@@ -1,0 +1,32 @@
+// 「Jenkins & Jenkins Pipeline 入門」第6章に対応する Scripted Pipeline 版。
+// Jenkinsfile（Declarative 版）と同じアプリケーションに対する
+// 最小構成の Scripted Pipeline での書き方を示す。
+node {
+    stage('Checkout') {
+        checkout scm
+    }
+
+    stage('Build') {
+        sh 'python -m venv .venv'
+        sh '. .venv/bin/activate && pip install -r requirements.txt'
+    }
+
+    stage('Test') {
+        try {
+            sh '. .venv/bin/activate && pytest --junitxml=reports/junit.xml'
+        } catch (err) {
+            currentBuild.result = 'UNSTABLE'
+            echo "テストが失敗しましたが、後続処理を続行します: ${err}"
+        } finally {
+            junit allowEmptyResults: true, testResults: 'reports/junit.xml'
+        }
+    }
+
+    stage('Deploy') {
+        if (env.BRANCH_NAME == 'main') {
+            sh './deploy.sh production'
+        } else {
+            echo 'main 以外のブランチではデプロイをスキップします'
+        }
+    }
+}
