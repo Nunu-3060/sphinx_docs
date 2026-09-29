@@ -1,0 +1,241 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>シミュレーション例と考察 &mdash; Python による BML 交通モデルの実装 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="まとめ" href="summary.html" />
+    <link rel="prev" title="実行方法" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python による BML 交通モデルの実装
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">BML 交通モデルの理論</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">実装の解説</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">実行方法</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">シミュレーション例と考察</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">評価指標</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">密度による定常状態の違い</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">時間発展の例</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">格子の状態の可視化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gui">GUI での観察</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html">まとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix.html">付録</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python による BML 交通モデルの実装</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">シミュレーション例と考察</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>シミュレーション例と考察<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本章では、密度 <span class="math notranslate nohighlight">\(p\)</span> を変えながらシミュレーションを実行し、 <a class="reference internal" href="theory.html"><span class="doc">BML 交通モデルの理論</span></a> で説明した自由流と渋滞の違いを具体的な数値で確認します。</p>
+<section id="id2">
+<h2>評価指標<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>各ステップにおいて、直前のステップから実際に位置が変化した車の割合を「移動率」として計測します。移動率が 1 に近いほど、多くの車が滞りなく動けている自由流に近い状態であり、移動率が 0 に近いほど、車同士が互いの進路を塞ぎ合って動けなくなった渋滞状態に近いことを示します。盤面サイズを 128 × 128 、乱数のシードを固定した上で、密度ごとにシミュレーションを実行しました。</p>
+</section>
+<section id="id3">
+<h2>密度による定常状態の違い<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>十分にステップを進めた後（ 300 ステップ後）の移動率を、密度ごとに測定した結果を次の表に示します。</p>
+<table class="docutils align-default" id="id6">
+<caption><span class="caption-text">密度と移動率（ 300 ステップ後、 50 ステップの平均）</span><a class="headerlink" href="#id6" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>密度 <span class="math notranslate nohighlight">\(p\)</span></p></th>
+<th class="head"><p>移動率</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0.10</p></td>
+<td><p>0.9970</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.20</p></td>
+<td><p>0.9922</p></td>
+</tr>
+<tr class="row-even"><td><p>0.30</p></td>
+<td><p>0.9568</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.35</p></td>
+<td><p>0.7896</p></td>
+</tr>
+<tr class="row-even"><td><p>0.40</p></td>
+<td><p>0.4986</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.60</p></td>
+<td><p>0.0004</p></td>
+</tr>
+</tbody>
+</table>
+<p>密度が 0.1 から 0.3 程度までの範囲では移動率が 1 に近い値を保ち続け、自由流状態が維持されています。一方、密度が 0.35 を超えたあたりから移動率が急激に低下し始め、密度 0.6 では移動率がほぼ 0 まで落ち込んでおり、渋滞状態（デッドロック）に至っていることが分かります。この結果は、 <a class="reference internal" href="theory.html"><span class="doc">BML 交通モデルの理論</span></a> で述べた「臨界密度は 0.3 台前半程度」という説明とおおむね整合しています。</p>
+</section>
+<section id="id4">
+<h2>時間発展の例<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>密度による違いをより詳しく見るため、密度 0.2 （自由流になる例）と密度 0.6 （渋滞になる例）について、シミュレーション開始からの移動率の推移を測定した結果を次の表に示します。</p>
+<table class="docutils align-default" id="id7">
+<caption><span class="caption-text">移動率の時間発展（密度 0.2 と密度 0.6 の比較）</span><a class="headerlink" href="#id7" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ステップ数</p></th>
+<th class="head"><p>移動率（密度 0.2 ）</p></th>
+<th class="head"><p>移動率（密度 0.6 ）</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>0.8045</p></td>
+<td><p>0.3917</p></td>
+</tr>
+<tr class="row-odd"><td><p>20</p></td>
+<td><p>0.9356</p></td>
+<td><p>0.1952</p></td>
+</tr>
+<tr class="row-even"><td><p>40</p></td>
+<td><p>0.9523</p></td>
+<td><p>0.1339</p></td>
+</tr>
+<tr class="row-odd"><td><p>80</p></td>
+<td><p>0.9731</p></td>
+<td><p>0.0939</p></td>
+</tr>
+<tr class="row-even"><td><p>120</p></td>
+<td><p>0.9752</p></td>
+<td><p>0.0724</p></td>
+</tr>
+<tr class="row-odd"><td><p>200</p></td>
+<td><p>0.9852</p></td>
+<td><p>0.0441</p></td>
+</tr>
+</tbody>
+</table>
+<p>密度 0.2 の場合、開始直後は初期配置に起因する多少の詰まりが見られるものの、ステップが進むにつれて移動率が上昇し、比較的短時間で高い移動率に落ち着いています。これは、初期状態でたまたま生じた局所的な渋滞が解消され、自由流状態へ移行していく様子を表しています。対照的に、密度 0.6 の場合は開始直後から移動率が低く、ステップが進むにつれてさらに低下を続けており、渋滞が徐々に格子全体へ広がっていく様子が読み取れます。</p>
+</section>
+<section id="id5">
+<h2>格子の状態の可視化<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>密度 0.2 （自由流）と密度 0.6 （渋滞）について、 300 ステップ後の格子の状態を画像として出力した結果を次の表に示します。いずれも盤面サイズ 128 × 128 、乱数のシードを固定しており、 <a class="reference internal" href="theory.html"><span class="doc">BML 交通モデルの理論</span></a> の表と同じ配色（白：空きセル、青：南北方向の車、赤：東西方向の車）を用いています。</p>
+<table class="docutils align-default" id="id8">
+<caption><span class="caption-text">300 ステップ後の格子の状態</span><a class="headerlink" href="#id8" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>密度 0.2 （自由流）</p></th>
+<th class="head"><p>密度 0.6 （渋滞）</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><a class="reference internal image-reference" href="_images/free_flow.png"><img alt="密度 0.2 のシミュレーション画像" src="_images/free_flow.png" style="width: 100%;" />
+</a>
+</td>
+<td><a class="reference internal image-reference" href="_images/jam.png"><img alt="密度 0.6 のシミュレーション画像" src="_images/jam.png" style="width: 100%;" />
+</a>
+</td>
+</tr>
+</tbody>
+</table>
+<p>密度 0.2 の画像では、車がほぼ規則的な斜めの筋を作りながら途切れることなく流れており、自由流状態になっていることが見て取れます。密度 0.6 の画像では、車が斜め方向に伸びる太い帯状の塊を作って固まっており、渋滞状態（デッドロック）に至っていることが視覚的にも確認できます。</p>
+<p>これらの画像は、 <code class="docutils literal notranslate"><span class="pre">BMLImage</span></code> クラスを利用して格子の状態を画像として出力するスクリプト <a class="reference download internal" download="" href="_downloads/70d77ad5e681ad55c35436a3b9261d5c/export_images.py"><code class="xref download docutils literal notranslate"><span class="pre">export_images.py</span></code></a> で生成しました。</p>
+</section>
+<section id="gui">
+<h2>GUI での観察<a class="headerlink" href="#gui" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="usage.html"><span class="doc">実行方法</span></a> の手順に従って GUI アプリケーションを起動し、密度スケールで <code class="docutils literal notranslate"><span class="pre">probability</span></code> の値を小さく設定して「 start 」ボタンを押すと、車が途切れることなく流れ続ける自由流状態を視覚的に確認できます。逆に、既定値に近い高い密度で開始すると、次第に車の塊が固まって動かなくなり、格子全体が渋滞する様子を観察できます。数値だけでなく、実際に画面上で 2 つの状態の違いを見比べることで、 BML モデルが示す相転移現象をより直感的に理解できます。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="実行方法" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="summary.html" class="btn btn-neutral float-right" title="まとめ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

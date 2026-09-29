@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>実装の解説 &mdash; Python による BML 交通モデルの実装 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="実行方法" href="usage.html" />
+    <link rel="prev" title="BML 交通モデルの理論" href="theory.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python による BML 交通モデルの実装
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">BML 交通モデルの理論</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">実装の解説</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">モジュール構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bml">BML クラス（モデル本体）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utility">utility モジュール（色変換）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bmlimage">BMLImage クラス（可視化）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gui-tkwidget-framebml-bmlgui">GUI（ TkWidget ・ FrameBML ・ BMLGUI ）</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">実行方法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results.html">シミュレーション例と考察</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html">まとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix.html">付録</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python による BML 交通モデルの実装</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">実装の解説</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>実装の解説<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="id2">
+<h2>モジュール構成<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>本プロジェクトの実装は、 6 個の Python ファイルで構成されています。モデルのロジックと GUI の実装を分離しており、 <code class="docutils literal notranslate"><span class="pre">BML</span></code> クラスは tkinter に依存せず単体で利用できる構成になっています。各ファイルの全文は <a class="reference internal" href="appendix.html"><span class="doc">付録</span></a> からダウンロードできます。</p>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">モジュール構成</span><a class="headerlink" href="#id3" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ファイル</p></th>
+<th class="head"><p>役割</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BML.py</span></code></p></td>
+<td><p>BML モデル本体。格子の初期化と更新ロジックを numpy によるベクトル化演算で実装しています。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">utility.py</span></code></p></td>
+<td><p>HSV 表色系から RGB 表色系への変換関数 <code class="docutils literal notranslate"><span class="pre">hsv2rgb</span></code> を提供します。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BMLImage.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BML</span></code> を継承し、格子の状態を画像（ Pillow の <code class="docutils literal notranslate"><span class="pre">Image</span></code> ）に変換する機能を追加します。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FrameBML.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BMLImage</span></code> の画像を一定間隔で更新・表示する tkinter フレームです。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TkWidget.py</span></code></p></td>
+<td><p>色選択・盤面サイズ選択・密度スケールなど、 GUI の部品となる tkinter フレーム群です。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BMLGUI.pyw</span></code></p></td>
+<td><p>上記の部品を組み合わせたメインアプリケーションと、起動用の <code class="docutils literal notranslate"><span class="pre">main</span></code> 関数です。</p></td>
+</tr>
+</tbody>
+</table>
+<p>これらのモジュールの依存関係は、 <code class="docutils literal notranslate"><span class="pre">BML</span></code> → <code class="docutils literal notranslate"><span class="pre">BMLImage</span></code> → <code class="docutils literal notranslate"><span class="pre">FrameBML</span></code> → <code class="docutils literal notranslate"><span class="pre">BMLGUI</span></code> という継承・利用関係になっており、 <code class="docutils literal notranslate"><span class="pre">utility</span></code> と <code class="docutils literal notranslate"><span class="pre">TkWidget</span></code> はそれぞれ <code class="docutils literal notranslate"><span class="pre">BMLImage</span></code> と <code class="docutils literal notranslate"><span class="pre">BMLGUI</span></code> から利用されます。</p>
+</section>
+<section id="bml">
+<h2>BML クラス（モデル本体）<a class="headerlink" href="#bml" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">BML</span></code> クラスは、格子の状態を表す 2 次元 numpy 配列 <code class="docutils literal notranslate"><span class="pre">lattice</span></code> を保持し、初期化と 1 ステップ分の更新処理を提供します。</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">BML.py</span><a class="headerlink" href="#id4" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="k">class</span><span class="w"> </span><span class="nc">BML</span><span class="p">:</span>
+<span class="linenos"> 5</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="linenos"> 6</span>        <span class="bp">self</span><span class="p">,</span>
+<span class="linenos"> 7</span>        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+<span class="linenos"> 8</span>        <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+<span class="linenos"> 9</span>        <span class="n">probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">,</span>
+<span class="linenos">10</span>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="linenos">11</span>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">12</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lattice</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+<span class="linenos">13</span>        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<span class="linenos">14</span>        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="linenos">15</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lattice</span><span class="p">[</span><span class="n">p</span> <span class="o">&lt;</span> <span class="n">probability</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="linenos">16</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lattice</span><span class="p">[</span><span class="n">p</span> <span class="o">&lt;</span> <span class="n">probability</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="linenos">17</span>        <span class="k">return</span> <span class="kc">None</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span>    <span class="k">def</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">20</span>        <span class="n">l0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span><span class="p">)</span>
+<span class="linenos">21</span>        <span class="n">south</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="linenos">22</span>        <span class="n">north</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="linenos">23</span>        <span class="n">l0</span><span class="p">[((</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">south</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">north</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">))]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="linenos">24</span>        <span class="n">l0</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="linenos">25</span>        <span class="n">east</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">l0</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="linenos">26</span>        <span class="n">west</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">l0</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="linenos">27</span>        <span class="n">l1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span><span class="p">)</span>
+<span class="linenos">28</span>        <span class="n">l1</span><span class="p">[((</span><span class="n">l0</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">west</span> <span class="o">==</span> <span class="mi">2</span><span class="p">))</span> <span class="o">|</span> <span class="p">((</span><span class="n">l0</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">east</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">))]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="linenos">29</span>        <span class="n">l1</span><span class="p">[</span><span class="n">l0</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="linenos">30</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lattice</span> <span class="o">=</span> <span class="n">l1</span>
+<span class="linenos">31</span>        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</div>
+<p>コンストラクタでは、幅・高さ・密度 <code class="docutils literal notranslate"><span class="pre">probability</span></code> を受け取り、 <a class="reference internal" href="theory.html"><span class="doc">BML 交通モデルの理論</span></a> で示した確率に従って各セルへ 0 ・ 1 ・ 2 の値を割り当てています。 <code class="docutils literal notranslate"><span class="pre">next</span></code> メソッドでは、 <code class="docutils literal notranslate"><span class="pre">np.roll</span></code> を用いて格子全体を上下・左右にずらした配列を作成し、ブールインデックス（条件を満たすセルだけを一括で書き換える手法）によってループを使わずに 1 ステップ分の更新を計算しています。前半で南北方向の車（値 1 ）を、後半で東西方向の車（値 2 ）を、それぞれ <a class="reference internal" href="theory.html"><span class="doc">BML 交通モデルの理論</span></a> の更新規則に従って動かしており、 1 回の <code class="docutils literal notranslate"><span class="pre">next</span></code> 呼び出しで両方向の車が 1 回ずつ移動します。</p>
+</section>
+<section id="utility">
+<h2>utility モジュール（色変換）<a class="headerlink" href="#utility" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">BMLImage</span></code> で車の色を指定する際に、直感的に調整しやすい HSV 表色系（色相・彩度・明度）を RGB 表色系に変換するための関数です。</p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">utility.py</span><a class="headerlink" href="#id5" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="k">def</span><span class="w"> </span><span class="nf">hsv2rgb</span><span class="p">(</span>
+<span class="linenos"> 5</span>    <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 6</span>    <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 7</span>    <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]:</span>
+<span class="linenos"> 9</span>    <span class="n">phase_offsets</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
+<span class="linenos">10</span>    <span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
+<span class="linenos">11</span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+<span class="linenos">12</span>        <span class="n">phase_offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<span class="linenos">13</span>        <span class="n">rgb</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">phase_offsets</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">6</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span>
+<span class="linenos">14</span>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="linenos">15</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">s</span><span class="o">.</span><span class="n">shape</span> <span class="ow">or</span> <span class="n">h</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+<span class="linenos">16</span>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;adjust the array lengths to be the same.&quot;</span><span class="p">)</span>
+<span class="linenos">17</span>        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+<span class="linenos">18</span>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;input 2D numpy array.&quot;</span><span class="p">)</span>
+<span class="linenos">19</span>        <span class="n">phase_offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<span class="linenos">20</span>        <span class="n">phase_offsets</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span>
+<span class="linenos">21</span>        <span class="n">phase_offsets</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span>
+<span class="linenos">22</span>        <span class="n">hue</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+<span class="linenos">23</span>        <span class="n">saturate</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+<span class="linenos">24</span>        <span class="n">value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+<span class="linenos">25</span>        <span class="n">rgb</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">hue</span> <span class="o">+</span> <span class="n">phase_offsets</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">6</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">saturate</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">value</span>
+<span class="linenos">26</span>    <span class="k">else</span><span class="p">:</span>
+<span class="linenos">27</span>        <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+<span class="linenos">28</span>            <span class="s2">&quot;h, s, and v must all be float or np.ndarray.&quot;</span><span class="p">,</span>
+<span class="linenos">29</span>            <span class="sa">f</span><span class="s2">&quot;h: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="linenos">30</span>            <span class="sa">f</span><span class="s2">&quot;s: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="linenos">31</span>            <span class="sa">f</span><span class="s2">&quot;v: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="linenos">32</span>        <span class="p">])</span>
+<span class="linenos">33</span>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="linenos">34</span>    <span class="n">rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">rgb</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos">35</span>    <span class="k">return</span> <span class="p">(</span><span class="n">rgb</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>引数 <code class="docutils literal notranslate"><span class="pre">h</span></code> ・ <code class="docutils literal notranslate"><span class="pre">s</span></code> ・ <code class="docutils literal notranslate"><span class="pre">v</span></code> にはそれぞれ 1 つの <code class="docutils literal notranslate"><span class="pre">float</span></code> 値、または同じ形状の numpy 配列のいずれかを渡すことができ、配列を渡した場合は各要素に対応する RGB 値をまとめて計算します。</p>
+</section>
+<section id="bmlimage">
+<h2>BMLImage クラス（可視化）<a class="headerlink" href="#bmlimage" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">BMLImage</span></code> クラスは <code class="docutils literal notranslate"><span class="pre">BML</span></code> を継承し、格子の状態を画像として描画する機能を追加します。</p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">BMLImage.py</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageTk</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">BML</span><span class="w"> </span><span class="kn">import</span> <span class="n">BML</span>
+<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">utility</span><span class="w"> </span><span class="kn">import</span> <span class="n">hsv2rgb</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="k">class</span><span class="w"> </span><span class="nc">BMLImage</span><span class="p">(</span><span class="n">BML</span><span class="p">):</span>
+<span class="linenos"> 9</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="linenos">10</span>        <span class="bp">self</span><span class="p">,</span>
+<span class="linenos">11</span>        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+<span class="linenos">12</span>        <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+<span class="linenos">13</span>        <span class="n">probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">,</span>
+<span class="linenos">14</span>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="linenos">15</span>        <span class="n">c0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="linenos">16</span>        <span class="n">c1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="linenos">17</span>        <span class="n">c2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="linenos">18</span>        <span class="n">pixel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="linenos">19</span>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">20</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">probability</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+<span class="linenos">21</span>        <span class="k">if</span> <span class="n">c0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">c1</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">c2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">22</span>            <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+<span class="linenos">23</span>            <span class="n">h</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+<span class="linenos">24</span>            <span class="n">s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.875</span>
+<span class="linenos">25</span>            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.875</span>
+<span class="linenos">26</span>            <span class="n">c0</span> <span class="o">=</span> <span class="n">hsv2rgb</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="n">v</span><span class="p">)</span>
+<span class="linenos">27</span>            <span class="n">c1</span> <span class="o">=</span> <span class="n">hsv2rgb</span><span class="p">(</span><span class="n">h</span><span class="o">-</span><span class="mf">0.125</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="linenos">28</span>            <span class="n">c2</span> <span class="o">=</span> <span class="n">hsv2rgb</span><span class="p">(</span><span class="n">h</span><span class="o">+</span><span class="mf">0.125</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="linenos">29</span>        <span class="bp">self</span><span class="o">.</span><span class="n">c0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]</span> <span class="o">=</span> <span class="n">c0</span>
+<span class="linenos">30</span>        <span class="bp">self</span><span class="o">.</span><span class="n">c1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]</span> <span class="o">=</span> <span class="n">c1</span>
+<span class="linenos">31</span>        <span class="bp">self</span><span class="o">.</span><span class="n">c2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]</span> <span class="o">=</span> <span class="n">c2</span>
+<span class="linenos">32</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image_array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="linenos">33</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">pixel</span><span class="o">*</span><span class="n">width</span><span class="p">,</span> <span class="n">pixel</span><span class="o">*</span><span class="n">height</span><span class="p">)</span>
+<span class="linenos">34</span>        <span class="k">return</span> <span class="kc">None</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span>    <span class="k">def</span><span class="w"> </span><span class="nf">image_np</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]:</span>
+<span class="linenos">37</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image_array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">c0</span>
+<span class="linenos">38</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image_array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">c1</span>
+<span class="linenos">39</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image_array</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lattice</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">c2</span>
+<span class="linenos">40</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_array</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span>    <span class="k">def</span><span class="w"> </span><span class="nf">image_pil</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="linenos">43</span>        <span class="n">im</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_np</span><span class="p">())</span>
+<span class="linenos">44</span>        <span class="k">return</span> <span class="n">im</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">NEAREST</span><span class="p">)</span>
+<span class="linenos">45</span>
+<span class="linenos">46</span>    <span class="k">def</span><span class="w"> </span><span class="nf">image_tk</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ImageTk</span><span class="o">.</span><span class="n">PhotoImage</span><span class="p">:</span>
+<span class="linenos">47</span>        <span class="k">return</span> <span class="n">ImageTk</span><span class="o">.</span><span class="n">PhotoImage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_pil</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">image_np</span></code> メソッドで、格子の値 0 ・ 1 ・ 2 をそれぞれ色 <code class="docutils literal notranslate"><span class="pre">c0</span></code> ・ <code class="docutils literal notranslate"><span class="pre">c1</span></code> ・ <code class="docutils literal notranslate"><span class="pre">c2</span></code> に対応させた RGB 画像配列を作成し、 <code class="docutils literal notranslate"><span class="pre">image_pil</span></code> メソッドで Pillow の <code class="docutils literal notranslate"><span class="pre">Image</span></code> オブジェクトへ変換した上で、指定した <code class="docutils literal notranslate"><span class="pre">pixel</span></code> 倍率に拡大します。 <code class="docutils literal notranslate"><span class="pre">image_tk</span></code> メソッドは、この画像を tkinter で表示できる <code class="docutils literal notranslate"><span class="pre">ImageTk.PhotoImage</span></code> 形式に変換します。拡大時の補間方式に最近傍法（ <code class="docutils literal notranslate"><span class="pre">Image.Resampling.NEAREST</span></code> ）を用いているため、格子の 1 マス 1 マスが 1 つの色の塊としてはっきり表示されます。</p>
+</section>
+<section id="gui-tkwidget-framebml-bmlgui">
+<h2>GUI（ TkWidget ・ FrameBML ・ BMLGUI ）<a class="headerlink" href="#gui-tkwidget-framebml-bmlgui" title="Link to this heading"></a></h2>
+<p>GUI 部分は 3 つのモジュールに分かれています。</p>
+<p><code class="docutils literal notranslate"><span class="pre">FrameBML</span></code> は、 <code class="docutils literal notranslate"><span class="pre">BMLImage</span></code> の画像を <code class="docutils literal notranslate"><span class="pre">ttk.Label</span></code> に表示し、 tkinter の <code class="docutils literal notranslate"><span class="pre">after</span></code> メソッドを用いて一定間隔（既定では 10 ミリ秒）ごとに <code class="docutils literal notranslate"><span class="pre">next</span></code> メソッドを呼び出して画像を更新し続けます。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">FrameBML.py</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tk</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="kn">import</span> <span class="n">ttk</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">ImageTk</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="kn">from</span><span class="w"> </span><span class="nn">BMLImage</span><span class="w"> </span><span class="kn">import</span> <span class="n">BMLImage</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="k">class</span><span class="w"> </span><span class="nc">FrameBML</span><span class="p">(</span><span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+<span class="linenos">10</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="linenos">11</span>        <span class="bp">self</span><span class="p">,</span>
+<span class="linenos">12</span>        <span class="n">master</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Misc</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="linenos">13</span>        <span class="n">bmli</span><span class="p">:</span> <span class="n">BMLImage</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="linenos">14</span>        <span class="n">interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<span class="linenos">15</span>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">16</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="linenos">17</span>        <span class="k">if</span> <span class="n">bmli</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">18</span>            <span class="n">bmli</span> <span class="o">=</span> <span class="n">BMLImage</span><span class="p">()</span>
+<span class="linenos">19</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bmli</span><span class="p">:</span> <span class="n">BMLImage</span> <span class="o">=</span> <span class="n">bmli</span>
+<span class="linenos">20</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span> <span class="n">ImageTk</span><span class="o">.</span><span class="n">PhotoImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bmli</span><span class="o">.</span><span class="n">image_tk</span><span class="p">()</span>
+<span class="linenos">21</span>        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
+<span class="linenos">22</span>        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="linenos">23</span>        <span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">interval</span>
+<span class="linenos">24</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Destroy&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_destroy</span><span class="p">)</span>
+<span class="linenos">25</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos">26</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">after</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">)</span>
+<span class="linenos">27</span>        <span class="k">return</span> <span class="kc">None</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span>    <span class="k">def</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">30</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bmli</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+<span class="linenos">31</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bmli</span><span class="o">.</span><span class="n">image_tk</span><span class="p">()</span>
+<span class="linenos">32</span>        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
+<span class="linenos">33</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">after</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">)</span>
+<span class="linenos">34</span>        <span class="k">return</span> <span class="kc">None</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span>    <span class="k">def</span><span class="w"> </span><span class="nf">_on_destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">37</span>        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">widget</span> <span class="ow">is</span> <span class="bp">self</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">38</span>            <span class="bp">self</span><span class="o">.</span><span class="n">after_cancel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span><span class="p">)</span>
+<span class="linenos">39</span>            <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos">40</span>        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">TkWidget</span></code> には、色（ HSV ）を選択する <code class="docutils literal notranslate"><span class="pre">FrameHSV</span></code> 、盤面サイズを選択する <code class="docutils literal notranslate"><span class="pre">FrameRadioButton</span></code> 、密度を選択する <code class="docutils literal notranslate"><span class="pre">FrameScale</span></code> の 3 つの部品クラスが定義されています。いずれも <code class="docutils literal notranslate"><span class="pre">get</span></code> メソッドで現在の設定値を取得し、 <code class="docutils literal notranslate"><span class="pre">set</span></code> メソッドで値を設定できます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">BMLGUI</span></code> は、これらの部品を配置してメインウィンドウを構成するクラスです。「 start 」ボタンで新しいウィンドウを開いてシミュレーションを開始し、「 stop 」ボタンでそのウィンドウを閉じます。「 reset 」ボタンで密度・盤面サイズの設定を既定値に戻し、「 color 」ボタンで車の色をランダムに選び直すことができます。 GUI の具体的な操作方法は <a class="reference internal" href="usage.html"><span class="doc">実行方法</span></a> で説明します。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory.html" class="btn btn-neutral float-left" title="BML 交通モデルの理論" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-right" title="実行方法" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>可視化層: SandImage.py &mdash; Python による飛砂のシミュレーションの実装 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="GUI 部品層: TkWidget.py / FrameSand.py" href="widgets.html" />
+    <link rel="prev" title="モデル層: Sand.py" href="model.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python による飛砂のシミュレーションの実装
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">実装概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">モデル層: Sand.py</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">可視化層: SandImage.py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">配色の初期化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#image-np">画像への変換: image_np()</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">明度の正規化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hsv-rgb">HSV から RGB への変換</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pil-tkinter">PIL 画像・Tkinter 画像への変換</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="widgets.html">GUI 部品層: TkWidget.py / FrameSand.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application.html">アプリケーション層: SandGUI.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API リファレンス</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html">まとめ</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python による飛砂のシミュレーションの実装</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">可視化層: SandImage.py</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sandimage-py">
+<h1>可視化層: SandImage.py<a class="headerlink" href="#sandimage-py" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">SandImage</span></code> は <a class="reference internal" href="model.html"><span class="doc">モデル層: Sand.py</span></a> で解説した <code class="docutils literal notranslate"><span class="pre">Sand</span></code> を継承し、高さ場を Pillow (PIL) の画像に変換するクラスです。継承しているため、高さ場の更新ロジック(<code class="docutils literal notranslate"><span class="pre">next()</span></code>)はそのまま <code class="docutils literal notranslate"><span class="pre">Sand</span></code> のものを利用し、<code class="docutils literal notranslate"><span class="pre">SandImage</span></code> は「画像に変換する」機能だけを追加しています。</p>
+<section id="id1">
+<h2>配色の初期化<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">L0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">q</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pixel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">hue</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.875</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">pixel</span><span class="o">*</span><span class="n">width</span><span class="p">,</span> <span class="n">pixel</span><span class="o">*</span><span class="n">height</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hue</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+            <span class="n">hue</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hue</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">hue</span> <span class="o">%</span> <span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">saturation</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">saturation</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_offsets</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase_offsets</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>コンストラクタでは、<code class="docutils literal notranslate"><span class="pre">Sand</span></code> のコンストラクタ(<code class="docutils literal notranslate"><span class="pre">L0</span></code> / <code class="docutils literal notranslate"><span class="pre">b</span></code> / <code class="docutils literal notranslate"><span class="pre">q</span></code> / <code class="docutils literal notranslate"><span class="pre">D</span></code> / <code class="docutils literal notranslate"><span class="pre">seed</span></code> / <code class="docutils literal notranslate"><span class="pre">width</span></code> / <code class="docutils literal notranslate"><span class="pre">height</span></code>)をそのまま呼び出したうえで、画像化のために次の3つを準備します。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">self.image_size</span></code>: <code class="docutils literal notranslate"><span class="pre">pixel</span></code> 倍に拡大した出力画像サイズ(<code class="docutils literal notranslate"><span class="pre">(pixel</span> <span class="pre">*</span> <span class="pre">width,</span> <span class="pre">pixel</span> <span class="pre">*</span> <span class="pre">height)</span></code>)。1セルを <code class="docutils literal notranslate"><span class="pre">pixel</span></code> × <code class="docutils literal notranslate"><span class="pre">pixel</span></code> の正方形として描画するための拡大率です。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self.hue</span></code> / <code class="docutils literal notranslate"><span class="pre">self.saturation</span></code>: 色相(Hue)・彩度(Saturation)を格子全体(<code class="docutils literal notranslate"><span class="pre">(height,</span> <span class="pre">width,</span> <span class="pre">3)</span></code> の配列)に敷き詰めたもの。<code class="docutils literal notranslate"><span class="pre">hue</span></code> に <code class="docutils literal notranslate"><span class="pre">None</span></code> を渡すとランダムな色相が選ばれます。彩度は <code class="docutils literal notranslate"><span class="pre">numpy.clip</span></code> で必ず <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> の範囲に収められます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self.phase_offsets</span></code>: 後述する HSV → RGB 変換で使う、R・G・B 各チャンネルごとの位相のずれです。</p></li>
+</ul>
+<p>色相・彩度はどちらも画像全体で一定値であり、セルごとに変化するのは高さ場(明度に対応する値)だけです。したがって、砂山が高いセルほど明るく、低いセルほど暗く表示されます。色相・彩度が空間分布を持たないにも関わらず <code class="docutils literal notranslate"><span class="pre">(height,</span> <span class="pre">width,</span> <span class="pre">3)</span></code> の配列として保持しているのは、次で説明する HSV → RGB 変換をベクトル化して実装するためです。</p>
+</section>
+<section id="image-np">
+<h2>画像への変換: image_np()<a class="headerlink" href="#image-np" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">image_np</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]:</span>
+        <span class="n">height_max</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">height_min</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">denom</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span> <span class="o">=</span> <span class="n">height_max</span> <span class="o">-</span> <span class="n">height_min</span>
+        <span class="n">value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">height_min</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">height_max</span> <span class="o">-</span> <span class="n">height_min</span><span class="p">)</span>
+            <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">denom</span> <span class="k">else</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+            <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hue</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase_offsets</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">6</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>
+                <span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">saturation</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">value</span><span class="p">,</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">rgb</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>このメソッドは、高さ場を RGB の画素値(<code class="docutils literal notranslate"><span class="pre">uint8</span></code> の NumPy 配列)に変換します。</p>
+<section id="id2">
+<h3>明度の正規化<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>まず、そのときの高さ場の最小値・最大値を使って、明度(Value)を <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> に正規化します。</p>
+<div class="math notranslate nohighlight">
+\[v_{i,j} = \frac{h_{i,j} - h_{\min}}{h_{\max} - h_{\min}}\]</div>
+<p>高さ場が完全に一様で <code class="docutils literal notranslate"><span class="pre">h_max</span> <span class="pre">==</span> <span class="pre">h_min</span></code> となる場合は 0 除算になってしまうため、その場合は明度を一律 0 として扱います。</p>
+</section>
+<section id="hsv-rgb">
+<h3>HSV から RGB への変換<a class="headerlink" href="#hsv-rgb" title="Link to this heading"></a></h3>
+<p>色相 <span class="math notranslate nohighlight">\(H\)</span> ・彩度 <span class="math notranslate nohighlight">\(S\)</span> ・明度 <span class="math notranslate nohighlight">\(V\)</span> から RGB の各チャンネル <span class="math notranslate nohighlight">\(c \in \{R, G, B\}\)</span> を求める計算式は、次のように実装されています。</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+p_c &amp;= \bigl|\, \mathrm{frac}(H + o_c) \times 6 - 3 \,\bigr| \\
+c   &amp;= V \times \Bigl( \bigl(\mathrm{clip}(p_c - 1,\ 0,\ 1) - 1\bigr) \times S + 1 \Bigr)
+\end{align*}</div><p>ここで <span class="math notranslate nohighlight">\(o_c\)</span> は <code class="docutils literal notranslate"><span class="pre">self.phase_offsets</span></code> にあらかじめ設定してあるチャンネルごとの位相のずれで、<span class="math notranslate nohighlight">\(o_R = 0\)</span> 、<span class="math notranslate nohighlight">\(o_G = 2/3\)</span> 、<span class="math notranslate nohighlight">\(o_B = 1/3\)</span> です。この式は、一般的な HSV → RGB 変換をシェーダー向けに整理した式(GPU のシェーダーコードでよく使われる形)をそのまま NumPy でベクトル化したものです。</p>
+<p>計算された値は最後に <code class="docutils literal notranslate"><span class="pre">numpy.clip</span></code> で <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> に収め、255 倍して <code class="docutils literal notranslate"><span class="pre">uint8</span></code> に変換することで、通常の RGB 画素値になります。</p>
+</section>
+</section>
+<section id="pil-tkinter">
+<h2>PIL 画像・Tkinter 画像への変換<a class="headerlink" href="#pil-tkinter" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">image_pil</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+        <span class="n">im</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_np</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">im</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">NEAREST</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">image_tk</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ImageTk</span><span class="o">.</span><span class="n">PhotoImage</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ImageTk</span><span class="o">.</span><span class="n">PhotoImage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_pil</span><span class="p">())</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">image_pil()</span></code> は <code class="docutils literal notranslate"><span class="pre">image_np()</span></code> の結果を <code class="docutils literal notranslate"><span class="pre">PIL.Image</span></code> に変換したうえで、<code class="docutils literal notranslate"><span class="pre">self.image_size</span></code> まで最近傍補間(<code class="docutils literal notranslate"><span class="pre">Image.Resampling.NEAREST</span></code>)で拡大します。最近傍補間を使っているのは、1セルを1色のくっきりした正方形として表示するためです(平滑化されたぼやけた拡大にはなりません)。</p>
+<p><code class="docutils literal notranslate"><span class="pre">image_tk()</span></code> は、さらにそれを Tkinter で表示できる <code class="docutils literal notranslate"><span class="pre">ImageTk.PhotoImage</span></code> に変換します。この戻り値が、<a class="reference internal" href="widgets.html"><span class="doc">GUI 部品層: TkWidget.py / FrameSand.py</span></a> で解説する <code class="docutils literal notranslate"><span class="pre">FrameSand</span></code> から利用されます。</p>
+<p>クラス・メソッドのシグネチャ一覧は <a class="reference internal" href="api.html"><span class="doc">API リファレンス</span></a> を参照してください。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="model.html" class="btn btn-neutral float-left" title="モデル層: Sand.py" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="widgets.html" class="btn btn-neutral float-right" title="GUI 部品層: TkWidget.py / FrameSand.py" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

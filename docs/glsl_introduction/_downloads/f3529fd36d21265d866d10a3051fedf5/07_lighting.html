@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>07 ライティング | GLSL 入門</title>
+<style>
+  body { margin: 0; padding: 12px; background: #1e1e1e; color: #ddd; font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  canvas { display: block; width: 100%; max-width: 600px; height: auto; background: #000; }
+  .controls { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .controls input[type="range"] { width: 110px; vertical-align: middle; }
+  #log { color: #ff8080; white-space: pre-wrap; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<h1>07 ライティング（環境光・拡散反射・鏡面反射）</h1>
+<canvas id="canvas" width="600" height="400"></canvas>
+<div class="controls">
+  <label><input id="use-ambient" type="checkbox" checked> 環境光</label>
+  <label><input id="use-diffuse" type="checkbox" checked> 拡散反射</label>
+  <label><input id="use-specular" type="checkbox" checked> 鏡面反射</label>
+  <label>鏡面反射のモデル
+    <select id="specular-model">
+      <option value="blinn">Blinn-Phong</option>
+      <option value="phong">Phong</option>
+    </select>
+  </label>
+  <label>光沢度 <input id="shininess" type="range" min="1" max="256" value="64"> <span id="shininess-value">64</span></label>
+  <label>光源の方位 <input id="light-azimuth" type="range" min="-180" max="180" value="-40"></label>
+  <label>光源の高さ <input id="light-elevation" type="range" min="-80" max="80" value="35"></label>
+  <label>X 方向の拡大率 <input id="scale-x" type="range" min="0.3" max="2" step="0.01" value="1.6"></label>
+  <label><input id="use-normal-matrix" type="checkbox" checked> 法線行列を使う</label>
+  <label><input id="use-gamma" type="checkbox" checked> ガンマ補正</label>
+  <label><input id="auto-rotate" type="checkbox" checked> 自動回転</label>
+</div>
+<pre id="log"></pre>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+layout(location = 0) in vec3 aPosition;  // モデル座標での位置
+layout(location = 1) in vec3 aNormal;    // モデル座標での法線
+
+uniform mat4 uModel;
+uniform mat4 uView;
+uniform mat4 uProjection;
+uniform mat3 uNormalMatrix;  // 法線をワールド座標へ変換する行列
+
+out vec3 vWorldPosition;  // ワールド座標での位置
+out vec3 vNormal;         // ワールド座標での法線
+
+void main() {
+    vec4 worldPosition = uModel * vec4(aPosition, 1.0);
+    vWorldPosition = worldPosition.xyz;
+    vNormal = uNormalMatrix * aNormal;
+    gl_Position = uProjection * uView * worldPosition;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+
+in vec3 vWorldPosition;
+in vec3 vNormal;
+
+uniform vec3 uLightDirection;  // 物体から光源へ向かう方向（ワールド座標）
+uniform vec3 uCameraPosition;  // カメラの位置（ワールド座標）
+uniform vec3 uBaseColor;       // 物体の色
+uniform float uShininess;      // 光沢度：大きいほどハイライトが小さく鋭くなる
+uniform bool uUseAmbient;
+uniform bool uUseDiffuse;
+uniform bool uUseSpecular;
+uniform bool uUseBlinnPhong;   // true：Blinn-Phong、false：Phong
+uniform bool uUseGamma;
+
+out vec4 outColor;
+
+const vec3 LIGHT_COLOR = vec3(1.0);    // 光源の色
+const float AMBIENT_STRENGTH = 0.15;   // 環境光の強さ
+const float SPECULAR_STRENGTH = 0.6;   // 鏡面反射の強さ
+
+void main() {
+    // 補間された法線は長さが 1 とは限らないので、正規化し直す
+    vec3 N = normalize(vNormal);
+    vec3 L = normalize(uLightDirection);
+    vec3 V = normalize(uCameraPosition - vWorldPosition);  // 表面からカメラへ向かう方向
+
+    vec3 color = vec3(0.0);
+
+    // 環境光：周囲からの間接的な光を一定の明るさで近似する
+    if (uUseAmbient) {
+        color += AMBIENT_STRENGTH * uBaseColor;
+    }
+
+    // 拡散反射（Lambert）：光が当たる角度が浅いほど暗くなる
+    float diffuse = max(dot(N, L), 0.0);
+    if (uUseDiffuse) {
+        color += diffuse * uBaseColor * LIGHT_COLOR;
+    }
+
+    // 鏡面反射：光源の反射方向とカメラの方向が近いほど明るい（光が当たっている面だけ）
+    if (uUseSpecular && diffuse > 0.0) {
+        float specular;
+        if (uUseBlinnPhong) {
+            vec3 H = normalize(L + V);                     // ハーフベクトル
+            specular = pow(max(dot(N, H), 0.0), uShininess);
+        } else {
+            vec3 R = reflect(-L, N);                       // 光の反射方向
+            specular = pow(max(dot(R, V), 0.0), uShininess);
+        }
+        color += SPECULAR_STRENGTH * specular * LIGHT_COLOR;
+    }
+
+    // ガンマ補正：線形な明るさを、ディスプレイ向けの値に変換する（近似）
+    if (uUseGamma) {
+        color = pow(color, vec3(1.0 / 2.2));
+    }
+
+    outColor = vec4(color, 1.0);
+}
+</script>
+
+<script>
+"use strict";
+
+// ---- 行列計算の関数（列優先） ----
+const mat4 = {
+    multiply(a, b) {
+        const out = new Float32Array(16);
+        for (let col = 0; col < 4; col++) {
+            for (let row = 0; row < 4; row++) {
+                let sum = 0;
+                for (let k = 0; k < 4; k++) {
+                    sum += a[k * 4 + row] * b[col * 4 + k];
+                }
+                out[col * 4 + row] = sum;
+            }
+        }
+        return out;
+    },
+    translation(x, y, z) {
+        return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1]);
+    },
+    scaling(x, y, z) {
+        return new Float32Array([x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1]);
+    },
+    rotationY(angle) {
+        const c = Math.cos(angle), s = Math.sin(angle);
+        return new Float32Array([c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]);
+    },
+    perspective(fovY, aspect, near, far) {
+        const f = 1 / Math.tan(fovY / 2);
+        const nf = 1 / (near - far);
+        return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
+    },
+    // 左上 3 × 3 の部分をそのまま取り出す（法線行列を使わない場合の比較用）
+    upperLeft3x3(m) {
+        return new Float32Array([m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]]);
+    },
+    // ---- 法線行列の計算 ----
+    // 法線行列：モデル行列の左上 3 × 3 の逆行列の転置。
+    // 逆行列の転置は「余因子行列 ÷ 行列式」で求められる。
+    normalMatrix(m) {
+        // a[行][列] として取り出す（列優先なので m[列 * 4 + 行]）
+        const a00 = m[0], a01 = m[4], a02 = m[8];
+        const a10 = m[1], a11 = m[5], a12 = m[9];
+        const a20 = m[2], a21 = m[6], a22 = m[10];
+        // 余因子
+        const c00 = a11 * a22 - a12 * a21, c01 = -(a10 * a22 - a12 * a20), c02 = a10 * a21 - a11 * a20;
+        const c10 = -(a01 * a22 - a02 * a21), c11 = a00 * a22 - a02 * a20, c12 = -(a00 * a21 - a01 * a20);
+        const c20 = a01 * a12 - a02 * a11, c21 = -(a00 * a12 - a02 * a10), c22 = a00 * a11 - a01 * a10;
+        const det = a00 * c00 + a01 * c01 + a02 * c02;
+        // 列優先の mat3 として返す（1 列目は c00, c10, c20 をそれぞれ det で割った値）
+        return new Float32Array([
+            c00 / det, c10 / det, c20 / det,
+            c01 / det, c11 / det, c21 / det,
+            c02 / det, c12 / det, c22 / det,
+        ]);
+    },
+    // ---- 法線行列の計算ここまで ----
+};
+
+function compileShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const message = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("シェーダーのコンパイルに失敗しました。\n" + message);
+    }
+    return shader;
+}
+
+function createProgram(gl, vertexSource, fragmentSource) {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error("プログラムのリンクに失敗しました。\n" + gl.getProgramInfoLog(program));
+    }
+    return program;
+}
+
+function getShaderSource(id) {
+    return document.getElementById(id).textContent.trim();
+}
+
+// 球の頂点データを作る（緯度方向 stacks 分割、経度方向 slices 分割）。
+// 原点を中心とする半径 1 の球では、各点の位置ベクトルがそのまま法線になる。
+function createSphere(stacks, slices) {
+    const vertices = [];  // x, y, z, nx, ny, nz の繰り返し
+    const indices = [];
+    for (let i = 0; i <= stacks; i++) {
+        const theta = Math.PI * i / stacks;          // 北極 (0) から南極 (π) まで
+        for (let j = 0; j <= slices; j++) {
+            const phi = 2 * Math.PI * j / slices;    // 経度 0 から 2π まで
+            const x = Math.sin(theta) * Math.sin(phi);
+            const y = Math.cos(theta);
+            const z = Math.sin(theta) * Math.cos(phi);
+            vertices.push(x, y, z, x, y, z);
+        }
+    }
+    for (let i = 0; i < stacks; i++) {
+        for (let j = 0; j < slices; j++) {
+            const a = i * (slices + 1) + j;  // 左上
+            const b = a + slices + 1;        // 左下
+            indices.push(a, b, a + 1, a + 1, b, b + 1);
+        }
+    }
+    return { vertices: new Float32Array(vertices), indices: new Uint16Array(indices) };
+}
+
+function main() {
+    const canvas = document.getElementById("canvas");
+    const gl = canvas.getContext("webgl2");
+    if (!gl) {
+        throw new Error("このブラウザーは WebGL 2.0 に対応していません。");
+    }
+    const program = createProgram(gl, getShaderSource("vertex-shader"), getShaderSource("fragment-shader"));
+
+    const sphere = createSphere(48, 96);
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, sphere.vertices, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, sphere.indices, gl.STATIC_DRAW);
+
+    const uniformNames = ["uModel", "uView", "uProjection", "uNormalMatrix", "uLightDirection", "uCameraPosition",
+        "uBaseColor", "uShininess", "uUseAmbient", "uUseDiffuse", "uUseSpecular", "uUseBlinnPhong", "uUseGamma"];
+    const loc = {};
+    for (const name of uniformNames) {
+        loc[name] = gl.getUniformLocation(program, name);
+    }
+
+    const input = (id) => document.getElementById(id);
+    const toRadian = (degree) => degree * Math.PI / 180;
+    const cameraPosition = [0, 0, 3.5];
+
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+
+    let angle = 0;
+    let lastTime = null;
+
+    function frame(now) {
+        const deltaTime = lastTime === null ? 0 : (now - lastTime) / 1000;
+        lastTime = now;
+        if (input("auto-rotate").checked) {
+            angle += deltaTime * 0.5;
+        }
+        input("shininess-value").textContent = input("shininess").value;
+
+        // モデル行列：X 方向に拡大縮小してから Y 軸まわりに回転する
+        const model = mat4.multiply(mat4.rotationY(angle), mat4.scaling(Number(input("scale-x").value), 1, 1));
+        const view = mat4.translation(-cameraPosition[0], -cameraPosition[1], -cameraPosition[2]);
+        const projection = mat4.perspective(toRadian(45), canvas.width / canvas.height, 0.1, 100);
+        const normalMatrix = input("use-normal-matrix").checked ? mat4.normalMatrix(model) : mat4.upperLeft3x3(model);
+
+        // 光源の方向（方位角と仰角から求める）
+        const azimuth = toRadian(Number(input("light-azimuth").value));
+        const elevation = toRadian(Number(input("light-elevation").value));
+        const lightDirection = [
+            Math.cos(elevation) * Math.sin(azimuth),
+            Math.sin(elevation),
+            Math.cos(elevation) * Math.cos(azimuth),
+        ];
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0.08, 0.08, 0.1, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.useProgram(program);
+        gl.uniformMatrix4fv(loc.uModel, false, model);
+        gl.uniformMatrix4fv(loc.uView, false, view);
+        gl.uniformMatrix4fv(loc.uProjection, false, projection);
+        gl.uniformMatrix3fv(loc.uNormalMatrix, false, normalMatrix);
+        gl.uniform3fv(loc.uLightDirection, lightDirection);
+        gl.uniform3fv(loc.uCameraPosition, cameraPosition);
+        gl.uniform3f(loc.uBaseColor, 0.8, 0.25, 0.15);
+        gl.uniform1f(loc.uShininess, Number(input("shininess").value));
+        gl.uniform1i(loc.uUseAmbient, input("use-ambient").checked ? 1 : 0);
+        gl.uniform1i(loc.uUseDiffuse, input("use-diffuse").checked ? 1 : 0);
+        gl.uniform1i(loc.uUseSpecular, input("use-specular").checked ? 1 : 0);
+        gl.uniform1i(loc.uUseBlinnPhong, input("specular-model").value === "blinn" ? 1 : 0);
+        gl.uniform1i(loc.uUseGamma, input("use-gamma").checked ? 1 : 0);
+
+        gl.bindVertexArray(vao);
+        gl.drawElements(gl.TRIANGLES, sphere.indices.length, gl.UNSIGNED_SHORT, 0);
+
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+}
+
+try {
+    main();
+} catch (error) {
+    document.getElementById("log").textContent = error.message;
+    console.error(error);
+}
+</script>
+</body>
+</html>

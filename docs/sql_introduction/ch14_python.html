@@ -1,0 +1,832 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14. Python から SQL を使う &mdash; SQL 入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=47d01576" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="付録 A 演習問題の解答" href="appendix_a_answers.html" />
+    <link rel="prev" title="13. インデックスと性能" href="ch13_index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SQL 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_overview.html">2. データベースと SQL の概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_setup.html">3. 環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_select.html">4. データの取得</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_null.html">5. NULL の扱い</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_aggregate.html">6. 集計とグループ化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_join.html">7. テーブルの結合</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_subquery.html">8. サブクエリと共通テーブル式</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_window.html">9. ウィンドウ関数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_modify.html">10. データの追加・更新・削除</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_ddl.html">11. テーブルの設計と定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_transaction.html">12. トランザクション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_index.html">13. インデックスと性能</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">14. Python から SQL を使う</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#db-api-2-0">14.1. DB-API 2.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">14.2. 基本的な使い方</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">14.2.1. 接続と結果の取り出し</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">14.2.2. プレースホルダー</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sql">14.3. SQL インジェクション</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">14.4. トランザクションの制御</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#autocommit">14.4.1. autocommit 属性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#with">14.4.2. with 文によるトランザクション</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">14.5. 型ヒントを付けたデータアクセス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pandas">14.6. pandas と組み合わせる</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sql-pandas">14.6.1. SQL と pandas の使い分け</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#orm">14.7. ORM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exercises-ch14">14.8. 演習問題</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_answers.html">付録 A 演習問題の解答</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_dialects.html">付録 B SQL の方言比較</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_glossary.html">付録 C 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考資料</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_e_samples.html">付録 E サンプルファイル一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SQL 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">14. </span>Python から SQL を使う</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python-sql">
+<h1><span class="section-number">14. </span>Python から SQL を使う<a class="headerlink" href="#python-sql" title="Link to this heading"></a></h1>
+<p>本章では、Python のプログラムから SQL を実行する方法を説明します。前半では標準ライブラリの <code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> モジュールを、後半では pandas と SQL を組み合わせる方法を扱います。</p>
+<p>本章のサンプルは、<code class="docutils literal notranslate"><span class="pre">examples</span></code> フォルダーで <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">ch14_basics.py</span></code> のように実行します。実行する前に、3 章の手順で <code class="docutils literal notranslate"><span class="pre">shop.db</span></code> を作成しておいてください。</p>
+<section id="db-api-2-0">
+<h2><span class="section-number">14.1. </span>DB-API 2.0<a class="headerlink" href="#db-api-2-0" title="Link to this heading"></a></h2>
+<p>Python には、データベースを操作するモジュールが備えるべきインターフェースの仕様として、PEP 249（Python Database API Specification v2.0、DB-API 2.0）があります。<code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> モジュールはこの仕様に従っています。PostgreSQL 用の psycopg や MySQL 用の mysqlclient など、他の DBMS 用のモジュールも同じ仕様に従っているため、本章で説明する使い方の多くは、他の DBMS でもほぼ同じです。</p>
+<p>DB-API 2.0 の主な要素は次のとおりです。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>要素</p></th>
+<th class="head"><p>役割</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>接続（Connection）</p></td>
+<td><p>データベースへの接続を表します。<code class="docutils literal notranslate"><span class="pre">commit()</span></code> と <code class="docutils literal notranslate"><span class="pre">rollback()</span></code> でトランザクションを制御し、<code class="docutils literal notranslate"><span class="pre">close()</span></code> で接続を閉じます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>カーソル（Cursor）</p></td>
+<td><p>SQL の実行と、結果の取り出しを行います。<code class="docutils literal notranslate"><span class="pre">execute()</span></code> で SQL を実行し、<code class="docutils literal notranslate"><span class="pre">fetchone()</span></code> や <code class="docutils literal notranslate"><span class="pre">fetchall()</span></code> で結果を取り出します。</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> モジュールでは、接続の <code class="docutils literal notranslate"><span class="pre">execute()</span></code> メソッドを呼ぶと、内部でカーソルが作成されて SQL が実行され、そのカーソルが返されます。本章の例では、この簡略化された書き方を使います。</p>
+</section>
+<section id="id1">
+<h2><span class="section-number">14.2. </span>基本的な使い方<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3><span class="section-number">14.2.1. </span>接続と結果の取り出し<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ch14_basics.py</span></code> は、<code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> モジュールの基本的な使い方を示すスクリプトです。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">ch14_basics.py</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;sqlite3 モジュールの基本的な使い方（14 章）.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">接続、SQL の実行、結果の取り出し、プレースホルダーの使い方を示します。</span>
+<span class="linenos"> 4</span><span class="sd">このスクリプトはデータを読み込むだけで、shop.db の内容は変更しません。</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="sd">使い方::</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="sd">    python ch14_basics.py</span>
+<span class="linenos"> 9</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="linenos">12</span><span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">closing</span>
+<span class="linenos">13</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="n">DB_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;shop.db&quot;</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="k">def</span><span class="w"> </span><span class="nf">show_fetch_methods</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">19</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;結果を取り出す 3 つの方法を示します.&quot;&quot;&quot;</span>
+<span class="linenos">20</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- fetchone(): 1 行ずつ取り出す&quot;</span><span class="p">)</span>
+<span class="linenos">21</span>    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM products&quot;</span><span class="p">)</span>
+<span class="linenos">22</span>    <span class="n">row</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+<span class="linenos">23</span>    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>  <span class="c1"># 行はタプルとして返されます</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- fetchall(): すべての行をリストとして取り出す&quot;</span><span class="p">)</span>
+<span class="linenos">26</span>    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">27</span>        <span class="s2">&quot;SELECT name, price FROM products WHERE category_id = 8&quot;</span>
+<span class="linenos">28</span>    <span class="p">)</span>
+<span class="linenos">29</span>    <span class="nb">print</span><span class="p">(</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- for 文: カーソルから 1 行ずつ取り出す&quot;</span><span class="p">)</span>
+<span class="linenos">32</span>    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">33</span>        <span class="s2">&quot;SELECT name, price FROM products WHERE category_id = 6&quot;</span>
+<span class="linenos">34</span>    <span class="p">)</span>
+<span class="linenos">35</span>    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">price</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+<span class="linenos">36</span>        <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">price</span><span class="p">)</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span><span class="k">def</span><span class="w"> </span><span class="nf">show_placeholders</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">40</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;プレースホルダーを使って値を渡す方法を示します.&quot;&quot;&quot;</span>
+<span class="linenos">41</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- ? を使うプレースホルダー&quot;</span><span class="p">)</span>
+<span class="linenos">42</span>    <span class="n">min_price</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="linenos">43</span>    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">44</span>        <span class="s2">&quot;SELECT name, price FROM products WHERE price &gt;= ? ORDER BY price&quot;</span><span class="p">,</span>
+<span class="linenos">45</span>        <span class="p">(</span><span class="n">min_price</span><span class="p">,),</span>  <span class="c1"># 値が 1 つでもタプルで渡します</span>
+<span class="linenos">46</span>    <span class="p">)</span>
+<span class="linenos">47</span>    <span class="nb">print</span><span class="p">(</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+<span class="linenos">48</span>
+<span class="linenos">49</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- 名前付きのプレースホルダー&quot;</span><span class="p">)</span>
+<span class="linenos">50</span>    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">51</span>        <span class="s2">&quot;SELECT name FROM customers&quot;</span>
+<span class="linenos">52</span>        <span class="s2">&quot; WHERE prefecture = :pref AND registered_on &gt;= :since&quot;</span><span class="p">,</span>
+<span class="linenos">53</span>        <span class="p">{</span><span class="s2">&quot;pref&quot;</span><span class="p">:</span> <span class="s2">&quot;東京都&quot;</span><span class="p">,</span> <span class="s2">&quot;since&quot;</span><span class="p">:</span> <span class="s2">&quot;2024-02-01&quot;</span><span class="p">},</span>
+<span class="linenos">54</span>    <span class="p">)</span>
+<span class="linenos">55</span>    <span class="nb">print</span><span class="p">(</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+<span class="linenos">56</span>
+<span class="linenos">57</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- IN の値の個数が変わる場合&quot;</span><span class="p">)</span>
+<span class="linenos">58</span>    <span class="n">customer_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+<span class="linenos">59</span>    <span class="n">marks</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;?&quot;</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">customer_ids</span><span class="p">)</span>  <span class="c1"># &quot;?, ?, ?&quot; を作ります</span>
+<span class="linenos">60</span>    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">61</span>        <span class="sa">f</span><span class="s2">&quot;SELECT name FROM customers WHERE customer_id IN (</span><span class="si">{</span><span class="n">marks</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+<span class="linenos">62</span>        <span class="n">customer_ids</span><span class="p">,</span>
+<span class="linenos">63</span>    <span class="p">)</span>
+<span class="linenos">64</span>    <span class="nb">print</span><span class="p">(</span><span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+<span class="linenos">65</span>
+<span class="linenos">66</span>
+<span class="linenos">67</span><span class="k">def</span><span class="w"> </span><span class="nf">show_row_factory</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">68</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;sqlite3.Row を使って列名で値を参照する方法を示します.&quot;&quot;&quot;</span>
+<span class="linenos">69</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- sqlite3.Row: 列名で値を参照する&quot;</span><span class="p">)</span>
+<span class="linenos">70</span>    <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+<span class="linenos">71</span>    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">72</span>        <span class="s2">&quot;SELECT customer_id, name, email FROM customers WHERE customer_id = ?&quot;</span><span class="p">,</span>
+<span class="linenos">73</span>        <span class="p">(</span><span class="mi">3</span><span class="p">,),</span>
+<span class="linenos">74</span>    <span class="p">)</span>
+<span class="linenos">75</span>    <span class="n">row</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+<span class="linenos">76</span>    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">])</span>  <span class="c1"># NULL は None になります</span>
+<span class="linenos">77</span>    <span class="nb">print</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
+<span class="linenos">78</span>    <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># 元の設定（タプルで返す）に戻します</span>
+<span class="linenos">79</span>
+<span class="linenos">80</span>
+<span class="linenos">81</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">82</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;各機能の例を順に実行します.&quot;&quot;&quot;</span>
+<span class="linenos">83</span>    <span class="c1"># closing() を使うと、with 文を抜けるときに接続が閉じられます。</span>
+<span class="linenos">84</span>    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+<span class="linenos">85</span>        <span class="n">show_fetch_methods</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos">86</span>        <span class="n">show_placeholders</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos">87</span>        <span class="n">show_row_factory</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos">88</span>
+<span class="linenos">89</span>
+<span class="linenos">90</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">91</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--- fetchone(): 1 行ずつ取り出す
+(12,)
+--- fetchall(): すべての行をリストとして取り出す
+[(&#39;ミルクチョコレート&#39;, 200), (&#39;ビターチョコレート&#39;, 250)]
+--- for 文: カーソルから 1 行ずつ取り出す
+ドリップコーヒー 800
+缶コーヒー 120
+--- ? を使うプレースホルダー
+[(&#39;味噌&#39;, 500), (&#39;緑茶ティーバッグ&#39;, 600), (&#39;ドリップコーヒー&#39;, 800), (&#39;福袋&#39;, 3000)]
+--- 名前付きのプレースホルダー
+[(&#39;高橋美咲&#39;,), (&#39;山本優子&#39;,)]
+--- IN の値の個数が変わる場合
+[(&#39;佐藤花子&#39;,), (&#39;高橋美咲&#39;,), (&#39;伊藤さくら&#39;,)]
+--- sqlite3.Row: 列名で値を参照する
+高橋美咲 None
+{&#39;customer_id&#39;: 3, &#39;name&#39;: &#39;高橋美咲&#39;, &#39;email&#39;: None}
+</pre></div>
+</div>
+<p>ポイントを説明します。</p>
+<dl>
+<dt>接続を閉じる</dt><dd><p><code class="docutils literal notranslate"><span class="pre">sqlite3.connect()</span></code> で開いた接続は、使い終わったら <code class="docutils literal notranslate"><span class="pre">close()</span></code> で閉じます。<code class="docutils literal notranslate"><span class="pre">contextlib.closing()</span></code> を使うと、<code class="docutils literal notranslate"><span class="pre">with</span></code> 文を抜けるときに自動的に閉じられます。接続オブジェクトをそのまま <code class="docutils literal notranslate"><span class="pre">with</span></code> 文に渡した場合の動作は、後述します。</p>
+</dd>
+<dt>結果の取り出し</dt><dd><p><code class="docutils literal notranslate"><span class="pre">fetchone()</span></code> は結果を 1 行ずつ、<code class="docutils literal notranslate"><span class="pre">fetchall()</span></code> はすべての行をリストとして返します。カーソルを <code class="docutils literal notranslate"><span class="pre">for</span></code> 文で反復すると、1 行ずつ処理できます。結果の行数が多い場合は、すべての行を一度にメモリに読み込む <code class="docutils literal notranslate"><span class="pre">fetchall()</span></code> より、<code class="docutils literal notranslate"><span class="pre">for</span></code> 文で反復するほうがメモリの使用量を抑えられます。</p>
+</dd>
+<dt>行の形式</dt><dd><p>既定では、各行はタプルとして返されます。接続の <code class="docutils literal notranslate"><span class="pre">row_factory</span></code> 属性に <code class="docutils literal notranslate"><span class="pre">sqlite3.Row</span></code> を設定すると、<code class="docutils literal notranslate"><span class="pre">row[&quot;name&quot;]</span></code> のように列名で値を参照できるようになります。</p>
+</dd>
+<dt>データ型の対応</dt><dd><p>SQLite の値は、次のように Python の値に変換されます。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>SQLite</p></th>
+<th class="head"><p>Python</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NULL</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">INTEGER</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">REAL</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TEXT</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BLOB</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bytes</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3><span class="section-number">14.2.2. </span>プレースホルダー<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>SQL 文に値を渡すときは、SQL 文の中に <code class="docutils literal notranslate"><span class="pre">?</span></code> を書き、値を <code class="docutils literal notranslate"><span class="pre">execute()</span></code> の第 2 引数にタプルやリストで渡します。この <code class="docutils literal notranslate"><span class="pre">?</span></code> をプレースホルダーと呼びます。<code class="docutils literal notranslate"><span class="pre">:pref</span></code> のように名前を付けたプレースホルダーを使い、値を辞書で渡すこともできます。</p>
+<p>値が 1 つだけの場合も、<code class="docutils literal notranslate"><span class="pre">(min_price,)</span></code> のようにタプルで渡します。<code class="docutils literal notranslate"><span class="pre">(min_price)</span></code> と書くと、括弧は単なる式の括弧とみなされ、タプルにならないので注意してください。</p>
+<p><code class="docutils literal notranslate"><span class="pre">IN</span></code> の括弧内の値の個数が実行時に決まる場合は、<code class="docutils literal notranslate"><span class="pre">ch14_basics.py</span></code> の <code class="docutils literal notranslate"><span class="pre">show_placeholders()</span></code> 関数のように、値の個数だけ <code class="docutils literal notranslate"><span class="pre">?</span></code> を並べた文字列を作ってから SQL 文に埋め込みます。埋め込むのは <code class="docutils literal notranslate"><span class="pre">?</span></code> だけであり、値そのものはプレースホルダーで渡している点が重要です。</p>
+</section>
+</section>
+<section id="sql">
+<h2><span class="section-number">14.3. </span>SQL インジェクション<a class="headerlink" href="#sql" title="Link to this heading"></a></h2>
+<p>プレースホルダーを使わずに、f 文字列などで値を SQL 文に直接埋め込んではいけません。利用者が入力した文字列を埋め込むと、SQL 文の意味が書き換えられてしまうおそれがあるためです。このような攻撃を SQL インジェクションと呼びます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ch14_injection.py</span></code> は、SQL インジェクションの危険性を示すスクリプトです。</p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">ch14_injection.py</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;SQL インジェクションとその対策の例（14 章）.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">利用者が入力した文字列を SQL 文に直接埋め込むと、</span>
+<span class="linenos"> 4</span><span class="sd">SQL 文の意味が書き換えられてしまうことを示します。</span>
+<span class="linenos"> 5</span><span class="sd">このスクリプトはデータを読み込むだけで、shop.db の内容は変更しません。</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="sd">使い方::</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">    python ch14_injection.py</span>
+<span class="linenos">10</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="linenos">13</span><span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">closing</span>
+<span class="linenos">14</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="n">DB_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;shop.db&quot;</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="k">def</span><span class="w"> </span><span class="nf">find_customers_unsafe</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="linenos">20</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;【危険な例】入力された文字列を SQL 文に直接埋め込んで検索します.&quot;&quot;&quot;</span>
+<span class="linenos">21</span>    <span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT name FROM customers WHERE name = &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+<span class="linenos">22</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  実行される SQL: </span><span class="si">{</span><span class="n">sql</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">23</span>    <span class="k">return</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)]</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span><span class="k">def</span><span class="w"> </span><span class="nf">find_customers_safe</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="linenos">27</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;【安全な例】プレースホルダーを使って値を渡して検索します.&quot;&quot;&quot;</span>
+<span class="linenos">28</span>    <span class="n">sql</span> <span class="o">=</span> <span class="s2">&quot;SELECT name FROM customers WHERE name = ?&quot;</span>
+<span class="linenos">29</span>    <span class="k">return</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,))]</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">33</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;通常の入力と悪意のある入力で、2 つの関数の結果を比べます.&quot;&quot;&quot;</span>
+<span class="linenos">34</span>    <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;佐藤花子&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39; OR &#39;1&#39;=&#39;1&quot;</span><span class="p">]</span>
+<span class="linenos">35</span>    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+<span class="linenos">36</span>        <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+<span class="linenos">37</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;入力: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">38</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  危険な例の結果: </span><span class="si">{</span><span class="n">find_customers_unsafe</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span><span class="w"> </span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">39</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  安全な例の結果: </span><span class="si">{</span><span class="n">find_customers_safe</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span><span class="w"> </span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">43</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>入力: 佐藤花子
+  実行される SQL: SELECT name FROM customers WHERE name = &#39;佐藤花子&#39;
+  危険な例の結果: [&#39;佐藤花子&#39;]
+  安全な例の結果: [&#39;佐藤花子&#39;]
+入力: &#39; OR &#39;1&#39;=&#39;1
+  実行される SQL: SELECT name FROM customers WHERE name = &#39;&#39; OR &#39;1&#39;=&#39;1&#39;
+  危険な例の結果: [&#39;佐藤花子&#39;, &#39;鈴木一郎&#39;, &#39;高橋美咲&#39;, &#39;田中健太&#39;, &#39;伊藤さくら&#39;, &#39;渡辺翔&#39;, &#39;山本優子&#39;, &#39;中村大輔&#39;]
+  安全な例の結果: []
+</pre></div>
+</div>
+<p>入力として <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">OR</span> <span class="pre">'1'='1</span></code> を与えると、危険な例では SQL 文が <code class="docutils literal notranslate"><span class="pre">WHERE</span> <span class="pre">name</span> <span class="pre">=</span> <span class="pre">''</span> <span class="pre">OR</span> <span class="pre">'1'='1'</span></code> となり、条件が常に真になるため、すべての顧客の氏名が返されてしまいます。入力によっては、データの削除などの操作が行われるおそれもあります。</p>
+<p>プレースホルダーを使った安全な例では、入力された文字列は常に 1 つの値として扱われ、SQL 文の一部として解釈されることはありません。そのため、<code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">OR</span> <span class="pre">'1'='1</span></code> という氏名の顧客を探すことになり、結果は空になります。</p>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>SQL 文に値を渡すときは、必ずプレースホルダーを使用してください。テーブル名や列名はプレースホルダーで渡せないため、実行時に切り替える必要がある場合は、あらかじめ用意した名前の一覧に含まれるかを確認してから埋め込みます。</p>
+</div>
+</section>
+<section id="id4">
+<h2><span class="section-number">14.4. </span>トランザクションの制御<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<section id="autocommit">
+<h3><span class="section-number">14.4.1. </span>autocommit 属性<a class="headerlink" href="#autocommit" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> モジュールのトランザクションの扱いは、<code class="docutils literal notranslate"><span class="pre">sqlite3.connect()</span></code> の <code class="docutils literal notranslate"><span class="pre">autocommit</span></code> 引数（Python 3.12 で追加）によって、次のように変わります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">autocommit</span></code> の値</p></th>
+<th class="head"><p>動作</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p>接続した時点と <code class="docutils literal notranslate"><span class="pre">commit()</span></code> や <code class="docutils literal notranslate"><span class="pre">rollback()</span></code> を呼んだ直後に、トランザクションが自動的に開始されます。常にトランザクションの中にある状態になり、<code class="docutils literal notranslate"><span class="pre">commit()</span></code> を呼ぶまで変更は確定しません。PEP 249 に従った動作であり、Python のドキュメントで推奨されています。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p>SQLite の自動コミット（12 章を参照）で動作します。トランザクションは、SQL の <code class="docutils literal notranslate"><span class="pre">BEGIN</span></code> を実行した場合だけ開始されます。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sqlite3.LEGACY_TRANSACTION_CONTROL</span></code></p></td>
+<td><p>現在の既定値。<code class="docutils literal notranslate"><span class="pre">INSERT</span></code>、<code class="docutils literal notranslate"><span class="pre">UPDATE</span></code>、<code class="docutils literal notranslate"><span class="pre">DELETE</span></code>、<code class="docutils literal notranslate"><span class="pre">REPLACE</span></code> 文の前に、トランザクションが自動的に開始されます。<code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文や <code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">TABLE</span></code> 文などでは開始されません。</p></td>
+</tr>
+</tbody>
+</table>
+<p>Python のドキュメントでは、既定値は将来のバージョンで <code class="docutils literal notranslate"><span class="pre">False</span></code> に変更される予定とされています。どの値の場合でも、トランザクションの中で行った変更は、<code class="docutils literal notranslate"><span class="pre">commit()</span></code> を呼ばずに接続を閉じると失われます。本資料の <code class="docutils literal notranslate"><span class="pre">run_query.py</span></code> は、SQL の <code class="docutils literal notranslate"><span class="pre">BEGIN</span></code> や <code class="docutils literal notranslate"><span class="pre">COMMIT</span></code> を書いたとおりに実行するため、<code class="docutils literal notranslate"><span class="pre">autocommit=True</span></code> を指定しています。</p>
+</section>
+<section id="with">
+<h3><span class="section-number">14.4.2. </span>with 文によるトランザクション<a class="headerlink" href="#with" title="Link to this heading"></a></h3>
+<p>接続オブジェクトを <code class="docutils literal notranslate"><span class="pre">with</span></code> 文に渡すと、ブロックを正常に抜けたときに <code class="docutils literal notranslate"><span class="pre">commit()</span></code> が、例外が発生したときに <code class="docutils literal notranslate"><span class="pre">rollback()</span></code> が自動的に呼ばれます。「一連の処理がすべて成功したら確定し、途中で失敗したらすべて取り消す」処理を簡潔に書けます。</p>
+<p>ただし、この <code class="docutils literal notranslate"><span class="pre">with</span></code> 文は接続を閉じません。接続を閉じるには、別途 <code class="docutils literal notranslate"><span class="pre">close()</span></code> を呼ぶか、<code class="docutils literal notranslate"><span class="pre">contextlib.closing()</span></code> を使います。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ch14_transaction.py</span></code> は、12 章で説明した注文の処理を Python で実装したスクリプトです。在庫が足りない商品が含まれている場合は例外を発生させ、その注文に関するすべての変更を取り消します。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">ch14_transaction.py</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="sd">&quot;&quot;&quot;Python からトランザクションを制御する例（14 章）.</span>
+<span class="linenos">  2</span>
+<span class="linenos">  3</span><span class="sd">注文の追加、注文明細の追加、在庫数の更新を 1 つのトランザクションで行います。</span>
+<span class="linenos">  4</span><span class="sd">在庫が足りない場合は例外を発生させ、すべての変更を取り消します。</span>
+<span class="linenos">  5</span>
+<span class="linenos">  6</span><span class="sd">shop.db の内容を変更しないよう、メモリ上に複製したデータベースを使います。</span>
+<span class="linenos">  7</span>
+<span class="linenos">  8</span><span class="sd">使い方::</span>
+<span class="linenos">  9</span>
+<span class="linenos"> 10</span><span class="sd">    python ch14_transaction.py</span>
+<span class="linenos"> 11</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 12</span>
+<span class="linenos"> 13</span><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="linenos"> 14</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos"> 15</span>
+<span class="linenos"> 16</span><span class="n">DB_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;shop.db&quot;</span>
+<span class="linenos"> 17</span>
+<span class="linenos"> 18</span>
+<span class="linenos"> 19</span><span class="k">class</span><span class="w"> </span><span class="nc">OutOfStockError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="linenos"> 20</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;在庫が足りないことを表す例外です.&quot;&quot;&quot;</span>
+<span class="linenos"> 21</span>
+<span class="linenos"> 22</span>
+<span class="linenos"> 23</span><span class="k">def</span><span class="w"> </span><span class="nf">open_copy</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">:</span>
+<span class="linenos"> 24</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;データベースをメモリ上に複製して開きます.</span>
+<span class="linenos"> 25</span>
+<span class="linenos"> 26</span><span class="sd">    PRAGMA foreign_keys はトランザクションの中では効果がないため、</span>
+<span class="linenos"> 27</span><span class="sd">    autocommit=True で接続して設定した後で autocommit を False にします。</span>
+<span class="linenos"> 28</span><span class="sd">    autocommit を False にすると、常にトランザクションの中にある状態になり、</span>
+<span class="linenos"> 29</span><span class="sd">    commit() または rollback() を呼ぶまで変更は確定しません。</span>
+<span class="linenos"> 30</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 31</span>    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos"> 32</span>    <span class="n">source</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+<span class="linenos"> 33</span>    <span class="k">try</span><span class="p">:</span>
+<span class="linenos"> 34</span>        <span class="n">source</span><span class="o">.</span><span class="n">backup</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos"> 35</span>    <span class="k">finally</span><span class="p">:</span>
+<span class="linenos"> 36</span>        <span class="n">source</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="linenos"> 37</span>    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA foreign_keys = ON&quot;</span><span class="p">)</span>
+<span class="linenos"> 38</span>    <span class="n">conn</span><span class="o">.</span><span class="n">autocommit</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="linenos"> 39</span>    <span class="k">return</span> <span class="n">conn</span>
+<span class="linenos"> 40</span>
+<span class="linenos"> 41</span>
+<span class="linenos"> 42</span><span class="k">def</span><span class="w"> </span><span class="nf">place_order</span><span class="p">(</span>
+<span class="linenos"> 43</span>    <span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span>
+<span class="linenos"> 44</span>    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos"> 45</span>    <span class="n">customer_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos"> 46</span>    <span class="n">ordered_on</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="linenos"> 47</span>    <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+<span class="linenos"> 48</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 49</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;注文を登録します. items は (商品番号, 数量) のリストです.</span>
+<span class="linenos"> 50</span>
+<span class="linenos"> 51</span><span class="sd">    with conn: のブロックを正常に抜けると commit() が、</span>
+<span class="linenos"> 52</span><span class="sd">    例外が発生すると rollback() が自動的に呼ばれます。</span>
+<span class="linenos"> 53</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 54</span>    <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>
+<span class="linenos"> 55</span>        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos"> 56</span>            <span class="s2">&quot;INSERT INTO orders (order_id, customer_id, ordered_on, status)&quot;</span>
+<span class="linenos"> 57</span>            <span class="s2">&quot; VALUES (?, ?, ?, &#39;受付済&#39;)&quot;</span><span class="p">,</span>
+<span class="linenos"> 58</span>            <span class="p">(</span><span class="n">order_id</span><span class="p">,</span> <span class="n">customer_id</span><span class="p">,</span> <span class="n">ordered_on</span><span class="p">),</span>
+<span class="linenos"> 59</span>        <span class="p">)</span>
+<span class="linenos"> 60</span>        <span class="k">for</span> <span class="n">product_id</span><span class="p">,</span> <span class="n">quantity</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+<span class="linenos"> 61</span>            <span class="n">row</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos"> 62</span>                <span class="s2">&quot;SELECT price, stock FROM products WHERE product_id = ?&quot;</span><span class="p">,</span>
+<span class="linenos"> 63</span>                <span class="p">(</span><span class="n">product_id</span><span class="p">,),</span>
+<span class="linenos"> 64</span>            <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+<span class="linenos"> 65</span>            <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 66</span>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;商品番号 </span><span class="si">{</span><span class="n">product_id</span><span class="si">}</span><span class="s2"> の商品はありません&quot;</span><span class="p">)</span>
+<span class="linenos"> 67</span>            <span class="n">price</span><span class="p">,</span> <span class="n">stock</span> <span class="o">=</span> <span class="n">row</span>
+<span class="linenos"> 68</span>            <span class="k">if</span> <span class="n">stock</span> <span class="o">&lt;</span> <span class="n">quantity</span><span class="p">:</span>
+<span class="linenos"> 69</span>                <span class="k">raise</span> <span class="n">OutOfStockError</span><span class="p">(</span>
+<span class="linenos"> 70</span>                    <span class="sa">f</span><span class="s2">&quot;商品番号 </span><span class="si">{</span><span class="n">product_id</span><span class="si">}</span><span class="s2"> の在庫が足りません&quot;</span>
+<span class="linenos"> 71</span>                    <span class="sa">f</span><span class="s2">&quot;（在庫 </span><span class="si">{</span><span class="n">stock</span><span class="si">}</span><span class="s2">、注文 </span><span class="si">{</span><span class="n">quantity</span><span class="si">}</span><span class="s2">）&quot;</span>
+<span class="linenos"> 72</span>                <span class="p">)</span>
+<span class="linenos"> 73</span>            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos"> 74</span>                <span class="s2">&quot;INSERT INTO order_items&quot;</span>
+<span class="linenos"> 75</span>                <span class="s2">&quot; (order_id, product_id, quantity, unit_price)&quot;</span>
+<span class="linenos"> 76</span>                <span class="s2">&quot; VALUES (?, ?, ?, ?)&quot;</span><span class="p">,</span>
+<span class="linenos"> 77</span>                <span class="p">(</span><span class="n">order_id</span><span class="p">,</span> <span class="n">product_id</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">price</span><span class="p">),</span>
+<span class="linenos"> 78</span>            <span class="p">)</span>
+<span class="linenos"> 79</span>            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos"> 80</span>                <span class="s2">&quot;UPDATE products SET stock = stock - ? WHERE product_id = ?&quot;</span><span class="p">,</span>
+<span class="linenos"> 81</span>                <span class="p">(</span><span class="n">quantity</span><span class="p">,</span> <span class="n">product_id</span><span class="p">),</span>
+<span class="linenos"> 82</span>            <span class="p">)</span>
+<span class="linenos"> 83</span>
+<span class="linenos"> 84</span>
+<span class="linenos"> 85</span><span class="k">def</span><span class="w"> </span><span class="nf">show_state</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 86</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;注文の件数と、商品番号 1 と 5 の在庫数を表示します.&quot;&quot;&quot;</span>
+<span class="linenos"> 87</span>    <span class="p">(</span><span class="n">order_count</span><span class="p">,)</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM orders&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+<span class="linenos"> 88</span>    <span class="n">stocks</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos"> 89</span>        <span class="s2">&quot;SELECT product_id, stock FROM products WHERE product_id IN (1, 5)&quot;</span>
+<span class="linenos"> 90</span>    <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+<span class="linenos"> 91</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  注文の件数: </span><span class="si">{</span><span class="n">order_count</span><span class="si">}</span><span class="s2">、在庫数（商品番号, 在庫数）: </span><span class="si">{</span><span class="n">stocks</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos"> 92</span>
+<span class="linenos"> 93</span>
+<span class="linenos"> 94</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 95</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;成功する注文と、在庫不足で失敗する注文を登録します.&quot;&quot;&quot;</span>
+<span class="linenos"> 96</span>    <span class="n">conn</span> <span class="o">=</span> <span class="n">open_copy</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">)</span>
+<span class="linenos"> 97</span>    <span class="k">try</span><span class="p">:</span>
+<span class="linenos"> 98</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;初期状態:&quot;</span><span class="p">)</span>
+<span class="linenos"> 99</span>        <span class="n">show_state</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos">100</span>
+<span class="linenos">101</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;注文 13（商品番号 1 を 3 個）を登録します。&quot;</span><span class="p">)</span>
+<span class="linenos">102</span>        <span class="n">place_order</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;2025-07-01&quot;</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)])</span>
+<span class="linenos">103</span>        <span class="n">show_state</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos">104</span>
+<span class="linenos">105</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;注文 14（商品番号 1 を 2 個、商品番号 5 を 1 個）を登録します。&quot;</span><span class="p">)</span>
+<span class="linenos">106</span>        <span class="k">try</span><span class="p">:</span>
+<span class="linenos">107</span>            <span class="n">place_order</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;2025-07-02&quot;</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span>
+<span class="linenos">108</span>        <span class="k">except</span> <span class="n">OutOfStockError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+<span class="linenos">109</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  エラー: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">110</span>            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  注文 14 の変更はすべて取り消されました。&quot;</span><span class="p">)</span>
+<span class="linenos">111</span>        <span class="n">show_state</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos">112</span>    <span class="k">finally</span><span class="p">:</span>
+<span class="linenos">113</span>        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="linenos">114</span>
+<span class="linenos">115</span>
+<span class="linenos">116</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">117</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>初期状態:
+  注文の件数: 12、在庫数（商品番号, 在庫数）: [(1, 50), (5, 0)]
+注文 13（商品番号 1 を 3 個）を登録します。
+  注文の件数: 13、在庫数（商品番号, 在庫数）: [(1, 47), (5, 0)]
+注文 14（商品番号 1 を 2 個、商品番号 5 を 1 個）を登録します。
+  エラー: 商品番号 5 の在庫が足りません（在庫 0、注文 1）
+  注文 14 の変更はすべて取り消されました。
+  注文の件数: 13、在庫数（商品番号, 在庫数）: [(1, 47), (5, 0)]
+</pre></div>
+</div>
+<p>注文 14 では、商品番号 1 の明細の追加と在庫数の更新が行われた後で、商品番号 5 の在庫不足が見つかっています。<code class="docutils literal notranslate"><span class="pre">with</span> <span class="pre">conn:</span></code> のブロックで例外が発生したため <code class="docutils literal notranslate"><span class="pre">rollback()</span></code> が呼ばれ、商品番号 1 に関する変更も含めて、注文 14 のすべての変更が取り消されています。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p><code class="docutils literal notranslate"><span class="pre">autocommit=False</span></code> の場合、接続した時点でトランザクションが開始されます。SQLite の <code class="docutils literal notranslate"><span class="pre">PRAGMA</span> <span class="pre">foreign_keys</span> <span class="pre">=</span> <span class="pre">ON;</span></code> はトランザクションの中で実行しても効果がないため、<code class="docutils literal notranslate"><span class="pre">ch14_transaction.py</span></code> の <code class="docutils literal notranslate"><span class="pre">open_copy()</span></code> 関数では、<code class="docutils literal notranslate"><span class="pre">autocommit=True</span></code> で接続して設定を行った後で、<code class="docutils literal notranslate"><span class="pre">autocommit</span></code> 属性を <code class="docutils literal notranslate"><span class="pre">False</span></code> に変更しています。</p>
+</div>
+</section>
+</section>
+<section id="id5">
+<h2><span class="section-number">14.5. </span>型ヒントを付けたデータアクセス<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>アプリケーションでは、SQL を実行する処理を関数にまとめ、結果をデータクラスなどの型の決まったオブジェクトに変換して返すと、呼び出す側のコードが読みやすくなります。また、型ヒントを付けておくと、mypy などの型チェッカーで誤りを見つけやすくなります。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">ch14_repository.py</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;型ヒントを付けたデータアクセス関数の例（14 章）.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">SQL の実行を関数にまとめ、結果をデータクラスに変換して返します。</span>
+<span class="linenos"> 4</span><span class="sd">呼び出す側は SQL を意識せずに、型の決まったオブジェクトとしてデータを扱えます。</span>
+<span class="linenos"> 5</span><span class="sd">このスクリプトはデータを読み込むだけで、shop.db の内容は変更しません。</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="sd">使い方::</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">    python ch14_repository.py</span>
+<span class="linenos">10</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="linenos">13</span><span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">closing</span>
+<span class="linenos">14</span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="linenos">15</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="n">DB_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;shop.db&quot;</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">21</span><span class="k">class</span><span class="w"> </span><span class="nc">Product</span><span class="p">:</span>
+<span class="linenos">22</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;商品を表すデータクラスです.&quot;&quot;&quot;</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span>    <span class="n">product_id</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">25</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">26</span>    <span class="n">category_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># カテゴリがない商品は None になります</span>
+<span class="linenos">27</span>    <span class="n">price</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">28</span>    <span class="n">stock</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">32</span><span class="k">class</span><span class="w"> </span><span class="nc">CustomerSales</span><span class="p">:</span>
+<span class="linenos">33</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;顧客ごとの購入金額を表すデータクラスです.&quot;&quot;&quot;</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span>    <span class="n">customer_id</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">36</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">37</span>    <span class="n">total_amount</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span><span class="k">def</span><span class="w"> </span><span class="nf">find_products</span><span class="p">(</span>
+<span class="linenos">41</span>    <span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">max_price</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">in_stock_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="linenos">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Product</span><span class="p">]:</span>
+<span class="linenos">43</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;価格が max_price 以下の商品を、価格の安い順に返します.&quot;&quot;&quot;</span>
+<span class="linenos">44</span>    <span class="n">sql</span> <span class="o">=</span> <span class="p">(</span>
+<span class="linenos">45</span>        <span class="s2">&quot;SELECT product_id, name, category_id, price, stock&quot;</span>
+<span class="linenos">46</span>        <span class="s2">&quot; FROM products WHERE price &lt;= ?&quot;</span>
+<span class="linenos">47</span>    <span class="p">)</span>
+<span class="linenos">48</span>    <span class="n">params</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">max_price</span><span class="p">]</span>
+<span class="linenos">49</span>    <span class="k">if</span> <span class="n">in_stock_only</span><span class="p">:</span>
+<span class="linenos">50</span>        <span class="c1"># 条件を追加するときも、値はプレースホルダーで渡します。</span>
+<span class="linenos">51</span>        <span class="n">sql</span> <span class="o">+=</span> <span class="s2">&quot; AND stock &gt; ?&quot;</span>
+<span class="linenos">52</span>        <span class="n">params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">53</span>    <span class="n">sql</span> <span class="o">+=</span> <span class="s2">&quot; ORDER BY price, product_id&quot;</span>
+<span class="linenos">54</span>    <span class="k">return</span> <span class="p">[</span><span class="n">Product</span><span class="p">(</span><span class="o">*</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">params</span><span class="p">)]</span>
+<span class="linenos">55</span>
+<span class="linenos">56</span>
+<span class="linenos">57</span><span class="k">def</span><span class="w"> </span><span class="nf">top_customers</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CustomerSales</span><span class="p">]:</span>
+<span class="linenos">58</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;購入金額（キャンセルを除く）の多い顧客を limit 人まで返します.&quot;&quot;&quot;</span>
+<span class="linenos">59</span>    <span class="n">sql</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="linenos">60</span><span class="s2">        SELECT c.customer_id, c.name, SUM(oi.quantity * oi.unit_price)</span>
+<span class="linenos">61</span><span class="s2">        FROM customers AS c</span>
+<span class="linenos">62</span><span class="s2">        INNER JOIN orders AS o ON c.customer_id = o.customer_id</span>
+<span class="linenos">63</span><span class="s2">        INNER JOIN order_items AS oi ON o.order_id = oi.order_id</span>
+<span class="linenos">64</span><span class="s2">        WHERE o.status &lt;&gt; &#39;キャンセル&#39;</span>
+<span class="linenos">65</span><span class="s2">        GROUP BY c.customer_id, c.name</span>
+<span class="linenos">66</span><span class="s2">        ORDER BY SUM(oi.quantity * oi.unit_price) DESC, c.customer_id</span>
+<span class="linenos">67</span><span class="s2">        LIMIT ?</span>
+<span class="linenos">68</span><span class="s2">    &quot;&quot;&quot;</span>
+<span class="linenos">69</span>    <span class="k">return</span> <span class="p">[</span><span class="n">CustomerSales</span><span class="p">(</span><span class="o">*</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="p">(</span><span class="n">limit</span><span class="p">,))]</span>
+<span class="linenos">70</span>
+<span class="linenos">71</span>
+<span class="linenos">72</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">73</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;関数を呼び出して結果を表示します.&quot;&quot;&quot;</span>
+<span class="linenos">74</span>    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+<span class="linenos">75</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;価格が 200 円以下で在庫のある商品:&quot;</span><span class="p">)</span>
+<span class="linenos">76</span>        <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">find_products</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">in_stock_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="linenos">77</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">product</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">product</span><span class="o">.</span><span class="n">price</span><span class="si">}</span><span class="s2"> 円（在庫 </span><span class="si">{</span><span class="n">product</span><span class="o">.</span><span class="n">stock</span><span class="si">}</span><span class="s2">）&quot;</span><span class="p">)</span>
+<span class="linenos">78</span>
+<span class="linenos">79</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;購入金額の上位 3 人:&quot;</span><span class="p">)</span>
+<span class="linenos">80</span>        <span class="k">for</span> <span class="n">rank</span><span class="p">,</span> <span class="n">customer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">top_customers</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="linenos">81</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2"> 位 </span><span class="si">{</span><span class="n">customer</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">customer</span><span class="o">.</span><span class="n">total_amount</span><span class="si">}</span><span class="s2"> 円&quot;</span><span class="p">)</span>
+<span class="linenos">82</span>
+<span class="linenos">83</span>
+<span class="linenos">84</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">85</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>価格が 200 円以下で在庫のある商品:
+  ボールペン: 100 円（在庫 200）
+  缶コーヒー: 120 円（在庫 100）
+  ポテトチップス: 150 円（在庫 80）
+  ノート: 180 円（在庫 120）
+  ミルクチョコレート: 200 円（在庫 50）
+購入金額の上位 3 人:
+  1 位 佐藤花子: 3870 円
+  2 位 鈴木一郎: 3500 円
+  3 位 伊藤さくら: 2880 円
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">find_products()</span></code> 関数では、引数に応じて条件を追加していますが、追加する条件の値もプレースホルダーで渡しています。SQL 文を組み立てる場合でも、値を直接埋め込まないようにしてください。</p>
+<p><code class="docutils literal notranslate"><span class="pre">fetchone()</span></code> や <code class="docutils literal notranslate"><span class="pre">fetchall()</span></code>、カーソルの反復で得られる行の型は <code class="docutils literal notranslate"><span class="pre">Any</span></code> であるため、型チェッカーは SQL の結果の型を検査できません。データクラスの型ヒントと、SQL 文の列の並びや型が一致しているかは、テストなどで確認する必要があります。</p>
+</section>
+<section id="pandas">
+<h2><span class="section-number">14.6. </span>pandas と組み合わせる<a class="headerlink" href="#pandas" title="Link to this heading"></a></h2>
+<p>pandas の <code class="docutils literal notranslate"><span class="pre">read_sql_query()</span></code> 関数を使うと、SQL の結果を DataFrame として読み込めます。また、DataFrame の <code class="docutils literal notranslate"><span class="pre">to_sql()</span></code> メソッドを使うと、DataFrame をデータベースのテーブルとして書き込めます。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">ch14_pandas.py</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;pandas と SQL を組み合わせる例（14 章）.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">SQL で集計した結果を DataFrame として読み込む方法と、</span>
+<span class="linenos"> 4</span><span class="sd">DataFrame をデータベースのテーブルとして書き込む方法を示します。</span>
+<span class="linenos"> 5</span><span class="sd">書き込みはメモリ上のデータベースに対して行うため、shop.db の内容は変更しません。</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="sd">使い方::</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">    python ch14_pandas.py</span>
+<span class="linenos">10</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="linenos">13</span><span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">closing</span>
+<span class="linenos">14</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="n">DB_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;shop.db&quot;</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="k">def</span><span class="w"> </span><span class="nf">monthly_sales</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="linenos">22</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;指定した状態の注文について、月ごとの売上金額を DataFrame で返します.&quot;&quot;&quot;</span>
+<span class="linenos">23</span>    <span class="n">sql</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="linenos">24</span><span class="s2">        SELECT strftime(&#39;%Y-%m&#39;, o.ordered_on) AS month,</span>
+<span class="linenos">25</span><span class="s2">               SUM(oi.quantity * oi.unit_price) AS sales</span>
+<span class="linenos">26</span><span class="s2">        FROM orders AS o</span>
+<span class="linenos">27</span><span class="s2">        INNER JOIN order_items AS oi ON o.order_id = oi.order_id</span>
+<span class="linenos">28</span><span class="s2">        WHERE o.status = ?</span>
+<span class="linenos">29</span><span class="s2">        GROUP BY month</span>
+<span class="linenos">30</span><span class="s2">        ORDER BY month</span>
+<span class="linenos">31</span><span class="s2">    &quot;&quot;&quot;</span>
+<span class="linenos">32</span>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql_query</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">conn</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="n">status</span><span class="p">,))</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">36</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;読み込みと書き込みの例を実行します.&quot;&quot;&quot;</span>
+<span class="linenos">37</span>    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+<span class="linenos">38</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- SQL で集計した結果を読み込む&quot;</span><span class="p">)</span>
+<span class="linenos">39</span>        <span class="n">sales</span> <span class="o">=</span> <span class="n">monthly_sales</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;発送済&quot;</span><span class="p">)</span>
+<span class="linenos">40</span>        <span class="nb">print</span><span class="p">(</span><span class="n">sales</span><span class="p">)</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- テーブルを読み込んで pandas で集計する&quot;</span><span class="p">)</span>
+<span class="linenos">43</span>        <span class="n">products</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql_query</span><span class="p">(</span>
+<span class="linenos">44</span>            <span class="s2">&quot;SELECT category_id, price FROM products&quot;</span><span class="p">,</span> <span class="n">conn</span>
+<span class="linenos">45</span>        <span class="p">)</span>
+<span class="linenos">46</span>        <span class="nb">print</span><span class="p">(</span><span class="n">products</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;category_id&quot;</span><span class="p">,</span> <span class="n">dropna</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s2">&quot;price&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- DataFrame をテーブルとして書き込む&quot;</span><span class="p">)</span>
+<span class="linenos">49</span>    <span class="n">targets</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+<span class="linenos">50</span>        <span class="p">{</span>
+<span class="linenos">51</span>            <span class="s2">&quot;month&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;2025-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2025-02&quot;</span><span class="p">,</span> <span class="s2">&quot;2025-03&quot;</span><span class="p">],</span>
+<span class="linenos">52</span>            <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">3000</span><span class="p">,</span> <span class="mi">3000</span><span class="p">,</span> <span class="mi">4000</span><span class="p">],</span>
+<span class="linenos">53</span>        <span class="p">}</span>
+<span class="linenos">54</span>    <span class="p">)</span>
+<span class="linenos">55</span>    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">))</span> <span class="k">as</span> <span class="n">mem</span><span class="p">:</span>
+<span class="linenos">56</span>        <span class="n">targets</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s2">&quot;sales_targets&quot;</span><span class="p">,</span> <span class="n">mem</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos">57</span>        <span class="nb">print</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_sql_query</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM sales_targets&quot;</span><span class="p">,</span> <span class="n">mem</span><span class="p">))</span>
+<span class="linenos">58</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">61</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>--- SQL で集計した結果を読み込む
+     month  sales
+0  2025-01   3100
+1  2025-02   2070
+2  2025-03   1900
+3  2025-04   2350
+4  2025-05   1500
+--- テーブルを読み込んで pandas で集計する
+category_id
+3.0     140.0
+4.0     150.0
+5.0     450.0
+6.0     460.0
+7.0     475.0
+8.0     225.0
+NaN    3000.0
+Name: price, dtype: float64
+--- DataFrame をテーブルとして書き込む
+     month  target
+0  2025-01    3000
+1  2025-02    3000
+2  2025-03    4000
+</pre></div>
+</div>
+<p>1 つ目の結果は、状態が「発送済」の注文だけを集計しているため、9 章の月ごとの売上金額（キャンセル以外のすべての注文を集計）とは値が異なります。<code class="docutils literal notranslate"><span class="pre">read_sql_query()</span></code> の <code class="docutils literal notranslate"><span class="pre">params</span></code> 引数で、プレースホルダーに渡す値を指定できます。<code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> モジュールの接続はそのまま渡せますが、他の DBMS では、SQLAlchemy（後述）の接続を渡すことが推奨されています。</p>
+<p>2 つ目の結果の <code class="docutils literal notranslate"><span class="pre">category_id</span></code> が <code class="docutils literal notranslate"><span class="pre">3.0</span></code> のように実数で表示されているのは、列に NULL が含まれているためです。pandas では、整数の列に欠損値（<code class="docutils literal notranslate"><span class="pre">NaN</span></code>）があると、列全体が実数型になります。</p>
+<section id="sql-pandas">
+<h3><span class="section-number">14.6.1. </span>SQL と pandas の使い分け<a class="headerlink" href="#sql-pandas" title="Link to this heading"></a></h3>
+<p>SQL と pandas のどちらでも、絞り込みや集計を行えます。一般的には、次のように使い分けます。</p>
+<ul class="simple">
+<li><p>データベースのデータ量が多い場合は、SQL で必要な行と列に絞り込み、集計してから読み込みます。すべてのデータを読み込んでから pandas で処理すると、転送に時間がかかり、メモリも多く使います。</p></li>
+<li><p>読み込んだ後のデータの整形、統計処理、可視化は、pandas や NumPy で行います。</p></li>
+</ul>
+</section>
+</section>
+<section id="orm">
+<h2><span class="section-number">14.7. </span>ORM<a class="headerlink" href="#orm" title="Link to this heading"></a></h2>
+<p>SQL を直接書く代わりに、Python のクラスとテーブルを対応づけ、オブジェクトの操作としてデータベースを扱う仕組みを ORM（Object-Relational Mapping）と呼びます。Python では SQLAlchemy や Django の ORM がよく使われています。</p>
+<p>ORM を使うと、DBMS の方言の違いを意識せずにコードを書けるなどの利点があります。しかし、ORM も内部では SQL を生成して実行しています。性能の問題を調べたり、複雑な集計を行ったりする場面では、SQL の知識が必要になります。</p>
+</section>
+<section id="exercises-ch14">
+<span id="id6"></span><h2><span class="section-number">14.8. </span>演習問題<a class="headerlink" href="#exercises-ch14" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>都道府県名を引数に取り、その都道府県の顧客の氏名のリストを返す関数 <code class="docutils literal notranslate"><span class="pre">customers_in(conn:</span> <span class="pre">sqlite3.Connection,</span> <span class="pre">prefecture:</span> <span class="pre">str)</span> <span class="pre">-&gt;</span> <span class="pre">list[str]</span></code> を作成してください。値はプレースホルダーで渡してください。</p></li>
+<li><p>次の関数には問題があります。問題点を説明し、修正してください。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">find_products_by_name</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">keyword</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="linenos">2</span>    <span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT name FROM products WHERE name LIKE &#39;%</span><span class="si">{</span><span class="n">keyword</span><span class="si">}</span><span class="s2">%&#39;&quot;</span>
+<span class="linenos">3</span>    <span class="k">return</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)]</span>
+</pre></div>
+</div>
+</li>
+<li><p>次のプログラムを実行した後、<code class="docutils literal notranslate"><span class="pre">shop.db</span></code> の <code class="docutils literal notranslate"><span class="pre">categories</span></code> テーブルに「ジュース」が追加されていませんでした。原因を説明し、修正してください。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="linenos">2</span>
+<span class="linenos">3</span><span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;shop.db&quot;</span><span class="p">)</span>
+<span class="linenos">4</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO categories (name, parent_id) VALUES (&#39;ジュース&#39;, 2)&quot;</span><span class="p">)</span>
+<span class="linenos">5</span><span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pd.read_sql_query()</span></code> を使い、カテゴリ名ごとの商品数と平均価格を SQL で集計した結果を DataFrame として読み込んでください。</p></li>
+</ol>
+<p>解答は <a class="reference internal" href="appendix_a_answers.html#answers-ch14"><span class="std std-ref">14 章 Python から SQL を使う</span></a> にあります。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch13_index.html" class="btn btn-neutral float-left" title="13. インデックスと性能" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="appendix_a_answers.html" class="btn btn-neutral float-right" title="付録 A 演習問題の解答" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

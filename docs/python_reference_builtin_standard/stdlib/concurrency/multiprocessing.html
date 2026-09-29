@@ -1,0 +1,292 @@
+
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>multiprocessing &mdash; Python コア機能・標準ライブラリ解説書 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=19757887"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=4755f45a"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="検索" href="../../search.html" />
+    <link rel="next" title="asyncio" href="asyncio.html" />
+    <link rel="prev" title="threading" href="threading.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <a href="../../index.html" class="icon icon-home">
+    Python 解説書
+  </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../builtin_types/index.html">組み込み型のメソッド</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../operators/index.html">演算子</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../builtins/index.html">組み込み関数</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">標準モジュール</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../file_path/index.html">ファイル・パス操作</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datetime_time/index.html">日付・時刻</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_structures/index.html">データ構造・アルゴリズム補助</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../text/index.html">テキスト処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_format/index.html">データフォーマット・シリアライズ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../numeric/index.html">数値・数学</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../system/index.html">システム・実行環境</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">並行処理</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="threading.html">threading</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">multiprocessing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#multiprocessing-process">multiprocessing.Process</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gil">なぜ GIL を回避できるのか</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multiprocessing-pool">multiprocessing.Pool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multiprocessing-queue">multiprocessing.Queue</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#value-array-manager">Value / Array / Manager による状態共有</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="asyncio.html">asyncio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="concurrent_futures.html">concurrent.futures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../testing/index.html">テスト・デバッグ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gui/index.html">GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/index.html">その他</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Python コア機能・標準ライブラリ解説書</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">標準モジュール</a></li>
+          <li class="breadcrumb-item"><a href="index.html">並行処理</a></li>
+      <li class="breadcrumb-item active">multiprocessing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multiprocessing">
+<h1>multiprocessing<a class="headerlink" href="#multiprocessing" title="Link to this heading"></a></h1>
+<p>複数のプロセスを用いて処理を並列実行するためのモジュール。それぞれの
+プロセスが独立した Python インタプリタと GIL を持つため、CPU バウンドな
+処理を複数の CPU コアで真に並列に実行できる。</p>
+<section id="multiprocessing-process">
+<h2>multiprocessing.Process<a class="headerlink" href="#multiprocessing-process" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Process</span></code> オブジェクトに実行したい関数を渡してプロセスを生成する。API は <code class="docutils literal notranslate"><span class="pre">threading.Thread</span></code> とよく似ており、<code class="docutils literal notranslate"><span class="pre">start()</span></code> で開始し <code class="docutils literal notranslate"><span class="pre">join()</span></code> で終了を待つ。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">worker</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 開始&quot;</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">p</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">worker</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;process-1&quot;</span><span class="p">,))</span>
+<span class="gp">... </span>    <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>spawn 方式を使う環境（Windows や macOS など。macOS はデフォルトの子プロセス生成方式が <code class="docutils literal notranslate"><span class="pre">spawn</span></code> になっている）では、プロセス生成のコードは <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">__name__</span> <span class="pre">==</span> <span class="pre">&quot;__main__&quot;:</span></code> の中に書く必要がある。書かないと、子プロセスがモジュールを再import した際に無限にプロセスを生成してしまう。</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p><code class="docutils literal notranslate"><span class="pre">Process</span></code> や <code class="docutils literal notranslate"><span class="pre">Pool.map()</span></code> に渡す関数は、<code class="docutils literal notranslate"><span class="pre">spawn</span></code> 方式では pickle 可能である必要があり、そのためにはモジュールのトップレベルで定義された（import 可能な）関数でなければならない。ラムダ式や関数内で定義したクロージャ、対話モード（REPL）でその場に定義した関数は pickle できず、<code class="docutils literal notranslate"><span class="pre">PicklingError</span></code> などのエラーになる。これは <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> を使う際にもっともよく遭遇するエラーの一つである。</p>
+</div>
+</section>
+<section id="gil">
+<h2>なぜ GIL を回避できるのか<a class="headerlink" href="#gil" title="Link to this heading"></a></h2>
+<p>前述のとおり各プロセスが独立した GIL を持つのは、<code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> が OS のプロセスを個別に起動するためである。GIL（Global Interpreter Lock）は 1 つのプロセス内で 1 つのインタプリタがバイトコードを実行することを保証する仕組みであり、そもそもプロセスをまたいで共有されるものではないため、プロセスを分ければ複数コアを並列に使うことができる。</p>
+</section>
+<section id="multiprocessing-pool">
+<h2>multiprocessing.Pool<a class="headerlink" href="#multiprocessing-pool" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Pool</span></code> はワーカープロセスの集団を管理し、<code class="docutils literal notranslate"><span class="pre">map()</span></code> でイテラブルの
+各要素に関数を適用する処理を各プロセスに分配してくれる。CPU バウンドな
+処理を並列化する際によく使われる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">square</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">square</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">map()</span></code> の他にも、目的に応じて使い分けられるメソッドがある。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">starmap()</span></code>: <code class="docutils literal notranslate"><span class="pre">map()</span></code> は単一引数の関数しか渡せないが、<code class="docutils literal notranslate"><span class="pre">starmap()</span></code> は <code class="docutils literal notranslate"><span class="pre">(引数1,</span> <span class="pre">引数2,</span> <span class="pre">...)</span></code> のタプルのイテラブルを渡すことで、複数引数を取る関数を並列化できる。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">apply_async()</span></code>: 1回だけ非同期に関数を呼び出し、<code class="docutils literal notranslate"><span class="pre">Future</span></code> に似た
+結果オブジェクトを返す。<code class="docutils literal notranslate"><span class="pre">callback</span></code> 引数に関数を渡すと、結果が
+得られた時点でそれを自動的に呼び出せる。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">imap()</span></code> / <code class="docutils literal notranslate"><span class="pre">imap_unordered()</span></code>: <code class="docutils literal notranslate"><span class="pre">map()</span></code> はすべての結果が揃うまで
+ブロックしてリストを返すが、これらは結果を1件ずつ遅延的に返す
+イテレータを返す。大量データを扱う場合や、結果が出るたびに進捗を
+表示したい場合に向く（<code class="docutils literal notranslate"><span class="pre">imap_unordered</span></code> は結果が出た順に返すため、
+入力順を保持する <code class="docutils literal notranslate"><span class="pre">imap</span></code> より速く結果を得られることがある）。</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">power</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">exp</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">base</span> <span class="o">**</span> <span class="n">exp</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="n">power</span><span class="p">,</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)])</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">[8, 9, 25]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">apply_async()</span></code> に <code class="docutils literal notranslate"><span class="pre">callback</span></code> を渡す例は以下の通り。結果を待たずに
+処理を続け、結果が得られた時点で <code class="docutils literal notranslate"><span class="pre">callback</span></code> に指定した関数が呼ばれる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">store_result</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">square</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,),</span> <span class="n">callback</span><span class="o">=</span><span class="n">store_result</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="gp">... </span>        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>  <span class="c1"># コールバックの完了を含めて待つ</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">[100]</span>
+</pre></div>
+</div>
+</section>
+<section id="multiprocessing-queue">
+<h2>multiprocessing.Queue<a class="headerlink" href="#multiprocessing-queue" title="Link to this heading"></a></h2>
+<p>プロセスはメモリ空間を共有しないため、変数を直接共有することはできない。
+プロセス間通信（IPC）には <code class="docutils literal notranslate"><span class="pre">Queue</span></code> を使うのが基本的な方法で、
+内部でデータをシリアライズしてやり取りする。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">producer</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># 終了の合図</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">consumer</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">item</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">break</span>
+<span class="gp">... </span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;受信: </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">q</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">p1</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">producer</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">q</span><span class="p">,))</span>
+<span class="gp">... </span>    <span class="n">p2</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">consumer</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">q</span><span class="p">,))</span>
+<span class="gp">... </span>    <span class="n">p1</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">p2</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">p1</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">p2</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+</section>
+<section id="value-array-manager">
+<h2>Value / Array / Manager による状態共有<a class="headerlink" href="#value-array-manager" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Queue</span></code> によるメッセージのやり取りとは別に、単純な値や配列を複数のプロセス間で直接共有したい場合は <code class="docutils literal notranslate"><span class="pre">multiprocessing.Value</span></code>・<code class="docutils literal notranslate"><span class="pre">multiprocessing.Array</span></code> が使える。内部で共有メモリを使い、<code class="docutils literal notranslate"><span class="pre">threading.Lock</span></code> と同様にロックを介して安全に更新できる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">increment</span><span class="p">(</span><span class="n">counter</span><span class="p">,</span> <span class="n">lock</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">with</span> <span class="n">lock</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="n">counter</span><span class="o">.</span><span class="n">value</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">counter</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="s2">&quot;i&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># &quot;i&quot; は int を表す型コード</span>
+<span class="gp">... </span>    <span class="n">lock</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">procs</span> <span class="o">=</span> <span class="p">[</span><span class="n">mp</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">increment</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">counter</span><span class="p">,</span> <span class="n">lock</span><span class="p">))</span>
+<span class="gp">... </span>             <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">counter</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">4000</span>
+</pre></div>
+</div>
+<p>リストや辞書のような、より複雑なデータ構造を共有したい場合は、<code class="docutils literal notranslate"><span class="pre">multiprocessing.Manager()</span></code> が返す <code class="docutils literal notranslate"><span class="pre">dict</span></code>/<code class="docutils literal notranslate"><span class="pre">list</span></code> 風のプロキシオブジェクトを使うと簡単に扱える。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span> <span class="k">as</span> <span class="n">manager</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">shared_dict</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
+<span class="gp">... </span>        <span class="n">shared_dict</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="gp">... </span>        <span class="c1"># shared_dict を各プロセスに渡して更新できる</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>より高レベルな <code class="docutils literal notranslate"><span class="pre">Pool</span></code>/<code class="docutils literal notranslate"><span class="pre">Executor</span></code> 風の API を使いたい場合は <a class="reference internal" href="concurrent_futures.html"><span class="doc">concurrent.futures</span></a> の <code class="docutils literal notranslate"><span class="pre">ProcessPoolExecutor</span></code> も検討するとよい。一方、並列化したい処理が CPU バウンドではなく I/O 待ちが中心の場合は、プロセスを起動するオーバーヘッドをかけずに <a class="reference internal" href="threading.html"><span class="doc">threading</span></a> を使う方が適していることが多い。</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="threading.html" class="btn btn-neutral float-left" title="threading" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="asyncio.html" class="btn btn-neutral float-right" title="asyncio" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,532 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 11 章 パフォーマンス &mdash; Unity パーティクル入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=01157622" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="第 12 章 VFX Graph の基礎" href="ch12_vfx_graph_basics.html" />
+    <link rel="prev" title="第 10 章 作例" href="ch10_examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity パーティクル入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 1 部 基礎</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">第 1 章 はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_particle_basics.html">第 2 章 パーティクルの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_first_particle.html">第 3 章 最初のパーティクル</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 2 部 Particle System のモジュール</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch04_main_module.html">第 4 章 Main モジュール</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_emission_shape.html">第 5 章 放出と形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_over_lifetime.html">第 6 章 時間変化のモジュール</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_rendering.html">第 7 章 描画</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_collision_sub_emitters.html">第 8 章 衝突・サブエミッター・トレイル</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 3 部 スクリプトと実践</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch09_scripting.html">第 9 章 スクリプトからの制御</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_examples.html">第 10 章 作例</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 11 章 パフォーマンス</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">処理が重くなる原因</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">オーバードロー</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">対策</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#culling-mode">Culling Mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">処理の重さを調べる</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">プロファイラー</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#frame-debugger">Frame Debugger</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">オブジェクトプール</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 4 部 VFX Graph</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch12_vfx_graph_basics.html">第 12 章 VFX Graph の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_vfx_graph_practice.html">第 13 章 VFX Graph の実践</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/troubleshooting.html">付録 B よくあるトラブルと対処法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/references.html">付録 C 参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity パーティクル入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 11 章 パフォーマンス</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch10_examples.html" class="btn btn-neutral float-left" title="第 10 章 作例" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch12_vfx_graph_basics.html" class="btn btn-neutral float-right" title="第 12 章 VFX Graph の基礎" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 11 章 パフォーマンス<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>パーティクルは、少しの設定の変更で数が何倍にも増えるため、気付かないうちにゲームの処理を重くしやすい。この章では、パーティクルの処理が重くなる原因と対策、処理の重さを調べる方法、エフェクトを使い回すオブジェクトプールを説明する。</p>
+<p>この章のサンプルコードは、<code class="docutils literal notranslate"><span class="pre">examples/chapter11</span></code> フォルダーにある。</p>
+<section id="id2">
+<h2>処理が重くなる原因<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>パーティクルの処理の重さは、主に次の 3 つに分けられる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>原因</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>シミュレーション（CPU）</p></td>
+<td><p>パーティクルの位置や色などを毎フレーム計算する処理。パーティクルの数と、有効にしているモジュールの数に比例して重くなる。Noise モジュールと、<span class="guilabel">Type</span> が <span class="guilabel">World</span> の Collision モジュールは、特に計算が多い。</p></td>
+</tr>
+<tr class="row-odd"><td><p>描画の命令（CPU）</p></td>
+<td><p>GPU に描画を命令する処理。Particle System の数とマテリアルの数が多いほど、命令の数（ドローコール）が増える。</p></td>
+</tr>
+<tr class="row-even"><td><p>オーバードロー（GPU）</p></td>
+<td><p>同じピクセルを何度も塗り重ねる処理。大きな半透明のパーティクルが重なるほど重くなる（後述）。</p></td>
+</tr>
+</tbody>
+</table>
+<p>どれが原因かによって、有効な対策が異なる。まずは後述のプロファイラーで原因を調べてから対策する。</p>
+<section id="id3">
+<h3>オーバードロー<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>不透明なオブジェクトは、手前のオブジェクトに隠れたピクセルを塗らずに済ませられる。一方、半透明のパーティクルは、奥のパーティクルが透けて見えるため、重なったパーティクルをすべて塗る必要がある。同じピクセルを何度も塗り重ねることを、オーバードローという。</p>
+<p>画面を覆うほど大きなパーティクルが 10 枚重なると、画面のすべてのピクセルを 10 回塗ることになる。パーティクルの数が少なくても、1 つ 1 つが大きいと GPU の負荷が高くなる。特に、カメラのすぐ近くにあるパーティクルは、画面の大部分を覆うため負荷が高い。</p>
+<p>URP では、<span class="menuselection">Window ‣ Analysis ‣ Rendering Debugger</span> の <span class="guilabel">Rendering</span> タブで <span class="guilabel">Overdraw Mode</span> を選ぶと、オーバードローの多い場所が明るく表示される。</p>
+</section>
+</section>
+<section id="id4">
+<h2>対策<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>対策</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>パーティクルの数を減らす</p></td>
+<td><p><span class="guilabel">Rate over Time</span> や <span class="guilabel">Start Lifetime</span> を減らす。同時に存在する数は <span class="math notranslate nohighlight">\(r \times L\)</span> で見積もれる（第 5 章を参照）。見た目を保つには、数を減らした分、1 つ 1 つを大きくしたり、テクスチャーの形を工夫したりする。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="guilabel">Max Particles</span> を設定する</p></td>
+<td><p>設定のミスや想定外の状況で、パーティクルが増えすぎるのを防ぐ上限になる。</p></td>
+</tr>
+<tr class="row-even"><td><p>パーティクルを大きくしすぎない</p></td>
+<td><p>オーバードローを減らす。Renderer モジュールの <span class="guilabel">Max Particle Size</span> で、画面に対する大きさの上限を決めることもできる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>テクスチャーの透明な部分を減らす</p></td>
+<td><p>透明な部分も、塗る処理は行われる。形の周りの余白が小さいテクスチャーを使う。</p></td>
+</tr>
+<tr class="row-even"><td><p>重いモジュールを見直す</p></td>
+<td><p>Noise モジュールの <span class="guilabel">Quality</span> や <span class="guilabel">Octaves</span> を下げる。衝突が平らな地面だけでよい場合は、Collision モジュールの <span class="guilabel">Type</span> を <span class="guilabel">Planes</span> にする。</p></td>
+</tr>
+<tr class="row-odd"><td><p>マテリアルを共有する</p></td>
+<td><p>同じ見た目のエフェクトには、同じマテリアルを使う。</p></td>
+</tr>
+<tr class="row-even"><td><p>画面外の計算を止める</p></td>
+<td><p>Main モジュールの <span class="guilabel">Culling Mode</span> を設定する（後述）。</p></td>
+</tr>
+</tbody>
+</table>
+<section id="culling-mode">
+<h3>Culling Mode<a class="headerlink" href="#culling-mode" title="Link to this heading"></a></h3>
+<p>Main モジュールの <span class="guilabel">Culling Mode</span> は、Particle System が画面の外にあるときに、シミュレーションを止めるかどうかを決める。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>値</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="guilabel">Automatic</span></p></td>
+<td><p><span class="guilabel">Looping</span> が有効なら <span class="guilabel">Pause</span> と同じ動作、無効なら <span class="guilabel">Always Simulate</span> と同じ動作をする。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="guilabel">Pause And Catch-up</span></p></td>
+<td><p>画面の外にある間は止め、画面に戻ったときに止めていた時間の分を一度に計算して、遅れを取り戻す。</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="guilabel">Pause</span></p></td>
+<td><p>画面の外にある間は止める。画面に戻ると、止めたところから再開する。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="guilabel">Always Simulate</span></p></td>
+<td><p>画面の外にあっても計算を続ける。</p></td>
+</tr>
+</tbody>
+</table>
+<p>画面の中にあるかどうかは、パーティクル全体を囲むバウンディングボックスで判定する。バウンディングボックスは、Particle Effect パネルの <span class="guilabel">Show Bounds</span> で確認できる（第 3 章を参照）。</p>
+</section>
+</section>
+<section id="id5">
+<h2>処理の重さを調べる<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="id6">
+<h3>プロファイラー<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p><span class="menuselection">Window ‣ Analysis ‣ Profiler</span> で開くプロファイラーでは、フレームごとの処理時間の内訳を調べられる。</p>
+<ol class="arabic simple">
+<li><p>プロファイラーを開き、再生モードにする。</p></li>
+<li><p><span class="guilabel">CPU Usage</span> のグラフで、処理時間が長いフレームをクリックする。</p></li>
+<li><p>下部の表示を <span class="guilabel">Hierarchy</span> にし、名前に「Particle」を含む項目の処理時間を確認する。</p></li>
+</ol>
+<p>プロファイラーは、Unity のエディター自体の処理も含めて計測する。正確な値を知りたい場合は、ゲームをビルドし、ビルドしたゲームにプロファイラーを接続して計測する。</p>
+</section>
+<section id="frame-debugger">
+<h3>Frame Debugger<a class="headerlink" href="#frame-debugger" title="Link to this heading"></a></h3>
+<p><span class="menuselection">Window ‣ Analysis ‣ Frame Debugger</span> で開く Frame Debugger では、1 フレームの描画の命令を 1 つずつ確認できる。<span class="guilabel">Enable</span> を押すと、再生中のフレームが止まり、描画の命令の一覧が表示される。一覧の項目を選ぶと、その命令までに描画された画面が表示される。どの Particle System が、どの順番で、何回の命令で描画されているかを確認できる。</p>
+<p>Game ビューの <span class="guilabel">Stats</span> ボタンを押すと、描画の命令の数（<span class="guilabel">Batches</span>）などの統計情報が表示される。エフェクトを再生する前と後で値を比べると、エフェクトによって増えた命令の数が分かる。</p>
+</section>
+</section>
+<section id="id7">
+<h2>オブジェクトプール<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>第 10 章では、ヒットエフェクトのプレハブを <code class="docutils literal notranslate"><span class="pre">Instantiate</span></code> メソッドで生成し、再生が終わると <span class="guilabel">Stop Action</span> の <span class="guilabel">Destroy</span> で削除した。GameObject の生成と削除は処理が重く、削除したオブジェクトのメモリーはガベージコレクションで回収される。ガベージコレクションが動くと、ゲームが一瞬止まることがある。弾が当たるたびにエフェクトを生成するような、頻繁に使うエフェクトでは、この処理が問題になる。</p>
+<p>そこで、一度生成したエフェクトを削除せずに無効にして取っておき、次に必要になったときに有効にして使い回す。この方法をオブジェクトプールという。Unity には、オブジェクトプールを作るための <code class="docutils literal notranslate"><span class="pre">UnityEngine.Pool.ObjectPool&lt;T&gt;</span></code> クラスが用意されている。</p>
+<p>次の 3 つのスクリプトで、第 10 章のヒットエフェクトをオブジェクトプールで使い回す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>スクリプト</p></th>
+<th class="head"><p>役割</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>EffectPool.cs</p></td>
+<td><p>エフェクトを保持するプール。取り出されたエフェクトを、指定した位置で再生する。</p></td>
+</tr>
+<tr class="row-odd"><td><p>PooledEffect.cs</p></td>
+<td><p>エフェクトのプレハブに付けるスクリプト。再生が終わると、自分をプールに戻す。</p></td>
+</tr>
+<tr class="row-even"><td><p>PooledHitEffectSpawner.cs</p></td>
+<td><p>クリックした位置で、プールのエフェクトを再生する。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">EffectPool.cs</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine.Pool</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 5</span><span class="c1">/// エフェクトを使い回すためのオブジェクトプール。</span>
+<span class="linenos"> 6</span><span class="c1">/// シーン内の空の GameObject にアタッチし、PooledEffect を付けたプレハブを設定して使う。</span>
+<span class="linenos"> 7</span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos"> 8</span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">EffectPool</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">MonoBehaviour</span>
+<span class="linenos"> 9</span><span class="p">{</span>
+<span class="linenos">10</span><span class="w">    </span><span class="na">[SerializeField, Tooltip(&quot;使い回すエフェクトのプレハブ（PooledEffect を付けておく）&quot;)]</span>
+<span class="linenos">11</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="n">PooledEffect</span><span class="w"> </span><span class="n">_effectPrefab</span><span class="p">;</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="w">    </span><span class="na">[SerializeField, Tooltip(&quot;最初に確保するリストの大きさ&quot;)]</span>
+<span class="linenos">14</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">_defaultCapacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="w">    </span><span class="na">[SerializeField, Tooltip(&quot;プールに保持するエフェクトの最大数&quot;)]</span>
+<span class="linenos">17</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">_maxSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="p">;</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="n">ObjectPool</span><span class="o">&lt;</span><span class="n">PooledEffect</span><span class="o">&gt;</span><span class="w"> </span><span class="n">_pool</span><span class="p">;</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Awake</span><span class="p">()</span>
+<span class="linenos">22</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">23</span><span class="w">        </span><span class="n">_pool</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ObjectPool</span><span class="o">&lt;</span><span class="n">PooledEffect</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="linenos">24</span><span class="w">            </span><span class="n">CreateEffect</span><span class="p">,</span>
+<span class="linenos">25</span><span class="w">            </span><span class="n">OnGetEffect</span><span class="p">,</span>
+<span class="linenos">26</span><span class="w">            </span><span class="n">OnReleaseEffect</span><span class="p">,</span>
+<span class="linenos">27</span><span class="w">            </span><span class="n">OnDestroyEffect</span><span class="p">,</span>
+<span class="linenos">28</span><span class="w">            </span><span class="k">true</span><span class="p">,</span>
+<span class="linenos">29</span><span class="w">            </span><span class="n">_defaultCapacity</span><span class="p">,</span>
+<span class="linenos">30</span><span class="w">            </span><span class="n">_maxSize</span><span class="p">);</span>
+<span class="linenos">31</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos">34</span><span class="w">    </span><span class="c1">/// 指定した位置と向きでエフェクトを再生する。</span>
+<span class="linenos">35</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">36</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Play</span><span class="p">(</span><span class="n">Vector3</span><span class="w"> </span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">Quaternion</span><span class="w"> </span><span class="n">rotation</span><span class="p">)</span>
+<span class="linenos">37</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">38</span><span class="w">        </span><span class="c1">// プールに空きがあればそれを使い、なければ新しく生成する。</span>
+<span class="linenos">39</span><span class="w">        </span><span class="n">PooledEffect</span><span class="w"> </span><span class="n">effect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_pool</span><span class="p">.</span><span class="n">Get</span><span class="p">();</span>
+<span class="linenos">40</span><span class="w">        </span><span class="n">effect</span><span class="p">.</span><span class="n">transform</span><span class="p">.</span><span class="n">SetPositionAndRotation</span><span class="p">(</span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">rotation</span><span class="p">);</span>
+<span class="linenos">41</span><span class="w">        </span><span class="n">effect</span><span class="p">.</span><span class="n">Play</span><span class="p">();</span>
+<span class="linenos">42</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">43</span>
+<span class="linenos">44</span><span class="w">    </span><span class="c1">// プールに空きがないときに呼ばれ、新しいエフェクトを生成する。</span>
+<span class="linenos">45</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="n">PooledEffect</span><span class="w"> </span><span class="nf">CreateEffect</span><span class="p">()</span>
+<span class="linenos">46</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">47</span><span class="w">        </span><span class="n">PooledEffect</span><span class="w"> </span><span class="n">effect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instantiate</span><span class="p">(</span><span class="n">_effectPrefab</span><span class="p">,</span><span class="w"> </span><span class="n">transform</span><span class="p">);</span>
+<span class="linenos">48</span><span class="w">        </span><span class="n">effect</span><span class="p">.</span><span class="n">SetPool</span><span class="p">(</span><span class="n">_pool</span><span class="p">);</span>
+<span class="linenos">49</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">effect</span><span class="p">;</span>
+<span class="linenos">50</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span><span class="w">    </span><span class="c1">// プールから取り出すときに呼ばれる。</span>
+<span class="linenos">53</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnGetEffect</span><span class="p">(</span><span class="n">PooledEffect</span><span class="w"> </span><span class="n">effect</span><span class="p">)</span>
+<span class="linenos">54</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">55</span><span class="w">        </span><span class="n">effect</span><span class="p">.</span><span class="n">gameObject</span><span class="p">.</span><span class="n">SetActive</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+<span class="linenos">56</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">57</span>
+<span class="linenos">58</span><span class="w">    </span><span class="c1">// プールに戻すときに呼ばれる。</span>
+<span class="linenos">59</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnReleaseEffect</span><span class="p">(</span><span class="n">PooledEffect</span><span class="w"> </span><span class="n">effect</span><span class="p">)</span>
+<span class="linenos">60</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">61</span><span class="w">        </span><span class="n">effect</span><span class="p">.</span><span class="n">gameObject</span><span class="p">.</span><span class="n">SetActive</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+<span class="linenos">62</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">63</span>
+<span class="linenos">64</span><span class="w">    </span><span class="c1">// プールがいっぱいで戻せないときに呼ばれ、エフェクトを削除する。</span>
+<span class="linenos">65</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnDestroyEffect</span><span class="p">(</span><span class="n">PooledEffect</span><span class="w"> </span><span class="n">effect</span><span class="p">)</span>
+<span class="linenos">66</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">67</span><span class="w">        </span><span class="n">Destroy</span><span class="p">(</span><span class="n">effect</span><span class="p">.</span><span class="n">gameObject</span><span class="p">);</span>
+<span class="linenos">68</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">69</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/c0829914a57993e09ace3abc3a4b0c32/EffectPool.cs"><code class="xref download docutils literal notranslate"><span class="pre">EffectPool.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">ObjectPool&lt;T&gt;</span></code> のコンストラクターには、次の引数を渡す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>引数</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">createFunc</span></code></p></td>
+<td><p>プールに空きがないときに、新しいオブジェクトを生成するメソッド。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">actionOnGet</span></code></p></td>
+<td><p>プールからオブジェクトを取り出すときに呼ぶメソッド。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">actionOnRelease</span></code></p></td>
+<td><p>プールにオブジェクトを戻すときに呼ぶメソッド。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">actionOnDestroy</span></code></p></td>
+<td><p>プールがいっぱいで戻せないオブジェクトを削除するメソッド。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">collectionCheck</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code> にすると、同じオブジェクトを 2 回戻すような誤りを検出する。検出の処理はエディター上でだけ行われる。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">defaultCapacity</span></code></p></td>
+<td><p>オブジェクトを保持するリストの、最初の大きさ。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">maxSize</span></code></p></td>
+<td><p>プールに保持するオブジェクトの最大数。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">PooledEffect.cs</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine.Pool</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 5</span><span class="c1">/// EffectPool で使い回すエフェクト。</span>
+<span class="linenos"> 6</span><span class="c1">/// エフェクトのプレハブのルートの GameObject（Particle System を持つもの）にアタッチして使う。</span>
+<span class="linenos"> 7</span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos"> 8</span><span class="c1">/// &lt;remarks&gt;</span>
+<span class="linenos"> 9</span><span class="c1">/// プレハブの Main モジュールは、Looping と Play On Awake を無効にしておく。</span>
+<span class="linenos">10</span><span class="c1">/// 再生が終わると、自分をプールに戻す。</span>
+<span class="linenos">11</span><span class="c1">/// &lt;/remarks&gt;</span>
+<span class="linenos">12</span><span class="na">[RequireComponent(typeof(ParticleSystem))]</span>
+<span class="linenos">13</span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">PooledEffect</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">MonoBehaviour</span>
+<span class="linenos">14</span><span class="p">{</span>
+<span class="linenos">15</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="n">ParticleSystem</span><span class="w"> </span><span class="n">_particleSystem</span><span class="p">;</span>
+<span class="linenos">16</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="n">IObjectPool</span><span class="o">&lt;</span><span class="n">PooledEffect</span><span class="o">&gt;</span><span class="w"> </span><span class="n">_pool</span><span class="p">;</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Awake</span><span class="p">()</span>
+<span class="linenos">19</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">20</span><span class="w">        </span><span class="n">_particleSystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetComponent</span><span class="o">&lt;</span><span class="n">ParticleSystem</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span><span class="w">        </span><span class="c1">// 再生が終わったときに OnParticleSystemStopped が呼ばれるようにする。</span>
+<span class="linenos">23</span><span class="w">        </span><span class="n">ParticleSystem</span><span class="p">.</span><span class="n">MainModule</span><span class="w"> </span><span class="n">main</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_particleSystem</span><span class="p">.</span><span class="n">main</span><span class="p">;</span>
+<span class="linenos">24</span><span class="w">        </span><span class="n">main</span><span class="p">.</span><span class="n">stopAction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ParticleSystemStopAction</span><span class="p">.</span><span class="n">Callback</span><span class="p">;</span>
+<span class="linenos">25</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos">28</span><span class="w">    </span><span class="c1">/// 戻り先のプールを設定する。</span>
+<span class="linenos">29</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">30</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">SetPool</span><span class="p">(</span><span class="n">IObjectPool</span><span class="o">&lt;</span><span class="n">PooledEffect</span><span class="o">&gt;</span><span class="w"> </span><span class="n">pool</span><span class="p">)</span>
+<span class="linenos">31</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">32</span><span class="w">        </span><span class="n">_pool</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pool</span><span class="p">;</span>
+<span class="linenos">33</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos">36</span><span class="w">    </span><span class="c1">/// エフェクトを最初から再生する。</span>
+<span class="linenos">37</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">38</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Play</span><span class="p">()</span>
+<span class="linenos">39</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">40</span><span class="w">        </span><span class="n">_particleSystem</span><span class="p">.</span><span class="n">Play</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+<span class="linenos">41</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">42</span>
+<span class="linenos">43</span><span class="w">    </span><span class="c1">// Stop Action が Callback のとき、すべてのパーティクルが消えて再生が終わると、Unity から呼ばれる。</span>
+<span class="linenos">44</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnParticleSystemStopped</span><span class="p">()</span>
+<span class="linenos">45</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">46</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">_pool</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">null</span><span class="p">)</span>
+<span class="linenos">47</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">48</span><span class="w">            </span><span class="n">_pool</span><span class="p">.</span><span class="n">Release</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="linenos">49</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">50</span><span class="w">        </span><span class="k">else</span>
+<span class="linenos">51</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">52</span><span class="w">            </span><span class="c1">// プールを使わずに生成された場合は、そのまま削除する。</span>
+<span class="linenos">53</span><span class="w">            </span><span class="n">Destroy</span><span class="p">(</span><span class="n">gameObject</span><span class="p">);</span>
+<span class="linenos">54</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">55</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">56</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/5f980af198cc8a50b4dcd15af2447f7f/PooledEffect.cs"><code class="xref download docutils literal notranslate"><span class="pre">PooledEffect.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">Awake</span></code> メソッドで Main モジュールの <span class="guilabel">Stop Action</span> を <span class="guilabel">Callback</span> にしている。再生が終わると <code class="docutils literal notranslate"><span class="pre">OnParticleSystemStopped</span></code> メソッドが呼ばれ、自分をプールに戻す。プールに戻すと、EffectPool.cs の <code class="docutils literal notranslate"><span class="pre">OnReleaseEffect</span></code> メソッドで GameObject が無効になる。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">PooledHitEffectSpawner.cs</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine.InputSystem</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 5</span><span class="c1">/// 第 10 章の HitEffectSpawner を、EffectPool を使う形に書き換えたサンプル。</span>
+<span class="linenos"> 6</span><span class="c1">/// シーン内の空の GameObject にアタッチし、EffectPool を設定して使う。</span>
+<span class="linenos"> 7</span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos"> 8</span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">PooledHitEffectSpawner</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">MonoBehaviour</span>
+<span class="linenos"> 9</span><span class="p">{</span>
+<span class="linenos">10</span><span class="w">    </span><span class="na">[SerializeField, Tooltip(&quot;エフェクトを取り出すプール&quot;)]</span>
+<span class="linenos">11</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="n">EffectPool</span><span class="w"> </span><span class="n">_effectPool</span><span class="p">;</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="w">    </span><span class="na">[SerializeField, Tooltip(&quot;レイの最大距離&quot;)]</span>
+<span class="linenos">14</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">_maxDistance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100f</span><span class="p">;</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="n">Camera</span><span class="w"> </span><span class="n">_camera</span><span class="p">;</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Awake</span><span class="p">()</span>
+<span class="linenos">19</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">20</span><span class="w">        </span><span class="n">_camera</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Camera</span><span class="p">.</span><span class="n">main</span><span class="p">;</span>
+<span class="linenos">21</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Update</span><span class="p">()</span>
+<span class="linenos">24</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">25</span><span class="w">        </span><span class="n">Mouse</span><span class="w"> </span><span class="n">mouse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Mouse</span><span class="p">.</span><span class="n">current</span><span class="p">;</span>
+<span class="linenos">26</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mouse</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">mouse</span><span class="p">.</span><span class="n">leftButton</span><span class="p">.</span><span class="n">wasPressedThisFrame</span><span class="p">)</span>
+<span class="linenos">27</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">28</span><span class="w">            </span><span class="k">return</span><span class="p">;</span>
+<span class="linenos">29</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="w">        </span><span class="n">Ray</span><span class="w"> </span><span class="n">ray</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_camera</span><span class="p">.</span><span class="n">ScreenPointToRay</span><span class="p">(</span><span class="n">mouse</span><span class="p">.</span><span class="n">position</span><span class="p">.</span><span class="n">ReadValue</span><span class="p">());</span>
+<span class="linenos">32</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Physics</span><span class="p">.</span><span class="n">Raycast</span><span class="p">(</span><span class="n">ray</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="n">RaycastHit</span><span class="w"> </span><span class="n">hit</span><span class="p">,</span><span class="w"> </span><span class="n">_maxDistance</span><span class="p">))</span>
+<span class="linenos">33</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">34</span><span class="w">            </span><span class="c1">// Instantiate の代わりに、プールからエフェクトを取り出して再生する。</span>
+<span class="linenos">35</span><span class="w">            </span><span class="n">Quaternion</span><span class="w"> </span><span class="n">rotation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Quaternion</span><span class="p">.</span><span class="n">LookRotation</span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">normal</span><span class="p">);</span>
+<span class="linenos">36</span><span class="w">            </span><span class="n">_effectPool</span><span class="p">.</span><span class="n">Play</span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">point</span><span class="p">,</span><span class="w"> </span><span class="n">rotation</span><span class="p">);</span>
+<span class="linenos">37</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">38</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">39</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/e67dc4cc2e4c62bf470129da0cc09e0a/PooledHitEffectSpawner.cs"><code class="xref download docutils literal notranslate"><span class="pre">PooledHitEffectSpawner.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>使う手順は次のとおりである。</p>
+<ol class="arabic simple">
+<li><p>第 10 章の HitEffect のプレハブを複製し、名前を「PooledHitEffect」にする。</p></li>
+<li><p>PooledHitEffect のルートの GameObject に、PooledEffect.cs をアタッチする。Main モジュールの <span class="guilabel">Play On Awake</span> を無効にする。子の Flash の <span class="guilabel">Play On Awake</span> も無効にする。</p></li>
+<li><p>シーンに空の GameObject を作り、名前を「EffectPool」にする。EffectPool.cs をアタッチし、<span class="guilabel">Effect Prefab</span> に PooledHitEffect を設定する。</p></li>
+<li><p>第 10 章の HitEffectSpawner の GameObject から HitEffectSpawner.cs を削除し、代わりに PooledHitEffectSpawner.cs をアタッチする。<span class="guilabel">Effect Pool</span> に EffectPool の GameObject を設定する。</p></li>
+</ol>
+<p>再生モードでオブジェクトをクリックすると、第 10 章と同じようにヒットエフェクトが表示される。Hierarchy ウィンドウで EffectPool の子を見ると、エフェクトの GameObject が削除されずに残り、再生が終わると無効になって、次のクリックで再び使われることが分かる。</p>
+<p><span class="guilabel">Play On Awake</span> を無効にするのは、プールから取り出して GameObject を有効にした時点で、位置を設定する前に再生が始まるのを防ぐためである。再生は、位置を設定した後に EffectPool.cs の <code class="docutils literal notranslate"><span class="pre">Play</span></code> メソッドから始める。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch10_examples.html" class="btn btn-neutral float-left" title="第 10 章 作例" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch12_vfx_graph_basics.html" class="btn btn-neutral float-right" title="第 12 章 VFX Graph の基礎" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

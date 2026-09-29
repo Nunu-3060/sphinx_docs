@@ -1,0 +1,475 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 11 章 影 &mdash; Unity シェーダー・グラフィック入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=01157622" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="第 12 章 透明と描画順" href="ch12_transparency.html" />
+    <link rel="prev" title="第 10 章 法線マップ" href="ch10_normal_map.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity シェーダー・グラフィックス入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 1 部 導入と理論</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">第 1 章 はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_cg_math.html">第 2 章 コンピューターグラフィックスの数学</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_coordinate_transform.html">第 3 章 座標変換</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_rendering_pipeline.html">第 4 章 GPU とレンダリングパイプライン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_unity_rendering.html">第 5 章 Unity の描画のしくみ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 2 部 シェーダーの基本</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch06_shaderlab_hlsl.html">第 6 章 ShaderLab と HLSL の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_first_shader.html">第 7 章 最初のシェーダー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_texture_uv.html">第 8 章 テクスチャーと UV</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 3 部 ライティング</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch09_lighting.html">第 9 章 ライティング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_normal_map.html">第 10 章 法線マップ</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 11 章 影</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">シャドウマップ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">カスケードシャドウマップ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">影を落とし、影を受けるシェーダー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">パス間で共通の定数バッファー</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">影を受ける処理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">シェーダーのバリアントとキーワード</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">シャドウマップの参照</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">影を落とす処理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">シャドウアクネ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#depthonly">DepthOnly パス</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 4 部 表現の幅を広げる</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch12_transparency.html">第 12 章 透明と描画順</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_vertex_animation.html">第 13 章 頂点アニメーション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_effects.html">第 14 章 表現テクニック</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch15_post_effect.html">第 15 章 ポストエフェクト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch16_shader_graph.html">第 16 章 Shader Graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17_debug_optimize.html">第 17 章 デバッグと最適化</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/formulas.html">付録 B 数式のまとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/references.html">付録 C 参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity シェーダー・グラフィックス入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 11 章 影</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch10_normal_map.html" class="btn btn-neutral float-left" title="第 10 章 法線マップ" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch12_transparency.html" class="btn btn-neutral float-right" title="第 12 章 透明と描画順" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 11 章 影<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>第 9 章と第 10 章のシェーダーは、ほかのオブジェクトに影を落とさず、ほかのオブジェクトの影も受けない。この章では、シャドウマップのしくみを説明し、影を落とし、影を受けるシェーダーを作る。</p>
+<p>この章のサンプルコードは、<code class="docutils literal notranslate"><span class="pre">examples/chapter11</span></code> フォルダーにある。</p>
+<section id="id2">
+<h2>シャドウマップ<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>URP は、シャドウマップと呼ばれる方法で影を描画する。シャドウマップの手順は、次の 2 段階である。</p>
+<ol class="arabic simple">
+<li><p>ライトの位置からシーンを見たときの深度を、テクスチャー（シャドウマップ）に描画する。シャドウマップの各ピクセルには、ライトから最も近いオブジェクトまでの距離が記録される。</p></li>
+<li><p>カメラから見たシーンを描画するときに、各ピクセルの位置をライトから見た座標に変換し、シャドウマップの深度と比べる。シャドウマップの深度より奥にあれば、ライトとの間にほかのオブジェクトがあるので、影の中にある。</p></li>
+</ol>
+<p>シェーダーの立場から見ると、1 つ目の段階が「影を落とす」処理、2 つ目の段階が「影を受ける」処理である。影を落とすには、シャドウマップに深度を書き込むための <code class="docutils literal notranslate"><span class="pre">ShadowCaster</span></code> パスが必要である。影を受けるには、色を描画するパスの中でシャドウマップを参照する必要がある。</p>
+<section id="id3">
+<h3>カスケードシャドウマップ<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>Directional Light は、シーン全体を照らすため、1 枚のシャドウマップでシーン全体を覆うと、カメラの近くの影が粗くなる。そこで、カメラからの距離に応じて範囲を複数に分け、範囲ごとにシャドウマップを作る。この方法をカスケードシャドウマップという。分割の数は、URP Asset の <span class="guilabel">Shadows</span> の <span class="guilabel">Cascade Count</span> で設定する。</p>
+</section>
+</section>
+<section id="id4">
+<h2>影を落とし、影を受けるシェーダー<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>次のシェーダーは、第 9 章の Blinn-Phong のシェーダーに、影を受ける処理と、影を落とすための <code class="docutils literal notranslate"><span class="pre">ShadowCaster</span></code> パスを加えたものである。さらに、カメラの深度テクスチャーに深度を書き込むための <code class="docutils literal notranslate"><span class="pre">DepthOnly</span></code> パスも加えている。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">ShadowLit.shader</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="c1">// 第 11 章：影を落とし（ShadowCaster パス）、</span>
+<span class="linenos">  2</span><span class="c1">// 影を受ける（シャドウマップの参照）シェーダー。</span>
+<span class="linenos">  3</span><span class="c1">// ライティングは第 9 章の BlinnPhong.shader と同じ計算に、影の減衰を加えたもの。</span>
+<span class="linenos">  4</span><span class="n">Shader</span><span class="w"> </span><span class="s">&quot;Introduction/Chapter11/ShadowLit&quot;</span>
+<span class="linenos">  5</span><span class="p">{</span>
+<span class="linenos">  6</span><span class="w">    </span><span class="n">Properties</span>
+<span class="linenos">  7</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">  8</span><span class="w">        </span><span class="p">[</span><span class="n">MainColor</span><span class="p">]</span><span class="w"> </span><span class="n">_BaseColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Base Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">  9</span><span class="w">        </span><span class="n">_SpecularColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Specular Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 10</span><span class="w">        </span><span class="n">_Shininess</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Shininess&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">256</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span>
+<span class="linenos"> 11</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 12</span>
+<span class="linenos"> 13</span><span class="w">    </span><span class="n">SubShader</span>
+<span class="linenos"> 14</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos"> 15</span><span class="w">        </span><span class="n">Tags</span>
+<span class="linenos"> 16</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos"> 17</span><span class="w">            </span><span class="s">&quot;RenderType&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Opaque&quot;</span>
+<span class="linenos"> 18</span><span class="w">            </span><span class="s">&quot;Queue&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Geometry&quot;</span>
+<span class="linenos"> 19</span><span class="w">            </span><span class="s">&quot;RenderPipeline&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalPipeline&quot;</span>
+<span class="linenos"> 20</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 21</span>
+<span class="linenos"> 22</span><span class="w">        </span><span class="c1">// HLSLINCLUDE の内容は、このサブシェーダーのすべてのパスの先頭に挿入される。</span>
+<span class="linenos"> 23</span><span class="w">        </span><span class="c1">// SRP Batcher に対応させるには、</span>
+<span class="linenos"> 24</span><span class="w">        </span><span class="c1">// すべてのパスで UnityPerMaterial の内容を同じにする必要がある。</span>
+<span class="linenos"> 25</span><span class="w">        </span><span class="n">HLSLINCLUDE</span>
+<span class="linenos"> 26</span><span class="w">        </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl&quot;</span>
+<span class="linenos"> 27</span>
+<span class="linenos"> 28</span><span class="w">        </span><span class="n">CBUFFER_START</span><span class="p">(</span><span class="n">UnityPerMaterial</span><span class="p">)</span>
+<span class="linenos"> 29</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">;</span>
+<span class="linenos"> 30</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">_SpecularColor</span><span class="p">;</span>
+<span class="linenos"> 31</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">_Shininess</span><span class="p">;</span>
+<span class="linenos"> 32</span><span class="w">        </span><span class="n">CBUFFER_END</span>
+<span class="linenos"> 33</span><span class="w">        </span><span class="n">ENDHLSL</span>
+<span class="linenos"> 34</span>
+<span class="linenos"> 35</span><span class="w">        </span><span class="c1">// 1 つ目のパス：画面に色を描画する</span>
+<span class="linenos"> 36</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos"> 37</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos"> 38</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;ForwardLit&quot;</span>
+<span class="linenos"> 39</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalForward&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos"> 40</span>
+<span class="linenos"> 41</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos"> 42</span><span class="w">            </span><span class="cp">#pragma vertex Vert</span>
+<span class="linenos"> 43</span><span class="w">            </span><span class="cp">#pragma fragment Frag</span>
+<span class="linenos"> 44</span>
+<span class="linenos"> 45</span><span class="w">            </span><span class="c1">// メインライトの影を受けるためのキーワード。</span>
+<span class="linenos"> 46</span><span class="w">            </span><span class="c1">// URP Asset の影の設定に応じて、URP がこのうち 1 つを有効にする。</span>
+<span class="linenos"> 47</span><span class="w">            </span><span class="cp">#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE</span>
+<span class="linenos"> 48</span><span class="w">            </span><span class="c1">// ソフトシャドウ（影の輪郭をぼかす処理）のためのキーワード</span>
+<span class="linenos"> 49</span><span class="w">            </span><span class="cp">#pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH</span>
+<span class="linenos"> 50</span>
+<span class="linenos"> 51</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl&quot;</span>
+<span class="linenos"> 52</span>
+<span class="linenos"> 53</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos"> 54</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 55</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos"> 56</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">NORMAL</span><span class="p">;</span>
+<span class="linenos"> 57</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos"> 58</span>
+<span class="linenos"> 59</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos"> 60</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 61</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos"> 62</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">positionWS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD0</span><span class="p">;</span>
+<span class="linenos"> 63</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD1</span><span class="p">;</span>
+<span class="linenos"> 64</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos"> 65</span>
+<span class="linenos"> 66</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">Vert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos"> 67</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 68</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos"> 69</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorld</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xyz</span><span class="p">);</span>
+<span class="linenos"> 70</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformWorldToHClip</span><span class="p">(</span><span class="n">output</span><span class="p">.</span><span class="n">positionWS</span><span class="p">);</span>
+<span class="linenos"> 71</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorldNormal</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalOS</span><span class="p">);</span>
+<span class="linenos"> 72</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos"> 73</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">Frag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos"> 76</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 77</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalWS</span><span class="p">);</span>
+<span class="linenos"> 78</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">viewDirWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetWorldSpaceNormalizeViewDir</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionWS</span><span class="p">);</span>
+<span class="linenos"> 79</span>
+<span class="linenos"> 80</span><span class="w">                </span><span class="c1">// ワールド空間の位置を、シャドウマップを参照するための座標に変換する</span>
+<span class="linenos"> 81</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">shadowCoord</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformWorldToShadowCoord</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionWS</span><span class="p">);</span>
+<span class="linenos"> 82</span><span class="w">                </span><span class="c1">// 引数に shadowCoord を渡すと、</span>
+<span class="linenos"> 83</span><span class="w">                </span><span class="c1">// mainLight.shadowAttenuation に影の情報が入る</span>
+<span class="linenos"> 84</span><span class="w">                </span><span class="c1">// （0：完全に影の中、1：影の外）</span>
+<span class="linenos"> 85</span><span class="w">                </span><span class="n">Light</span><span class="w"> </span><span class="n">mainLight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetMainLight</span><span class="p">(</span><span class="n">shadowCoord</span><span class="p">);</span>
+<span class="linenos"> 86</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">lightColor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">color</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">shadowAttenuation</span><span class="p">;</span>
+<span class="linenos"> 87</span>
+<span class="linenos"> 88</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">ambient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SampleSH</span><span class="p">(</span><span class="n">normalWS</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="p">;</span>
+<span class="linenos"> 89</span>
+<span class="linenos"> 90</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">nDotL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">saturate</span><span class="p">(</span><span class="nb">dot</span><span class="p">(</span><span class="n">normalWS</span><span class="p">,</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">direction</span><span class="p">));</span>
+<span class="linenos"> 91</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">lightColor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nDotL</span><span class="p">;</span>
+<span class="linenos"> 92</span>
+<span class="linenos"> 93</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">halfDirWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="n">mainLight</span><span class="p">.</span><span class="n">direction</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">viewDirWS</span><span class="p">);</span>
+<span class="linenos"> 94</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">nDotH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">saturate</span><span class="p">(</span><span class="nb">dot</span><span class="p">(</span><span class="n">normalWS</span><span class="p">,</span><span class="w"> </span><span class="n">halfDirWS</span><span class="p">));</span>
+<span class="linenos"> 95</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">specular</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_SpecularColor</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">lightColor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">pow</span><span class="p">(</span><span class="n">nDotH</span><span class="p">,</span><span class="w"> </span><span class="n">_Shininess</span><span class="p">);</span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="kt">half4</span><span class="p">(</span><span class="n">ambient</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">specular</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos"> 98</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos"> 99</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">100</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">101</span>
+<span class="linenos">102</span><span class="w">        </span><span class="c1">// 2 つ目のパス：シャドウマップに深度を書き込み、ほかのオブジェクトに影を落とす</span>
+<span class="linenos">103</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos">104</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">105</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;ShadowCaster&quot;</span>
+<span class="linenos">106</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ShadowCaster&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos">107</span>
+<span class="linenos">108</span><span class="w">            </span><span class="n">ZWrite</span><span class="w"> </span><span class="n">On</span>
+<span class="linenos">109</span><span class="w">            </span><span class="n">ZTest</span><span class="w"> </span><span class="n">LEqual</span>
+<span class="linenos">110</span><span class="w">            </span><span class="c1">// 色は書き込まない</span>
+<span class="linenos">111</span><span class="w">            </span><span class="n">ColorMask</span><span class="w"> </span><span class="mo">0</span>
+<span class="linenos">112</span>
+<span class="linenos">113</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos">114</span><span class="w">            </span><span class="cp">#pragma vertex ShadowVert</span>
+<span class="linenos">115</span><span class="w">            </span><span class="cp">#pragma fragment ShadowFrag</span>
+<span class="linenos">116</span>
+<span class="linenos">117</span><span class="w">            </span><span class="c1">// ポイントライトとスポットライトの影を描画するときに、</span>
+<span class="linenos">118</span><span class="w">            </span><span class="c1">// URP が有効にするキーワード</span>
+<span class="linenos">119</span><span class="w">            </span><span class="cp">#pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW</span>
+<span class="linenos">120</span>
+<span class="linenos">121</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl&quot;</span>
+<span class="linenos">122</span>
+<span class="linenos">123</span><span class="w">            </span><span class="c1">// 影を描画しているライトの向きと位置。URP が値を設定する。</span>
+<span class="linenos">124</span><span class="w">            </span><span class="kt">float3</span><span class="w"> </span><span class="n">_LightDirection</span><span class="p">;</span>
+<span class="linenos">125</span><span class="w">            </span><span class="kt">float3</span><span class="w"> </span><span class="n">_LightPosition</span><span class="p">;</span>
+<span class="linenos">126</span>
+<span class="linenos">127</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos">128</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">129</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos">130</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">NORMAL</span><span class="p">;</span>
+<span class="linenos">131</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">132</span>
+<span class="linenos">133</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos">134</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">135</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos">136</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">137</span>
+<span class="linenos">138</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">ShadowVert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos">139</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">140</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">141</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">positionWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorld</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xyz</span><span class="p">);</span>
+<span class="linenos">142</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorldNormal</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalOS</span><span class="p">);</span>
+<span class="linenos">143</span>
+<span class="linenos">144</span><span class="w">            </span><span class="cp">#if defined(_CASTING_PUNCTUAL_LIGHT_SHADOW)</span>
+<span class="linenos">145</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">lightDirectionWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="n">_LightPosition</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">positionWS</span><span class="p">);</span>
+<span class="linenos">146</span><span class="w">            </span><span class="cp">#else</span>
+<span class="linenos">147</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">lightDirectionWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_LightDirection</span><span class="p">;</span>
+<span class="linenos">148</span><span class="w">            </span><span class="cp">#endif</span>
+<span class="linenos">149</span>
+<span class="linenos">150</span><span class="w">                </span><span class="c1">// シャドウアクネ（表面に縞模様の影が出る現象）を防ぐため、</span>
+<span class="linenos">151</span><span class="w">                </span><span class="c1">// 位置を少しずらす</span>
+<span class="linenos">152</span><span class="w">                </span><span class="n">positionWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ApplyShadowBias</span><span class="p">(</span><span class="n">positionWS</span><span class="p">,</span><span class="w"> </span><span class="n">normalWS</span><span class="p">,</span><span class="w"> </span><span class="n">lightDirectionWS</span><span class="p">);</span>
+<span class="linenos">153</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformWorldToHClip</span><span class="p">(</span><span class="n">positionWS</span><span class="p">);</span>
+<span class="linenos">154</span>
+<span class="linenos">155</span><span class="w">                </span><span class="c1">// ライトの近くでクリップ面より手前に出た頂点を、</span>
+<span class="linenos">156</span><span class="w">                </span><span class="c1">// クリップ面の位置に押し戻す</span>
+<span class="linenos">157</span><span class="w">            </span><span class="cp">#if UNITY_REVERSED_Z</span>
+<span class="linenos">158</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">min</span><span class="p">(</span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="p">.</span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="n">UNITY_NEAR_CLIP_VALUE</span><span class="p">);</span>
+<span class="linenos">159</span><span class="w">            </span><span class="cp">#else</span>
+<span class="linenos">160</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="p">.</span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="n">UNITY_NEAR_CLIP_VALUE</span><span class="p">);</span>
+<span class="linenos">161</span><span class="w">            </span><span class="cp">#endif</span>
+<span class="linenos">162</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">163</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">164</span>
+<span class="linenos">165</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">ShadowFrag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos">166</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">167</span><span class="w">                </span><span class="c1">// 深度だけが必要なため、色は何を返してもよい</span>
+<span class="linenos">168</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span>
+<span class="linenos">169</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">170</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">171</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">172</span>
+<span class="linenos">173</span><span class="w">        </span><span class="c1">// 3 つ目のパス：深度テクスチャーに深度を書き込む。</span>
+<span class="linenos">174</span><span class="w">        </span><span class="c1">// カメラの深度テクスチャーを使う機能（Depth Priming や、</span>
+<span class="linenos">175</span><span class="w">        </span><span class="c1">// 深度を使うエフェクトなど）で必要になる。</span>
+<span class="linenos">176</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos">177</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">178</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;DepthOnly&quot;</span>
+<span class="linenos">179</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;DepthOnly&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos">180</span>
+<span class="linenos">181</span><span class="w">            </span><span class="n">ZWrite</span><span class="w"> </span><span class="n">On</span>
+<span class="linenos">182</span><span class="w">            </span><span class="n">ColorMask</span><span class="w"> </span><span class="n">R</span>
+<span class="linenos">183</span>
+<span class="linenos">184</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos">185</span><span class="w">            </span><span class="cp">#pragma vertex DepthVert</span>
+<span class="linenos">186</span><span class="w">            </span><span class="cp">#pragma fragment DepthFrag</span>
+<span class="linenos">187</span>
+<span class="linenos">188</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos">189</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">190</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos">191</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">192</span>
+<span class="linenos">193</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos">194</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">195</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos">196</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">197</span>
+<span class="linenos">198</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">DepthVert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos">199</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">200</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">201</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToHClip</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xyz</span><span class="p">);</span>
+<span class="linenos">202</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">203</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">204</span>
+<span class="linenos">205</span><span class="w">            </span><span class="kt">half</span><span class="w"> </span><span class="n">DepthFrag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos">206</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">207</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">positionCS</span><span class="p">.</span><span class="n">z</span><span class="p">;</span>
+<span class="linenos">208</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">209</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">210</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">211</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">212</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/e3292bca7fee7e46c8c3410ae6882e7d/ShadowLit.shader"><code class="xref download docutils literal notranslate"><span class="pre">ShadowLit.shader</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>Plane の上に球を置き、両方にこのシェーダーのマテリアルを設定すると、球の影が Plane に落ちる。Plane だけに URP の標準の Lit シェーダーを使った場合も、球の影は Plane に落ちる。</p>
+<section id="id5">
+<h3>パス間で共通の定数バッファー<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>このシェーダーは 3 つのパスを持つ。SRP Batcher に対応させるには、すべてのパスで <code class="docutils literal notranslate"><span class="pre">UnityPerMaterial</span></code> の内容を同じにする必要がある（第 5 章を参照）。そこで、<code class="docutils literal notranslate"><span class="pre">HLSLINCLUDE</span></code> ブロックに <code class="docutils literal notranslate"><span class="pre">Core.hlsl</span></code> の読み込みと <code class="docutils literal notranslate"><span class="pre">UnityPerMaterial</span></code> の宣言をまとめ、すべてのパスで共通に使っている。</p>
+</section>
+</section>
+<section id="id6">
+<h2>影を受ける処理<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>影を受ける処理は、<code class="docutils literal notranslate"><span class="pre">ForwardLit</span></code> パスで行っている。</p>
+<section id="id7">
+<h3>シェーダーのバリアントとキーワード<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>URP は、URP Asset の影の設定に応じて、<code class="docutils literal notranslate"><span class="pre">_MAIN_LIGHT_SHADOWS</span></code> などのキーワードを有効にする。シェーダーの中では、キーワードが有効かどうかで <code class="docutils literal notranslate"><span class="pre">#if</span></code> によって処理を切り替えている。<code class="docutils literal notranslate"><span class="pre">Lighting.hlsl</span></code> の中の影の関数も、これらのキーワードを見て、影の計算を行うかどうかを決めている。</p>
+<p><code class="docutils literal notranslate"><span class="pre">#pragma</span> <span class="pre">multi_compile</span></code> は、指定したキーワードごとに、シェーダーの別々の版をコンパイルする命令である。この別々の版をシェーダーのバリアントという。</p>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="cp">#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE</span>
+</pre></div>
+</div>
+<p>この行では、キーワードなし（<code class="docutils literal notranslate"><span class="pre">_</span></code>）、<code class="docutils literal notranslate"><span class="pre">_MAIN_LIGHT_SHADOWS</span></code>、<code class="docutils literal notranslate"><span class="pre">_MAIN_LIGHT_SHADOWS_CASCADE</span></code> の 3 つのバリアントが作られる。実行時には、有効になっているキーワードに合ったバリアントが使われる。キーワードの意味は、次のとおりである。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 45.0%" />
+<col style="width: 55.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>キーワード</p></th>
+<th class="head"><p>有効になる条件</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_MAIN_LIGHT_SHADOWS</span></code></p></td>
+<td><p>メインライトの影が有効で、カスケードが 1 つのとき</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_MAIN_LIGHT_SHADOWS_CASCADE</span></code></p></td>
+<td><p>メインライトの影が有効で、カスケードが 2 つ以上のとき</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_SHADOWS_SOFT</span></code> など</p></td>
+<td><p>ソフトシャドウ（影の輪郭をぼかす処理）が有効なとき。末尾の <code class="docutils literal notranslate"><span class="pre">_LOW</span></code>、<code class="docutils literal notranslate"><span class="pre">_MEDIUM</span></code>、<code class="docutils literal notranslate"><span class="pre">_HIGH</span></code> は品質を表す</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">#pragma</span> <span class="pre">multi_compile_fragment</span></code> は、フラグメントシェーダーだけでキーワードを使う場合の書き方である。頂点シェーダーのバリアントが増えないため、コンパイルの時間とメモリを節約できる。</p>
+<p>バリアントの数は、キーワードの組み合わせの数だけ増える。この例では 3 × 5 = 15 個のバリアントが作られる。バリアントが多すぎる問題については、第 17 章で説明する。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>URP には、画面空間で影を計算する Screen Space Shadows という機能もある。この機能を有効にすると <code class="docutils literal notranslate"><span class="pre">_MAIN_LIGHT_SHADOWS_SCREEN</span></code> キーワードが使われるが、サンプルは対応していない。Screen Space Shadows は既定では無効である。</p>
+</div>
+</section>
+<section id="id8">
+<h3>シャドウマップの参照<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>フラグメントシェーダーでは、<code class="docutils literal notranslate"><span class="pre">TransformWorldToShadowCoord</span></code> 関数で、ワールド空間の位置をシャドウマップの座標に変換している。カスケードシャドウマップの場合は、どのカスケードを使うかもこの関数が決める。</p>
+<p>その座標を <code class="docutils literal notranslate"><span class="pre">GetMainLight</span></code> 関数の引数に渡すと、戻り値の <code class="docutils literal notranslate"><span class="pre">shadowAttenuation</span></code> に、影の中にあるかどうかが 0（完全に影の中）～1（影の外）の値で入る。ライトの色に <code class="docutils literal notranslate"><span class="pre">shadowAttenuation</span></code> を掛けることで、影の中では拡散反射と鏡面反射が弱まる。環境光には掛けないため、影の中も真っ暗にはならない。</p>
+</section>
+</section>
+<section id="id9">
+<h2>影を落とす処理<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>影を落とす処理は、<code class="docutils literal notranslate"><span class="pre">ShadowCaster</span></code> パスで行っている。URP は、シャドウマップを描画するときに、<code class="docutils literal notranslate"><span class="pre">LightMode</span></code> が <code class="docutils literal notranslate"><span class="pre">ShadowCaster</span></code> のパスを使う。</p>
+<ul class="simple">
+<li><p>色は必要なく深度だけを書き込むため、<code class="docutils literal notranslate"><span class="pre">ColorMask</span> <span class="pre">0</span></code> で色の書き込みを止めている。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_LightDirection</span></code> と <code class="docutils literal notranslate"><span class="pre">_LightPosition</span></code> には、影を描画しているライトの向きと位置を、URP が設定する。ポイントライトとスポットライトの影を描画するときは、URP が <code class="docutils literal notranslate"><span class="pre">_CASTING_PUNCTUAL_LIGHT_SHADOW</span></code> キーワードを有効にする。</p></li>
+<li><p>頂点シェーダーでは、<code class="docutils literal notranslate"><span class="pre">ApplyShadowBias</span></code> 関数で頂点の位置を少しずらしている。これは、シャドウアクネと呼ばれる現象を防ぐためである。</p></li>
+</ul>
+<section id="id10">
+<h3>シャドウアクネ<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>シャドウマップの 1 つのピクセルは、ある程度の広さを持つ。そのため、ライトに照らされている面でも、自分自身の深度と比べたときに、わずかな差で「奥にある」と判定される部分ができる。その結果、表面に縞模様の影が現れる。この現象をシャドウアクネという。</p>
+<p>シャドウアクネを防ぐには、シャドウマップに書き込む深度をライトから少し遠ざける（深度バイアス）か、頂点を法線の逆方向に少し押し込む（法線バイアス）。<code class="docutils literal notranslate"><span class="pre">ApplyShadowBias</span></code> 関数は、ライトの <span class="guilabel">Shadows</span> の <span class="guilabel">Bias</span> の設定に従って、両方を適用する。バイアスが大きすぎると、影がオブジェクトから離れて見える（ピーターパン現象）。</p>
+</section>
+</section>
+<section id="depthonly">
+<h2>DepthOnly パス<a class="headerlink" href="#depthonly" title="Link to this heading"></a></h2>
+<p>URP は、カメラの深度テクスチャーが必要な場合に、<code class="docutils literal notranslate"><span class="pre">LightMode</span></code> が <code class="docutils literal notranslate"><span class="pre">DepthOnly</span></code> のパスで、不透明なオブジェクトの深度を先に描画することがある。例えば、Universal Renderer Data アセットの <span class="guilabel">Depth Priming Mode</span> を有効にした場合である。<code class="docutils literal notranslate"><span class="pre">DepthOnly</span></code> のパスがないシェーダーは、深度テクスチャーに書き込まれないため、深度テクスチャーを使う機能で正しく扱われない。</p>
+<p><code class="docutils literal notranslate"><span class="pre">DepthOnly</span></code> のパスは、深度を書き込むだけの単純なパスである。サンプルでは、フラグメントシェーダーでクリップ空間の z を返し、<code class="docutils literal notranslate"><span class="pre">ColorMask</span> <span class="pre">R</span></code> で 1 つのチャンネルだけに書き込んでいる。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>Screen Space Ambient Occlusion（SSAO）などの機能は、深度に加えて法線のテクスチャーを使う。その場合、URP は <code class="docutils literal notranslate"><span class="pre">LightMode</span></code> が <code class="docutils literal notranslate"><span class="pre">DepthNormals</span></code> のパスを使う。本資料では <code class="docutils literal notranslate"><span class="pre">DepthNormals</span></code> のパスは扱わない。必要な場合は、URP の Lit シェーダーの <code class="docutils literal notranslate"><span class="pre">DepthNormals</span></code> のパスを参考にするとよい。</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch10_normal_map.html" class="btn btn-neutral float-left" title="第 10 章 法線マップ" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch12_transparency.html" class="btn btn-neutral float-right" title="第 12 章 透明と描画順" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

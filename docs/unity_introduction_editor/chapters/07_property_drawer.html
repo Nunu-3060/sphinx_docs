@@ -1,0 +1,497 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7. PropertyDrawer と DecoratorDrawer &mdash; Unity エディター拡張入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="8. EditorWindow" href="08_editor_window.html" />
+    <link rel="prev" title="6. カスタムエディター" href="06_custom_editor.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity エディター拡張入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_basics.html">2. エディター拡張の基本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_menu_item.html">3. メニューの追加</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_attributes.html">4. 属性による Inspector 表示の調整</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_serialized_object.html">5. SerializedObject と Undo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_custom_editor.html">6. カスタムエディター</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">7. PropertyDrawer と DecoratorDrawer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">7.1. サンプルコード</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#propertydrawer">7.2. 型に対する PropertyDrawer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">7.3. 属性に対する PropertyDrawer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#decoratordrawer">7.4. DecoratorDrawer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">7.5. PropertyDrawer を作るときの注意点</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#propertydrawer-propertyfield">7.5.1. PropertyDrawer の中で、同じフィールドの <code class="docutils literal notranslate"><span class="pre">PropertyField</span></code> を作らない</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#imgui-inspector">7.5.2. IMGUI の Inspector ウィンドウでは表示されない</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">7.6. 参考資料</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="08_editor_window.html">8. EditorWindow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_scene_view.html">9. Scene ビューの拡張</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_assets.html">10. アセットの操作</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_settings.html">11. 設定の保存</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_batch_rename.html">12. 実践：一括リネームツールを作る</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_appendix.html">13. 付録</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity エディター拡張入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">7. </span>PropertyDrawer と DecoratorDrawer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="propertydrawer-decoratordrawer">
+<h1><span class="section-number">7. </span>PropertyDrawer と DecoratorDrawer<a class="headerlink" href="#propertydrawer-decoratordrawer" title="Link to this heading"></a></h1>
+<p>第 6 章のカスタムエディターは、コンポーネント単位で表示をカスタマイズする仕組みでした。これに対して PropertyDrawer は、フィールド単位で表示をカスタマイズする仕組みです。一度作成すれば、どのコンポーネントのフィールドにも適用されます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 35.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>仕組み</p></th>
+<th class="head"><p>カスタマイズの単位</p></th>
+<th class="head"><p>適用される場所</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>カスタムエディター</p></td>
+<td><p>コンポーネント（またはアセット）の型</p></td>
+<td><p>指定した型の Inspector ウィンドウ全体</p></td>
+</tr>
+<tr class="row-odd"><td><p>PropertyDrawer</p></td>
+<td><p>フィールドの型、または属性</p></td>
+<td><p>その型のフィールド、またはその属性を付けたフィールド</p></td>
+</tr>
+<tr class="row-even"><td><p>DecoratorDrawer</p></td>
+<td><p>属性</p></td>
+<td><p>その属性を付けたフィールドの上</p></td>
+</tr>
+</tbody>
+</table>
+<section id="id1">
+<h2><span class="section-number">7.1. </span>サンプルコード<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>PropertyDrawer と DecoratorDrawer が適用されるフィールドを持つコンポーネントです。</p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">Runtime/DrawerExample.cs</span><a class="headerlink" href="#id5" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro</span>
+<span class="linenos"> 4</span><span class="p">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="c1">/// 第 7 章のサンプルです。</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// 自作の PropertyDrawer と DecoratorDrawer が適用されるフィールドを持ちます。</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">DrawerExample</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">MonoBehaviour</span>
+<span class="linenos">10</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">11</span><span class="w">        </span><span class="c1">// NoteAttribute → NoteDrawer（DecoratorDrawer）で補足説明を表示します。</span>
+<span class="linenos">12</span><span class="w">        </span><span class="c1">// MinMaxRange 型 → MinMaxRangeDrawer（PropertyDrawer）で表示します。</span>
+<span class="linenos">13</span><span class="w">        </span><span class="na">[Note(&quot;敵が出現する間隔（秒）を、最小値と最大値で指定します。&quot;)]</span>
+<span class="linenos">14</span><span class="w">        </span><span class="na">[SerializeField]</span><span class="w"> </span><span class="k">private</span><span class="w"> </span><span class="n">MinMaxRange</span><span class="w"> </span><span class="n">spawnInterval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">MinMaxRange</span><span class="p">(</span><span class="mf">1f</span><span class="p">,</span><span class="w"> </span><span class="mf">3f</span><span class="p">);</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="w">        </span><span class="c1">// TagSelectorAttribute → TagSelectorDrawer（PropertyDrawer）で表示します。</span>
+<span class="linenos">17</span><span class="w">        </span><span class="na">[TagSelector]</span>
+<span class="linenos">18</span><span class="w">        </span><span class="na">[SerializeField]</span><span class="w"> </span><span class="k">private</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">targetTag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Player&quot;</span><span class="p">;</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">MinMaxRange</span><span class="w"> </span><span class="n">SpawnInterval</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">spawnInterval</span><span class="p">;</span>
+<span class="linenos">21</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">TargetTag</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">targetTag</span><span class="p">;</span>
+<span class="linenos">22</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">23</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/5acd1fb61cee02f0ef67c65f7edf279f/DrawerExample.cs"><code class="xref download docutils literal notranslate"><span class="pre">DrawerExample.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>このコンポーネントをゲームオブジェクトに追加すると、Inspector ウィンドウは次のように表示されます。</p>
+<ul class="simple">
+<li><p>「Spawn Interval」の上に、補足説明が表示される</p></li>
+<li><p>「Spawn Interval」の最小値と最大値が 1 行に並び、最小値が最大値を超えると警告が表示される</p></li>
+<li><p>「Target Tag」が、タグを選択するドロップダウンになる</p></li>
+</ul>
+</section>
+<section id="propertydrawer">
+<h2><span class="section-number">7.2. </span>型に対する PropertyDrawer<a class="headerlink" href="#propertydrawer" title="Link to this heading"></a></h2>
+<p>最小値と最大値の組を表す <code class="docutils literal notranslate"><span class="pre">MinMaxRange</span></code> 構造体を例に、独自の型の表示をカスタマイズします。</p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">Runtime/MinMaxRange.cs</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">System</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro</span>
+<span class="linenos"> 5</span><span class="p">{</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// 最小値と最大値の組を表す型です。</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// 第 7 章の MinMaxRangeDrawer で、Inspector ウィンドウの表示をカスタマイズします。</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">10</span><span class="w">    </span><span class="na">[Serializable]</span>
+<span class="linenos">11</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">MinMaxRange</span>
+<span class="linenos">12</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">13</span><span class="w">        </span><span class="na">[SerializeField]</span><span class="w"> </span><span class="k">private</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">min</span><span class="p">;</span>
+<span class="linenos">14</span><span class="w">        </span><span class="na">[SerializeField]</span><span class="w"> </span><span class="k">private</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">max</span><span class="p">;</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="nf">MinMaxRange</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">min</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">max</span><span class="p">)</span>
+<span class="linenos">17</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">18</span><span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="n">min</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">;</span>
+<span class="linenos">19</span><span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="n">max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">;</span>
+<span class="linenos">20</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Min</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">min</span><span class="p">;</span>
+<span class="linenos">23</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Max</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">max</span><span class="p">;</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="w">        </span><span class="c1">/// &lt;summary&gt;min 以上 max 以下の乱数を返します。&lt;/summary&gt;</span>
+<span class="linenos">26</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="nf">GetRandomValue</span><span class="p">()</span>
+<span class="linenos">27</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">28</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">UnityEngine</span><span class="p">.</span><span class="n">Random</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="n">min</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="p">);</span>
+<span class="linenos">29</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">30</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">31</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/ea785b9b72d4cb017776ef656517a83d/MinMaxRange.cs"><code class="xref download docutils literal notranslate"><span class="pre">MinMaxRange.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>独自の型をシリアライズするには、型に <code class="docutils literal notranslate"><span class="pre">Serializable</span></code> 属性を付けます。PropertyDrawer を作成しない場合、この型のフィールドは、折りたたみ可能な見出しの下に「Min」と「Max」が縦に並んで表示されます。</p>
+<p>この表示を 1 行にまとめる PropertyDrawer が次のコードです。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">Editor/MinMaxRangeDrawer.cs</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEditor.UIElements</span><span class="p">;</span>
+<span class="linenos"> 3</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine.UIElements</span><span class="p">;</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro.EditorScripts</span>
+<span class="linenos"> 6</span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// 第 7 章のサンプルです。</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="c1">/// MinMaxRange 型のフィールドを「ラベル・最小値・最大値」の 1 行で表示します。</span>
+<span class="linenos">10</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">11</span><span class="w">    </span><span class="na">[CustomPropertyDrawer(typeof(MinMaxRange))]</span>
+<span class="linenos">12</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">MinMaxRangeDrawer</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">PropertyDrawer</span>
+<span class="linenos">13</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">14</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="n">VisualElement</span><span class="w"> </span><span class="nf">CreatePropertyGUI</span><span class="p">(</span><span class="n">SerializedProperty</span><span class="w"> </span><span class="n">property</span><span class="p">)</span>
+<span class="linenos">15</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">16</span><span class="w">            </span><span class="c1">// MinMaxRange 構造体の中にある private フィールドを取得します。</span>
+<span class="linenos">17</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">minProperty</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">property</span><span class="p">.</span><span class="n">FindPropertyRelative</span><span class="p">(</span><span class="s">&quot;min&quot;</span><span class="p">);</span>
+<span class="linenos">18</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">maxProperty</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">property</span><span class="p">.</span><span class="n">FindPropertyRelative</span><span class="p">(</span><span class="s">&quot;max&quot;</span><span class="p">);</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">VisualElement</span><span class="p">();</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">VisualElement</span><span class="p">();</span>
+<span class="linenos">23</span><span class="w">            </span><span class="n">row</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">flexDirection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FlexDirection</span><span class="p">.</span><span class="n">Row</span><span class="p">;</span>
+<span class="linenos">24</span><span class="w">            </span><span class="n">root</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">row</span><span class="p">);</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Label</span><span class="p">(</span><span class="n">property</span><span class="p">.</span><span class="n">displayName</span><span class="p">);</span>
+<span class="linenos">27</span><span class="w">            </span><span class="n">label</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">120</span><span class="p">;</span>
+<span class="linenos">28</span><span class="w">            </span><span class="n">label</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">unityTextAlign</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UnityEngine</span><span class="p">.</span><span class="n">TextAnchor</span><span class="p">.</span><span class="n">MiddleLeft</span><span class="p">;</span>
+<span class="linenos">29</span><span class="w">            </span><span class="n">row</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="w">            </span><span class="n">row</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">CreateFloatField</span><span class="p">(</span><span class="s">&quot;最小&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">minProperty</span><span class="p">));</span>
+<span class="linenos">32</span><span class="w">            </span><span class="n">row</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">CreateFloatField</span><span class="p">(</span><span class="s">&quot;最大&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">maxProperty</span><span class="p">));</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span><span class="w">            </span><span class="c1">// 最小値が最大値を超えているときだけ警告を表示します。</span>
+<span class="linenos">35</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">warning</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HelpBox</span><span class="p">(</span><span class="s">&quot;最小値が最大値を超えています。&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">HelpBoxMessageType</span><span class="p">.</span><span class="n">Warning</span><span class="p">);</span>
+<span class="linenos">36</span><span class="w">            </span><span class="n">root</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">warning</span><span class="p">);</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span><span class="w">            </span><span class="k">void</span><span class="w"> </span><span class="nf">UpdateWarning</span><span class="p">()</span>
+<span class="linenos">39</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">40</span><span class="w">                </span><span class="kt">var</span><span class="w"> </span><span class="n">isInvalid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">minProperty</span><span class="p">.</span><span class="n">floatValue</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">maxProperty</span><span class="p">.</span><span class="n">floatValue</span><span class="p">;</span>
+<span class="linenos">41</span><span class="w">                </span><span class="n">warning</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">display</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">isInvalid</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">DisplayStyle</span><span class="p">.</span><span class="n">Flex</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">DisplayStyle</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+<span class="linenos">42</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">43</span>
+<span class="linenos">44</span><span class="w">            </span><span class="n">UpdateWarning</span><span class="p">();</span>
+<span class="linenos">45</span><span class="w">            </span><span class="n">root</span><span class="p">.</span><span class="n">TrackPropertyValue</span><span class="p">(</span><span class="n">minProperty</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">UpdateWarning</span><span class="p">());</span>
+<span class="linenos">46</span><span class="w">            </span><span class="n">root</span><span class="p">.</span><span class="n">TrackPropertyValue</span><span class="p">(</span><span class="n">maxProperty</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">UpdateWarning</span><span class="p">());</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">root</span><span class="p">;</span>
+<span class="linenos">49</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">50</span>
+<span class="linenos">51</span><span class="w">        </span><span class="k">private</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">FloatField</span><span class="w"> </span><span class="nf">CreateFloatField</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="n">label</span><span class="p">,</span><span class="w"> </span><span class="n">SerializedProperty</span><span class="w"> </span><span class="n">property</span><span class="p">)</span>
+<span class="linenos">52</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">53</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">FloatField</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
+<span class="linenos">54</span>
+<span class="linenos">55</span><span class="w">            </span><span class="c1">// BindProperty で、入力欄と SerializedProperty を結び付けます。</span>
+<span class="linenos">56</span><span class="w">            </span><span class="n">field</span><span class="p">.</span><span class="n">BindProperty</span><span class="p">(</span><span class="n">property</span><span class="p">);</span>
+<span class="linenos">57</span>
+<span class="linenos">58</span><span class="w">            </span><span class="c1">// 残りの幅を 2 つの入力欄で等分し、短いラベルが入力欄を圧迫しないようにします。</span>
+<span class="linenos">59</span><span class="w">            </span><span class="n">field</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">flexGrow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">60</span><span class="w">            </span><span class="n">field</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">flexBasis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="linenos">61</span><span class="w">            </span><span class="n">field</span><span class="p">.</span><span class="n">labelElement</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">minWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="linenos">62</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">field</span><span class="p">;</span>
+<span class="linenos">63</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">64</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">65</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/297bbf131de81f0338d8ea50bceec5c0/MinMaxRangeDrawer.cs"><code class="xref download docutils literal notranslate"><span class="pre">MinMaxRangeDrawer.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>PropertyDrawer は、次の手順で作成します。</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PropertyDrawer</span></code> クラスを継承したクラスを、エディター専用のアセンブリに作成します。</p></li>
+<li><p>クラスに <code class="docutils literal notranslate"><span class="pre">CustomPropertyDrawer</span></code> 属性を付け、対象の型を指定します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CreatePropertyGUI</span></code> メソッドをオーバーライドし、表示する UI を作成して返します。</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">CreatePropertyGUI</span></code> の引数には、表示の対象となるフィールドの <code class="docutils literal notranslate"><span class="pre">SerializedProperty</span></code> が渡されます。構造体やクラスの中のフィールドは、<code class="docutils literal notranslate"><span class="pre">FindPropertyRelative</span></code> にフィールド名を指定して取得します。</p>
+<p>入力欄と <code class="docutils literal notranslate"><span class="pre">SerializedProperty</span></code> を結び付けるには、<code class="docutils literal notranslate"><span class="pre">BindProperty</span></code> メソッドを使います。</p>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="kt">var</span><span class="w"> </span><span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">FloatField</span><span class="p">(</span><span class="n">label</span><span class="p">);</span>
+<span class="n">field</span><span class="p">.</span><span class="n">BindProperty</span><span class="p">(</span><span class="n">property</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>最小値が最大値を超えたときの警告は、第 6 章と同じく <code class="docutils literal notranslate"><span class="pre">TrackPropertyValue</span></code> を使って表示を切り替えています。</p>
+</section>
+<section id="id2">
+<h2><span class="section-number">7.3. </span>属性に対する PropertyDrawer<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>PropertyDrawer は、型ではなく属性に対しても作成できます。属性に対する PropertyDrawer を使うと、同じ string 型のフィールドでも、属性を付けたものだけ表示を変えられます。</p>
+<p>まず、<code class="docutils literal notranslate"><span class="pre">PropertyAttribute</span></code> を継承した属性クラスを作成します。属性はゲーム本体側のスクリプトで使うため、ゲーム本体側のアセンブリに置きます。</p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">Runtime/TagSelectorAttribute.cs</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro</span>
+<span class="linenos"> 4</span><span class="p">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="c1">/// string 型のフィールドに付けると、タグをドロップダウンで選択できるようになる属性です。</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// 表示の処理は第 7 章の TagSelectorDrawer に記述します。</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TagSelectorAttribute</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">PropertyAttribute</span>
+<span class="linenos">10</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">11</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">12</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/24d2469e35c7fa163deb935f22a34b6e/TagSelectorAttribute.cs"><code class="xref download docutils literal notranslate"><span class="pre">TagSelectorAttribute.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>次に、この属性に対する PropertyDrawer を、エディター専用のアセンブリに作成します。<code class="docutils literal notranslate"><span class="pre">CustomPropertyDrawer</span></code> 属性には、属性クラスの型を指定します。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">Editor/TagSelectorDrawer.cs</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEditor.UIElements</span><span class="p">;</span>
+<span class="linenos"> 3</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine.UIElements</span><span class="p">;</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro.EditorScripts</span>
+<span class="linenos"> 6</span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// 第 7 章のサンプルです。</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="c1">/// TagSelector 属性が付いた string 型のフィールドを、タグのドロップダウンで表示します。</span>
+<span class="linenos">10</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">11</span><span class="w">    </span><span class="na">[CustomPropertyDrawer(typeof(TagSelectorAttribute))]</span>
+<span class="linenos">12</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">TagSelectorDrawer</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">PropertyDrawer</span>
+<span class="linenos">13</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">14</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="n">VisualElement</span><span class="w"> </span><span class="nf">CreatePropertyGUI</span><span class="p">(</span><span class="n">SerializedProperty</span><span class="w"> </span><span class="n">property</span><span class="p">)</span>
+<span class="linenos">15</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">16</span><span class="w">            </span><span class="c1">// string 型以外のフィールドに付けられた場合は、エラーメッセージを表示します。</span>
+<span class="linenos">17</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">property</span><span class="p">.</span><span class="n">propertyType</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">SerializedPropertyType</span><span class="p">.</span><span class="n">String</span><span class="p">)</span>
+<span class="linenos">18</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">19</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nf">HelpBox</span><span class="p">(</span>
+<span class="linenos">20</span><span class="w">                    </span><span class="s">$&quot;{property.displayName}：TagSelector 属性は string 型のフィールドにだけ使用できます。&quot;</span><span class="p">,</span>
+<span class="linenos">21</span><span class="w">                    </span><span class="n">HelpBoxMessageType</span><span class="p">.</span><span class="n">Error</span><span class="p">);</span>
+<span class="linenos">22</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="w">            </span><span class="c1">// TagField は、プロジェクトに登録されているタグを選択肢に持つドロップダウンです。</span>
+<span class="linenos">25</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">TagField</span><span class="p">(</span><span class="n">property</span><span class="p">.</span><span class="n">displayName</span><span class="p">);</span>
+<span class="linenos">26</span><span class="w">            </span><span class="n">field</span><span class="p">.</span><span class="n">BindProperty</span><span class="p">(</span><span class="n">property</span><span class="p">);</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="w">            </span><span class="c1">// ほかのフィールドとラベルの幅をそろえます。</span>
+<span class="linenos">29</span><span class="w">            </span><span class="n">field</span><span class="p">.</span><span class="n">AddToClassList</span><span class="p">(</span><span class="n">BaseField</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">&gt;</span><span class="p">.</span><span class="n">alignedFieldUssClassName</span><span class="p">);</span>
+<span class="linenos">30</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">field</span><span class="p">;</span>
+<span class="linenos">31</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">32</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">33</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/a80db510f42cbaa50ee94a9e63b58f0c/TagSelectorDrawer.cs"><code class="xref download docutils literal notranslate"><span class="pre">TagSelectorDrawer.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>属性は、どの型のフィールドにも付けられてしまいます。サンプルコードでは、<code class="docutils literal notranslate"><span class="pre">propertyType</span></code> でフィールドの型を調べ、string 型以外に付けられた場合はエラーメッセージを表示しています。</p>
+<p><code class="docutils literal notranslate"><span class="pre">TagField</span></code> は、プロジェクトに登録されているタグを選択肢に持つドロップダウンです。UI Toolkit には、このほかにもエディター用の入力欄が用意されています。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>要素</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TagField</span></code></p></td>
+<td><p>タグを選択するドロップダウン</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">LayerField</span></code></p></td>
+<td><p>レイヤーを選択するドロップダウン</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ObjectField</span></code></p></td>
+<td><p>オブジェクトの参照を指定する入力欄</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ColorField</span></code></p></td>
+<td><p>色を指定する入力欄</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">BaseField&lt;string&gt;.alignedFieldUssClassName</span></code> は、Inspector ウィンドウでほかのフィールドとラベルの幅をそろえるための USS クラス名です。<code class="docutils literal notranslate"><span class="pre">PropertyField</span></code> が作成する入力欄には自動で付きますが、自分で作成した入力欄には付かないため、明示的に追加しています。</p>
+</section>
+<section id="decoratordrawer">
+<h2><span class="section-number">7.4. </span>DecoratorDrawer<a class="headerlink" href="#decoratordrawer" title="Link to this heading"></a></h2>
+<p>DecoratorDrawer は、フィールドの上に装飾を加えるための仕組みです。第 4 章の <code class="docutils literal notranslate"><span class="pre">Header</span></code> 属性や <code class="docutils literal notranslate"><span class="pre">Space</span></code> 属性も、DecoratorDrawer で実現されています。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">Runtime/NoteAttribute.cs</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro</span>
+<span class="linenos"> 4</span><span class="p">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="c1">/// フィールドの上に補足説明を表示する属性です。</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// 表示の処理は第 7 章の NoteDrawer に記述します。</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">NoteAttribute</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">PropertyAttribute</span>
+<span class="linenos">10</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">11</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="nf">NoteAttribute</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="n">text</span><span class="p">)</span>
+<span class="linenos">12</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">13</span><span class="w">            </span><span class="n">Text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">text</span><span class="p">;</span>
+<span class="linenos">14</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">Text</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos">17</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">18</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/059ccf247502d749197a990d3193907c/NoteAttribute.cs"><code class="xref download docutils literal notranslate"><span class="pre">NoteAttribute.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">Editor/NoteDrawer.cs</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine.UIElements</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro.EditorScripts</span>
+<span class="linenos"> 5</span><span class="p">{</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// 第 7 章のサンプルです。</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// Note 属性が付いたフィールドの上に、補足説明を表示します。</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">10</span><span class="w">    </span><span class="na">[CustomPropertyDrawer(typeof(NoteAttribute))]</span>
+<span class="linenos">11</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">NoteDrawer</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">DecoratorDrawer</span>
+<span class="linenos">12</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">13</span><span class="w">        </span><span class="c1">// DecoratorDrawer はフィールドの値を扱わないため、引数に SerializedProperty がありません。</span>
+<span class="linenos">14</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="n">VisualElement</span><span class="w"> </span><span class="nf">CreatePropertyGUI</span><span class="p">()</span>
+<span class="linenos">15</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">16</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">note</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">NoteAttribute</span><span class="p">)</span><span class="n">attribute</span><span class="p">;</span>
+<span class="linenos">17</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nf">HelpBox</span><span class="p">(</span><span class="n">note</span><span class="p">.</span><span class="n">Text</span><span class="p">,</span><span class="w"> </span><span class="n">HelpBoxMessageType</span><span class="p">.</span><span class="n">Info</span><span class="p">);</span>
+<span class="linenos">18</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">19</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">20</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/c96cf443705ff221e449ad2d1d76b7ca/NoteDrawer.cs"><code class="xref download docutils literal notranslate"><span class="pre">NoteDrawer.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>DecoratorDrawer はフィールドの値を扱わないため、<code class="docutils literal notranslate"><span class="pre">CreatePropertyGUI</span></code> に引数がありません。属性に渡した値は、<code class="docutils literal notranslate"><span class="pre">attribute</span></code> プロパティから取得します。</p>
+<p>PropertyDrawer と違い、DecoratorDrawer は 1 つのフィールドに複数適用できます。サンプルコードの <code class="docutils literal notranslate"><span class="pre">spawnInterval</span></code> フィールドでは、<code class="docutils literal notranslate"><span class="pre">Note</span></code> 属性による DecoratorDrawer と、<code class="docutils literal notranslate"><span class="pre">MinMaxRange</span></code> 型に対する PropertyDrawer が同時に適用されています。</p>
+</section>
+<section id="id3">
+<h2><span class="section-number">7.5. </span>PropertyDrawer を作るときの注意点<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<section id="propertydrawer-propertyfield">
+<h3><span class="section-number">7.5.1. </span>PropertyDrawer の中で、同じフィールドの <code class="docutils literal notranslate"><span class="pre">PropertyField</span></code> を作らない<a class="headerlink" href="#propertydrawer-propertyfield" title="Link to this heading"></a></h3>
+<p>属性に対する PropertyDrawer の中で、引数の <code class="docutils literal notranslate"><span class="pre">property</span></code> をそのまま <code class="docutils literal notranslate"><span class="pre">PropertyField</span></code> に渡すと、その <code class="docutils literal notranslate"><span class="pre">PropertyField</span></code> にも同じ PropertyDrawer が適用される可能性があります。サンプルコードの <code class="docutils literal notranslate"><span class="pre">TagSelectorDrawer</span></code> のように、<code class="docutils literal notranslate"><span class="pre">TagField</span></code> などの具体的な入力欄を作成してください。</p>
+<p>一方、<code class="docutils literal notranslate"><span class="pre">FindPropertyRelative</span></code> で取得した子のフィールドを <code class="docutils literal notranslate"><span class="pre">PropertyField</span></code> で表示するのは問題ありません。</p>
+</section>
+<section id="imgui-inspector">
+<h3><span class="section-number">7.5.2. </span>IMGUI の Inspector ウィンドウでは表示されない<a class="headerlink" href="#imgui-inspector" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">CreatePropertyGUI</span></code> は UI Toolkit 用のメソッドです。Unity 6 の既定の Inspector ウィンドウは UI Toolkit で表示されるため、通常は問題ありません。ただし、IMGUI の <code class="docutils literal notranslate"><span class="pre">OnInspectorGUI</span></code> で作られたカスタムエディターの中では <code class="docutils literal notranslate"><span class="pre">CreatePropertyGUI</span></code> は使われず、代わりに IMGUI 用の <code class="docutils literal notranslate"><span class="pre">OnGUI</span></code> メソッドが呼ばれます。<code class="docutils literal notranslate"><span class="pre">OnGUI</span></code> を実装していない場合は、「No GUI Implemented」と表示されます。</p>
+</section>
+</section>
+<section id="id4">
+<h2><span class="section-number">7.6. </span>参考資料<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/PropertyDrawer.html">PropertyDrawer</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/PropertyDrawer.CreatePropertyGUI.html">PropertyDrawer.CreatePropertyGUI</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/DecoratorDrawer.html">DecoratorDrawer</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/PropertyAttribute.html">PropertyAttribute</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/UIElements.TagField.html">UIElements.TagField</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/UIElements.BaseField_1-alignedFieldUssClassName.html">UIElements.BaseField_1-alignedFieldUssClassName</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="06_custom_editor.html" class="btn btn-neutral float-left" title="6. カスタムエディター" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="08_editor_window.html" class="btn btn-neutral float-right" title="8. EditorWindow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

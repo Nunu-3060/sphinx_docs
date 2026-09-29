@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>エラーハンドリング &mdash; Rust 入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="ジェネリクスとトレイト" href="12_generics_and_traits.html" />
+    <link rel="prev" title="コレクション" href="../part2_ownership/10_collections.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rust 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第1部 基礎</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/01_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/02_first_program.html">最初のプログラム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/03_variables_and_types.html">変数と型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/04_control_flow.html">制御フロー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/05_functions.html">関数</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第2部 所有権とメモリ管理</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/06_ownership.html">所有権(Ownership)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/07_references_and_borrowing.html">借用と参照</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/08_structs.html">構造体</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/09_enums_and_pattern_matching.html">列挙型とパターンマッチング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/10_collections.html">コレクション</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第3部 実務でよく使う機能</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">エラーハンドリング</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#panic">回復不能なエラー: panic! マクロ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#result-t-e">回復可能なエラー: Result&lt;T, E&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#match-result">match による Result の処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#unwrap-expect">unwrap と expect の使い方と注意点</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">? 演算子によるエラーの伝播</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">独自のエラー型</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#result-option">Result/Option のコンビネータメソッド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="12_generics_and_traits.html">ジェネリクスとトレイト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_modules_and_packages.html">モジュールとパッケージ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_iterators_and_closures.html">イテレータとクロージャ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第4部 発展</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part4_advanced/15_lifetimes.html">ライフタイム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part4_advanced/16_smart_pointers.html">スマートポインタ(概論)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part4_advanced/17_concurrency.html">並行処理の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part4_advanced/18_cargo_and_ecosystem.html">Cargo とエコシステム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part4_advanced/19_testing.html">テスト</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第5部 まとめ</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part5_conclusion/20_practical_project.html">簡単な実践プロジェクト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part5_conclusion/21_next_steps.html">次のステップ</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rust 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">エラーハンドリング</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>エラーハンドリング<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>プログラムを書いていると、ファイルが見つからない、ネットワーク接続が切れる、入力値が不正であるなど、さまざまな「失敗」に遭遇します。Python では主に <code class="docutils literal notranslate"><span class="pre">try</span></code>/<code class="docutils literal notranslate"><span class="pre">except</span></code> を使って実行時に例外を捕捉しますが、Rust ではエラーを「回復不能なエラー」と「回復可能なエラー」の2種類に分けて考え、それぞれ異なる方法で扱います。本章ではこの2つの仕組みと、エラーを扱う際によく使われる構文を学びます。</p>
+<section id="panic">
+<h2>回復不能なエラー: panic! マクロ<a class="headerlink" href="#panic" title="Link to this heading"></a></h2>
+<p>プログラムがこれ以上正常に処理を続けられない致命的な状況では、 <code class="docutils literal notranslate"><span class="pre">panic!</span></code> マクロを使って処理を強制的に停止させます。配列の範囲外アクセスをしたときや、<code class="docutils literal notranslate"><span class="pre">panic!(&quot;メッセージ&quot;)</span></code> を明示的に呼び出したときに発生します。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">];</span>
+
+<span class="w">    </span><span class="c1">// 範囲外アクセスは panic を引き起こす</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">[</span><span class="mi">99</span><span class="p">]);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>このコードを実行すると、Rust はエラーメッセージと発生箇所を表示してプロセスを異常終了させます。<code class="docutils literal notranslate"><span class="pre">panic!</span></code> は、バグの検出やそれ以上処理を続けても安全ではない状況のためのものであり、あらかじめ起こりうると分かっているエラーの処理には使いません。</p>
+</section>
+<section id="result-t-e">
+<h2>回復可能なエラー: Result&lt;T, E&gt;<a class="headerlink" href="#result-t-e" title="Link to this heading"></a></h2>
+<p>ファイルが存在しない、数値のパースに失敗したなど、あらかじめ想定できるエラーには <code class="docutils literal notranslate"><span class="pre">Result&lt;T,</span> <span class="pre">E&gt;</span></code> という列挙型を使います。定義は次のようになっています。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">E</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">T</span><span class="p">),</span>
+<span class="w">    </span><span class="nb">Err</span><span class="p">(</span><span class="n">E</span><span class="p">),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>処理が成功すれば <code class="docutils literal notranslate"><span class="pre">Ok</span></code> に成功値を、失敗すれば <code class="docutils literal notranslate"><span class="pre">Err</span></code> にエラー値を包んで返します。例えば標準ライブラリの <code class="docutils literal notranslate"><span class="pre">File::open</span></code> は <code class="docutils literal notranslate"><span class="pre">Result&lt;File,</span> <span class="pre">std::io::Error&gt;</span></code> を返します。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">File</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">::</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;hello.txt&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">file</span><span class="p">,</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;ファイルを開けませんでした: {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="match-result">
+<h2>match による Result の処理<a class="headerlink" href="#match-result" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Result</span></code> は列挙型なので、<code class="docutils literal notranslate"><span class="pre">match</span></code> 式を使って <code class="docutils literal notranslate"><span class="pre">Ok</span></code>/<code class="docutils literal notranslate"><span class="pre">Err</span></code> のそれぞれの場合に応じた処理を書くのが基本です。エラーの種類によって挙動を変えたい場合は、<code class="docutils literal notranslate"><span class="pre">Err</span></code> 側でさらに <code class="docutils literal notranslate"><span class="pre">match</span></code> することもできます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">File</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::</span><span class="n">ErrorKind</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">::</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;hello.txt&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">file</span><span class="p">,</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">error</span><span class="p">.</span><span class="n">kind</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">ErrorKind</span><span class="p">::</span><span class="n">NotFound</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;ファイルが見つかりません: {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="n">other_error</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="fm">panic!</span><span class="p">(</span><span class="s">&quot;ファイルを開けませんでした: {:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">other_error</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="unwrap-expect">
+<h2>unwrap と expect の使い方と注意点<a class="headerlink" href="#unwrap-expect" title="Link to this heading"></a></h2>
+<p>毎回 <code class="docutils literal notranslate"><span class="pre">match</span></code> を書くのは冗長に感じられることがあります。 <code class="docutils literal notranslate"><span class="pre">Result&lt;T,</span> <span class="pre">E&gt;</span></code> には <code class="docutils literal notranslate"><span class="pre">unwrap</span></code> メソッドと <code class="docutils literal notranslate"><span class="pre">expect</span></code> メソッドが用意されており、<code class="docutils literal notranslate"><span class="pre">Ok</span></code> の場合は中身を取り出し、<code class="docutils literal notranslate"><span class="pre">Err</span></code> の場合はその場で <code class="docutils literal notranslate"><span class="pre">panic!</span></code> します。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">File</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Err の場合、デフォルトのメッセージで panic する</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_file1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">::</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;hello.txt&quot;</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Err の場合、指定したメッセージで panic する</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_file2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">::</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;hello.txt&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;hello.txt を開けませんでした&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">expect</span></code> はメッセージを自分で指定できるため、<code class="docutils literal notranslate"><span class="pre">unwrap</span></code> よりもデバッグしやすくなります。ただし、どちらもエラー時にプログラムを即座に終了させるため、プロトタイピングや「失敗しないと分かっている」場面以外では多用すべきではありません。本番のコードでは、後述する <code class="docutils literal notranslate"><span class="pre">?</span></code> 演算子や <code class="docutils literal notranslate"><span class="pre">match</span></code> を使って適切にエラーを処理することが推奨されます。</p>
+</section>
+<section id="id2">
+<h2>? 演算子によるエラーの伝播<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>エラーが起きた関数の中では処理しきれず、呼び出し元にエラーを「伝播」させたい場合がよくあります。そのために使うのが <code class="docutils literal notranslate"><span class="pre">?</span></code> 演算子です。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">File</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">io</span><span class="p">::{</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">Read</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">read_username_from_file</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">io</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">::</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;hello.txt&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="w">    </span><span class="n">file</span><span class="p">.</span><span class="n">read_to_string</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">username</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="n">username</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">?</span></code> は、対象の <code class="docutils literal notranslate"><span class="pre">Result</span></code> が <code class="docutils literal notranslate"><span class="pre">Ok</span></code> であれば中身の値を取り出して処理を続け、<code class="docutils literal notranslate"><span class="pre">Err</span></code> であればその <code class="docutils literal notranslate"><span class="pre">Err</span></code> をそのまま関数の戻り値として即座に <code class="docutils literal notranslate"><span class="pre">return</span></code> します。これにより、<code class="docutils literal notranslate"><span class="pre">match</span></code> を何段も書かずに簡潔にエラーを伝播できます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">?</span></code> 演算子を使うには、それを使う関数自身の戻り値が <code class="docutils literal notranslate"><span class="pre">Result</span></code> (または <code class="docutils literal notranslate"><span class="pre">Option</span></code>)になっている必要があります。<code class="docutils literal notranslate"><span class="pre">main</span></code> 関数でも、戻り値を <code class="docutils literal notranslate"><span class="pre">Result&lt;(),</span> <span class="pre">E&gt;</span></code> にすれば <code class="docutils literal notranslate"><span class="pre">?</span></code> を利用できます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fs</span><span class="p">::</span><span class="n">File</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">::</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;hello.txt&quot;</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">dyn</span></code> (トレイトオブジェクト) や <code class="docutils literal notranslate"><span class="pre">Box</span></code> (スマートポインタ) については、スマートポインタの章で詳しく説明します。ここでは「<code class="docutils literal notranslate"><span class="pre">main</span></code> から <code class="docutils literal notranslate"><span class="pre">?</span></code> を使うための定型句」と捉えておけば十分です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">Option&lt;T&gt;</span></code> を返す関数でも同様に <code class="docutils literal notranslate"><span class="pre">?</span></code> を使えます。<code class="docutils literal notranslate"><span class="pre">Some</span></code> であれば中身を取り出して処理を続け、<code class="docutils literal notranslate"><span class="pre">None</span></code> であれば即座に <code class="docutils literal notranslate"><span class="pre">None</span></code> を返します。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">fn</span><span class="w"> </span><span class="nf">first_char_uppercase</span><span class="p">(</span><span class="n">text</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">first</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">text</span><span class="p">.</span><span class="n">chars</span><span class="p">().</span><span class="n">next</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">Some</span><span class="p">(</span><span class="n">first</span><span class="p">.</span><span class="n">to_ascii_uppercase</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">first_char_uppercase</span><span class="p">(</span><span class="s">&quot;rust&quot;</span><span class="p">));</span><span class="w"> </span><span class="c1">// Some(&#39;R&#39;)</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">first_char_uppercase</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">));</span><span class="w">      </span><span class="c1">// None</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>独自のエラー型<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>実務のコードでは、<code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Error&gt;</span></code> で済ませず、自分のプログラム専用のエラー型を定義することもよくあります。複数の失敗パターンを1つの <code class="docutils literal notranslate"><span class="pre">enum</span></code> にまとめ、<code class="docutils literal notranslate"><span class="pre">std::fmt::Display</span></code> を実装してエラーメッセージを組み立てられるようにするのが基本的なパターンです。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">fmt</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug)]</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">AppError</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">NotFound</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+<span class="w">    </span><span class="n">InvalidInput</span><span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">fmt</span><span class="p">::</span><span class="n">Display</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">AppError</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">fmt</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">fmt</span><span class="p">::</span><span class="n">Formatter</span><span class="o">&lt;&#39;</span><span class="nb">_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">fmt</span><span class="p">::</span><span class="nb">Result</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="bp">self</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">AppError</span><span class="p">::</span><span class="n">NotFound</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;{} が見つかりません&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">),</span>
+<span class="w">            </span><span class="n">AppError</span><span class="p">::</span><span class="n">InvalidInput</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">write!</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;入力が不正です: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">),</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">AppError</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">find_user</span><span class="p">(</span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">AppError</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="n">AppError</span><span class="p">::</span><span class="n">NotFound</span><span class="p">(</span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;ユーザー&quot;</span><span class="p">)));</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(</span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;Alice&quot;</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">find_user</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;見つかりました: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">),</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;エラー: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="p">),</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">impl</span> <span class="pre">std::error::Error</span> <span class="pre">for</span> <span class="pre">AppError</span> <span class="pre">{}</span></code> のように、<code class="docutils literal notranslate"><span class="pre">Display</span></code> だけでなく <code class="docutils literal notranslate"><span class="pre">std::error::Error</span></code> トレイトも実装しておくのが、独自のエラー型としては「完成形」となる慣習的なパターンです。<code class="docutils literal notranslate"><span class="pre">Error</span></code> トレイト自体にはメソッドの実装義務がほとんどありませんが、これを実装しておくことで、例えば <code class="docutils literal notranslate"><span class="pre">AppError</span></code> を <code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Error&gt;</span></code> に変換して先ほどの <code class="docutils literal notranslate"><span class="pre">?</span></code> 演算子でまとめて扱えるようになるなど、標準ライブラリやエコシステムのエラー処理の仕組みと連携しやすくなります。</p>
+<p>なお、<code class="docutils literal notranslate"><span class="pre">?</span></code> 演算子は、対象の <code class="docutils literal notranslate"><span class="pre">Err</span></code> の型と関数の戻り値のエラー型が異なっていても、内部で <code class="docutils literal notranslate"><span class="pre">From::from</span></code> を呼び出して自動的に型変換を行ってくれます。異なる種類のエラー(例えば <code class="docutils literal notranslate"><span class="pre">std::io::Error</span></code> と独自のエラー型)を1つの関数の中で <code class="docutils literal notranslate"><span class="pre">?</span></code> を使ってまとめて扱いたいときは、独自のエラー型に対して <code class="docutils literal notranslate"><span class="pre">From&lt;io::Error&gt;</span></code> を実装しておくと、<code class="docutils literal notranslate"><span class="pre">?</span></code> だけで変換までしてくれるようになります。</p>
+<p>ここまで見てきたように、独自のエラー型を「きちんと」定義しようとすると <code class="docutils literal notranslate"><span class="pre">Display</span></code> や <code class="docutils literal notranslate"><span class="pre">Error</span></code> の実装、<code class="docutils literal notranslate"><span class="pre">From</span></code> による変換など、書くべき定型コードが増えていきます。そのため実務の Rust コードでは、こうした手作業を省くために <code class="docutils literal notranslate"><span class="pre">anyhow</span></code> や <code class="docutils literal notranslate"><span class="pre">thiserror</span></code> というクレートがデファクトスタンダードとしてよく使われます。アプリケーションのコードでは、<code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Error&gt;</span></code> を手軽に扱える <code class="docutils literal notranslate"><span class="pre">anyhow</span></code> がよく使われ、ライブラリのコードでは <code class="docutils literal notranslate"><span class="pre">#[derive(thiserror::Error)]</span></code> によって <code class="docutils literal notranslate"><span class="pre">Display</span></code>/<code class="docutils literal notranslate"><span class="pre">Error</span></code> の実装を自動生成できる <code class="docutils literal notranslate"><span class="pre">thiserror</span></code> がよく使われます。本書では標準ライブラリの範囲にとどめて解説していますが、実務でエラー処理を書く際にはこれらのクレートの存在を知っておくとよいでしょう。</p>
+</section>
+<section id="result-option">
+<h2>Result/Option のコンビネータメソッド<a class="headerlink" href="#result-option" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">match</span></code> や <code class="docutils literal notranslate"><span class="pre">unwrap</span></code>/<code class="docutils literal notranslate"><span class="pre">expect</span></code>/<code class="docutils literal notranslate"><span class="pre">?</span></code> 以外にも、<code class="docutils literal notranslate"><span class="pre">Result</span></code>/<code class="docutils literal notranslate"><span class="pre">Option</span></code> には「コンビネータ」と呼ばれる便利なメソッドが多数用意されています。実務の Rust コードでは、これらのメソッドが <code class="docutils literal notranslate"><span class="pre">match</span></code> や <code class="docutils literal notranslate"><span class="pre">?</span></code> と同じくらいの頻度で登場します。代表的なものを紹介します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">unwrap_or</span></code> は、<code class="docutils literal notranslate"><span class="pre">Err</span></code>/<code class="docutils literal notranslate"><span class="pre">None</span></code> のときに指定したデフォルト値を使います。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="s">&quot;失敗&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span><span class="w"> </span><span class="c1">// 0</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">None</span><span class="p">;</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">.</span><span class="n">unwrap_or</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">));</span><span class="w"> </span><span class="c1">// -1</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">map</span></code> は、<code class="docutils literal notranslate"><span class="pre">Ok</span></code>/<code class="docutils literal notranslate"><span class="pre">Some</span></code> の中身だけにクロージャを適用して変換します。<code class="docutils literal notranslate"><span class="pre">Err</span></code>/<code class="docutils literal notranslate"><span class="pre">None</span></code> の場合は何もせずそのまま伝播します。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Ok</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">doubled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">v</span><span class="o">|</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">doubled</span><span class="p">);</span><span class="w"> </span><span class="c1">// Ok(6)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">map_err</span></code> は <code class="docutils literal notranslate"><span class="pre">map</span></code> とは逆に、<code class="docutils literal notranslate"><span class="pre">Err</span></code> の中身(エラー値)だけを変換します。異なるエラー型を1つにそろえたいときによく使います。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">x</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="kt">str</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="s">&quot;not a number&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">y</span><span class="p">:</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">map_err</span><span class="p">(</span><span class="o">|</span><span class="n">e</span><span class="o">|</span><span class="w"> </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;パースエラー: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">));</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">);</span><span class="w"> </span><span class="c1">// Err(&quot;パースエラー: not a number&quot;)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">and_then</span></code> は、成功した場合に続けて別の <code class="docutils literal notranslate"><span class="pre">Result</span></code>/<code class="docutils literal notranslate"><span class="pre">Option</span></code> を返す処理をつなげます。<code class="docutils literal notranslate"><span class="pre">map</span></code> と違い、渡すクロージャ自身が <code class="docutils literal notranslate"><span class="pre">Result</span></code>/<code class="docutils literal notranslate"><span class="pre">Option</span></code> を返す点が特徴です。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">fn</span><span class="w"> </span><span class="nf">half_if_even</span><span class="p">(</span><span class="n">n</span><span class="p">:</span><span class="w"> </span><span class="kt">i32</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="kt">i32</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Some</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">None</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="mi">8</span><span class="p">).</span><span class="n">and_then</span><span class="p">(</span><span class="n">half_if_even</span><span class="p">).</span><span class="n">and_then</span><span class="p">(</span><span class="n">half_if_even</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{:?}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">);</span><span class="w"> </span><span class="c1">// Some(2)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="tip admonition">
+<p class="admonition-title">Python 経験者向けメモ</p>
+<p>Python の <code class="docutils literal notranslate"><span class="pre">try</span></code>/<code class="docutils literal notranslate"><span class="pre">except</span></code> は、実行時にコードを動かしてみて例外が発生したら捕まえる、という仕組みです。そのため <code class="docutils literal notranslate"><span class="pre">except</span></code> を書き忘れていても文法上のエラーにはならず、実行するまでどんな例外が飛んでくるか分かりません。</p>
+<p>一方 Rust の <code class="docutils literal notranslate"><span class="pre">Result&lt;T,</span> <span class="pre">E&gt;</span></code> は、関数の戻り値の「型」としてエラーの可能性が表現されます。呼び出し側は戻り値が <code class="docutils literal notranslate"><span class="pre">Result</span></code> であることをコンパイラに把握されているため、<code class="docutils literal notranslate"><span class="pre">match</span></code> や <code class="docutils literal notranslate"><span class="pre">?</span></code> などで中身を処理しない限りコンパイルが通りません。つまり Rust では「エラー処理を書き忘れる」ことがコンパイルの段階で発見しやすくなっているのです。</p>
+</div>
+</section>
+<section id="id4">
+<h2>まとめ<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>回復不能なエラーには <code class="docutils literal notranslate"><span class="pre">panic!</span></code> を使い、プログラムを強制終了させます。</p></li>
+<li><p>回復可能なエラーは <code class="docutils literal notranslate"><span class="pre">Result&lt;T,</span> <span class="pre">E&gt;</span></code> の <code class="docutils literal notranslate"><span class="pre">Ok</span></code>/<code class="docutils literal notranslate"><span class="pre">Err</span></code> で表現します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">match</span></code> を使うと <code class="docutils literal notranslate"><span class="pre">Ok</span></code>/<code class="docutils literal notranslate"><span class="pre">Err</span></code> それぞれに応じた処理を書けます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unwrap</span></code>/<code class="docutils literal notranslate"><span class="pre">expect</span></code> は手軽ですが、失敗時に即座に <code class="docutils literal notranslate"><span class="pre">panic!</span></code> するため、本番コードでは多用を避けるべきです。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">?</span></code> 演算子を使うと、戻り値が <code class="docutils literal notranslate"><span class="pre">Result</span></code> の関数の中でエラーを簡潔に呼び出し元へ伝播できます。</p></li>
+<li><p>複数のエラー種別を <code class="docutils literal notranslate"><span class="pre">enum</span></code> にまとめ、<code class="docutils literal notranslate"><span class="pre">Display</span></code> を実装すれば独自のエラー型を定義できます。<code class="docutils literal notranslate"><span class="pre">?</span></code> 演算子は <code class="docutils literal notranslate"><span class="pre">From::from</span></code> によって型を自動変換してくれます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unwrap_or</span></code>/<code class="docutils literal notranslate"><span class="pre">map</span></code>/<code class="docutils literal notranslate"><span class="pre">map_err</span></code>/<code class="docutils literal notranslate"><span class="pre">and_then</span></code> などのコンビネータメソッドを使うと、<code class="docutils literal notranslate"><span class="pre">match</span></code> を書かずに <code class="docutils literal notranslate"><span class="pre">Result</span></code>/<code class="docutils literal notranslate"><span class="pre">Option</span></code> を簡潔に処理できます。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../part2_ownership/10_collections.html" class="btn btn-neutral float-left" title="コレクション" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="12_generics_and_traits.html" class="btn btn-neutral float-right" title="ジェネリクスとトレイト" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

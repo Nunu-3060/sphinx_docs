@@ -1,0 +1,441 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 12 章 VFX Graph の基礎 &mdash; Unity パーティクル入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=01157622" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="第 13 章 VFX Graph の実践" href="ch13_vfx_graph_practice.html" />
+    <link rel="prev" title="第 11 章 パフォーマンス" href="ch11_performance.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity パーティクル入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 1 部 基礎</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">第 1 章 はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_particle_basics.html">第 2 章 パーティクルの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_first_particle.html">第 3 章 最初のパーティクル</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 2 部 Particle System のモジュール</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch04_main_module.html">第 4 章 Main モジュール</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_emission_shape.html">第 5 章 放出と形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_over_lifetime.html">第 6 章 時間変化のモジュール</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_rendering.html">第 7 章 描画</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_collision_sub_emitters.html">第 8 章 衝突・サブエミッター・トレイル</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 3 部 スクリプトと実践</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch09_scripting.html">第 9 章 スクリプトからの制御</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_examples.html">第 10 章 作例</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_performance.html">第 11 章 パフォーマンス</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 4 部 VFX Graph</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 12 章 VFX Graph の基礎</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">導入</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">VFX Graph のアセットの作成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">シーンへの配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">グラフの構成要素</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">コンテキストの流れ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">ブロックとオペレーターの追加</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">属性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">各コンテキストの主な設定</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spawn">Spawn コンテキスト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#initialize-particle">Initialize Particle コンテキスト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#update-particle">Update Particle コンテキスト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-particle">Output Particle コンテキスト</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#blackboard">Blackboard とプロパティ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_vfx_graph_practice.html">第 13 章 VFX Graph の実践</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/troubleshooting.html">付録 B よくあるトラブルと対処法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/references.html">付録 C 参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity パーティクル入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 12 章 VFX Graph の基礎</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch11_performance.html" class="btn btn-neutral float-left" title="第 11 章 パフォーマンス" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch13_vfx_graph_practice.html" class="btn btn-neutral float-right" title="第 13 章 VFX Graph の実践" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="vfx-graph">
+<h1>第 12 章 VFX Graph の基礎<a class="headerlink" href="#vfx-graph" title="Link to this heading"></a></h1>
+<p>VFX Graph（Visual Effect Graph）は、パーティクルの計算を GPU で行う機能である。Particle System との違いは、第 2 章で説明した。この章では、VFX Graph の導入方法、グラフの構成要素、パーティクルが放出されてから消えるまでの流れを説明する。</p>
+<p>VFX Graph は、URP と HDRP で使える。Built-in Render Pipeline では使えない。また、コンピュートシェーダーに対応した GPU が必要である。</p>
+<section id="id1">
+<h2>導入<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>VFX Graph は、Visual Effect Graph パッケージとして提供されている。次の手順でプロジェクトに追加する。</p>
+<ol class="arabic simple">
+<li><p><span class="menuselection">Window ‣ Package Manager</span> を選び、Package Manager ウィンドウを開く。</p></li>
+<li><p>左側の一覧で <span class="guilabel">Unity Registry</span> を選ぶ。</p></li>
+<li><p>パッケージの一覧から <span class="guilabel">Visual Effect Graph</span> を選び、<span class="guilabel">Install</span> を押す。</p></li>
+</ol>
+<p>VFX Graph のバージョンは、プロジェクトの URP のバージョンに合わせたものが自動で選ばれる。</p>
+</section>
+<section id="id2">
+<h2>VFX Graph のアセットの作成<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>VFX Graph では、エフェクトの内容を VFX Graph のアセットに保存する。アセットは次の手順で作る。</p>
+<ol class="arabic simple">
+<li><p>Project ウィンドウで右クリックし、<span class="menuselection">Create ‣ Visual Effects ‣ Visual Effect Graph</span> を選ぶ。</p></li>
+<li><p>テンプレートを選ぶウィンドウが開く。<span class="guilabel">Simple Loop</span> を選び、<span class="guilabel">Create</span> を押す。</p></li>
+<li><p>アセットの名前を付ける。</p></li>
+</ol>
+<p>作ったアセットをダブルクリックすると、VFX Graph ウィンドウが開き、グラフを編集できる。</p>
+<section id="id3">
+<h3>シーンへの配置<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>VFX Graph のアセットを Project ウィンドウから Hierarchy ウィンドウか Scene ビューにドラッグ＆ドロップすると、Visual Effect コンポーネントを持つ GameObject が作られ、エフェクトが再生される。Visual Effect コンポーネントは、Particle System コンポーネントにあたるもので、<span class="guilabel">Asset Template</span> に設定した VFX Graph のアセットを再生する。</p>
+<p>Visual Effect コンポーネントを持つ GameObject を選択すると、Scene ビューに再生を操作するパネルが表示される。このパネルで、再生、一時停止、停止、再生の速さの変更などを行える。</p>
+</section>
+</section>
+<section id="id4">
+<h2>グラフの構成要素<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>VFX Graph のグラフは、次の要素でできている。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>要素</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>コンテキスト</p></td>
+<td><p>処理の段階を表す大きな枠。上から下に向かって、放出、初期化、更新、描画の順に処理される。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ブロック</p></td>
+<td><p>コンテキストの中に積み重ねる処理の単位。上のブロックから順に実行される。Particle System のモジュールの設定項目にあたる。</p></td>
+</tr>
+<tr class="row-even"><td><p>オペレーター</p></td>
+<td><p>値を計算するノード。出力をブロックの入力につなぐと、計算した値をブロックで使える。</p></td>
+</tr>
+<tr class="row-odd"><td><p>プロパティ</p></td>
+<td><p>グラフの外から値を変えられる変数。Blackboard で定義する（後述）。</p></td>
+</tr>
+<tr class="row-even"><td><p>システム</p></td>
+<td><p>放出から描画までのひとつながりのコンテキスト。1 つのグラフに、複数のシステムを置ける。</p></td>
+</tr>
+</tbody>
+</table>
+<p>Particle System では、Inspector ウィンドウでモジュールを有効にして値を設定した。VFX Graph では、コンテキストにブロックを追加し、必要ならオペレーターで計算した値をつないで設定する。</p>
+<section id="id5">
+<h3>コンテキストの流れ<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p><span class="guilabel">Simple Loop</span> のテンプレートで作ったグラフには、上から次のコンテキストが並んでいる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>コンテキスト</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Spawn</p></td>
+<td><p>1 フレームに何個のパーティクルを放出するかを決める。Particle System の Emission モジュールにあたる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>Initialize Particle</p></td>
+<td><p>放出したパーティクルの初期値（位置、速度、寿命など）を決める。Particle System の Main モジュールと Shape モジュールにあたる。</p></td>
+</tr>
+<tr class="row-even"><td><p>Update Particle</p></td>
+<td><p>毎フレーム、パーティクルの値を更新する。重力、空気抵抗、揺らぎなどを加える。</p></td>
+</tr>
+<tr class="row-odd"><td><p>Output Particle</p></td>
+<td><p>パーティクルを描画する。形、テクスチャー、色、大きさ、合成の方法を決める。描画する形によって、Output Particle Quad などの種類がある。</p></td>
+</tr>
+</tbody>
+</table>
+<p>Spawn コンテキストの上には、再生と停止のイベント（OnPlay と OnStop）が表示される。Visual Effect コンポーネントが再生を始めると、OnPlay のイベントが Spawn コンテキストに送られ、放出が始まる。</p>
+</section>
+<section id="id6">
+<h3>ブロックとオペレーターの追加<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>コンテキストの上で右クリックして <span class="guilabel">Create Block</span> を選ぶか、Space キーを押すと、ブロックを検索して追加できる。グラフの何もない場所で右クリックして <span class="guilabel">Create Node</span> を選ぶか、Space キーを押すと、オペレーターやコンテキストを検索して追加できる。</p>
+<p>ブロックを追加したり値を変えたりすると、グラフは自動でコンパイルされ、Scene ビューのエフェクトに反映される。変更をアセットに保存するには、VFX Graph ウィンドウの <span class="guilabel">Save</span> ボタンを押すか、Ctrl + S キーを押す。</p>
+</section>
+</section>
+<section id="id7">
+<h2>属性<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>VFX Graph では、パーティクルが持つ値を属性（アトリビュート）という。主な属性を次の表にまとめる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>属性</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">position</span></code></p></td>
+<td><p>位置</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">velocity</span></code></p></td>
+<td><p>速度</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lifetime</span></code></p></td>
+<td><p>寿命（秒）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">age</span></code></p></td>
+<td><p>放出されてからの経過時間（秒）</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">size</span></code></p></td>
+<td><p>大きさ</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">color</span></code></p></td>
+<td><p>色</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></td>
+<td><p>不透明度</p></td>
+</tr>
+</tbody>
+</table>
+<p>ブロックの多くは、属性に値を設定する。たとえば、Set Lifetime ブロックは <code class="docutils literal notranslate"><span class="pre">lifetime</span></code> 属性に、Set Velocity ブロックは <code class="docutils literal notranslate"><span class="pre">velocity</span></code> 属性に値を設定する。ブロックの設定で、値を固定にするか、2 つの値の間のランダムな値にするかを選べる。</p>
+<p>寿命に対する経過時間は、第 6 章と同じく次の式で表される。</p>
+<div class="math notranslate nohighlight">
+\[t_n = \frac{\mathit{age}}{\mathit{lifetime}}\]</div>
+<p>名前の最後に「over Life」が付くブロック（Set Size over Life や Set Color over Life など）は、<span class="math notranslate nohighlight">\(t_n\)</span> を横軸にしたカーブやグラデーションで値を設定する。Particle System の Size over Lifetime モジュールや Color over Lifetime モジュールにあたる。</p>
+</section>
+<section id="id8">
+<h2>各コンテキストの主な設定<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<section id="spawn">
+<h3>Spawn コンテキスト<a class="headerlink" href="#spawn" title="Link to this heading"></a></h3>
+<p>Spawn コンテキストには、放出の頻度を決めるブロックを追加する。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ブロック</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Constant Spawn Rate</p></td>
+<td><p>1 秒あたり <span class="guilabel">Rate</span> 個のパーティクルを放出し続ける。</p></td>
+</tr>
+<tr class="row-odd"><td><p>Single Burst</p></td>
+<td><p>1 回だけ、まとめてパーティクルを放出する。</p></td>
+</tr>
+<tr class="row-even"><td><p>Periodic Burst</p></td>
+<td><p>一定の間隔で、まとめてパーティクルを放出する。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="initialize-particle">
+<h3>Initialize Particle コンテキスト<a class="headerlink" href="#initialize-particle" title="Link to this heading"></a></h3>
+<p>Initialize Particle コンテキストは、ブロックのほかに、次の設定を持つ。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>設定</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="guilabel">Capacity</span></p></td>
+<td><p>同時に存在できるパーティクルの最大数。この数に応じて、GPU のメモリーが最初に確保される。Particle System の <span class="guilabel">Max Particles</span> にあたる。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="guilabel">Bounds Setting Mode</span></p></td>
+<td><p>エフェクト全体を囲むバウンディングボックスの決め方。<span class="guilabel">Manual</span> は手で指定する。<span class="guilabel">Recorded</span> は、エディター上で再生して記録した範囲を使う。<span class="guilabel">Automatic</span> は、実行中に自動で計算する。</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="guilabel">Bounds</span></p></td>
+<td><p><span class="guilabel">Manual</span> のときの、バウンディングボックスの中心と大きさ。</p></td>
+</tr>
+</tbody>
+</table>
+<p>同時に存在するパーティクルの数は、Particle System と同じく <span class="math notranslate nohighlight">\(N \approx r \times L\)</span> で見積もれる（第 5 章を参照）。<span class="guilabel">Capacity</span> は、この値より大きくしておく。<span class="guilabel">Capacity</span> を超えた分のパーティクルは放出されない。一方、<span class="guilabel">Capacity</span> を必要以上に大きくすると、使わないメモリーを確保することになる。</p>
+<p>バウンディングボックスは、エフェクトが画面の中にあるかどうかの判定に使う。バウンディングボックスが実際のパーティクルの範囲より小さいと、パーティクルが画面に映っているのに、バウンディングボックスが画面の外に出た時点でエフェクト全体が描画されなくなる。</p>
+<p>Initialize Particle コンテキストには、次のようなブロックを追加する。</p>
+<ul class="simple">
+<li><p>Set Position Shape ブロック：パーティクルを放出する範囲の形（球、円柱、箱など）を決める。Particle System の Shape モジュールにあたる。</p></li>
+<li><p>Set Velocity ブロック：初速を決める。</p></li>
+<li><p>Set Lifetime ブロック：寿命を決める。</p></li>
+</ul>
+</section>
+<section id="update-particle">
+<h3>Update Particle コンテキスト<a class="headerlink" href="#update-particle" title="Link to this heading"></a></h3>
+<p>Update Particle コンテキストは、毎フレーム、速度に従ってパーティクルの位置を動かし、<code class="docutils literal notranslate"><span class="pre">age</span></code> を増やす。<code class="docutils literal notranslate"><span class="pre">age</span></code> が <code class="docutils literal notranslate"><span class="pre">lifetime</span></code> を超えたパーティクルは消える。これらの処理は、ブロックを追加しなくても自動で行われる。</p>
+<p>Update Particle コンテキストには、次のようなブロックを追加する。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ブロック</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gravity</p></td>
+<td><p>重力の加速度を加える。</p></td>
+</tr>
+<tr class="row-odd"><td><p>Linear Drag</p></td>
+<td><p>空気抵抗のように、速度を落とす。</p></td>
+</tr>
+<tr class="row-even"><td><p>Turbulence</p></td>
+<td><p>不規則な揺らぎを加える。Particle System の Noise モジュールにあたる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>Collision Shape</p></td>
+<td><p>球、箱、平面などの形状と衝突させる。</p></td>
+</tr>
+<tr class="row-even"><td><p>Collision Depth Buffer</p></td>
+<td><p>カメラの深度バッファーを使って、画面に映っているものと衝突させる。</p></td>
+</tr>
+</tbody>
+</table>
+<p>VFX Graph のパーティクルは GPU で計算されるため、Particle System のように物理演算のコライダーと衝突させることはできない。代わりに、形状や深度バッファーとの衝突を使う。</p>
+</section>
+<section id="output-particle">
+<h3>Output Particle コンテキスト<a class="headerlink" href="#output-particle" title="Link to this heading"></a></h3>
+<p>Output Particle コンテキストは、パーティクルの描画の方法を決める。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>設定</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="guilabel">Blend Mode</span></p></td>
+<td><p>背景との合成の方法。<span class="guilabel">Alpha</span>、<span class="guilabel">Additive</span>、<span class="guilabel">Alpha Premultiplied</span>、<span class="guilabel">Opaque</span> から選ぶ。考え方は第 7 章の <span class="guilabel">Blending Mode</span> と同じである。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="guilabel">Main Texture</span></p></td>
+<td><p>パーティクルに貼るテクスチャー。</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="guilabel">UV Mode</span></p></td>
+<td><p>テクスチャーの使い方。<span class="guilabel">Flipbook</span> にすると、フリップブックのコマ送りのアニメーションに使える。</p></td>
+</tr>
+</tbody>
+</table>
+<p>Output Particle コンテキストには、次のようなブロックを追加する。</p>
+<ul class="simple">
+<li><p>Orient ブロック：パーティクルの向きを決める。<span class="guilabel">Face Camera Plane</span> にすると、ビルボードになる。</p></li>
+<li><p>Set Size over Life ブロック：寿命の間の大きさの変化を決める。</p></li>
+<li><p>Set Color over Life ブロック：寿命の間の色と不透明度の変化を決める。</p></li>
+</ul>
+</section>
+</section>
+<section id="blackboard">
+<h2>Blackboard とプロパティ<a class="headerlink" href="#blackboard" title="Link to this heading"></a></h2>
+<p>Blackboard は、グラフで使うプロパティを定義するパネルである。VFX Graph ウィンドウの <span class="guilabel">Blackboard</span> ボタンで表示と非表示を切り替える。</p>
+<p>プロパティは、次の手順で作る。</p>
+<ol class="arabic simple">
+<li><p>Blackboard の <span class="guilabel">+</span> ボタンを押し、型（Float、Vector3、Color など）を選ぶ。</p></li>
+<li><p>プロパティの名前を付ける。</p></li>
+<li><p>プロパティを Blackboard からグラフにドラッグ＆ドロップし、ブロックの入力につなぐ。</p></li>
+</ol>
+<p>プロパティの <span class="guilabel">Exposed</span> を有効にすると、Visual Effect コンポーネントの Inspector ウィンドウの <span class="guilabel">Properties</span> に表示される。Inspector ウィンドウで値を変えると、同じ VFX Graph のアセットを使うエフェクトでも、GameObject ごとに異なる値にできる。たとえば、1 つの炎のグラフから、色の違う炎を複数作れる。</p>
+<p>Exposed を有効にしたプロパティは、C# スクリプトからも値を変えられる（第 13 章を参照）。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch11_performance.html" class="btn btn-neutral float-left" title="第 11 章 パフォーマンス" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch13_vfx_graph_practice.html" class="btn btn-neutral float-right" title="第 13 章 VFX Graph の実践" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

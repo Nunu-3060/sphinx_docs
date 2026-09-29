@@ -1,0 +1,238 @@
+
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>asyncio &mdash; Python コア機能・標準ライブラリ解説書 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=19757887"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=4755f45a"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="検索" href="../../search.html" />
+    <link rel="next" title="concurrent.futures" href="concurrent_futures.html" />
+    <link rel="prev" title="multiprocessing" href="multiprocessing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <a href="../../index.html" class="icon icon-home">
+    Python 解説書
+  </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../builtin_types/index.html">組み込み型のメソッド</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../operators/index.html">演算子</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../builtins/index.html">組み込み関数</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">標準モジュール</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../file_path/index.html">ファイル・パス操作</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datetime_time/index.html">日付・時刻</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_structures/index.html">データ構造・アルゴリズム補助</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../text/index.html">テキスト処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_format/index.html">データフォーマット・シリアライズ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../numeric/index.html">数値・数学</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../system/index.html">システム・実行環境</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">並行処理</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="threading.html">threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="multiprocessing.html">multiprocessing</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">asyncio</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#async-def-await">async def / await</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asyncio-run">asyncio.run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asyncio-create-task-asyncio-gather">asyncio.create_task / asyncio.gather</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asyncio-taskgroup">asyncio.TaskGroup による構造化された並行実行</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#asyncio-queue">asyncio.Queue によるタスク間の連携</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="concurrent_futures.html">concurrent.futures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../testing/index.html">テスト・デバッグ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gui/index.html">GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/index.html">その他</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Python コア機能・標準ライブラリ解説書</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">標準モジュール</a></li>
+          <li class="breadcrumb-item"><a href="index.html">並行処理</a></li>
+      <li class="breadcrumb-item active">asyncio</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="asyncio">
+<h1>asyncio<a class="headerlink" href="#asyncio" title="Link to this heading"></a></h1>
+<p>単一スレッド・単一プロセスの中で、コルーチンを用いて I/O バウンドな
+処理を並行実行するためのモジュール。イベントループが、待ち時間の発生した
+コルーチンから別のコルーチンへと実行を切り替えることで、効率よく
+多数の処理を同時に進めることができる。</p>
+<section id="async-def-await">
+<h2>async def / await<a class="headerlink" href="#async-def-await" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">def</span></code> で定義した関数はコルーチン関数となり、呼び出しても即座には
+実行されず、コルーチンオブジェクトを返す。<code class="docutils literal notranslate"><span class="pre">await</span></code> を使うと、その
+コルーチンの完了を待ちながら、他の処理に制御を譲ることができる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">say_hello</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>  <span class="c1"># I/O 待ちを模したノンブロッキングな待機</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;こんにちは、</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">さん&quot;</span><span class="p">)</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+</section>
+<section id="asyncio-run">
+<h2>asyncio.run<a class="headerlink" href="#asyncio-run" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">asyncio.run()</span></code> はイベントループを新規作成し、渡したコルーチンを
+実行してループを閉じる。トップレベルの非同期プログラムを起動する際の
+基本的な入り口となる関数。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">say_hello</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="go">こんにちは、Aliceさん</span>
+</pre></div>
+</div>
+</section>
+<section id="asyncio-create-task-asyncio-gather">
+<h2>asyncio.create_task / asyncio.gather<a class="headerlink" href="#asyncio-create-task-asyncio-gather" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">create_task()</span></code> はコルーチンをイベントループ上のタスクとしてスケジュールし、即座にバックグラウンドで実行を開始させる。複数のコルーチンをまとめて並行実行し、すべての結果を待ちたい場合は <code class="docutils literal notranslate"><span class="pre">asyncio.gather()</span></code> を使う。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="c1"># 3 つのタスクを同時にスケジュール</span>
+<span class="gp">... </span>    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+<span class="gp">... </span>        <span class="n">say_hello</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">say_hello</span><span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">say_hello</span><span class="p">(</span><span class="s2">&quot;Carol&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<span class="go">こんにちは、Aliceさん</span>
+<span class="go">こんにちは、Carolさん</span>
+<span class="go">こんにちは、Bobさん</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">say_hello</span></code> を順番に <code class="docutils literal notranslate"><span class="pre">await</span></code> で呼び出した場合は合計 4 秒かかるが、<code class="docutils literal notranslate"><span class="pre">gather()</span></code> でまとめて並行実行すると、最も遅い待機時間である 2 秒程度ですべて完了する。</p>
+</section>
+<section id="asyncio-taskgroup">
+<h2>asyncio.TaskGroup による構造化された並行実行<a class="headerlink" href="#asyncio-taskgroup" title="Link to this heading"></a></h2>
+<p>Python 3.11 以降では、<code class="docutils literal notranslate"><span class="pre">gather()</span></code> の代わりに <code class="docutils literal notranslate"><span class="pre">asyncio.TaskGroup</span></code> を
+使うことが推奨されている。<code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">with</span></code> ブロックを抜ける際に、ブロック
+内で <code class="docutils literal notranslate"><span class="pre">create_task()</span></code> した全タスクの完了を待つ。いずれかのタスクが
+例外を発生させた場合、他の実行中のタスクは自動的にキャンセルされ、
+例外はブロックを抜ける際にまとめて送出される。<code class="docutils literal notranslate"><span class="pre">gather()</span></code> よりも
+キャンセルと例外伝播の扱いが安全で分かりやすい。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">async</span> <span class="k">with</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">TaskGroup</span><span class="p">()</span> <span class="k">as</span> <span class="n">tg</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">tg</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">say_hello</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="gp">... </span>        <span class="n">tg</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">say_hello</span><span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="gp">... </span>        <span class="n">tg</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">say_hello</span><span class="p">(</span><span class="s2">&quot;Carol&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<span class="go">こんにちは、Aliceさん</span>
+<span class="go">こんにちは、Carolさん</span>
+<span class="go">こんにちは、Bobさん</span>
+</pre></div>
+</div>
+</section>
+<section id="asyncio-queue">
+<h2>asyncio.Queue によるタスク間の連携<a class="headerlink" href="#asyncio-queue" title="Link to this heading"></a></h2>
+<p>コルーチン同士でデータをやり取りしたい場合は <code class="docutils literal notranslate"><span class="pre">asyncio.Queue</span></code> が使える。
+プロデューサー・コンシューマー間の連携によく利用される。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">producer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">await</span> <span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">await</span> <span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">consumer</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">item</span> <span class="o">=</span> <span class="k">await</span> <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">break</span>
+<span class="gp">... </span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;受信: </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="n">queue</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">producer</span><span class="p">(</span><span class="n">queue</span><span class="p">),</span> <span class="n">consumer</span><span class="p">(</span><span class="n">queue</span><span class="p">))</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<span class="go">受信: 0</span>
+<span class="go">受信: 1</span>
+<span class="go">受信: 2</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p><code class="docutils literal notranslate"><span class="pre">asyncio</span></code> はシングルスレッドで動作するため、GIL による制限が問題にならず、スレッド切り替えのオーバーヘッドやロックによる競合状態の心配も基本的に不要になる。大量の同時ネットワーク接続を扱うサーバーなど、I/O 待ちの処理を極めて多数同時に扱いたい場合、<code class="docutils literal notranslate"><span class="pre">threading</span></code> よりも <code class="docutils literal notranslate"><span class="pre">asyncio</span></code> の方が少ないリソースで効率よくスケールすることが多い。ただし、対象のライブラリが async 対応している必要があり、CPU バウンドな処理には <a class="reference internal" href="multiprocessing.html"><span class="doc">multiprocessing</span></a> が適している。</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="multiprocessing.html" class="btn btn-neutral float-left" title="multiprocessing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="concurrent_futures.html" class="btn btn-neutral float-right" title="concurrent.futures" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

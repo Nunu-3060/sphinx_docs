@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GUI 部品層: TkWidget.py / FrameSand.py &mdash; Python による飛砂のシミュレーションの実装 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="アプリケーション層: SandGUI.py" href="application.html" />
+    <link rel="prev" title="可視化層: SandImage.py" href="visualization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python による飛砂のシミュレーションの実装
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">実装概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">モデル層: Sand.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">可視化層: SandImage.py</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">GUI 部品層: TkWidget.py / FrameSand.py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tkwidget-py">TkWidget.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#frameradiobutton">FrameRadioButton: グリッドサイズの選択</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#framescale-0-01-0">FrameScale: 0.0〜1.0 の値の選択</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#framesand-py">FrameSand.py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">アニメーションの仕組み</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">ウィジェット破棄時の後始末</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="application.html">アプリケーション層: SandGUI.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API リファレンス</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html">まとめ</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python による飛砂のシミュレーションの実装</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">GUI 部品層: TkWidget.py / FrameSand.py</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gui-tkwidget-py-framesand-py">
+<h1>GUI 部品層: TkWidget.py / FrameSand.py<a class="headerlink" href="#gui-tkwidget-py-framesand-py" title="Link to this heading"></a></h1>
+<p>GUI 部品層には、<code class="docutils literal notranslate"><span class="pre">Sand</span></code> / <code class="docutils literal notranslate"><span class="pre">SandImage</span></code> に依存しない汎用的な Tkinter 部品(<code class="docutils literal notranslate"><span class="pre">TkWidget</span></code>)と、<code class="docutils literal notranslate"><span class="pre">SandImage</span></code> を一定間隔で更新しながら表示し続けるフレーム(<code class="docutils literal notranslate"><span class="pre">FrameSand</span></code>)が含まれます。いずれも <a class="reference internal" href="application.html"><span class="doc">アプリケーション層: SandGUI.py</span></a> で解説する <code class="docutils literal notranslate"><span class="pre">SandGUI</span></code> から利用されます。</p>
+<section id="tkwidget-py">
+<h2>TkWidget.py<a class="headerlink" href="#tkwidget-py" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">TkWidget</span></code> は、<code class="docutils literal notranslate"><span class="pre">ttk.Frame</span></code> を継承した2つの汎用部品を提供するモジュールです。<code class="docutils literal notranslate"><span class="pre">Sand</span></code> / <code class="docutils literal notranslate"><span class="pre">SandImage</span></code> を一切 import しておらず、独立した部品としてどんな Tkinter アプリケーションからでも再利用できます。</p>
+<section id="frameradiobutton">
+<h3>FrameRadioButton: グリッドサイズの選択<a class="headerlink" href="#frameradiobutton" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">FrameRadioButton</span><span class="p">(</span><span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">master</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Misc</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;size&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">IntVar</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">IntVar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">DISPLAY_SIZE</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radiobutton</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Radiobutton</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Radiobutton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">DISPLAY_SIZE</span> <span class="o">//</span> <span class="mi">4</span><span class="p">,</span> <span class="n">DISPLAY_SIZE</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">DISPLAY_SIZE</span><span class="p">]</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">radiobutton</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DISPLAY_SIZE</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">radiobutton</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>既定値 512 の <code class="docutils literal notranslate"><span class="pre">DISPLAY_SIZE</span></code> を基準に、<code class="docutils literal notranslate"><span class="pre">DISPLAY_SIZE</span> <span class="pre">//</span> <span class="pre">4</span></code> / <code class="docutils literal notranslate"><span class="pre">DISPLAY_SIZE</span> <span class="pre">//</span> <span class="pre">2</span></code> / <code class="docutils literal notranslate"><span class="pre">DISPLAY_SIZE</span></code> の3つの選択肢をラジオボタンとして表示します。選択された値は <code class="docutils literal notranslate"><span class="pre">tk.IntVar</span></code> で保持され、<code class="docutils literal notranslate"><span class="pre">get()</span></code> / <code class="docutils literal notranslate"><span class="pre">set()</span></code> で読み書きできます。</p>
+</section>
+<section id="framescale-0-01-0">
+<h3>FrameScale: 0.0〜1.0 の値の選択<a class="headerlink" href="#framescale-0-01-0" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">FrameScale</span><span class="p">(</span><span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">master</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Misc</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">:</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Scale</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Scale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">TOP</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">BOTH</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">TOP</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">BOTH</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">p</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">0.0</span></code> 〜 <code class="docutils literal notranslate"><span class="pre">1.0</span></code> の範囲のスライダー(<code class="docutils literal notranslate"><span class="pre">ttk.Scale</span></code>)と、その値を表示するラベルをまとめた部品です。コンストラクタに渡した <code class="docutils literal notranslate"><span class="pre">text</span></code> がラベルの見出しとして使われ(例:<code class="docutils literal notranslate"><span class="pre">&quot;hue&quot;</span></code> や <code class="docutils literal notranslate"><span class="pre">&quot;saturation&quot;</span></code>)、スライダーを動かすたびに <code class="docutils literal notranslate"><span class="pre">apply()</span></code> が呼ばれてラベルの表示が更新されます。<a class="reference internal" href="application.html"><span class="doc">アプリケーション層: SandGUI.py</span></a> では、この部品を色相用・彩度用に2つ生成して使っています。</p>
+</section>
+</section>
+<section id="framesand-py">
+<h2>FrameSand.py<a class="headerlink" href="#framesand-py" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">FrameSand</span></code> は <code class="docutils literal notranslate"><span class="pre">SandImage</span></code> のインスタンスを1つ保持し、Tkinter の <code class="docutils literal notranslate"><span class="pre">after</span></code> によるタイマーで一定間隔ごとに更新・再描画し続けるフレームです。</p>
+<section id="id1">
+<h3>アニメーションの仕組み<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">master</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Misc</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">sandimage</span><span class="p">:</span> <span class="n">SandImage</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sandimage</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sandimage</span> <span class="o">=</span> <span class="n">SandImage</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sandimage</span><span class="p">:</span> <span class="n">SandImage</span> <span class="o">=</span> <span class="n">sandimage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span> <span class="n">ImageTk</span><span class="o">.</span><span class="n">PhotoImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sandimage</span><span class="o">.</span><span class="n">image_tk</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Destroy&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_destroy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">after</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sandimage</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sandimage</span><span class="o">.</span><span class="n">image_tk</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">after</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>コンストラクタは、渡された(または新規作成した)``SandImage`` から最初の画像を取得してラベルに表示したあと、<code class="docutils literal notranslate"><span class="pre">self.after(self.interval,</span> <span class="pre">self.next)</span></code> で <code class="docutils literal notranslate"><span class="pre">interval</span></code> ミリ秒後に <code class="docutils literal notranslate"><span class="pre">next()</span></code> を呼ぶよう予約します。<code class="docutils literal notranslate"><span class="pre">next()</span></code> は <code class="docutils literal notranslate"><span class="pre">SandImage.next()</span></code> で高さ場を1ステップ進め、新しい画像に差し替えたあと、自分自身を再び <code class="docutils literal notranslate"><span class="pre">after</span></code> で予約し直します。これにより、<code class="docutils literal notranslate"><span class="pre">next()</span></code> が延々と呼ばれ続けるアニメーションループが実現されています。</p>
+</section>
+<section id="id2">
+<h3>ウィジェット破棄時の後始末<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">_on_destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">widget</span> <span class="ow">is</span> <span class="bp">self</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">after_cancel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">after</span></code> で予約したタイマーは、ウィジェットが破棄されても自動的にはキャンセルされません。もしキャンセルせずに放置すると、<code class="docutils literal notranslate"><span class="pre">FrameSand</span></code> が含まれるウィンドウを閉じたあとにタイマーが発火し、すでに存在しないラベルを更新しようとしてエラーになってしまいます。</p>
+<p>これを防ぐため、コンストラクタで <code class="docutils literal notranslate"><span class="pre">self.bind(&quot;&lt;Destroy&gt;&quot;,</span> <span class="pre">self._on_destroy)</span></code> を登録し、ウィジェットが破棄される直前に呼ばれる <code class="docutils literal notranslate"><span class="pre">_on_destroy()</span></code> の中で <code class="docutils literal notranslate"><span class="pre">self.after_cancel(self._after_id)</span></code> を呼び、予約中のタイマーを確実にキャンセルしています。<code class="docutils literal notranslate"><span class="pre">next()</span></code> が自分自身を再予約するたびに <code class="docutils literal notranslate"><span class="pre">self._after_id</span></code> を更新しているのも、常に「今まさに予約されているタイマー」を正しくキャンセルできるようにするためです。</p>
+<p>クラス・メソッドのシグネチャ一覧は <a class="reference internal" href="api.html"><span class="doc">API リファレンス</span></a> を参照してください。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="visualization.html" class="btn btn-neutral float-left" title="可視化層: SandImage.py" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="application.html" class="btn btn-neutral float-right" title="アプリケーション層: SandGUI.py" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

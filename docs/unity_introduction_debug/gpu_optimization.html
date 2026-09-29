@@ -1,0 +1,270 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>9. 描画（GPU）の最適化 &mdash; Unity デバッグ・最適化入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="10. メモリとアセットの最適化" href="memory_optimization.html" />
+    <link rel="prev" title="8. CPU（スクリプト）の最適化" href="cpu_optimization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Unity デバッグ・最適化入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debug_basics.html">2. デバッグの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debug_tools.html">3. デバッグ用ツールと機能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_bugs.html">4. よくある不具合と対処法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="device_debug.html">5. 実機でのデバッグ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimization_basics.html">6. 最適化の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">7. プロファイリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cpu_optimization.html">8. CPU（スクリプト）の最適化</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">9. 描画（GPU）の最適化</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">9.1. 描画処理の流れとドローコール</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">9.2. バッチング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#lod">9.3. カリングと LOD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">9.4. オーバードローと半透明</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">9.5. ライティングと影</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">9.6. 解像度、ポストエフェクト、シェーダー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">9.6.1. 解像度</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">9.6.2. ポストエフェクト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">9.6.3. シェーダー</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="memory_optimization.html">10. メモリとアセットの最適化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="physics_ui.html">11. 物理演算と UI の最適化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="checklist.html">12. まとめとチェックリスト</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Unity デバッグ・最適化入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">9. </span>描画（GPU）の最適化</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gpu">
+<span id="gpu-optimization"></span><h1><span class="section-number">9. </span>描画（GPU）の最適化<a class="headerlink" href="#gpu" title="Link to this heading"></a></h1>
+<p>本章では、描画に関する処理の改善手法を紹介します。描画の処理には、GPU に描画を指示する CPU 側の処理と、実際に描画する GPU 側の処理があります。どちらがボトルネックかを確認してから対処してください（<a class="reference internal" href="optimization_basics.html#cpu-gpu-bound"><span class="std std-ref">CPU バウンドと GPU バウンドの見分け方</span></a>）。</p>
+<section id="id1">
+<h2><span class="section-number">9.1. </span>描画処理の流れとドローコール<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>Unity は、フレームごとに次のような流れで描画を行います。</p>
+<ol class="arabic simple">
+<li><p>カメラに映らないオブジェクトを描画の対象から外します（カリング）。</p></li>
+<li><p>描画するオブジェクトを、描画する順序に並べ替えます。</p></li>
+<li><p>オブジェクトごとに、使用するシェーダーやマテリアルの設定を GPU に送り、描画を指示します。</p></li>
+<li><p>GPU が、指示に従ってポリゴンを画面のピクセルに変換し、色を計算します。</p></li>
+</ol>
+<p>手順 3 で GPU に送る描画の指示をドローコールと呼びます。また、ドローコールの前に、使用するシェーダーなどの描画の設定を切り替える処理を SetPass コールと呼びます。SetPass コールは特に CPU の負荷が大きいため、その数を減らすことが CPU 側の描画の負荷を下げる鍵になります。</p>
+<p>ドローコールや SetPass コールの数は、Profiler の Rendering モジュールのほか、Game ビューのツールバーにある <span class="guilabel">Stats</span> ボタンで表示される統計情報でも確認できます。統計情報の Batches がドローコールの数、SetPass calls が SetPass コールの数です。</p>
+</section>
+<section id="id2">
+<h2><span class="section-number">9.2. </span>バッチング<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>バッチングとは、複数のオブジェクトの描画をまとめて、ドローコールや SetPass コールの数、またはその処理のコストを減らす仕組みです。URP で使える主なバッチングは次のとおりです。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 45.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>手法</p></th>
+<th class="head"><p>仕組みと条件</p></th>
+<th class="head"><p>注意点</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SRP Batcher</p></td>
+<td><p>同じシェーダーのバリアントを使うオブジェクトの描画をまとめ、マテリアルの切り替えのコストを減らします。マテリアルが異なっていても効果があります。URP では既定で有効です。</p></td>
+<td><p>SRP Batcher に対応したシェーダーが必要です。URP の標準のシェーダーは対応しています。</p></td>
+</tr>
+<tr class="row-odd"><td><p>GPU インスタンシング</p></td>
+<td><p>同じメッシュと同じマテリアルを使う多数のオブジェクトを、1 回のドローコールで描画します。マテリアルの <span class="guilabel">Enable GPU Instancing</span> を有効にして使います。</p></td>
+<td><p>SRP Batcher が使えるオブジェクトでは、SRP Batcher が優先されます。</p></td>
+</tr>
+<tr class="row-even"><td><p>Static Batching</p></td>
+<td><p>動かないオブジェクトのメッシュを、ビルド時などに結合します。Inspector ウィンドウの <span class="guilabel">Static</span> のうち、<span class="guilabel">Batching Static</span> を有効にして使います。</p></td>
+<td><p>結合したメッシュの分だけメモリの使用量が増えます。対象のオブジェクトは動かせません。</p></td>
+</tr>
+<tr class="row-odd"><td><p>Dynamic Batching</p></td>
+<td><p>頂点数の少ない小さなメッシュを、毎フレーム CPU で結合します。</p></td>
+<td><p>URP では既定で無効です。結合の処理自体に CPU の負荷がかかるため、現在のハードウェアではほとんどの場合、効果がありません。</p></td>
+</tr>
+</tbody>
+</table>
+<p>Unity 6 では、GPU Resident Drawer という機能も追加されました。GPU Resident Drawer を有効にすると、多数のオブジェクトが自動的にインスタンシングで描画されるようになります。利用するには、URP Asset の <span class="guilabel">GPU Resident Drawer</span> を有効にし、レンダリングパスに Forward+ を使うなどの条件を満たす必要があります。</p>
+<p>バッチングが期待どおりに行われているかは、Frame Debugger で確認できます（<a class="reference internal" href="profiling.html#frame-debugger"><span class="std std-ref">Frame Debugger による描画処理の確認</span></a>）。</p>
+</section>
+<section id="lod">
+<h2><span class="section-number">9.3. </span>カリングと LOD<a class="headerlink" href="#lod" title="Link to this heading"></a></h2>
+<p>描画する必要のないものを描画しないことも、重要な最適化です。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>手法</p></th>
+<th class="head"><p>説明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>視錐台カリング</p></td>
+<td><p>カメラの視野の外にあるオブジェクトを描画しない仕組みです。Unity が自動的に行います。カメラの <span class="guilabel">Far</span>（描画する最大距離）を必要以上に大きくしないことで、描画の対象を減らせます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>オクルージョンカリング</p></td>
+<td><p>壁や建物など、他のオブジェクトに隠れて見えないオブジェクトを描画しない仕組みです。遮る側のオブジェクトに <span class="guilabel">Occluder Static</span>、遮られる側に <span class="guilabel">Occludee Static</span> を設定し、<span class="menuselection">Window ‣ Rendering ‣ Occlusion Culling</span> でデータを事前に計算（ベイク）して使います。</p></td>
+</tr>
+<tr class="row-even"><td><p>LOD（Level of Detail）</p></td>
+<td><p>カメラから遠いオブジェクトほど、ポリゴン数の少ないメッシュで描画する仕組みです。LOD Group コンポーネントに、詳細度の異なる複数のメッシュを登録して使います。</p></td>
+</tr>
+</tbody>
+</table>
+<p>オクルージョンカリングは、屋内や街中など、見通しが悪く遮るものが多いシーンで特に効果があります。見通しのよい屋外のシーンでは、効果が小さい割に計算の負荷がかかることがあります。</p>
+</section>
+<section id="id3">
+<h2><span class="section-number">9.4. </span>オーバードローと半透明<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>同じピクセルが 1 フレームの中で何度も描画されることを、オーバードローと呼びます。オーバードローが多いと、GPU の負荷が高くなります。特に、半透明のオブジェクトは後ろにあるものと色を混ぜ合わせる必要があるため、重なるほど負荷が増えます。</p>
+<p>オーバードローが起こりやすいのは、次のようなものです。</p>
+<ul class="simple">
+<li><p>大きなパーティクルを大量に重ねたエフェクト</p></li>
+<li><p>画面全体を覆う半透明の UI やエフェクト</p></li>
+<li><p>半透明のマテリアルを使った大きなオブジェクト</p></li>
+</ul>
+<p>オーバードローの量は、<span class="menuselection">Window ‣ Analysis ‣ Rendering Debugger</span> で開く Rendering Debugger で可視化できます。対策としては、パーティクルの数や大きさを減らす、半透明にする必要のないオブジェクトは不透明のマテリアルを使う、といった方法があります。</p>
+</section>
+<section id="id4">
+<h2><span class="section-number">9.5. </span>ライティングと影<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>リアルタイムのライトと影は、描画の負荷が大きい処理です。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>手法</p></th>
+<th class="head"><p>説明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ライトのベイク</p></td>
+<td><p>動かないオブジェクトの照明と影を、あらかじめ計算してテクスチャ（ライトマップ）に保存しておく手法です。ライトの <span class="guilabel">Mode</span> を <span class="guilabel">Baked</span> または <span class="guilabel">Mixed</span> にし、<span class="menuselection">Window ‣ Rendering ‣ Lighting</span> で計算します。実行時の計算が不要になります。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ライトプローブ</p></td>
+<td><p>動くオブジェクトに、ベイクした照明の情報を反映する仕組みです。リアルタイムのライトを使わずに、周囲の明るさに合った見た目にできます。</p></td>
+</tr>
+<tr class="row-even"><td><p>リアルタイムのライトの数を減らす</p></td>
+<td><p>URP の Forward レンダリングでは、1 つのオブジェクトに影響するリアルタイムのライトの数に上限があり、ライトが増えるほど負荷も増えます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>影の設定を見直す</p></td>
+<td><p>URP Asset の <span class="guilabel">Max Distance</span>（影を描画する最大距離）、カスケードの数、影のテクスチャの解像度を下げると負荷が減ります。小さなオブジェクトは、Mesh Renderer の <span class="guilabel">Cast Shadows</span> を Off にして影を落とさないようにします。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id5">
+<h2><span class="section-number">9.6. </span>解像度、ポストエフェクト、シェーダー<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="id6">
+<h3><span class="section-number">9.6.1. </span>解像度<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>GPU の負荷は、描画するピクセルの数にほぼ比例します。スマートフォンには非常に高解像度の画面を持つものがあり、画面の解像度のまま描画すると GPU の負荷が大きくなります。URP Asset の <span class="guilabel">Render Scale</span> を 1 より小さくすると、低い解像度で描画してから画面の大きさに拡大するため、負荷を減らせます。</p>
+</section>
+<section id="id7">
+<h3><span class="section-number">9.6.2. </span>ポストエフェクト<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>Bloom、被写界深度（Depth of Field）、アンビエントオクルージョンなどのポストエフェクトは、画面全体のピクセルに対して処理を行うため、GPU の負荷が大きくなります。特にスマートフォンでは、効果と負荷を比較して、使用するポストエフェクトを厳選してください。</p>
+</section>
+<section id="id8">
+<h3><span class="section-number">9.6.3. </span>シェーダー<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>複雑なシェーダーほど、1 ピクセルあたりの計算量が増えます。スマートフォンなど性能の低い端末では、URP の Lit シェーダーの代わりに、計算の少ない Simple Lit シェーダーや、ライティングを行わない Unlit シェーダーを使うことも検討します。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cpu_optimization.html" class="btn btn-neutral float-left" title="8. CPU（スクリプト）の最適化" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="memory_optimization.html" class="btn btn-neutral float-right" title="10. メモリとアセットの最適化" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

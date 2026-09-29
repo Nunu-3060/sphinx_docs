@@ -1,0 +1,538 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. 関数の設計 &mdash; ソフトウェア設計入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=20bc2eae" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="5. データの設計" href="data.html" />
+    <link rel="prev" title="3. 良い設計の指標" href="metrics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ソフトウェア設計入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="what_is_design.html">2. ソフトウェア設計とは</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">3. 良い設計の指標</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">4. 関数の設計</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">4.1. 名前を付ける</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">4.2. 1 つの関数は 1 つのことをする</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">4.3. 引数を設計する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">4.3.1. 引数は少なく</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">4.3.2. キーワード専用引数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">4.3.3. フラグ引数を避ける</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">4.3.4. 可変なデフォルト引数に注意する</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">4.4. 副作用を分離する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">4.4.1. 引数を書き換えない</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">4.4.2. 計算と入出力を分ける</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">4.4.3. コマンドとクエリを分ける</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">4.5. 早期リターンで入れ子を浅くする</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">4.6. 型ヒントで約束を明示する</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">4.7. エラーを伝える</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id16">4.7.1. 独自の例外を設計する</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id17">4.8. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">5. データの設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="oop.html">6. オブジェクト指向設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="solid.html">7. SOLID 原則</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">8. デザインパターン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">9. モジュールとパッケージの設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dependency.html">10. 依存関係の管理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">11. アーキテクチャパターン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="domain.html">12. ドメインのモデリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">13. テストと設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="refactoring.html">14. リファクタリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="documentation.html">15. 設計の記録と伝達</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exercise.html">16. 総合演習</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="checklist.html">設計チェックリスト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">サンプルコード一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ソフトウェア設計入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">4. </span>関数の設計</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">4. </span>関数の設計<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>関数は、設計の最小の単位です。関数の名前、引数、戻り値、副作用の有無を適切に決めるだけで、コードは大きく読みやすくなります。この章では、関数を設計するときの考え方を説明します。</p>
+<section id="id2">
+<h2><span class="section-number">4.1. </span>名前を付ける<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>関数の名前は、その関数が <strong>何をするか</strong> を表します。どのように実現しているか（実装の方法）は、名前に含めません。名前を読んだだけで、中身を読まずに使えるのが理想です。処理を行う関数は動詞で始めますが、計算した値を返すだけの関数は、<code class="docutils literal notranslate"><span class="pre">average</span></code> や <code class="docutils literal notranslate"><span class="pre">shipping_fee</span></code> のように、返す値を表す名詞にしても構いません。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 30.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>悪い例</p></th>
+<th class="head"><p>良い例</p></th>
+<th class="head"><p>理由</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">data()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">load_sales()</span></code></p></td>
+<td><p>何のデータを、どうするのかが分かりません。処理を行う関数の名前は、動詞で始めるのが基本です。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">check(user)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">is_active(user)</span></code></p></td>
+<td><p>真偽値を返す関数は、<code class="docutils literal notranslate"><span class="pre">is_</span></code>、<code class="docutils literal notranslate"><span class="pre">has_</span></code>、<code class="docutils literal notranslate"><span class="pre">can_</span></code> などで始めると、<code class="docutils literal notranslate"><span class="pre">if</span></code> 文の中で自然に読めます。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">calc(w)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">shipping_fee(weight_kg)</span></code></p></td>
+<td><p>省略した名前は、書いた本人以外には意味が伝わりません。単位のある値は、名前に単位を含めると誤解を防げます。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">process_list(items)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">remove_expired(items)</span></code></p></td>
+<td><p>「処理する」「扱う」のような意味の広い言葉は、何も説明していません。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">get_and_save_user()</span></code></p></td>
+<td><p>2 つの関数に分ける</p></td>
+<td><p>名前に「and」が入るのは、関数が 2 つのことをしている証拠です。</p></td>
+</tr>
+</tbody>
+</table>
+<p>良い名前が思いつかない場合は、関数の役割そのものがあいまいになっている可能性があります。名前を考えることは、設計を見直すきっかけになります。</p>
+</section>
+<section id="id3">
+<h2><span class="section-number">4.2. </span>1 つの関数は 1 つのことをする<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>関数は、1 つのことだけを行うようにします。「1 つのこと」の目安は、その関数が何をするのかを、「〜と〜をする」とつなげずに 1 文で説明できることです。</p>
+<p>また、1 つの関数の中では、処理の <strong>抽象度</strong> をそろえます。次の関数では、「注文を確定する」という高い抽象度の処理と、「SQL を組み立てる」という低い抽象度の処理が混ざっています。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 悪い例: 抽象度の異なる処理が混ざっている</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">place_order</span><span class="p">(</span><span class="n">order</span><span class="p">):</span>
+    <span class="n">validate</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="n">sql</span> <span class="o">=</span> <span class="s2">&quot;UPDATE orders SET status = &#39;placed&#39; WHERE id = &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+    <span class="n">send_confirmation</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 良い例: 同じ抽象度の処理だけを並べる</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">place_order</span><span class="p">(</span><span class="n">order</span><span class="p">):</span>
+    <span class="n">validate</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="n">mark_as_placed</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+    <span class="n">send_confirmation</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>抽象度がそろっていると、関数を上から読むだけで処理の流れが分かります。詳細を知りたいときだけ、呼び出している関数の中を読めば済みます。</p>
+</section>
+<section id="id4">
+<h2><span class="section-number">4.3. </span>引数を設計する<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<section id="id5">
+<h3><span class="section-number">4.3.1. </span>引数は少なく<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>引数が多い関数は、呼び出すときに引数の順序を間違えやすく、テストでも組み合わせが増えます。引数が 4 つ、5 つと増えてきたら、関連する引数を 1 つのデータクラスにまとめられないかを検討します（<a class="reference internal" href="data.html"><span class="doc">データの設計</span></a> を参照）。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">4.3.2. </span>キーワード専用引数<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>引数の意味が値だけでは分かりにくい場合は、<code class="docutils literal notranslate"><span class="pre">*</span></code> を使ってキーワード専用引数にします。呼び出し側に引数の名前を書かせることで、コードの意味が明確になります。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">resize</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">keep_aspect</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">resize</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>                    <span class="c1"># TypeError になる</span>
+<span class="n">resize</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>       <span class="c1"># 意味が明確</span>
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h3><span class="section-number">4.3.3. </span>フラグ引数を避ける<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>真偽値の引数で関数の動作を切り替える（<a class="reference internal" href="glossary.html#term-46"><span class="xref std std-term">フラグ引数</span></a>）と、呼び出し側のコードを読んだだけでは、<code class="docutils literal notranslate"><span class="pre">True</span></code> が何を意味するのか分かりません。また、1 つの関数が 2 つのことをすることになります。このような場合は、関数を 2 つに分けます。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">ch04_functions.py（悪い例）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">bad_format_name</span><span class="p">(</span><span class="n">first</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">last</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">western</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;氏名を整形します（悪い例: 呼び出し側から意味が読み取れない）.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">western</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">last</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">last</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">ch04_functions.py（良い例）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">format_name_western</span><span class="p">(</span><span class="n">first</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">last</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;名、姓の順に並べた氏名を返します（良い例）.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">last</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_name_japanese</span><span class="p">(</span><span class="n">first</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">last</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;姓、名の順に並べた氏名を返します（良い例）.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">last</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id8">
+<h3><span class="section-number">4.3.4. </span>可変なデフォルト引数に注意する<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>Python では、デフォルト引数の値は、関数を定義したときに一度だけ作られます。リストや辞書のような可変なオブジェクトをデフォルト引数にすると、すべての呼び出しで同じオブジェクトが共有されてしまいます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 悪い例: 呼び出しのたびに同じリストに追加される</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tags</span>
+
+<span class="n">add_tag</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>  <span class="c1"># [&#39;a&#39;]</span>
+<span class="n">add_tag</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>  <span class="c1"># [&#39;a&#39;, &#39;b&#39;] になってしまう</span>
+
+<span class="c1"># 良い例: None をデフォルト値にし、関数の中で新しいリストを作る</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">tags</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id9">
+<h2><span class="section-number">4.4. </span>副作用を分離する<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>関数が戻り値を返す以外に、外の状態を変えることを <a class="reference internal" href="glossary.html#term-43"><span class="xref std std-term">副作用</span></a> と呼びます。引数のオブジェクトの書き換え、グローバル変数の変更、ファイルへの書き込み、画面への表示、ネットワークの通信などは、すべて副作用です。</p>
+<p>同じ引数に対して常に同じ戻り値を返し、副作用を持たない関数を <a class="reference internal" href="glossary.html#term-28"><span class="xref std std-term">純粋関数</span></a> と呼びます。純粋関数は、引数と戻り値だけを見れば動作が分かるので、理解しやすく、テストも簡単です。</p>
+<p>プログラムから副作用をなくすことはできません（ファイルに保存しないプログラムは役に立ちません）。目標は、副作用をなくすことではなく、<strong>副作用を持つ部分と、純粋な計算の部分を分ける</strong> ことです。</p>
+<section id="id10">
+<h3><span class="section-number">4.4.1. </span>引数を書き換えない<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>次の悪い例の関数は、引数で受け取ったリストの中身を書き換えます。呼び出し側は、関数を呼んだあとに元のデータが変わっていることに気付かないかもしれません。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">ch04_functions.py（悪い例）</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">bad_apply_discount</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;商品の価格を割り引きます（悪い例: 引数のリストを書き換える）.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="n">item</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">rate</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<p>良い例では、元のリストは変更せず、割り引いた価格の新しいリストを作って返します。<code class="docutils literal notranslate"><span class="pre">Item</span></code> は不変のデータクラス（<code class="docutils literal notranslate"><span class="pre">frozen=True</span></code>）なので、<code class="docutils literal notranslate"><span class="pre">dataclasses.replace</span></code> で一部の値だけを変えた新しいオブジェクトを作ります。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">ch04_functions.py（良い例）</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Item</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;商品を表します.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">int</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">ch04_functions.py（良い例）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">apply_discount</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Item</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;割り引いた価格の商品のリストを新しく作って返します（良い例）.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">rate</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;rate must be in [0, 1): </span><span class="si">{</span><span class="n">rate</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">replace</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">price</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">rate</span><span class="p">)))</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id11">
+<h3><span class="section-number">4.4.2. </span>計算と入出力を分ける<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>計算の結果を関数の中で <code class="docutils literal notranslate"><span class="pre">print</span></code> すると、その計算の結果をほかの用途（ファイルへの保存や、別の計算の入力）に使えず、テストで結果を確かめることも難しくなります。計算は値を返す関数にし、表示は呼び出し側で行います。</p>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text">ch04_functions.py（悪い例）</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">bad_print_average</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;平均点を計算して表示します（悪い例: 計算と表示が一体）.&quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">scores</span><span class="p">:</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="n">score</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;平均点: </span><span class="si">{</span><span class="n">total</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">ch04_functions.py（良い例）</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">average</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;平均点を返します（良い例: 入出力を持たない純粋な関数）.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">scores</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;scores must not be empty&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_average</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;平均点を表示用の文字列にします.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;平均点: </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/393effee35c7a939944cd333e6755d66/ch04_functions.py"><code class="xref download docutils literal notranslate"><span class="pre">ch04_functions.py</span></code></a></p>
+</section>
+<section id="id12">
+<h3><span class="section-number">4.4.3. </span>コマンドとクエリを分ける<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<ol class="upperalpha simple" start="2">
+<li><p>Meyer は、メソッドを次の 2 種類に分け、1 つのメソッドが両方を兼ねないようにすべきだと提唱しました。これを <a class="reference internal" href="glossary.html#term-22"><span class="xref std std-term">コマンドとクエリの分離</span></a> と呼びます。</p></li>
+</ol>
+<ul class="simple">
+<li><p>コマンド: 状態を変更します。値は返しません。</p></li>
+<li><p>クエリ: 値を返します。状態は変更しません。</p></li>
+</ul>
+<p>たとえば、スタックから値を取り出す <code class="docutils literal notranslate"><span class="pre">pop</span></code> は、状態の変更と値の返却を兼ねています。Python の <code class="docutils literal notranslate"><span class="pre">list.pop</span></code> のように、実用上の理由からこの原則に従わないメソッドもあります。しかし、自分で設計するメソッドでこの原則に従えば、クエリのつもりで呼んだメソッドが状態を変えてしまう、という事態を避けられます。</p>
+</section>
+</section>
+<section id="id13">
+<h2><span class="section-number">4.5. </span>早期リターンで入れ子を浅くする<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<p>条件の確認が入れ子になると、本来の処理がどこにあるのかが分かりにくくなります。前提条件を満たさない場合を先に処理して関数を抜ける（<a class="reference internal" href="glossary.html#term-31"><span class="xref std std-term">早期リターン</span></a>）と、入れ子が浅くなり、本来の処理が関数の最後に残ります。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 悪い例: 入れ子が深い</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">withdraw</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">account</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">amount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">account</span><span class="o">.</span><span class="n">balance</span> <span class="o">&gt;=</span> <span class="n">amount</span><span class="p">:</span>
+                <span class="n">account</span><span class="o">.</span><span class="n">balance</span> <span class="o">-=</span> <span class="n">amount</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;残高が足りません&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;金額は正の数です&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;口座が無効です&quot;</span><span class="p">)</span>
+
+<span class="c1"># 良い例: 前提条件を先に確認する</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">withdraw</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">account</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;口座が無効です&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">amount</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;金額は正の数です&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">account</span><span class="o">.</span><span class="n">balance</span> <span class="o">&lt;</span> <span class="n">amount</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;残高が足りません&quot;</span><span class="p">)</span>
+    <span class="n">account</span><span class="o">.</span><span class="n">balance</span> <span class="o">-=</span> <span class="n">amount</span>
+</pre></div>
+</div>
+</section>
+<section id="id14">
+<h2><span class="section-number">4.6. </span>型ヒントで約束を明示する<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<p>型ヒントは、関数と呼び出し側の間の <strong>約束</strong> を明示します。引数に何を渡せばよいのか、戻り値として何が返るのかが、ドキュメントを読まなくても分かります。また、mypy などの型チェッカーを使えば、約束に反する呼び出しを実行前に検出できます。</p>
+<p>型ヒントを書くときは、次の点を意識します。</p>
+<ul class="simple">
+<li><p><strong>受け取る型は広く、返す型は具体的に</strong> します。引数を順に読むだけなら <code class="docutils literal notranslate"><span class="pre">list[int]</span></code> ではなく <code class="docutils literal notranslate"><span class="pre">Iterable[int]</span></code> や <code class="docutils literal notranslate"><span class="pre">Sequence[int]</span></code> にすると、タプルやジェネレーターも渡せるようになります。戻り値は、呼び出し側が使えるメソッドが多いように、具体的な型にします。</p></li>
+<li><p>値がない場合があるなら、戻り値の型を <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">|</span> <span class="pre">None</span></code> にします。呼び出し側は <code class="docutils literal notranslate"><span class="pre">None</span></code> の確認を忘れると、mypy に指摘されます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Any</span></code> は、型の検査を止めてしまうので、できるだけ使いません。</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">total</span><span class="p">(</span><span class="n">prices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>   <span class="c1"># リストもタプルも渡せる</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">find_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">User</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># 見つからない場合がある</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</section>
+<section id="id15">
+<h2><span class="section-number">4.7. </span>エラーを伝える<a class="headerlink" href="#id15" title="Link to this heading"></a></h2>
+<p>関数が処理を続けられない状況（ファイルが見つからない、在庫が足りないなど）を呼び出し側に伝える方法には、主に次の 2 つがあります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 40.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>方法</p></th>
+<th class="head"><p>向いている場面</p></th>
+<th class="head"><p>例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>例外を送出する</p></td>
+<td><p>通常は起きない、または起きたら処理を中断すべき状況</p></td>
+<td><p>在庫が足りない、引数が不正、通信に失敗した</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code> などの値を返す</p></td>
+<td><p>「見つからない」ことが通常の結果の 1 つである状況</p></td>
+<td><p>辞書の <code class="docutils literal notranslate"><span class="pre">get</span></code>、検索の結果が 0 件</p></td>
+</tr>
+</tbody>
+</table>
+<p>Python では、例外を使ってエラーを伝えるのが一般的です。エラーを表す特別な戻り値（<code class="docutils literal notranslate"><span class="pre">-1</span></code> や空文字列など）は、呼び出し側が確認を忘れても処理が進んでしまうので避けます。</p>
+<section id="id16">
+<h3><span class="section-number">4.7.1. </span>独自の例外を設計する<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>アプリケーションに固有のエラーは、独自の例外クラスとして定義します。そのとき、アプリケーションの例外をすべて 1 つの基底クラスから派生させると、呼び出し側は「このアプリケーションが意図して送出したエラー」をまとめて捕捉できます。また、エラーの原因を属性として持たせると、呼び出し側はメッセージの文字列を解析せずに原因を判別できます。</p>
+<div class="literal-block-wrapper docutils container" id="id25">
+<div class="code-block-caption"><span class="caption-text">ch04_exceptions.py</span><a class="headerlink" href="#id25" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ShopError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;このアプリケーションが送出する例外の基底クラスです.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OutOfStockError</span><span class="p">(</span><span class="n">ShopError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;在庫が足りないときに送出します.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">requested</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">available</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2"> の在庫が足りません&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;（要求 </span><span class="si">{</span><span class="n">requested</span><span class="si">}</span><span class="s2"> 個、在庫 </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2"> 個）&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">product</span> <span class="o">=</span> <span class="n">product</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requested</span> <span class="o">=</span> <span class="n">requested</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">available</span> <span class="o">=</span> <span class="n">available</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UnknownProductError</span><span class="p">(</span><span class="n">ShopError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;存在しない商品が指定されたときに送出します.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2"> という商品はありません&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">product</span> <span class="o">=</span> <span class="n">product</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">reserve</span><span class="p">(</span><span class="n">stock</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">quantity</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;在庫を引き当て、引き当て後の在庫数を返します.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: quantity が正の整数でない場合（呼び出し側の誤り）</span>
+<span class="sd">        UnknownProductError: 商品が存在しない場合</span>
+<span class="sd">        OutOfStockError: 在庫が足りない場合</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">quantity</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;quantity must be positive: </span><span class="si">{</span><span class="n">quantity</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">product</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stock</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnknownProductError</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">stock</span><span class="p">[</span><span class="n">product</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">quantity</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">OutOfStockError</span><span class="p">(</span><span class="n">product</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">stock</span><span class="p">[</span><span class="n">product</span><span class="p">])</span>
+    <span class="n">stock</span><span class="p">[</span><span class="n">product</span><span class="p">]</span> <span class="o">-=</span> <span class="n">quantity</span>
+    <span class="k">return</span> <span class="n">stock</span><span class="p">[</span><span class="n">product</span><span class="p">]</span>
+
+
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-text">ch04_exceptions.py（呼び出し側）</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;いくつかの注文を処理し、エラーの種類に応じて対処します.&quot;&quot;&quot;</span>
+    <span class="n">stock</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;apple&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;banana&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="n">orders</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;apple&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;banana&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;cherry&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;apple&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">product</span><span class="p">,</span> <span class="n">quantity</span> <span class="ow">in</span> <span class="n">orders</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">reserve</span><span class="p">(</span><span class="n">stock</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">quantity</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">OutOfStockError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="c1"># 属性から不足数を求め、入荷待ちの手配などに使える</span>
+            <span class="n">shortage</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">requested</span> <span class="o">-</span> <span class="n">error</span><span class="o">.</span><span class="n">available</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;エラー: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">（不足 </span><span class="si">{</span><span class="n">shortage</span><span class="si">}</span><span class="s2"> 個）&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ShopError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;エラー: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s2"> を </span><span class="si">{</span><span class="n">quantity</span><span class="si">}</span><span class="s2"> 個引き当てました&quot;</span>
+                  <span class="sa">f</span><span class="s2">&quot;（残り </span><span class="si">{</span><span class="n">remaining</span><span class="si">}</span><span class="s2"> 個）&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/a16fb1c37b5f0ec4ed92e29d5dc645ef/ch04_exceptions.py"><code class="xref download docutils literal notranslate"><span class="pre">ch04_exceptions.py</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">reserve</span></code> は、<code class="docutils literal notranslate"><span class="pre">quantity</span></code> が正でない場合には独自の例外ではなく、組み込みの <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> を送出しています。これは、呼び出し側のプログラムの誤り（関数の使い方の誤り）であり、業務上起こり得るエラー（在庫切れ）とは性質が異なるからです。</p>
+<p>例外を扱うときは、次の点に注意します。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">Exception:</span></code> で例外をまとめて捕捉し、何もせずに処理を続ける（例外を握りつぶす）ことは避けます。不具合の原因が分からなくなります。</p></li>
+<li><p>例外を別の例外に変換して送出し直すときは、<code class="docutils literal notranslate"><span class="pre">raise</span> <span class="pre">NewError(...)</span> <span class="pre">from</span> <span class="pre">error</span></code> のように <code class="docutils literal notranslate"><span class="pre">from</span></code> を付けて、元の例外の情報を残します。</p></li>
+<li><p>捕捉するのは、その場で適切に対処できる例外だけにします。対処できない例外は、呼び出し側に伝えます。</p></li>
+</ul>
+</section>
+</section>
+<section id="id17">
+<h2><span class="section-number">4.8. </span>まとめ<a class="headerlink" href="#id17" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>関数の名前は、何をするかを表します。</p></li>
+<li><p>1 つの関数は 1 つのことをし、処理の抽象度をそろえます。</p></li>
+<li><p>引数は少なくし、フラグ引数は避けます。</p></li>
+<li><p>副作用を持つ部分と純粋な計算の部分を分けます。</p></li>
+<li><p>型ヒントで、関数と呼び出し側の約束を明示します。</p></li>
+<li><p>エラーは例外で伝え、アプリケーションの例外は 1 つの基底クラスにまとめます。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="metrics.html" class="btn btn-neutral float-left" title="3. 良い設計の指標" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="data.html" class="btn btn-neutral float-right" title="5. データの設計" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

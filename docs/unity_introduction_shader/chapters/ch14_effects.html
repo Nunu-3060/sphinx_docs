@@ -1,0 +1,628 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 14 章 表現テクニック &mdash; Unity シェーダー・グラフィック入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=01157622" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="第 15 章 ポストエフェクト" href="ch15_post_effect.html" />
+    <link rel="prev" title="第 13 章 頂点アニメーション" href="ch13_vertex_animation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity シェーダー・グラフィックス入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 1 部 導入と理論</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">第 1 章 はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_cg_math.html">第 2 章 コンピューターグラフィックスの数学</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_coordinate_transform.html">第 3 章 座標変換</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_rendering_pipeline.html">第 4 章 GPU とレンダリングパイプライン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_unity_rendering.html">第 5 章 Unity の描画のしくみ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 2 部 シェーダーの基本</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch06_shaderlab_hlsl.html">第 6 章 ShaderLab と HLSL の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_first_shader.html">第 7 章 最初のシェーダー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_texture_uv.html">第 8 章 テクスチャーと UV</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 3 部 ライティング</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch09_lighting.html">第 9 章 ライティング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_normal_map.html">第 10 章 法線マップ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_shadow.html">第 11 章 影</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 4 部 表現の幅を広げる</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch12_transparency.html">第 12 章 透明と描画順</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_vertex_animation.html">第 13 章 頂点アニメーション</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 14 章 表現テクニック</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">リムライト</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">フレネル効果</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">ディゾルブ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">ノイズの生成</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">境目の発光</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c">C# からしきい値を変える</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">トゥーンシェーディングと輪郭線</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">陰影の段階化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">輪郭線</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch15_post_effect.html">第 15 章 ポストエフェクト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch16_shader_graph.html">第 16 章 Shader Graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17_debug_optimize.html">第 17 章 デバッグと最適化</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/formulas.html">付録 B 数式のまとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/references.html">付録 C 参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity シェーダー・グラフィックス入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 14 章 表現テクニック</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch13_vertex_animation.html" class="btn btn-neutral float-left" title="第 13 章 頂点アニメーション" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch15_post_effect.html" class="btn btn-neutral float-right" title="第 15 章 ポストエフェクト" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 14 章 表現テクニック<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>この章では、これまでに学んだ内容を組み合わせて、ゲームでよく使われる表現を作る。リムライト、ディゾルブ、トゥーンシェーディングと輪郭線の 3 つを扱う。</p>
+<p>この章のサンプルコードは、<code class="docutils literal notranslate"><span class="pre">examples/chapter14</span></code> フォルダーにある。</p>
+<section id="id2">
+<h2>リムライト<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>リムライトは、オブジェクトの輪郭付近を光らせる表現である。逆光で輪郭が明るく縁取られる様子を表したり、キャラクターを背景から目立たせたりするときに使う。</p>
+<p>カメラから見たオブジェクトの輪郭付近では、面がカメラに対して横を向いているため、法線 <span class="math notranslate nohighlight">\(\mathbf{N}\)</span> と視線の方向 <span class="math notranslate nohighlight">\(\mathbf{V}\)</span> がほぼ直交し、内積 <span class="math notranslate nohighlight">\(\mathbf{N} \cdot \mathbf{V}\)</span> が 0 に近くなる。反対に、カメラの正面を向いた面では内積が 1 に近い。そこで、<span class="math notranslate nohighlight">\(1 - \mathbf{N} \cdot \mathbf{V}\)</span> を輪郭らしさの値として使う。</p>
+<div class="math notranslate nohighlight">
+\[I_{rim} = C_{rim} \, (1 - \max(0,\ \mathbf{N} \cdot \mathbf{V}))^{p}\]</div>
+<p><span class="math notranslate nohighlight">\(p\)</span> は、光る範囲を調整する値（<code class="docutils literal notranslate"><span class="pre">_RimPower</span></code>）である。値が大きいほど、光る範囲が輪郭の近くに狭まる。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">RimLight.shader</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">// 第 14 章：オブジェクトの輪郭付近を光らせる（リムライト）シェーダー。</span>
+<span class="linenos"> 2</span><span class="n">Shader</span><span class="w"> </span><span class="s">&quot;Introduction/Chapter14/RimLight&quot;</span>
+<span class="linenos"> 3</span><span class="p">{</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="n">Properties</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos"> 6</span><span class="w">        </span><span class="p">[</span><span class="n">MainColor</span><span class="p">]</span><span class="w"> </span><span class="n">_BaseColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Base Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="p">[</span><span class="n">HDR</span><span class="p">]</span><span class="w"> </span><span class="n">_RimColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Rim Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 8</span><span class="w">        </span><span class="c1">// 値が大きいほど、光る範囲が輪郭の近くに狭まる</span>
+<span class="linenos"> 9</span><span class="w">        </span><span class="n">_RimPower</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Rim Power&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
+<span class="linenos">10</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="w">    </span><span class="n">SubShader</span>
+<span class="linenos">13</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">14</span><span class="w">        </span><span class="n">Tags</span>
+<span class="linenos">15</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">16</span><span class="w">            </span><span class="s">&quot;RenderType&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Opaque&quot;</span>
+<span class="linenos">17</span><span class="w">            </span><span class="s">&quot;Queue&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Geometry&quot;</span>
+<span class="linenos">18</span><span class="w">            </span><span class="s">&quot;RenderPipeline&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalPipeline&quot;</span>
+<span class="linenos">19</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos">22</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">23</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;RimLight&quot;</span>
+<span class="linenos">24</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalForward&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos">27</span><span class="w">            </span><span class="cp">#pragma vertex Vert</span>
+<span class="linenos">28</span><span class="w">            </span><span class="cp">#pragma fragment Frag</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl&quot;</span>
+<span class="linenos">31</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl&quot;</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos">34</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">35</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos">36</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">NORMAL</span><span class="p">;</span>
+<span class="linenos">37</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos">40</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">41</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos">42</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">positionWS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD0</span><span class="p">;</span>
+<span class="linenos">43</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD1</span><span class="p">;</span>
+<span class="linenos">44</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">45</span>
+<span class="linenos">46</span><span class="w">            </span><span class="n">CBUFFER_START</span><span class="p">(</span><span class="n">UnityPerMaterial</span><span class="p">)</span>
+<span class="linenos">47</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">;</span>
+<span class="linenos">48</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">_RimColor</span><span class="p">;</span>
+<span class="linenos">49</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">_RimPower</span><span class="p">;</span>
+<span class="linenos">50</span><span class="w">            </span><span class="n">CBUFFER_END</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">Vert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos">53</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">54</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">55</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorld</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xyz</span><span class="p">);</span>
+<span class="linenos">56</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformWorldToHClip</span><span class="p">(</span><span class="n">output</span><span class="p">.</span><span class="n">positionWS</span><span class="p">);</span>
+<span class="linenos">57</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorldNormal</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalOS</span><span class="p">);</span>
+<span class="linenos">58</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">59</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">60</span>
+<span class="linenos">61</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">Frag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos">62</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">63</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalWS</span><span class="p">);</span>
+<span class="linenos">64</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">viewDirWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetWorldSpaceNormalizeViewDir</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionWS</span><span class="p">);</span>
+<span class="linenos">65</span><span class="w">                </span><span class="n">Light</span><span class="w"> </span><span class="n">mainLight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetMainLight</span><span class="p">();</span>
+<span class="linenos">66</span>
+<span class="linenos">67</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">ambient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SampleSH</span><span class="p">(</span><span class="n">normalWS</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="p">;</span>
+<span class="linenos">68</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">nDotL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">saturate</span><span class="p">(</span><span class="nb">dot</span><span class="p">(</span><span class="n">normalWS</span><span class="p">,</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">direction</span><span class="p">));</span>
+<span class="linenos">69</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">color</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nDotL</span><span class="p">;</span>
+<span class="linenos">70</span>
+<span class="linenos">71</span><span class="w">                </span><span class="c1">// 法線と視線が直交する（内積が 0 に近い）輪郭付近ほど、rim が 1 に近づく</span>
+<span class="linenos">72</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">nDotV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">saturate</span><span class="p">(</span><span class="nb">dot</span><span class="p">(</span><span class="n">normalWS</span><span class="p">,</span><span class="w"> </span><span class="n">viewDirWS</span><span class="p">));</span>
+<span class="linenos">73</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">rim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">pow</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">nDotV</span><span class="p">,</span><span class="w"> </span><span class="n">_RimPower</span><span class="p">);</span>
+<span class="linenos">74</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">rimColor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_RimColor</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rim</span><span class="p">;</span>
+<span class="linenos">75</span>
+<span class="linenos">76</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="kt">half4</span><span class="p">(</span><span class="n">ambient</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">rimColor</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">77</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">78</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">79</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">80</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">81</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/be88bddcb16fc501f606e34b5abc2428/RimLight.shader"><code class="xref download docutils literal notranslate"><span class="pre">RimLight.shader</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>球に適用すると、輪郭が水色に光る。リムライトの色は、ライトの方向に関係なく加えられるため、ライトが当たらない側の輪郭も光る。</p>
+<p><code class="docutils literal notranslate"><span class="pre">_RimColor</span></code> には <code class="docutils literal notranslate"><span class="pre">[HDR]</span></code> 属性を付けている。HDR の色は、各成分に 1 より大きい値を設定できる。URP の Volume で Bloom を有効にしている場合、1 を超える明るさの部分は周囲ににじむように光って見える。</p>
+<section id="id3">
+<h3>フレネル効果<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>水面は、真上から見ると水の中が透けて見えるが、浅い角度から見ると空を映して鏡のように見える。このように、視線と面のなす角によって反射の強さが変わる現象を、フレネル効果という。フレネル効果の反射率は、Schlick の近似式でよく近似される。</p>
+<div class="math notranslate nohighlight">
+\[F = F_0 + (1 - F_0)(1 - \mathbf{N} \cdot \mathbf{V})^5\]</div>
+<p><span class="math notranslate nohighlight">\(F_0\)</span> は、面を正面から見たときの反射率である。リムライトの式は、この近似式と同じ <span class="math notranslate nohighlight">\((1 - \mathbf{N} \cdot \mathbf{V})\)</span> のべき乗の形をしている。リムライトは、フレネル効果を表現上の目的で強調したものと考えられる。</p>
+</section>
+</section>
+<section id="id4">
+<h2>ディゾルブ<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>ディゾルブは、オブジェクトが燃え尽きたり、溶けたりするように、少しずつ消えていく表現である。ノイズの値がしきい値より小さいピクセルを <code class="docutils literal notranslate"><span class="pre">clip</span></code> 関数で破棄し（第 12 章を参照）、しきい値を変えることで消える範囲を変える。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">Dissolve.shader</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="c1">// 第 14 章：ノイズを使って、</span>
+<span class="linenos">  2</span><span class="c1">// オブジェクトが燃え尽きるように消えていく（ディゾルブ）シェーダー。</span>
+<span class="linenos">  3</span><span class="n">Shader</span><span class="w"> </span><span class="s">&quot;Introduction/Chapter14/Dissolve&quot;</span>
+<span class="linenos">  4</span><span class="p">{</span>
+<span class="linenos">  5</span><span class="w">    </span><span class="n">Properties</span>
+<span class="linenos">  6</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">  7</span><span class="w">        </span><span class="p">[</span><span class="n">MainColor</span><span class="p">]</span><span class="w"> </span><span class="n">_BaseColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Base Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">  8</span><span class="w">        </span><span class="c1">// 0 で消えている部分なし、1 ですべて消える</span>
+<span class="linenos">  9</span><span class="w">        </span><span class="n">_Threshold</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Threshold&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.3</span>
+<span class="linenos"> 10</span><span class="w">        </span><span class="c1">// 消える境目を光らせる幅</span>
+<span class="linenos"> 11</span><span class="w">        </span><span class="n">_EdgeWidth</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Edge Width&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.05</span>
+<span class="linenos"> 12</span><span class="w">        </span><span class="p">[</span><span class="n">HDR</span><span class="p">]</span><span class="w"> </span><span class="n">_EdgeColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Edge Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 13</span><span class="w">        </span><span class="c1">// ノイズの細かさ（UV 座標に掛ける値）</span>
+<span class="linenos"> 14</span><span class="w">        </span><span class="n">_NoiseScale</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Noise Scale&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Float</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span>
+<span class="linenos"> 15</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 16</span>
+<span class="linenos"> 17</span><span class="w">    </span><span class="n">SubShader</span>
+<span class="linenos"> 18</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos"> 19</span><span class="w">        </span><span class="n">Tags</span>
+<span class="linenos"> 20</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos"> 21</span><span class="w">            </span><span class="s">&quot;RenderType&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;TransparentCutout&quot;</span>
+<span class="linenos"> 22</span><span class="w">            </span><span class="s">&quot;Queue&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;AlphaTest&quot;</span>
+<span class="linenos"> 23</span><span class="w">            </span><span class="s">&quot;RenderPipeline&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalPipeline&quot;</span>
+<span class="linenos"> 24</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 25</span>
+<span class="linenos"> 26</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos"> 27</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos"> 28</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;Dissolve&quot;</span>
+<span class="linenos"> 29</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalForward&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos"> 30</span>
+<span class="linenos"> 31</span><span class="w">            </span><span class="c1">// 消えた部分から内側（裏面）が見えるため、裏面も描画する</span>
+<span class="linenos"> 32</span><span class="w">            </span><span class="n">Cull</span><span class="w"> </span><span class="n">Off</span>
+<span class="linenos"> 33</span>
+<span class="linenos"> 34</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos"> 35</span><span class="w">            </span><span class="cp">#pragma vertex Vert</span>
+<span class="linenos"> 36</span><span class="w">            </span><span class="cp">#pragma fragment Frag</span>
+<span class="linenos"> 37</span>
+<span class="linenos"> 38</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl&quot;</span>
+<span class="linenos"> 39</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl&quot;</span>
+<span class="linenos"> 40</span>
+<span class="linenos"> 41</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos"> 42</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 43</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos"> 44</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">NORMAL</span><span class="p">;</span>
+<span class="linenos"> 45</span><span class="w">                </span><span class="kt">float2</span><span class="w"> </span><span class="n">uv</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD0</span><span class="p">;</span>
+<span class="linenos"> 46</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos"> 47</span>
+<span class="linenos"> 48</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos"> 49</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 50</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos"> 51</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD0</span><span class="p">;</span>
+<span class="linenos"> 52</span><span class="w">                </span><span class="kt">float2</span><span class="w"> </span><span class="n">uv</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD1</span><span class="p">;</span>
+<span class="linenos"> 53</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos"> 54</span>
+<span class="linenos"> 55</span><span class="w">            </span><span class="n">CBUFFER_START</span><span class="p">(</span><span class="n">UnityPerMaterial</span><span class="p">)</span>
+<span class="linenos"> 56</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">;</span>
+<span class="linenos"> 57</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">_Threshold</span><span class="p">;</span>
+<span class="linenos"> 58</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">_EdgeWidth</span><span class="p">;</span>
+<span class="linenos"> 59</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">_EdgeColor</span><span class="p">;</span>
+<span class="linenos"> 60</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">_NoiseScale</span><span class="p">;</span>
+<span class="linenos"> 61</span><span class="w">            </span><span class="n">CBUFFER_END</span>
+<span class="linenos"> 62</span>
+<span class="linenos"> 63</span><span class="w">            </span><span class="c1">// 2 次元の座標から、0 ～ 1 の疑似乱数を作る</span>
+<span class="linenos"> 64</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">Hash</span><span class="p">(</span><span class="kt">float2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos"> 65</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 66</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="nb">frac</span><span class="p">(</span><span class="nb">sin</span><span class="p">(</span><span class="nb">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float2</span><span class="p">(</span><span class="mf">12.9898</span><span class="p">,</span><span class="w"> </span><span class="mf">78.233</span><span class="p">)))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">43758.5453</span><span class="p">);</span>
+<span class="linenos"> 67</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos"> 68</span>
+<span class="linenos"> 69</span><span class="w">            </span><span class="c1">// バリューノイズ：格子点ごとの乱数を、滑らかに補間したノイズ</span>
+<span class="linenos"> 70</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">ValueNoise</span><span class="p">(</span><span class="kt">float2</span><span class="w"> </span><span class="n">uv</span><span class="p">)</span>
+<span class="linenos"> 71</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 72</span><span class="w">                </span><span class="kt">float2</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">floor</span><span class="p">(</span><span class="n">uv</span><span class="p">);</span><span class="w"> </span><span class="c1">// 格子の番号</span>
+<span class="linenos"> 73</span><span class="w">                </span><span class="kt">float2</span><span class="w"> </span><span class="n">local</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">frac</span><span class="p">(</span><span class="n">uv</span><span class="p">);</span><span class="w"> </span><span class="c1">// 格子の中での位置（0 ～ 1）</span>
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span><span class="w">                </span><span class="c1">// 格子の四隅の乱数</span>
+<span class="linenos"> 76</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Hash</span><span class="p">(</span><span class="n">cell</span><span class="p">);</span>
+<span class="linenos"> 77</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Hash</span><span class="p">(</span><span class="n">cell</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">float2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos"> 78</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Hash</span><span class="p">(</span><span class="n">cell</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">float2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos"> 79</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Hash</span><span class="p">(</span><span class="n">cell</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">float2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos"> 80</span>
+<span class="linenos"> 81</span><span class="w">                </span><span class="c1">// 3t^2 - 2t^3 で補間の重みを滑らかにし、格子の境目が目立たないようにする</span>
+<span class="linenos"> 82</span><span class="w">                </span><span class="kt">float2</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">local</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">local</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">3.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">local</span><span class="p">);</span>
+<span class="linenos"> 83</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="nb">lerp</span><span class="p">(</span><span class="nb">lerp</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="nb">lerp</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos"> 84</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos"> 85</span>
+<span class="linenos"> 86</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">Vert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos"> 87</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 88</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos"> 89</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToHClip</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xyz</span><span class="p">);</span>
+<span class="linenos"> 90</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorldNormal</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalOS</span><span class="p">);</span>
+<span class="linenos"> 91</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">uv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">uv</span><span class="p">;</span>
+<span class="linenos"> 92</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos"> 93</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos"> 94</span>
+<span class="linenos"> 95</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">Frag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">isFrontFace</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_IsFrontFace</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos"> 96</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 97</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="nb">noise</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ValueNoise</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">uv</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_NoiseScale</span><span class="p">);</span>
+<span class="linenos"> 98</span>
+<span class="linenos"> 99</span><span class="w">                </span><span class="c1">// ノイズの値がしきい値より小さいピクセルを破棄する</span>
+<span class="linenos">100</span><span class="w">                </span><span class="nb">clip</span><span class="p">(</span><span class="nb">noise</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">_Threshold</span><span class="p">);</span>
+<span class="linenos">101</span>
+<span class="linenos">102</span><span class="w">                </span><span class="c1">// 裏面では法線を反転し、内側にもライティングが正しく当たるようにする</span>
+<span class="linenos">103</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalWS</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">isFrontFace</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">104</span><span class="w">                </span><span class="n">Light</span><span class="w"> </span><span class="n">mainLight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetMainLight</span><span class="p">();</span>
+<span class="linenos">105</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">ambient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SampleSH</span><span class="p">(</span><span class="n">normalWS</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="p">;</span>
+<span class="linenos">106</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">nDotL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">saturate</span><span class="p">(</span><span class="nb">dot</span><span class="p">(</span><span class="n">normalWS</span><span class="p">,</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">direction</span><span class="p">));</span>
+<span class="linenos">107</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">color</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nDotL</span><span class="p">;</span>
+<span class="linenos">108</span>
+<span class="linenos">109</span><span class="w">                </span><span class="c1">// しきい値のすぐ上（消える境目）ほど edge が 1 に近づく。</span>
+<span class="linenos">110</span><span class="w">                </span><span class="c1">// しきい値が 0 のときは何も消えていないため、境目も光らせない。</span>
+<span class="linenos">111</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">edge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">smoothstep</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">_EdgeWidth</span><span class="p">,</span><span class="w"> </span><span class="nb">noise</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">_Threshold</span><span class="p">);</span>
+<span class="linenos">112</span><span class="w">                </span><span class="n">edge</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="nb">step</span><span class="p">(</span><span class="mf">0.001</span><span class="p">,</span><span class="w"> </span><span class="n">_Threshold</span><span class="p">);</span>
+<span class="linenos">113</span>
+<span class="linenos">114</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">lerp</span><span class="p">(</span><span class="n">ambient</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">diffuse</span><span class="p">,</span><span class="w"> </span><span class="n">_EdgeColor</span><span class="p">.</span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="n">edge</span><span class="p">);</span>
+<span class="linenos">115</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="kt">half4</span><span class="p">(</span><span class="n">color</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">116</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">117</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">118</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">119</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">120</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/90fca0d990b63b806c0fdc4da553a62d/Dissolve.shader"><code class="xref download docutils literal notranslate"><span class="pre">Dissolve.shader</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>マテリアルの <span class="guilabel">Threshold</span> を 0 から 1 に変えると、オブジェクトがまだらに消えていく。消える境目は、<span class="guilabel">Edge Color</span> の色で光る。</p>
+<section id="id5">
+<h3>ノイズの生成<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>ディゾルブでは、場所によって不規則に変わるが、近い場所では近い値になるノイズを使う。ノイズのテクスチャーを使うこともできるが、サンプルでは、テクスチャーを用意しなくても動くように、バリューノイズをシェーダーの中で計算している。</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Hash</span></code> 関数で、2 次元の座標から 0～1 の疑似乱数を作る。同じ座標からは常に同じ値が得られる。</p></li>
+<li><p>UV 座標を <code class="docutils literal notranslate"><span class="pre">_NoiseScale</span></code> 倍し、整数の格子に分ける。格子の四隅の点に、<code class="docutils literal notranslate"><span class="pre">Hash</span></code> 関数で乱数を割り当てる。</p></li>
+<li><p>格子の中の点の値を、四隅の乱数から補間して求める。補間の重みに <span class="math notranslate nohighlight">\(3t^2 - 2t^3\)</span> を使うと、格子の境目で値が滑らかにつながる。</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">Hash</span></code> 関数で使っている定数（12.9898、78.233、43758.5453）には特別な意味はなく、結果が不規則に見えるように選ばれた値である。</p>
+</section>
+<section id="id6">
+<h3>境目の発光<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>消える境目を光らせるため、ノイズの値としきい値の差が <code class="docutils literal notranslate"><span class="pre">_EdgeWidth</span></code> より小さい部分に、<code class="docutils literal notranslate"><span class="pre">_EdgeColor</span></code> の色を混ぜている。<code class="docutils literal notranslate"><span class="pre">smoothstep</span></code> 関数で、差が 0 のとき 1、<code class="docutils literal notranslate"><span class="pre">_EdgeWidth</span></code> 以上のとき 0 になる値を作っている。しきい値が 0 のときは何も消えていないため、<code class="docutils literal notranslate"><span class="pre">step</span></code> 関数で境目の発光を止めている。</p>
+<p>消えた部分からはオブジェクトの内側（裏面）が見えるため、<code class="docutils literal notranslate"><span class="pre">Cull</span> <span class="pre">Off</span></code> で裏面も描画している。フラグメントシェーダーの <code class="docutils literal notranslate"><span class="pre">SV_IsFrontFace</span></code> セマンティクスの引数には、表面なら <code class="docutils literal notranslate"><span class="pre">true</span></code>、裏面なら <code class="docutils literal notranslate"><span class="pre">false</span></code> が入る。裏面では法線を反転して、内側のライティングも正しく計算されるようにしている。</p>
+</section>
+<section id="c">
+<h3>C# からしきい値を変える<a class="headerlink" href="#c" title="Link to this heading"></a></h3>
+<p>次のスクリプトは、しきい値を時間とともに変化させる。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">DissolveAnimator.cs</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 4</span><span class="c1">/// Dissolve シェーダーの _Threshold を時間とともに変化させ、</span>
+<span class="linenos"> 5</span><span class="c1">/// オブジェクトが消えたり現れたりするようにする。</span>
+<span class="linenos"> 6</span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos"> 7</span><span class="na">[RequireComponent(typeof(Renderer))]</span>
+<span class="linenos"> 8</span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">DissolveAnimator</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">MonoBehaviour</span>
+<span class="linenos"> 9</span><span class="p">{</span>
+<span class="linenos">10</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ThresholdId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Shader</span><span class="p">.</span><span class="n">PropertyToID</span><span class="p">(</span><span class="s">&quot;_Threshold&quot;</span><span class="p">);</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="w">    </span><span class="na">[Tooltip(&quot;完全に消えるまでの秒数&quot;)]</span>
+<span class="linenos">13</span><span class="w">    </span><span class="na">[SerializeField]</span><span class="w"> </span><span class="k">private</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">_duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3.0f</span><span class="p">;</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="n">Material</span><span class="w"> </span><span class="n">_material</span><span class="p">;</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Start</span><span class="p">()</span>
+<span class="linenos">18</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">19</span><span class="w">        </span><span class="n">_material</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetComponent</span><span class="o">&lt;</span><span class="n">Renderer</span><span class="o">&gt;</span><span class="p">().</span><span class="n">material</span><span class="p">;</span>
+<span class="linenos">20</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Update</span><span class="p">()</span>
+<span class="linenos">23</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">24</span><span class="w">        </span><span class="c1">// 0（消えていない）と 1（すべて消えた）の間を往復させる</span>
+<span class="linenos">25</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">threshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Mathf</span><span class="p">.</span><span class="n">PingPong</span><span class="p">(</span><span class="n">Time</span><span class="p">.</span><span class="n">time</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">_duration</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">);</span>
+<span class="linenos">26</span><span class="w">        </span><span class="n">_material</span><span class="p">.</span><span class="n">SetFloat</span><span class="p">(</span><span class="n">ThresholdId</span><span class="p">,</span><span class="w"> </span><span class="n">threshold</span><span class="p">);</span>
+<span class="linenos">27</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnDestroy</span><span class="p">()</span>
+<span class="linenos">30</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">31</span><span class="w">        </span><span class="n">Destroy</span><span class="p">(</span><span class="n">_material</span><span class="p">);</span>
+<span class="linenos">32</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">33</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/c9039b651b70566ab7ddb34422ddb19b/DissolveAnimator.cs"><code class="xref download docutils literal notranslate"><span class="pre">DissolveAnimator.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">Dissolve</span></code> のマテリアルを設定したオブジェクトにアタッチして再生すると、オブジェクトが消えたり現れたりを繰り返す。スクリプトの書き方は、第 7 章の <code class="docutils literal notranslate"><span class="pre">ColorAnimator.cs</span></code> と同じである。</p>
+</section>
+</section>
+<section id="id7">
+<h2>トゥーンシェーディングと輪郭線<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>トゥーンシェーディングは、陰影をはっきりした数段階の色で塗り分け、アニメやイラストのように見せる表現である。輪郭線と組み合わせて使うことが多い。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">ToonOutline.shader</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="c1">// 第 14 章：陰影をはっきり 2 段階に分けるトゥーンシェーディングと、</span>
+<span class="linenos">  2</span><span class="c1">// 輪郭線を描画するシェーダー。</span>
+<span class="linenos">  3</span><span class="n">Shader</span><span class="w"> </span><span class="s">&quot;Introduction/Chapter14/ToonOutline&quot;</span>
+<span class="linenos">  4</span><span class="p">{</span>
+<span class="linenos">  5</span><span class="w">    </span><span class="n">Properties</span>
+<span class="linenos">  6</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">  7</span><span class="w">        </span><span class="p">[</span><span class="n">MainColor</span><span class="p">]</span><span class="w"> </span><span class="n">_BaseColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Base Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">  8</span><span class="w">        </span><span class="n">_ShadeColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Shade Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">  9</span><span class="w">        </span><span class="c1">// 明るい部分と暗い部分の境目の位置（N・L の値）</span>
+<span class="linenos"> 10</span><span class="w">        </span><span class="n">_ShadeThreshold</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Shade Threshold&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span>
+<span class="linenos"> 11</span><span class="w">        </span><span class="c1">// 境目をぼかす幅（0 でくっきり分かれる）</span>
+<span class="linenos"> 12</span><span class="w">        </span><span class="n">_ShadeSmoothness</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Shade Smoothness&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.02</span>
+<span class="linenos"> 13</span><span class="w">        </span><span class="n">_OutlineColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Outline Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 14</span><span class="w">        </span><span class="c1">// 輪郭線の太さ（オブジェクト空間の単位）</span>
+<span class="linenos"> 15</span><span class="w">        </span><span class="n">_OutlineWidth</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Outline Width&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.02</span>
+<span class="linenos"> 16</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 17</span>
+<span class="linenos"> 18</span><span class="w">    </span><span class="n">SubShader</span>
+<span class="linenos"> 19</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos"> 20</span><span class="w">        </span><span class="n">Tags</span>
+<span class="linenos"> 21</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos"> 22</span><span class="w">            </span><span class="s">&quot;RenderType&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Opaque&quot;</span>
+<span class="linenos"> 23</span><span class="w">            </span><span class="s">&quot;Queue&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Geometry&quot;</span>
+<span class="linenos"> 24</span><span class="w">            </span><span class="s">&quot;RenderPipeline&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalPipeline&quot;</span>
+<span class="linenos"> 25</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 26</span>
+<span class="linenos"> 27</span><span class="w">        </span><span class="c1">// 2 つのパスで UnityPerMaterial の内容をそろえるため、共通部分にまとめる</span>
+<span class="linenos"> 28</span><span class="w">        </span><span class="n">HLSLINCLUDE</span>
+<span class="linenos"> 29</span><span class="w">        </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl&quot;</span>
+<span class="linenos"> 30</span>
+<span class="linenos"> 31</span><span class="w">        </span><span class="n">CBUFFER_START</span><span class="p">(</span><span class="n">UnityPerMaterial</span><span class="p">)</span>
+<span class="linenos"> 32</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">;</span>
+<span class="linenos"> 33</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">_ShadeColor</span><span class="p">;</span>
+<span class="linenos"> 34</span><span class="w">            </span><span class="kt">half</span><span class="w"> </span><span class="n">_ShadeThreshold</span><span class="p">;</span>
+<span class="linenos"> 35</span><span class="w">            </span><span class="kt">half</span><span class="w"> </span><span class="n">_ShadeSmoothness</span><span class="p">;</span>
+<span class="linenos"> 36</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">_OutlineColor</span><span class="p">;</span>
+<span class="linenos"> 37</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">_OutlineWidth</span><span class="p">;</span>
+<span class="linenos"> 38</span><span class="w">        </span><span class="n">CBUFFER_END</span>
+<span class="linenos"> 39</span><span class="w">        </span><span class="n">ENDHLSL</span>
+<span class="linenos"> 40</span>
+<span class="linenos"> 41</span><span class="w">        </span><span class="c1">// 1 つ目のパス：トゥーンシェーディングで本体を描画する</span>
+<span class="linenos"> 42</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos"> 43</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos"> 44</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;Toon&quot;</span>
+<span class="linenos"> 45</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalForward&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos"> 46</span>
+<span class="linenos"> 47</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos"> 48</span><span class="w">            </span><span class="cp">#pragma vertex Vert</span>
+<span class="linenos"> 49</span><span class="w">            </span><span class="cp">#pragma fragment Frag</span>
+<span class="linenos"> 50</span>
+<span class="linenos"> 51</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl&quot;</span>
+<span class="linenos"> 52</span>
+<span class="linenos"> 53</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos"> 54</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 55</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos"> 56</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">NORMAL</span><span class="p">;</span>
+<span class="linenos"> 57</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos"> 58</span>
+<span class="linenos"> 59</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos"> 60</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 61</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos"> 62</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD0</span><span class="p">;</span>
+<span class="linenos"> 63</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos"> 64</span>
+<span class="linenos"> 65</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">Vert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos"> 66</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 67</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos"> 68</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToHClip</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xyz</span><span class="p">);</span>
+<span class="linenos"> 69</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorldNormal</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalOS</span><span class="p">);</span>
+<span class="linenos"> 70</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos"> 71</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos"> 72</span>
+<span class="linenos"> 73</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">Frag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos"> 74</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos"> 75</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalWS</span><span class="p">);</span>
+<span class="linenos"> 76</span><span class="w">                </span><span class="n">Light</span><span class="w"> </span><span class="n">mainLight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetMainLight</span><span class="p">();</span>
+<span class="linenos"> 77</span>
+<span class="linenos"> 78</span><span class="w">                </span><span class="c1">// Lambert と異なり、N・L を 0 ～ 1 に切り詰めずに使う（-1 ～ 1）</span>
+<span class="linenos"> 79</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">nDotL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">dot</span><span class="p">(</span><span class="n">normalWS</span><span class="p">,</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">direction</span><span class="p">);</span>
+<span class="linenos"> 80</span><span class="w">                </span><span class="c1">// しきい値の前後で 0 から 1 に急に変わる値を作る</span>
+<span class="linenos"> 81</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="nb">lit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">smoothstep</span><span class="p">(</span>
+<span class="linenos"> 82</span><span class="w">                    </span><span class="n">_ShadeThreshold</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">_ShadeSmoothness</span><span class="p">,</span>
+<span class="linenos"> 83</span><span class="w">                    </span><span class="n">_ShadeThreshold</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">_ShadeSmoothness</span><span class="p">,</span>
+<span class="linenos"> 84</span><span class="w">                    </span><span class="n">nDotL</span><span class="p">);</span>
+<span class="linenos"> 85</span>
+<span class="linenos"> 86</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">lerp</span><span class="p">(</span><span class="n">_ShadeColor</span><span class="p">.</span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="nb">lit</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">color</span><span class="p">;</span>
+<span class="linenos"> 87</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="kt">half4</span><span class="p">(</span><span class="n">color</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos"> 88</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos"> 89</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos"> 90</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 91</span>
+<span class="linenos"> 92</span><span class="w">        </span><span class="c1">// 2 つ目のパス：法線方向に膨らませたメッシュの裏面だけを描画して、輪郭線にする</span>
+<span class="linenos"> 93</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos"> 94</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos"> 95</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;Outline&quot;</span>
+<span class="linenos"> 96</span><span class="w">            </span><span class="c1">// URP は、LightMode が SRPDefaultUnlit のパスも、</span>
+<span class="linenos"> 97</span><span class="w">            </span><span class="c1">// UniversalForward のパスと同じタイミングで描画する</span>
+<span class="linenos"> 98</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;SRPDefaultUnlit&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos"> 99</span>
+<span class="linenos">100</span><span class="w">            </span><span class="c1">// 表面を描画せず、裏面だけを描画する</span>
+<span class="linenos">101</span><span class="w">            </span><span class="n">Cull</span><span class="w"> </span><span class="n">Front</span>
+<span class="linenos">102</span>
+<span class="linenos">103</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos">104</span><span class="w">            </span><span class="cp">#pragma vertex OutlineVert</span>
+<span class="linenos">105</span><span class="w">            </span><span class="cp">#pragma fragment OutlineFrag</span>
+<span class="linenos">106</span>
+<span class="linenos">107</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos">108</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">109</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos">110</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">NORMAL</span><span class="p">;</span>
+<span class="linenos">111</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">112</span>
+<span class="linenos">113</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos">114</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">115</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos">116</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">117</span>
+<span class="linenos">118</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">OutlineVert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos">119</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">120</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">121</span><span class="w">                </span><span class="c1">// 頂点を法線方向に押し出す</span>
+<span class="linenos">122</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalOS</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_OutlineWidth</span><span class="p">;</span>
+<span class="linenos">123</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xyz</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">offset</span><span class="p">;</span>
+<span class="linenos">124</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToHClip</span><span class="p">(</span><span class="n">positionOS</span><span class="p">);</span>
+<span class="linenos">125</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">126</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">127</span>
+<span class="linenos">128</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">OutlineFrag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos">129</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">130</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">_OutlineColor</span><span class="p">;</span>
+<span class="linenos">131</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">132</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">133</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">134</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">135</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/fa22ec541944ed09bb8eaf006922c999/ToonOutline.shader"><code class="xref download docutils literal notranslate"><span class="pre">ToonOutline.shader</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>球に適用すると、明るい部分と暗い部分がくっきり分かれ、周囲に暗い輪郭線が描画される。</p>
+<section id="id8">
+<h3>陰影の段階化<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>Lambert 反射では、<span class="math notranslate nohighlight">\(\mathbf{N} \cdot \mathbf{L}\)</span> の値に比例して明るさが滑らかに変わる。トゥーンシェーディングでは、<span class="math notranslate nohighlight">\(\mathbf{N} \cdot \mathbf{L}\)</span> がしきい値（<code class="docutils literal notranslate"><span class="pre">_ShadeThreshold</span></code>）より大きいかどうかで、明るい色（<code class="docutils literal notranslate"><span class="pre">_BaseColor</span></code>）と暗い色（<code class="docutils literal notranslate"><span class="pre">_ShadeColor</span></code>）を切り替える。</p>
+<p><code class="docutils literal notranslate"><span class="pre">step</span></code> 関数で切り替えると境目がぎざぎざになるため、サンプルでは <code class="docutils literal notranslate"><span class="pre">smoothstep</span></code> 関数で、しきい値の前後のわずかな幅（<code class="docutils literal notranslate"><span class="pre">_ShadeSmoothness</span></code>）だけ滑らかに切り替えている。</p>
+<p>暗い部分を黒くせず、<code class="docutils literal notranslate"><span class="pre">_ShadeColor</span></code> で色を指定できるようにしているのは、トゥーン調の表現では、影の色を物体の色より少し青みや赤みのある色にすることが多いためである。</p>
+</section>
+<section id="id9">
+<h3>輪郭線<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>輪郭線は、背面法と呼ばれる方法で描画している。1 つのシェーダーに 2 つのパスを書き、2 つ目のパスで次の処理を行う。</p>
+<ol class="arabic simple">
+<li><p>頂点を法線の方向に <code class="docutils literal notranslate"><span class="pre">_OutlineWidth</span></code> だけ押し出し、メッシュを一回り大きくする。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Cull</span> <span class="pre">Front</span></code> で表面を描画せず、裏面だけを輪郭線の色で描画する。</p></li>
+</ol>
+<p>一回り大きくしたメッシュの裏面は、元のメッシュの後ろにあるため、元のメッシュで隠れない輪郭の外側の部分だけが見える。これが輪郭線になる。</p>
+<p>輪郭線のパスの <code class="docutils literal notranslate"><span class="pre">LightMode</span></code> は <code class="docutils literal notranslate"><span class="pre">SRPDefaultUnlit</span></code> である。URP は、1 つのシェーダーの中で <code class="docutils literal notranslate"><span class="pre">LightMode</span></code> が <code class="docutils literal notranslate"><span class="pre">UniversalForward</span></code> のパスと <code class="docutils literal notranslate"><span class="pre">SRPDefaultUnlit</span></code> のパスを、同じ描画の段階で両方とも描画する（第 5 章を参照）。2 つのパスの <code class="docutils literal notranslate"><span class="pre">LightMode</span></code> が同じだと、片方しか描画されない。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>背面法には、次の制限がある。</p>
+<ul class="simple">
+<li><p>Cube のように角で法線が分かれているメッシュでは、角で輪郭線が途切れる。滑らかな法線を別に用意する方法などで対処する。</p></li>
+<li><p>押し出す量がオブジェクト空間の単位のため、カメラから遠いほど輪郭線が細く見え、Transform の Scale でも太さが変わる。</p></li>
+</ul>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch13_vertex_animation.html" class="btn btn-neutral float-left" title="第 13 章 頂点アニメーション" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch15_post_effect.html" class="btn btn-neutral float-right" title="第 15 章 ポストエフェクト" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

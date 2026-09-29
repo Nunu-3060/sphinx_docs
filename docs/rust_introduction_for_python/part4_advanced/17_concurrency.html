@@ -1,0 +1,281 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>並行処理の基礎 &mdash; Rust 入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="Cargo とエコシステム" href="18_cargo_and_ecosystem.html" />
+    <link rel="prev" title="スマートポインタ(概論)" href="16_smart_pointers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rust 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第1部 基礎</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/01_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/02_first_program.html">最初のプログラム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/03_variables_and_types.html">変数と型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/04_control_flow.html">制御フロー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/05_functions.html">関数</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第2部 所有権とメモリ管理</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/06_ownership.html">所有権(Ownership)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/07_references_and_borrowing.html">借用と参照</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/08_structs.html">構造体</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/09_enums_and_pattern_matching.html">列挙型とパターンマッチング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/10_collections.html">コレクション</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第3部 実務でよく使う機能</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part3_practical/11_error_handling.html">エラーハンドリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part3_practical/12_generics_and_traits.html">ジェネリクスとトレイト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part3_practical/13_modules_and_packages.html">モジュールとパッケージ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part3_practical/14_iterators_and_closures.html">イテレータとクロージャ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第4部 発展</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="15_lifetimes.html">ライフタイム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_smart_pointers.html">スマートポインタ(概論)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">並行処理の基礎</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">スレッドの生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mutex-t"><code class="docutils literal notranslate"><span class="pre">Mutex&lt;T&gt;</span></code> による排他制御</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#arc-t"><code class="docutils literal notranslate"><span class="pre">Arc&lt;T&gt;</span></code> によるスレッド間共有</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">チャネルによるスレッド間通信</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="18_cargo_and_ecosystem.html">Cargo とエコシステム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_testing.html">テスト</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第5部 まとめ</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part5_conclusion/20_practical_project.html">簡単な実践プロジェクト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part5_conclusion/21_next_steps.html">次のステップ</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rust 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">並行処理の基礎</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>並行処理の基礎<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>Rust は「恐れるものがない並行処理(fearless concurrency)」を掲げる言語です。所有権システムとその借用ルールは、コンパイル時にデータ競合を防ぐ役割も担っています。この章では、スレッドの生成から排他制御、スレッド間通信までの基本を見ていきます。</p>
+<section id="id2">
+<h2>スレッドの生成<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>新しいスレッドを立ち上げるには <code class="docutils literal notranslate"><span class="pre">std::thread::spawn</span></code> を使います。戻り値の <code class="docutils literal notranslate"><span class="pre">JoinHandle</span></code> に対して <code class="docutils literal notranslate"><span class="pre">join</span></code> を呼び出すと、そのスレッドの終了を待つことができます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thread</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..</span><span class="mi">5</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;子スレッド: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">1</span><span class="o">..</span><span class="mi">3</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;メインスレッド: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 子スレッドの終了を待つ</span>
+<span class="w">    </span><span class="n">handle</span><span class="p">.</span><span class="n">join</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">join</span></code> を呼ばないと、メインスレッドが先に終了した時点でプログラム全体が終わってしまい、子スレッドの処理が完了しないことがあります。なお <code class="docutils literal notranslate"><span class="pre">join()</span></code> は <code class="docutils literal notranslate"><span class="pre">Result</span></code> を返し、スレッドがパニックした場合には <code class="docutils literal notranslate"><span class="pre">Err</span></code> になります。<code class="docutils literal notranslate"><span class="pre">unwrap()</span></code> はその <code class="docutils literal notranslate"><span class="pre">Result</span></code> を展開し、もし子スレッドがパニックしていれば、その失敗を呼び出し側のスレッドで改めて発生させる働きをしています。</p>
+</section>
+<section id="mutex-t">
+<h2><code class="docutils literal notranslate"><span class="pre">Mutex&lt;T&gt;</span></code> による排他制御<a class="headerlink" href="#mutex-t" title="Link to this heading"></a></h2>
+<p>複数のスレッドから同じデータを書き換えたい場合には <code class="docutils literal notranslate"><span class="pre">Mutex&lt;T&gt;</span></code> (mutual exclusion、相互排他)を使います。<code class="docutils literal notranslate"><span class="pre">lock()</span></code> を呼ぶとロックを取得でき、戻り値のガードを通じて中のデータにアクセスできます。ガードがスコープを抜けると自動的にロックが解放されます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Mutex</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Mutex</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">num</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">counter</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">        </span><span class="o">*</span><span class="n">num</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;カウンタ: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">counter</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">unwrap</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Mutex</span></code> を使う際には、デッドロックに注意が必要です。たとえば同じスレッドの中で <code class="docutils literal notranslate"><span class="pre">lock()</span></code> をすでに保持したまま、解放する前に再度同じ <code class="docutils literal notranslate"><span class="pre">Mutex</span></code> を <code class="docutils literal notranslate"><span class="pre">lock()</span></code> しようとすると、そのスレッドは永遠に待ち続けてしまいます。同様に、複数の <code class="docutils literal notranslate"><span class="pre">Mutex</span></code> を異なる順序でロックするコードが複数のスレッドに存在すると、互いに相手のロック解放を待ち合ってしまい、デッドロックに陥ることがあります。なお、単純なカウンタのように扱うデータが単一の整数程度であれば、<code class="docutils literal notranslate"><span class="pre">std::sync::atomic</span></code> モジュールの <code class="docutils literal notranslate"><span class="pre">AtomicUsize</span></code> などを使うことで、<code class="docutils literal notranslate"><span class="pre">Mutex</span></code> よりも軽量に排他制御を行える場合もあります。</p>
+</section>
+<section id="arc-t">
+<h2><code class="docutils literal notranslate"><span class="pre">Arc&lt;T&gt;</span></code> によるスレッド間共有<a class="headerlink" href="#arc-t" title="Link to this heading"></a></h2>
+<p>前章で紹介した <code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code> はスレッドセーフではないため、複数のスレッドで共有することはできません。スレッドをまたいでデータを共有したい場合は、その代わりに <code class="docutils literal notranslate"><span class="pre">Arc&lt;T&gt;</span></code> (atomically reference counted)を使います。<code class="docutils literal notranslate"><span class="pre">Arc&lt;T&gt;</span></code> は <code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code> と同じ参照カウント方式ですが、カウントの増減をアトミック(不可分)な操作で行うため、複数スレッドから安全に <code class="docutils literal notranslate"><span class="pre">clone</span></code> できます。</p>
+<p>なお、次のコード例では <code class="docutils literal notranslate"><span class="pre">thread::spawn</span></code> に渡すクロージャの先頭に <code class="docutils literal notranslate"><span class="pre">move</span></code> というキーワードが付いています。<code class="docutils literal notranslate"><span class="pre">thread::spawn</span></code> に渡すクロージャは <code class="docutils literal notranslate"><span class="pre">'static</span></code> ライフタイムを持つ必要があるため、外部の変数を借用するのではなく、所有権ごとクロージャの中に取り込まなければなりません。<code class="docutils literal notranslate"><span class="pre">move</span></code> はそのためのキーワードで、「クロージャの外にある変数の所有権を、クロージャの内側に移動させる」という意味を持ちます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::{</span><span class="n">Arc</span><span class="p">,</span><span class="w"> </span><span class="n">Mutex</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Mutex</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">handles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[];</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="mi">5</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thread</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">num</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">counter</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">            </span><span class="o">*</span><span class="n">num</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">        </span><span class="n">handles</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">handles</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">handle</span><span class="p">.</span><span class="n">join</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;結果: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">counter</span><span class="p">.</span><span class="n">lock</span><span class="p">().</span><span class="n">unwrap</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>このように <code class="docutils literal notranslate"><span class="pre">Arc&lt;Mutex&lt;T&gt;&gt;</span></code> は、「複数のスレッドで共有し、かつ排他的に書き換える」というパターンでよく使われる組み合わせです。</p>
+<p>この安全性の背後には、<code class="docutils literal notranslate"><span class="pre">Send</span></code> と <code class="docutils literal notranslate"><span class="pre">Sync</span></code> という2つのマーカートレイトがあります。<code class="docutils literal notranslate"><span class="pre">Send</span></code> は「その型の値の所有権をスレッドをまたいで移動しても安全である」こと、<code class="docutils literal notranslate"><span class="pre">Sync</span></code> は「その型への参照を複数のスレッドから共有しても安全である」ことを表し、コンパイラはこれらのトレイトが実装されている型だけをスレッド間でやり取りできるようにチェックしています。<code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code> がスレッド間で使えないのは、この <code class="docutils literal notranslate"><span class="pre">Send</span></code>/<code class="docutils literal notranslate"><span class="pre">Sync</span></code> が実装されていないためです。普段はこれらのトレイトを意識する必要はほとんどありませんが、スレッドをまたいだ安全性が型システムによって裏付けられている、という点は覚えておくとよいでしょう。</p>
+</section>
+<section id="id3">
+<h2>チャネルによるスレッド間通信<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>共有メモリを直接ロックする代わりに、メッセージを送り合うことでスレッド間のやり取りを行う方法もあります。標準ライブラリの <code class="docutils literal notranslate"><span class="pre">std::sync::mpsc</span></code> (multi-producer, single-consumer)モジュールがチャネルを提供します。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">mpsc</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">tx</span><span class="p">,</span><span class="w"> </span><span class="n">rx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mpsc</span><span class="p">::</span><span class="n">channel</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">thread</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;こんにちは、スレッドから&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="n">tx</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">received</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rx</span><span class="p">.</span><span class="n">recv</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;受信: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">received</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">tx</span></code> (送信側)で <code class="docutils literal notranslate"><span class="pre">send</span></code> したデータの所有権は、そのままチャネルを通じて <code class="docutils literal notranslate"><span class="pre">rx</span></code> (受信側)へ移動します。そのため、送信後に送信側でそのデータを使おうとすると、所有権のルールによってコンパイルエラーになります。この仕組みにより、複数スレッドが同じデータを同時に書き換えるような事態を、言語レベルで防ぐことができます。</p>
+<p>「multi-producer」の名前が示すとおり、<code class="docutils literal notranslate"><span class="pre">mpsc</span></code> は複数の送信側を持つこともできます。<code class="docutils literal notranslate"><span class="pre">tx.clone()</span></code> で送信側を複製すれば、複数のスレッドから同じ受信側 <code class="docutils literal notranslate"><span class="pre">rx</span></code> に向けてメッセージを送ることができます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">mpsc</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">tx</span><span class="p">,</span><span class="w"> </span><span class="n">rx</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mpsc</span><span class="p">::</span><span class="n">channel</span><span class="p">();</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="mi">3</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">tx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tx</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="w">        </span><span class="n">thread</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">tx</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;スレッド {} から&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">)).</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nb">drop</span><span class="p">(</span><span class="n">tx</span><span class="p">);</span><span class="w"> </span><span class="c1">// 元の送信側も忘れずに drop する</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">received</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">rx</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;受信: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">received</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>元の <code class="docutils literal notranslate"><span class="pre">tx</span></code> を含め、すべての送信側が <code class="docutils literal notranslate"><span class="pre">drop</span></code> されるまで <code class="docutils literal notranslate"><span class="pre">rx</span></code> は受信待ちを続けます。そのため、複製した <code class="docutils literal notranslate"><span class="pre">tx</span></code> だけでなく元の <code class="docutils literal notranslate"><span class="pre">tx</span></code> も使い終わったら手放す必要があり、ここでは明示的に <code class="docutils literal notranslate"><span class="pre">drop(tx)</span></code> しています。</p>
+<div class="tip admonition">
+<p class="admonition-title">Python 経験者向けメモ</p>
+<p>Python(正確には CPython という標準実装)には GIL(グローバルインタプリタロック)があり、複数のスレッドを立ち上げても、CPU バウンドな処理は同時には実行されません(そのため Python では <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> を使うことも多いです)。一方 Rust には GIL のような仕組みは存在せず、スレッドは実際に並列実行されます。それでいて安全性が損なわれないのは、所有権システムのおかげでコンパイル時にデータ競合が起こらないことを保証できるからです。たとえば <code class="docutils literal notranslate"><span class="pre">Mutex</span></code> を経由せずに複数スレッドから同じデータを書き換えようとするコードは、そもそもコンパイルが通りません。</p>
+</div>
+<p>なお、本章で扱ったのは <code class="docutils literal notranslate"><span class="pre">std::thread</span></code> による OS スレッドを使った並行処理です。Rust にはこれとは別に <code class="docutils literal notranslate"><span class="pre">async</span></code>/<code class="docutils literal notranslate"><span class="pre">await</span></code> という非同期処理の仕組みもありますが、これはスレッドとは異なる考え方に基づく別の機能であり、非同期プログラミングについては次のステップとして学ぶとよいテーマです。</p>
+</section>
+<section id="id4">
+<h2>まとめ<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">std::thread::spawn</span></code> で新しいスレッドを生成し、<code class="docutils literal notranslate"><span class="pre">join</span></code> で終了を待ちます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Mutex&lt;T&gt;</span></code> は <code class="docutils literal notranslate"><span class="pre">lock()</span></code> によって排他制御を行い、複数スレッドからの安全な書き換えを可能にします。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Arc&lt;T&gt;</span></code> はスレッドセーフな参照カウント型で、<code class="docutils literal notranslate"><span class="pre">Arc&lt;Mutex&lt;T&gt;&gt;</span></code> の形で複数スレッド間のデータ共有によく使われます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">std::sync::mpsc</span></code> のチャネルを使うと、値の所有権を移動させながらスレッド間でメッセージをやり取りできます。</p></li>
+<li><p>Rust には GIL が無く、所有権システムによってデータ競合をコンパイル時に防ぎながら真の並列実行を実現できます。</p></li>
+<li><p>本章の内容は OS スレッドによる並行処理であり、<code class="docutils literal notranslate"><span class="pre">async</span></code>/<code class="docutils literal notranslate"><span class="pre">await</span></code> による非同期処理は別の仕組みです。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="16_smart_pointers.html" class="btn btn-neutral float-left" title="スマートポインタ(概論)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="18_cargo_and_ecosystem.html" class="btn btn-neutral float-right" title="Cargo とエコシステム" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

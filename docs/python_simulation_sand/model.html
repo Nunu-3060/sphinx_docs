@@ -1,0 +1,233 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>モデル層: Sand.py &mdash; Python による飛砂のシミュレーションの実装 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="可視化層: SandImage.py" href="visualization.html" />
+    <link rel="prev" title="実装概要" href="implementation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python による飛砂のシミュレーションの実装
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">実装概要</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">モデル層: Sand.py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">高さ場の初期化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#next">1ステップの更新: next()</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">輸送ステップ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">拡散ステップ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">可視化層: SandImage.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="widgets.html">GUI 部品層: TkWidget.py / FrameSand.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="application.html">アプリケーション層: SandGUI.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API リファレンス</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html">まとめ</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python による飛砂のシミュレーションの実装</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">モデル層: Sand.py</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sand-py">
+<h1>モデル層: Sand.py<a class="headerlink" href="#sand-py" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">Sand</span></code> クラスは、風によって運ばれる砂(飛砂)による地形の変化を、2次元の高さ場に対する離散時間の更新規則として実装しているクラスです。GUI や画像化には一切関与せず、NumPy 配列の更新だけに専念しているため、Tkinter が使えない環境でも単体で利用できます。以下、コンストラクタと <code class="docutils literal notranslate"><span class="pre">next()</span></code> メソッドに分けて説明します。</p>
+<section id="id1">
+<h2>高さ場の初期化<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">L0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">q</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">L0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">b</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">q</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">D</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>コンストラクタでは、幅 <code class="docutils literal notranslate"><span class="pre">width</span></code>・高さ <code class="docutils literal notranslate"><span class="pre">height</span></code> の格子に対応する2次元配列 <code class="docutils literal notranslate"><span class="pre">self.height</span></code> を、<code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1)</span></code> の一様乱数で初期化します。格子の各要素 <code class="docutils literal notranslate"><span class="pre">self.height[i,</span> <span class="pre">j]</span></code> が、位置 <code class="docutils literal notranslate"><span class="pre">(i,</span> <span class="pre">j)</span></code> における砂の堆積量に相当します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">L0</span></code> / <code class="docutils literal notranslate"><span class="pre">b</span></code> / <code class="docutils literal notranslate"><span class="pre">q</span></code> / <code class="docutils literal notranslate"><span class="pre">D</span></code> は、次の輸送・拡散の計算で使うパラメータです。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>名前</p></th>
+<th class="head"><p>意味</p></th>
+<th class="head"><p>既定値</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">L0</span></code></p></td>
+<td><p>基本飛距離</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">b</span></code></p></td>
+<td><p>堆積量に対する飛距離の感度</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">q</span></code></p></td>
+<td><p>1ステップあたりの輸送量</p></td>
+<td><p>0.1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">D</span></code></p></td>
+<td><p>拡散係数</p></td>
+<td><p>0.2</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">seed</span></code> は乱数生成器 <code class="docutils literal notranslate"><span class="pre">numpy.random.default_rng</span></code> に渡されるシード値です。同じ <code class="docutils literal notranslate"><span class="pre">seed</span></code> を指定すれば、初期状態を再現できます。</p>
+</section>
+<section id="next">
+<h2>1ステップの更新: next()<a class="headerlink" href="#next" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">height</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">length</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="n">dest</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">length</span><span class="p">)</span> <span class="o">%</span> <span class="n">width</span>
+        <span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">rows</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">width</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">dest</span><span class="o">.</span><span class="n">ravel</span><span class="p">()),</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">+=</span> <span class="n">d</span>
+        <span class="c1"># 可読性のために PEP8 に違反した書き方をしている。</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span>  <span class="c1"># noqa: E201</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span>  <span class="c1"># noqa: E201</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span>  <span class="c1"># noqa: E201</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>    <span class="c1"># noqa: E201</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">/</span> <span class="mi">6</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span>  <span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span>  <span class="c1"># noqa: E201</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span>  <span class="c1"># noqa: E201</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span>  <span class="c1"># noqa: E201</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>    <span class="c1"># noqa: E201</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">/</span> <span class="mi">12</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">next()</span></code> は、高さ場 <code class="docutils literal notranslate"><span class="pre">self.height</span></code> を1ステップ分更新するメソッドで、「輸送」と「拡散」の2段階から構成されています。</p>
+<section id="id2">
+<h3>輸送ステップ<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>各セルは一定量 <code class="docutils literal notranslate"><span class="pre">q</span></code> の砂を風下側(列方向)へ飛ばします。飛距離(ホップ長)は、そのセル自身の堆積量に応じて次のように決まります。</p>
+<div class="math notranslate nohighlight">
+\[l_{i,j} = \mathrm{round}(L_0 + b \, h_{i,j})\]</div>
+<p>セル <span class="math notranslate nohighlight">\((i, j)\)</span> から飛ばされた砂は、同じ行の列 <span class="math notranslate nohighlight">\((j - l_{i,j}) \bmod \mathrm{width}\)</span> に着地します。すなわち、風は列方向(横方向)に一定方向へ吹くものとしてモデル化されています。</p>
+<p>実装では、まず全セルのホップ長を <code class="docutils literal notranslate"><span class="pre">length</span></code> に、着地先の列インデックスを <code class="docutils literal notranslate"><span class="pre">dest</span></code> にまとめて計算します。そのうえで、「全セルが <code class="docutils literal notranslate"><span class="pre">q</span></code> を失い、着地先で <code class="docutils literal notranslate"><span class="pre">q</span></code> を得る」という収支を配列 <code class="docutils literal notranslate"><span class="pre">d</span></code> に積み上げています。</p>
+<div class="math notranslate nohighlight">
+\[d_{i,j} = -q + q \times \bigl(\text{セル } (i,j) \text{ に着地した輸送元の数}\bigr)\]</div>
+<p>全セルが必ず <code class="docutils literal notranslate"><span class="pre">q</span></code> を失い、失われた <code class="docutils literal notranslate"><span class="pre">q</span></code> はどこか1か所に必ず着地するため、輸送ステップは高さ場の合計値(総砂量)を厳密に保存します。複数のセルの飛距離が一致し、同じ着地先に集まる場合は着地量が加算されます。実装上は <code class="docutils literal notranslate"><span class="pre">numpy.add.at(d,</span> <span class="pre">(rows,</span> <span class="pre">dest.ravel()),</span> <span class="pre">self.q)</span></code> を用いることで、この重複加算(同一インデックスへの複数回の加算)を正しく処理しています(単純な配列インデックスへの代入では、重複した着地先の加算が上書きされてしまい、後から書き込んだ分しか反映されません)。</p>
+</section>
+<section id="id3">
+<h3>拡散ステップ<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>輸送後の高さ場に対して、周囲8セルとの重み付き平均による拡散を適用し、局所的に尖った砂山を滑らかにします。</p>
+<div class="math notranslate nohighlight">
+\[h_{i,j} \leftarrow (1 - D)\, h_{i,j}
++ \frac{D}{6} \sum_{(di,dj) \in N_4} h_{i+di,\,j+dj}
++ \frac{D}{12} \sum_{(di,dj) \in N_8} h_{i+di,\,j+dj}\]</div>
+<p>ここで <span class="math notranslate nohighlight">\(N_4\)</span> は上下左右の4近傍、<span class="math notranslate nohighlight">\(N_8\)</span> は斜め4方向の近傍です。自分自身の重み <span class="math notranslate nohighlight">\((1-D)\)</span> 、4近傍の重みの合計 <span class="math notranslate nohighlight">\(4 \times D/6 = 2D/3\)</span> 、斜め4近傍の重みの合計 <span class="math notranslate nohighlight">\(4 \times D/12 = D/3\)</span> を足し合わせるとちょうど 1 になるため、この拡散ステップも高さ場の合計値を変化させません。</p>
+<p>境界条件には <code class="docutils literal notranslate"><span class="pre">numpy.roll</span></code> による周期シフトを用いており、格子は上下・左右ともにつながったトーラス状の空間として扱われます。</p>
+</section>
+</section>
+<section id="id4">
+<h2>まとめ<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>輸送・拡散のいずれのステップも高さ場の合計値を変化させないため、<code class="docutils literal notranslate"><span class="pre">Sand.next()</span></code> を繰り返し呼び出しても、格子全体の総砂量は常に一定に保たれます。局所的な移動と均しだけを繰り返しながら、全体の量を変えずに地形が変化し続けるという性質が、このモデルの特徴です。</p>
+<p>クラス・メソッドのシグネチャ一覧は <a class="reference internal" href="api.html"><span class="doc">API リファレンス</span></a> を参照してください。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="implementation.html" class="btn btn-neutral float-left" title="実装概要" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="visualization.html" class="btn btn-neutral float-right" title="可視化層: SandImage.py" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

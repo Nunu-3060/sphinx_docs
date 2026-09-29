@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12 シェーダーエディター | GLSL 入門</title>
+<style>
+  body { margin: 0; padding: 12px; background: #1e1e1e; color: #ddd; font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  canvas { display: block; width: 100%; max-width: 600px; height: auto; background: #000; }
+  .controls { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  textarea { box-sizing: border-box; width: 100%; max-width: 600px; height: 300px; background: #111; color: #e0e0e0; border: 1px solid #444;
+             font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.4; tab-size: 4; white-space: pre; }
+  #log { box-sizing: border-box; max-width: 600px; white-space: pre-wrap; margin: 8px 0 0; padding: 6px; background: #111; min-height: 1.5em; }
+  #log.error { color: #ff8080; }
+  #log.ok { color: #80e080; }
+</style>
+</head>
+<body>
+<h1>12 シェーダーエディター（フラグメントシェーダーを書いて試す）</h1>
+<canvas id="canvas" width="600" height="300"></canvas>
+<div class="controls">
+  <label>サンプル
+    <select id="preset">
+      <option value="basic">基本：座標と時間を色で表示する</option>
+      <option value="range">デバッグ：範囲外の値を色で強調する</option>
+      <option value="error-type">エラーの例：int と float の混在</option>
+      <option value="error-semicolon">エラーの例：セミコロンの書き忘れ</option>
+      <option value="error-undeclared">エラーの例：宣言していない変数</option>
+      <option value="error-precision">エラーの例：精度の指定忘れ</option>
+    </select>
+  </label>
+  <button id="run" type="button">実行（Ctrl + Enter）</button>
+</div>
+<textarea id="editor" spellcheck="false"></textarea>
+<pre id="log"></pre>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+const vec2 POSITIONS[3] = vec2[3](vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));
+
+void main() {
+    gl_Position = vec4(POSITIONS[gl_VertexID], 0.0, 1.0);
+}
+</script>
+
+<script>
+"use strict";
+
+// ---- サンプルのフラグメントシェーダー ----
+// uResolution（キャンバスの大きさ）と uTime（経過時間 [秒]）は、JavaScript から毎フレーム設定される。
+const PRESETS = {
+    "basic": `#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+uniform float uTime;
+
+out vec4 outColor;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / uResolution;
+    // 赤 = 横方向の位置、緑 = 縦方向の位置、青 = 時間で変化
+    outColor = vec4(uv, 0.5 + 0.5 * sin(uTime), 1.0);
+}
+`,
+    "range": `#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+uniform float uTime;
+
+out vec4 outColor;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / uResolution;
+
+    // 調べたい値。ここでは 0 から 1 の範囲をはみ出す値を作っている
+    float value = 1.5 * sin(6.0 * uv.x + uTime) * uv.y;
+
+    // 0 から 1 の範囲は白黒、1 より大きい所は赤、0 より小さい所は青で表示する
+    vec3 color = vec3(clamp(value, 0.0, 1.0));
+    if (value > 1.0) {
+        color = vec3(1.0, 0.0, 0.0);
+    } else if (value < 0.0) {
+        color = vec3(0.0, 0.0, 1.0);
+    }
+    outColor = vec4(color, 1.0);
+}
+`,
+    "error-type": `#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+
+out vec4 outColor;
+
+void main() {
+    // エラー：float の変数に int の値 1 を代入している（1.0 と書けば正しい）
+    float brightness = 1;
+    outColor = vec4(vec3(brightness), 1.0);
+}
+`,
+    "error-semicolon": `#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+
+out vec4 outColor;
+
+void main() {
+    // エラー：次の行の末尾にセミコロンがない
+    vec2 uv = gl_FragCoord.xy / uResolution
+    outColor = vec4(uv, 0.0, 1.0);
+}
+`,
+    "error-undeclared": `#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+
+out vec4 outColor;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / uResolution;
+    // エラー：uTime を宣言していない
+    outColor = vec4(uv, sin(uTime), 1.0);
+}
+`,
+    "error-precision": `#version 300 es
+// エラー：precision highp float; を書き忘れている
+
+uniform vec2 uResolution;
+
+out vec4 outColor;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / uResolution;
+    outColor = vec4(uv, 0.0, 1.0);
+}
+`,
+};
+// ---- サンプルのフラグメントシェーダーここまで ----
+
+// ---- コンパイルとエラーログの表示 ----
+// 失敗したときは例外を投げずに、エラーログを返す
+function compileShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const log = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        return { shader: null, log };
+    }
+    return { shader, log: "" };
+}
+
+function main() {
+    const canvas = document.getElementById("canvas");
+    const editor = document.getElementById("editor");
+    const logArea = document.getElementById("log");
+    const gl = canvas.getContext("webgl2");
+    if (!gl) {
+        throw new Error("このブラウザーは WebGL 2.0 に対応していません。");
+    }
+
+    const vertexSource = document.getElementById("vertex-shader").textContent.trim();
+    const vertex = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+
+    let program = null;  // 最後にコンパイルに成功したプログラム
+    let locations = {};
+
+    function showLog(message, isError) {
+        logArea.textContent = message;
+        logArea.className = isError ? "error" : "ok";
+    }
+
+    // エディターの内容をコンパイルする。失敗したときは、前回成功したプログラムで描画を続ける
+    function build() {
+        const fragment = compileShader(gl, gl.FRAGMENT_SHADER, editor.value);
+        if (!fragment.shader) {
+            showLog("コンパイルエラー：\n" + fragment.log, true);
+            return;
+        }
+        const newProgram = gl.createProgram();
+        gl.attachShader(newProgram, vertex.shader);
+        gl.attachShader(newProgram, fragment.shader);
+        gl.linkProgram(newProgram);
+        gl.detachShader(newProgram, vertex.shader);  // 頂点シェーダーは次のビルドでも使う
+        gl.deleteShader(fragment.shader);
+        if (!gl.getProgramParameter(newProgram, gl.LINK_STATUS)) {
+            showLog("リンクエラー：\n" + gl.getProgramInfoLog(newProgram), true);
+            gl.deleteProgram(newProgram);
+            return;
+        }
+        if (program) {
+            gl.deleteProgram(program);
+        }
+        program = newProgram;
+        // 使われていない uniform 変数は null になる（null に値を設定しても何も起こらない）
+        locations = {
+            resolution: gl.getUniformLocation(program, "uResolution"),
+            time: gl.getUniformLocation(program, "uTime"),
+        };
+        showLog("コンパイルに成功しました。", false);
+    }
+    // ---- コンパイルとエラーログの表示ここまで ----
+
+    const vao = gl.createVertexArray();
+
+    function frame(now) {
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        if (program) {
+            gl.useProgram(program);
+            gl.uniform2f(locations.resolution, canvas.width, canvas.height);
+            gl.uniform1f(locations.time, now / 1000);
+            gl.bindVertexArray(vao);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+        }
+        requestAnimationFrame(frame);
+    }
+
+    const presetInput = document.getElementById("preset");
+    function loadPreset() {
+        editor.value = PRESETS[presetInput.value];
+        build();
+    }
+    presetInput.addEventListener("change", loadPreset);
+    document.getElementById("run").addEventListener("click", build);
+    editor.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            build();
+        } else if (event.key === "Tab") {
+            // Tab キーで字下げ（空白 4 個）を入力できるようにする
+            event.preventDefault();
+            const start = editor.selectionStart;
+            editor.setRangeText("    ", start, editor.selectionEnd, "end");
+        }
+    });
+
+    loadPreset();
+    requestAnimationFrame(frame);
+}
+
+try {
+    main();
+} catch (error) {
+    const logArea = document.getElementById("log");
+    logArea.textContent = error.message;
+    logArea.className = "error";
+    console.error(error);
+}
+</script>
+</body>
+</html>

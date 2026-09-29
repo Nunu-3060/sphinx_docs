@@ -1,0 +1,297 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>スマートポインタ(概論) &mdash; Rust 入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="並行処理の基礎" href="17_concurrency.html" />
+    <link rel="prev" title="ライフタイム" href="15_lifetimes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rust 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第1部 基礎</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/01_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/02_first_program.html">最初のプログラム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/03_variables_and_types.html">変数と型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/04_control_flow.html">制御フロー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part1_basics/05_functions.html">関数</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第2部 所有権とメモリ管理</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/06_ownership.html">所有権(Ownership)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/07_references_and_borrowing.html">借用と参照</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/08_structs.html">構造体</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/09_enums_and_pattern_matching.html">列挙型とパターンマッチング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part2_ownership/10_collections.html">コレクション</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第3部 実務でよく使う機能</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part3_practical/11_error_handling.html">エラーハンドリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part3_practical/12_generics_and_traits.html">ジェネリクスとトレイト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part3_practical/13_modules_and_packages.html">モジュールとパッケージ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part3_practical/14_iterators_and_closures.html">イテレータとクロージャ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第4部 発展</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="15_lifetimes.html">ライフタイム</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">スマートポインタ(概論)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#box-t"><code class="docutils literal notranslate"><span class="pre">Box&lt;T&gt;</span></code>: ヒープへの単純な確保</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rc-t"><code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code>: 複数所有を許す参照カウント型</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#refcell-t"><code class="docutils literal notranslate"><span class="pre">RefCell&lt;T&gt;</span></code>: 実行時借用チェックによる内部可変性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dyn">トレイトオブジェクト(<code class="docutils literal notranslate"><span class="pre">dyn</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="17_concurrency.html">並行処理の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_cargo_and_ecosystem.html">Cargo とエコシステム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_testing.html">テスト</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第5部 まとめ</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../part5_conclusion/20_practical_project.html">簡単な実践プロジェクト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../part5_conclusion/21_next_steps.html">次のステップ</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rust 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">スマートポインタ(概論)</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>スマートポインタ(概論)<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>これまで扱ってきた参照(<code class="docutils literal notranslate"><span class="pre">&amp;T</span></code>)は、あくまで既存の値を「借用」するだけの仕組みでした。この章では、値の所有権や生存期間そのものを管理する「スマートポインタ」と呼ばれる型を、代表的なものに絞って概論として紹介します。細部の実装までは踏み込まず、それぞれが「何のために使うのか」を押さえることを目標とします。あわせて、章の後半では実行時ポリモーフィズムを実現する「トレイトオブジェクト(<code class="docutils literal notranslate"><span class="pre">dyn</span></code>)」についても扱います。</p>
+<section id="box-t">
+<h2><code class="docutils literal notranslate"><span class="pre">Box&lt;T&gt;</span></code>: ヒープへの単純な確保<a class="headerlink" href="#box-t" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Box&lt;T&gt;</span></code> は最も単純なスマートポインタで、値をスタックではなくヒープに確保します。中身へのアクセスは通常の参照とほとんど変わりませんが、サイズがコンパイル時に決まらないデータや、大きなデータを所有権ごと移動させたい場合に便利です。</p>
+<p>代表的な用途が、再帰的なデータ構造です。次のような連結リストは、<code class="docutils literal notranslate"><span class="pre">Box</span></code> がなければ型のサイズが無限になってしまい定義できません。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">enum</span><span class="w"> </span><span class="nc">List</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Cons</span><span class="p">(</span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&gt;</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Nil</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">List</span><span class="p">::{</span><span class="n">Cons</span><span class="p">,</span><span class="w"> </span><span class="n">Nil</span><span class="p">};</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Cons</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Cons</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Cons</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Nil</span><span class="p">))))));</span>
+<span class="w">    </span><span class="c1">// list はヒープ上に確保された値へのポインタを内部に持つ</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">Cons</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">list</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;先頭の値: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Box&lt;List&gt;</span></code> によって「次の要素へのポインタ」のサイズだけを <code class="docutils literal notranslate"><span class="pre">List</span></code> が持てばよくなるため、コンパイラは <code class="docutils literal notranslate"><span class="pre">List</span></code> 全体のサイズを決定できるようになります。</p>
+</section>
+<section id="rc-t">
+<h2><code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code>: 複数所有を許す参照カウント型<a class="headerlink" href="#rc-t" title="Link to this heading"></a></h2>
+<p>Rust の所有権システムでは、通常1つの値の所有者は1つだけです。しかし、グラフ構造のように「複数の場所から同じデータを参照したい」場面もあります。そこで使うのが <code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code> (reference counted の略)です。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">rc</span><span class="p">::</span><span class="n">Rc</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;shared data&quot;</span><span class="p">));</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;参照カウント: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">));</span><span class="w"> </span><span class="c1">// 1</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;参照カウント: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">));</span><span class="w"> </span><span class="c1">// 2</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;参照カウント: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">));</span><span class="w"> </span><span class="c1">// 3</span>
+
+<span class="w">    </span><span class="nb">drop</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<span class="w">    </span><span class="nb">drop</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;参照カウント: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Rc</span><span class="p">::</span><span class="n">strong_count</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">));</span><span class="w"> </span><span class="c1">// 1</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Rc::clone</span></code> はデータそのものをコピーするのではなく、参照カウントを増やすだけの軽い操作です。カウントが0になったときに初めてヒープ上のデータが解放されます。ただし <code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code> はスレッド間で安全に共有できない点に注意してください(スレッド間で共有したい場合は、次章で扱う <code class="docutils literal notranslate"><span class="pre">Arc&lt;T&gt;</span></code> を使います)。</p>
+<p>なお、<code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code> 同士が親子関係のように互いを参照し合う構造を作ると、それぞれの参照カウントがいつまでも0にならず、メモリが解放されない「循環参照」が起こることがあります。これを避けるために、所有権を持たない(参照カウントを増やさない)弱い参照である <code class="docutils literal notranslate"><span class="pre">Weak&lt;T&gt;</span></code> が用意されています。たとえば親から子への参照には <code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code>、子から親への参照には <code class="docutils literal notranslate"><span class="pre">Weak&lt;T&gt;</span></code> を使うことで、循環を断ち切ることができます。</p>
+</section>
+<section id="refcell-t">
+<h2><code class="docutils literal notranslate"><span class="pre">RefCell&lt;T&gt;</span></code>: 実行時借用チェックによる内部可変性<a class="headerlink" href="#refcell-t" title="Link to this heading"></a></h2>
+<p>通常、借用ルール(不変参照は複数、可変参照はただ1つ)はコンパイル時にチェックされます。しかし <code class="docutils literal notranslate"><span class="pre">RefCell&lt;T&gt;</span></code> を使うと、このチェックを実行時に遅らせることができます。これを「内部可変性」と呼びます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">use</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">cell</span><span class="p">::</span><span class="n">RefCell</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RefCell</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">borrow_mut</span><span class="p">();</span>
+<span class="w">        </span><span class="o">*</span><span class="n">value</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;値: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">borrow</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">borrow()</span></code> は不変参照、<code class="docutils literal notranslate"><span class="pre">borrow_mut()</span></code> は可変参照を実行時に取得します。もし同時に複数の可変参照を取得しようとすると、コンパイルは通ってしまいますが、実行時にパニックします。コンパイル時の借用チェックでは表現しきれないパターン(例えば <code class="docutils literal notranslate"><span class="pre">Rc&lt;RefCell&lt;T&gt;&gt;</span></code> として複数箇所から共有しつつ中身を書き換えたい場合など)で活躍します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">RefCell&lt;T&gt;</span></code> の兄弟にあたる型として <code class="docutils literal notranslate"><span class="pre">Cell&lt;T&gt;</span></code> もあります。<code class="docutils literal notranslate"><span class="pre">Cell&lt;T&gt;</span></code> は <code class="docutils literal notranslate"><span class="pre">Copy</span></code> を実装した型に対して、<code class="docutils literal notranslate"><span class="pre">get</span></code> と <code class="docutils literal notranslate"><span class="pre">set</span></code> というメソッドだけで内部可変性を提供するシンプルな型です。参照を取得する仕組みを持たないため、<code class="docutils literal notranslate"><span class="pre">RefCell&lt;T&gt;</span></code> のような実行時の借用チェック(および違反時のパニック)のコストが一切かかりません。</p>
+<div class="tip admonition">
+<p class="admonition-title">Python 経験者向けメモ</p>
+<p>Python のオブジェクトはすべて内部的に参照カウントで管理されており、複数の変数から同じオブジェクトを指すことはごく普通に行われます。一方 Rust では、値は基本的に1つの所有者にしか属せず、複数の場所から同じデータを所有したい場合にだけ <code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code> のような型を明示的に選択します。つまり Python が「常に参照カウント」なのに対し、Rust は「必要なときだけ参照カウント」という考え方です。同様に <code class="docutils literal notranslate"><span class="pre">RefCell&lt;T&gt;</span></code> も、Python では意識すらしない「実行時に借用ルールを守っているかチェックする」という仕組みを、明示的な型として表現したものだと捉えると理解しやすいでしょう。</p>
+</div>
+</section>
+<section id="dyn">
+<h2>トレイトオブジェクト(<code class="docutils literal notranslate"><span class="pre">dyn</span></code>)<a class="headerlink" href="#dyn" title="Link to this heading"></a></h2>
+<p>ジェネリクスとトレイトの章では、<code class="docutils literal notranslate"><span class="pre">fn</span> <span class="pre">notify&lt;T:</span> <span class="pre">Summary&gt;(item:</span> <span class="pre">&amp;T)</span></code> のようにジェネリクスとトレイト境界を組み合わせる書き方を学びました。その章と、エラーハンドリングの章に登場した <code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Error&gt;</span></code> について、いずれも「<code class="docutils literal notranslate"><span class="pre">dyn</span></code> (トレイトオブジェクト)については、スマートポインタの章で詳しく説明します」と予告していました。ここでその内容を説明します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">fn</span> <span class="pre">notify&lt;T:</span> <span class="pre">Summary&gt;(item:</span> <span class="pre">&amp;T)</span></code> のようなジェネリクスを使った関数は、コンパイル時に呼び出し側の具体的な型ごとに専用のコードが生成されます。これを <strong>静的ディスパッチ</strong> と呼びます。どのメソッドを呼び出すかがコンパイル時に確定しているため、実行速度の面で有利です。</p>
+<p>これに対して <code class="docutils literal notranslate"><span class="pre">dyn</span></code> を使うと、<code class="docutils literal notranslate"><span class="pre">fn</span> <span class="pre">notify(item:</span> <span class="pre">&amp;dyn</span> <span class="pre">Summary)</span></code> のように「<code class="docutils literal notranslate"><span class="pre">Summary</span></code> を実装した何らかの型」を表す書き方ができます。この場合、<code class="docutils literal notranslate"><span class="pre">item</span></code> の具体的な型は実行時になるまで分からず、<code class="docutils literal notranslate"><span class="pre">summarize</span></code> の呼び出しは実行時に解決されます。これを <strong>動的ディスパッチ</strong> と呼び、<code class="docutils literal notranslate"><span class="pre">&amp;dyn</span> <span class="pre">Summary</span></code> や <code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Summary&gt;</span></code> のような書き方全般を「トレイトオブジェクト」と呼びます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">trait</span><span class="w"> </span><span class="n">Summary</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// ジェネリクス版: 静的ディスパッチ(型ごとにコードが生成される)</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">notify_static</span><span class="o">&lt;</span><span class="n">T</span><span class="p">:</span><span class="w"> </span><span class="nc">Summary</span><span class="o">&gt;</span><span class="p">(</span><span class="n">item</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;速報(静的): {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">item</span><span class="p">.</span><span class="n">summarize</span><span class="p">());</span>
+<span class="p">}</span>
+
+<span class="c1">// トレイトオブジェクト版: 動的ディスパッチ(実行時に実装が決まる)</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">notify_dynamic</span><span class="p">(</span><span class="n">item</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">dyn</span><span class="w"> </span><span class="n">Summary</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;速報(動的): {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">item</span><span class="p">.</span><span class="n">summarize</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>トレイトオブジェクトが特に役立つのは、実行時までどの具体的な型が来るか分からない場合です。代表的な例が、性質の異なる複数の型を1つの <code class="docutils literal notranslate"><span class="pre">Vec</span></code> にまとめて格納したいケースです。<code class="docutils literal notranslate"><span class="pre">Vec&lt;T&gt;</span></code> の要素はすべて同じ型 <code class="docutils literal notranslate"><span class="pre">T</span></code> でなければなりませんが、要素の型を <code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Summary&gt;</span></code> にすれば、<code class="docutils literal notranslate"><span class="pre">Summary</span></code> さえ実装していれば異なる構造体を同じ <code class="docutils literal notranslate"><span class="pre">Vec</span></code> に混在させられます。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">Article</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">Summary</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">Article</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;記事: {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">title</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">struct</span><span class="w"> </span><span class="nc">Tweet</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">username</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">Summary</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">Tweet</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">format!</span><span class="p">(</span><span class="s">&quot;ツイート by {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">username</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">items</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">Summary</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span>
+<span class="w">        </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Article</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;Rust入門&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">}),</span>
+<span class="w">        </span><span class="nb">Box</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="n">Tweet</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">username</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">from</span><span class="p">(</span><span class="s">&quot;rustlang&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">}),</span>
+<span class="w">    </span><span class="p">];</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">item</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">&amp;</span><span class="n">items</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;{}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">item</span><span class="p">.</span><span class="n">summarize</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Article</span></code> と <code class="docutils literal notranslate"><span class="pre">Tweet</span></code> はまったく別の型ですが、どちらも <code class="docutils literal notranslate"><span class="pre">Summary</span></code> を実装しているため、<code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Summary&gt;</span></code> として同じ <code class="docutils literal notranslate"><span class="pre">Vec</span></code> にまとめられます。それぞれの <code class="docutils literal notranslate"><span class="pre">Box</span></code> の中身は実行時にしか分からない別々の型であり、<code class="docutils literal notranslate"><span class="pre">summarize</span></code> を呼び出すたびに、実際に入っている型に応じた実装が動的に選ばれます。</p>
+<p>エラーハンドリングの章で登場した <code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Error&gt;</span></code> も、このトレイトオブジェクトの一種です。</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">fn</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="nb">Box</span><span class="o">&lt;</span><span class="k">dyn</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">error</span><span class="p">::</span><span class="n">Error</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>関数の中で起こりうるエラーの型が複数ある場合(ファイルI/Oのエラー、パースのエラーなど)、それぞれの型を毎回列挙するのは大変です。<code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Error&gt;</span></code> は「<code class="docutils literal notranslate"><span class="pre">Error</span></code> トレイトさえ実装していれば、どんな種類のエラーでも受け取れる箱」として使うことで、複数の異なるエラー型を1つの戻り値の型でまとめて表現できるようにしています。</p>
+<div class="tip admonition">
+<p class="admonition-title">Python 経験者向けメモ</p>
+<p>Python は動的型付けの言語なので、<code class="docutils literal notranslate"><span class="pre">obj.summarize()</span></code> のようなメソッド呼び出しは、実行時にならないとどのクラスの実装が呼ばれるか分かりません。つまり Python のメソッド呼び出しは、実質的に常に「動的ディスパッチ」だといえます。Rust ではこれとは逆に、基本的には静的ディスパッチが使われ、コンパイル時にどの実装を呼ぶかが決まります。<code class="docutils literal notranslate"><span class="pre">dyn</span></code> を明示的に使ったときだけ、Python のメソッド呼び出しに近い「実行時に実装を決める」動的ディスパッチになる、と捉えると理解しやすいでしょう。</p>
+</div>
+</section>
+<section id="id2">
+<h2>まとめ<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Box&lt;T&gt;</span></code> は値をヒープに確保するシンプルなスマートポインタで、再帰的なデータ構造の定義などに使います。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Rc&lt;T&gt;</span></code> は参照カウント方式で複数所有を実現し、<code class="docutils literal notranslate"><span class="pre">clone</span></code> するたびにカウントが増え、参照がなくなるとカウントが減ります。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RefCell&lt;T&gt;</span></code> は借用ルールのチェックを実行時に行うことで、内部可変性を実現します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Rc&lt;RefCell&lt;T&gt;&gt;</span></code> のように組み合わせることで、複数箇所から共有しつつ中身を書き換えるデータ構造を表現できます。</p></li>
+<li><p>ジェネリクスは静的ディスパッチ(コンパイル時に型ごとのコードを生成)、<code class="docutils literal notranslate"><span class="pre">dyn</span></code> を使ったトレイトオブジェクトは動的ディスパッチ(実行時に実装を決定)という違いがあります。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Trait&gt;</span></code> は、<code class="docutils literal notranslate"><span class="pre">Vec&lt;Box&lt;dyn</span> <span class="pre">Summary&gt;&gt;</span></code> のように異なる型をまとめて扱いたい場合や、<code class="docutils literal notranslate"><span class="pre">Box&lt;dyn</span> <span class="pre">Error&gt;</span></code> のようにどんな種類のエラーでも受け取りたい場合によく使われます。</p></li>
+<li><p>本章はあくまで概論であり、より高度な使い方や <code class="docutils literal notranslate"><span class="pre">Weak&lt;T&gt;</span></code> などは必要になったときに個別に学ぶとよいでしょう。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="15_lifetimes.html" class="btn btn-neutral float-left" title="ライフタイム" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="17_concurrency.html" class="btn btn-neutral float-right" title="並行処理の基礎" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

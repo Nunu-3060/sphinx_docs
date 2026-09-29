@@ -1,0 +1,194 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BML 交通モデルの理論 &mdash; Python による BML 交通モデルの実装 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="実装の解説" href="implementation.html" />
+    <link rel="prev" title="はじめに" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python による BML 交通モデルの実装
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">はじめに</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">BML 交通モデルの理論</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">格子と境界条件</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">車の初期配置と密度</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">更新規則</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">自由流と渋滞</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">実装の解説</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">実行方法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results.html">シミュレーション例と考察</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html">まとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix.html">付録</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python による BML 交通モデルの実装</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">BML 交通モデルの理論</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bml">
+<h1>BML 交通モデルの理論<a class="headerlink" href="#bml" title="Link to this heading"></a></h1>
+<section id="id1">
+<h2>格子と境界条件<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>BML モデルでは、幅 <span class="math notranslate nohighlight">\(W\)</span> ・高さ <span class="math notranslate nohighlight">\(H\)</span> の 2 次元正方格子を用います。格子の各セルは、行番号 <span class="math notranslate nohighlight">\(i\)</span> （ <span class="math notranslate nohighlight">\(0 \leq i &lt; H\)</span> ）と列番号 <span class="math notranslate nohighlight">\(j\)</span> （ <span class="math notranslate nohighlight">\(0 \leq j &lt; W\)</span> ）の組で表されます。本資料では、行番号は格子の北端から南端に向かって、列番号は西端から東端に向かって増加するものとします。</p>
+<p>格子の四辺は周期境界条件（トーラス状の境界条件）でつながっており、最も北の行から北へ 1 マス進むと最も南の行に、最も東の列から東へ 1 マス進むと最も西の列に、それぞれつながります。</p>
+</section>
+<section id="id2">
+<h2>車の初期配置と密度<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>格子の各セルは、空きセルまたは車のいずれかの状態を取ります。車には、南北方向に移動する車と、東西方向に移動する車の 2 種類があります。それぞれのセルには、密度パラメータ <span class="math notranslate nohighlight">\(p\)</span> （ <span class="math notranslate nohighlight">\(0 \leq p \leq 1\)</span> ）を用いて、以下の確率で初期状態が割り当てられます。</p>
+<div class="math notranslate nohighlight">
+\[P(\text{空きセル}) = 1 - p, \qquad P(\text{南北方向の車}) = P(\text{東西方向の車}) = \frac{p}{2}\]</div>
+<p>すなわち、格子全体としての車の密度が <span class="math notranslate nohighlight">\(p\)</span> となるように、南北方向の車と東西方向の車が同じ割合で配置されます。</p>
+<table class="docutils align-default" id="id5">
+<caption><span class="caption-text">格子の値と車の種類</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 10.0%" />
+<col style="width: 30.0%" />
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>値</p></th>
+<th class="head"><p>種類</p></th>
+<th class="head"><p>移動方向</p></th>
+<th class="head"><p>割合</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>空きセル</p></td>
+<td><p>（移動しない）</p></td>
+<td><p><span class="math notranslate nohighlight">\(1 - p\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>南北方向の車</p></td>
+<td><p>北</p></td>
+<td><p><span class="math notranslate nohighlight">\(p / 2\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>東西方向の車</p></td>
+<td><p>東</p></td>
+<td><p><span class="math notranslate nohighlight">\(p / 2\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id3">
+<h2>更新規則<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>BML モデルの更新は、南北方向の車の移動と東西方向の車の移動という 2 つの段階に分けて行われます。</p>
+<p>まず、南北方向の車について、以下の規則に従って全セルを同時に更新します。南北方向の車は、自分から見て北隣のセルが空きセルであれば北へ 1 マス移動し、そうでなければその場にとどまります。時刻 <span class="math notranslate nohighlight">\(t\)</span> における行 <span class="math notranslate nohighlight">\(i\)</span> ・列 <span class="math notranslate nohighlight">\(j\)</span> のセルの値を <span class="math notranslate nohighlight">\(L(i, j, t)\)</span> とすると、この段階の更新は次のように表されます。</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}L(i, j, t + \tfrac{1}{2}) =
+\begin{cases}
+  1 &amp; L(i, j, t) = 0 \ \text{かつ} \ L(i + 1, j, t) = 1 \ \text{の場合} \\
+  1 &amp; L(i, j, t) = 1 \ \text{かつ} \ L(i - 1, j, t) \neq 0 \ \text{の場合} \\
+  L(i, j, t) &amp; \text{それ以外の場合}
+\end{cases}\end{split}\]</div>
+<p>続いて、更新後の格子 <span class="math notranslate nohighlight">\(L(i, j, t + \tfrac{1}{2})\)</span> を用いて、東西方向の車についても同様に、東隣のセルが空きセルであれば東へ 1 マス移動する規則を全セルへ同時に適用します。</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}L(i, j, t + 1) =
+\begin{cases}
+  2 &amp; L(i, j, t + \tfrac{1}{2}) = 0 \ \text{かつ} \ L(i, j - 1, t + \tfrac{1}{2}) = 2 \ \text{の場合} \\
+  2 &amp; L(i, j, t + \tfrac{1}{2}) = 2 \ \text{かつ} \ L(i, j + 1, t + \tfrac{1}{2}) \neq 0 \ \text{の場合} \\
+  L(i, j, t + \tfrac{1}{2}) &amp; \text{それ以外の場合}
+\end{cases}\end{split}\]</div>
+<p>本プロジェクトの実装では、この 2 段階の更新をまとめて 1 回のメソッド呼び出しで行っています。詳細は <a class="reference internal" href="implementation.html"><span class="doc">実装の解説</span></a> で解説します。</p>
+</section>
+<section id="id4">
+<h2>自由流と渋滞<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>BML モデルの最も興味深い性質は、密度 <span class="math notranslate nohighlight">\(p\)</span> の値によって、シミュレーションの定常状態が大きく異なる点です。</p>
+<p>密度が十分に低い場合、車同士がほとんど衝突せず、すべての車が滞りなく移動し続ける「自由流」状態になります。一方、密度がある閾値（臨界密度）を超えると、車同士が互いの進路を塞ぎ合う状態に陥り、最終的にどの車も動けなくなる「渋滞」状態（デッドロック）へ収束します。この、密度の変化に伴って定常状態の性質が急激に変化する現象は相転移と呼ばれ、 BML モデルは単純な規則からこのような相転移が生じることを示した代表例として知られています。</p>
+<p>臨界密度の値は格子の形状や境界条件によって変化しますが、正方格子・周期境界条件の場合、一般に 0.3 台前半程度であるとされています。本プロジェクトの GUI アプリケーションが既定値として用いている密度 <span class="math notranslate nohighlight">\(p = 0.6\)</span> は、この臨界密度を上回っているため、既定の設定のままシミュレーションを開始すると、比較的早い段階で渋滞状態に至ります。密度による挙動の違いについては、 <a class="reference internal" href="results.html"><span class="doc">シミュレーション例と考察</span></a> で具体例を示します。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="はじめに" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="implementation.html" class="btn btn-neutral float-right" title="実装の解説" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>6. Scripted Pipeline と Groovy の基礎 &mdash; Jenkins &amp; Jenkins Pipeline 入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="7. マルチブランチパイプライン" href="07_multibranch.html" />
+    <link rel="prev" title="5. Declarative Pipeline 構文の詳細" href="05_pipeline_syntax.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Jenkins & Jenkins Pipeline 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. Jenkins とは</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_installation.html">2. インストールとセットアップ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_basic_usage.html">3. Jenkins の基本操作（Freestyle ジョブ）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_pipeline_basics.html">4. Jenkins Pipeline の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_pipeline_syntax.html">5. Declarative Pipeline 構文の詳細</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">6. Scripted Pipeline と Groovy の基礎</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#groovy-python">6.1. Groovy 入門（Python 経験者向け）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#node-stage">6.2. node と stage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">6.3. 制御構文とループ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#try-catch">6.4. try/catch によるエラーハンドリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#declarative">6.5. Declarative との使い分け</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sample-app-jenkinsfile-scripted">6.6. サンプル全体（sample-app/Jenkinsfile.scripted）</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="07_multibranch.html">7. マルチブランチパイプライン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_shared_libraries.html">8. 共有ライブラリ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_integration.html">9. 外部ツールとの連携</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_best_practices.html">10. ベストプラクティスとトラブルシューティング</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/a_glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/b_references.html">参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Jenkins & Jenkins Pipeline 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">6. </span>Scripted Pipeline と Groovy の基礎</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="scripted-pipeline-groovy">
+<h1><span class="section-number">6. </span>Scripted Pipeline と Groovy の基礎<a class="headerlink" href="#scripted-pipeline-groovy" title="Link to this heading"></a></h1>
+<p>Scripted Pipeline は Groovy スクリプトそのものであり、Declarative Pipeline よりも自由度の高い記述が可能です。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>サンプルリポジトリの <code class="docutils literal notranslate"><span class="pre">sample-app/Jenkinsfile.scripted</span></code> は、<code class="docutils literal notranslate"><span class="pre">sample-app/Jenkinsfile</span></code>（Declarative 版）と同じアプリケーションを Scripted Pipeline で書き直したものです。両者を見比べながら読み進めると、記法の違いが具体的に把握できます。全文は本章末尾に掲載しているほか、<a class="reference download internal" download="" href="../_downloads/51211e772cc3d3606c0b02182b1d41d4/Jenkinsfile.scripted"><code class="xref download docutils literal notranslate"><span class="pre">ここから直接ダウンロード</span></code></a> することもできます。</p>
+</div>
+<section id="groovy-python">
+<h2><span class="section-number">6.1. </span>Groovy 入門（Python 経験者向け）<a class="headerlink" href="#groovy-python" title="Link to this heading"></a></h2>
+<p>Groovy は JVM 上で動作するスクリプト言語で、Java との相互運用性を持ちながら、Python に近い簡潔な文法も備えています。ここでは Pipeline を読み書きするために最低限必要な範囲だけを、Python との対比で押さえます。</p>
+<p><strong>変数宣言</strong></p>
+<p>Groovy では型を書かずに <code class="docutils literal notranslate"><span class="pre">def</span></code> で変数を宣言できます。Python の変数がそのまま代入で使えるのと同じ感覚です。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="kt">def</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;jenkins&#39;</span>
+<span class="kt">def</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span>
+</pre></div>
+</div>
+<p><strong>文字列補間（GString）</strong></p>
+<p>ダブルクオートの文字列内では <code class="docutils literal notranslate"><span class="pre">${...}</span></code> で式を埋め込めます。Python の f-string（<code class="docutils literal notranslate"><span class="pre">f&quot;hello</span> <span class="pre">{name}&quot;</span></code>）に相当します。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="kt">def</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;world&#39;</span>
+<span class="n">echo</span><span class="w"> </span><span class="s2">&quot;hello, ${name}!&quot;</span><span class="w">   </span><span class="c1">// =&gt; hello, world!</span>
+</pre></div>
+</div>
+<p>シングルクオートの文字列では補間は行われない点も、Python の f-string と通常の文字列の違いに似ています。</p>
+<p><strong>クロージャ</strong></p>
+<p>波括弧 <code class="docutils literal notranslate"><span class="pre">{</span> <span class="pre">}</span></code> で囲んだブロックはクロージャ（Python のラムダ式や関数オブジェクトに近いもの）として値を持てます。Pipeline の <code class="docutils literal notranslate"><span class="pre">steps</span> <span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code> や <code class="docutils literal notranslate"><span class="pre">stage('x')</span> <span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code> の <code class="docutils literal notranslate"><span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code> は、実はすべてこのクロージャです。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="kt">def</span><span class="w"> </span><span class="n">greet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s2">&quot;hello, ${n}!&quot;</span><span class="w"> </span><span class="o">}</span>
+<span class="n">echo</span><span class="w"> </span><span class="nf">greet</span><span class="o">(</span><span class="s1">&#39;jenkins&#39;</span><span class="o">)</span>
+</pre></div>
+</div>
+<p><strong>リストとマップ</strong></p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="kt">def</span><span class="w"> </span><span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="s1">&#39;a&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;b&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;c&#39;</span><span class="o">]</span>
+<span class="kt">def</span><span class="w"> </span><span class="n">map</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="nl">name:</span><span class="w"> </span><span class="s1">&#39;jenkins&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">version:</span><span class="w"> </span><span class="mi">2</span><span class="o">]</span>
+<span class="n">echo</span><span class="w"> </span><span class="n">map</span><span class="o">.</span><span class="na">name</span><span class="w">       </span><span class="c1">// =&gt; jenkins</span>
+</pre></div>
+</div>
+<p>Python のリスト・辞書とほぼ同じ感覚で使えます。</p>
+</section>
+<section id="node-stage">
+<h2><span class="section-number">6.2. </span>node と stage<a class="headerlink" href="#node-stage" title="Link to this heading"></a></h2>
+<p>Scripted Pipeline の基本構造は、<code class="docutils literal notranslate"><span class="pre">node</span></code> ブロックと <code class="docutils literal notranslate"><span class="pre">stage</span></code> の組み合わせです。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">node</span><span class="o">(</span><span class="s1">&#39;linux&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Build&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;pip install -r requirements.txt&#39;</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;pytest&#39;</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">node</span></code> は Declarative Pipeline の <code class="docutils literal notranslate"><span class="pre">agent</span></code> に相当し、どのエージェントで処理を実行するかを指定します。<code class="docutils literal notranslate"><span class="pre">node</span></code> ブロックに入った時点でワークスペースが確保され、ブロックを抜けると解放されます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">stage</span></code> は Declarative Pipeline と同じく処理の単位を表しますが、Scripted Pipeline では <code class="docutils literal notranslate"><span class="pre">steps</span></code> ブロックを介さず、<code class="docutils literal notranslate"><span class="pre">stage</span></code> の中に直接 Groovy のコードを書きます。この「決められた構造に従うか、自由に書くか」という違いが、両者の最大の違いです。</p>
+</section>
+<section id="id1">
+<h2><span class="section-number">6.3. </span>制御構文とループ<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>Scripted Pipeline の中では、通常の Groovy と同じように <code class="docutils literal notranslate"><span class="pre">if</span></code>/<code class="docutils literal notranslate"><span class="pre">for</span></code>/<code class="docutils literal notranslate"><span class="pre">while</span></code> が使えます。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">node</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Conditional deploy&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">(</span><span class="n">env</span><span class="o">.</span><span class="na">BRANCH_NAME</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">&#39;main&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./deploy.sh production&#39;</span>
+<span class="w">        </span><span class="o">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;main 以外のブランチではデプロイをスキップします&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+
+<span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Run per module&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="kt">def</span><span class="w"> </span><span class="n">modules</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="s1">&#39;api&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;worker&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;web&#39;</span><span class="o">]</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="o">(</span><span class="n">m</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">modules</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">sh</span><span class="w"> </span><span class="s2">&quot;pytest tests/${m}&quot;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Python の <code class="docutils literal notranslate"><span class="pre">if</span></code>/<code class="docutils literal notranslate"><span class="pre">for</span></code> とほぼ同じ見た目ですが、1 点大きな違いがあります。Jenkins は Pipeline の実行を <strong>CPS（Continuation Passing Style）</strong>という仕組みで変換し、途中経過をシリアライズして保存できるようにしています。これは、実行中の Pipeline が Jenkins の再起動をまたいで継続できるようにするための仕組みです。</p>
+<p>この CPS 変換の制約により、通常の Groovy の標準ライブラリ（<code class="docutils literal notranslate"><span class="pre">List#each</span></code> のような組み込みメソッドにクロージャを渡すもの等）がそのままでは動かない、あるいは <code class="docutils literal notranslate"><span class="pre">&#64;NonCPS</span></code> アノテーションが必要になる場合があります。「基本的な if/for/while は問題なく使えるが、複雑な高階関数の使用は制約を受けることがある」という点を覚えておいてください。</p>
+</section>
+<section id="try-catch">
+<h2><span class="section-number">6.4. </span>try/catch によるエラーハンドリング<a class="headerlink" href="#try-catch" title="Link to this heading"></a></h2>
+<p>Scripted Pipeline では、通常の Groovy と同じく <code class="docutils literal notranslate"><span class="pre">try</span></code>/<code class="docutils literal notranslate"><span class="pre">catch</span></code>/<code class="docutils literal notranslate"><span class="pre">finally</span></code> でエラーハンドリングを行います。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">node</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;pytest&#39;</span>
+<span class="w">        </span><span class="o">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="o">(</span><span class="n">err</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;UNSTABLE&#39;</span>
+<span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;テストが失敗しましたが、後続処理を続行します: ${err}&quot;</span>
+<span class="w">        </span><span class="o">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">junit</span><span class="w"> </span><span class="s1">&#39;reports/*.xml&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Python の <code class="docutils literal notranslate"><span class="pre">try</span></code>/<code class="docutils literal notranslate"><span class="pre">except</span></code>/<code class="docutils literal notranslate"><span class="pre">finally</span></code> とほぼ同じ役割です。<code class="docutils literal notranslate"><span class="pre">catch</span></code> した例外を握りつぶすと、Jenkins のビルド自体は「成功」のまま終わってしまうため、<code class="docutils literal notranslate"><span class="pre">currentBuild.result</span></code> を <code class="docutils literal notranslate"><span class="pre">'UNSTABLE'</span></code> や <code class="docutils literal notranslate"><span class="pre">'FAILURE'</span></code> に明示的に設定し、実際の状態をビルド結果に反映させるのが定石です。</p>
+</section>
+<section id="declarative">
+<h2><span class="section-number">6.5. </span>Declarative との使い分け<a class="headerlink" href="#declarative" title="Link to this heading"></a></h2>
+<p>実務では、まず Declarative Pipeline で骨格を書き、Groovy の自由な記述力が必要な部分だけを <code class="docutils literal notranslate"><span class="pre">script</span> <span class="pre">{</span> <span class="pre">}</span></code> ブロックの中で Scripted な書き方に切り替える、という使い分けが一般的です。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">any</span>
+<span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Notify&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">script</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="kt">def</span><span class="w"> </span><span class="n">modules</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="s1">&#39;api&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;worker&#39;</span><span class="o">]</span>
+<span class="w">                    </span><span class="k">for</span><span class="w"> </span><span class="o">(</span><span class="n">m</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">modules</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                        </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;module ${m} をチェックします&quot;</span>
+<span class="w">                    </span><span class="o">}</span>
+<span class="w">                </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">when</span></code> や <code class="docutils literal notranslate"><span class="pre">post</span></code> のような Declarative Pipeline の定型的な仕組みでは表現しづらい、複雑な分岐やループだけを <code class="docutils literal notranslate"><span class="pre">script</span> <span class="pre">{</span> <span class="pre">}</span></code> に切り出すことで、可読性と自由度のバランスを取ることができます。「全体は Declarative、部分的に Scripted」という組み合わせが、最初に選ぶべき標準的なスタイルだと考えてください。</p>
+</section>
+<section id="sample-app-jenkinsfile-scripted">
+<h2><span class="section-number">6.6. </span>サンプル全体（sample-app/Jenkinsfile.scripted）<a class="headerlink" href="#sample-app-jenkinsfile-scripted" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="05_pipeline_syntax.html"><span class="doc">Declarative Pipeline 構文の詳細</span></a> 末尾の Declarative 版と同じアプリケーションに対する、Scripted Pipeline での実装全体です。<a class="reference download internal" download="" href="../_downloads/51211e772cc3d3606c0b02182b1d41d4/Jenkinsfile.scripted"><code class="xref download docutils literal notranslate"><span class="pre">sample-app/Jenkinsfile.scripted</span></code></a> としてダウンロードできます。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">// 「Jenkins &amp; Jenkins Pipeline 入門」第6章に対応する Scripted Pipeline 版。</span>
+<span class="linenos"> 2</span><span class="c1">// Jenkinsfile（Declarative 版）と同じアプリケーションに対する</span>
+<span class="linenos"> 3</span><span class="c1">// 最小構成の Scripted Pipeline での書き方を示す。</span>
+<span class="linenos"> 4</span><span class="n">node</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Checkout&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 6</span><span class="w">        </span><span class="n">checkout</span><span class="w"> </span><span class="n">scm</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="o">}</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Build&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">10</span><span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;python -m venv .venv&#39;</span>
+<span class="linenos">11</span><span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;. .venv/bin/activate &amp;&amp; pip install -r requirements.txt&#39;</span>
+<span class="linenos">12</span><span class="w">    </span><span class="o">}</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">15</span><span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">16</span><span class="w">            </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;. .venv/bin/activate &amp;&amp; pytest --junitxml=reports/junit.xml&#39;</span>
+<span class="linenos">17</span><span class="w">        </span><span class="o">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="o">(</span><span class="n">err</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">18</span><span class="w">            </span><span class="n">currentBuild</span><span class="o">.</span><span class="na">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;UNSTABLE&#39;</span>
+<span class="linenos">19</span><span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;テストが失敗しましたが、後続処理を続行します: ${err}&quot;</span>
+<span class="linenos">20</span><span class="w">        </span><span class="o">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">21</span><span class="w">            </span><span class="n">junit</span><span class="w"> </span><span class="nl">allowEmptyResults:</span><span class="w"> </span><span class="kc">true</span><span class="o">,</span><span class="w"> </span><span class="nl">testResults:</span><span class="w"> </span><span class="s1">&#39;reports/junit.xml&#39;</span>
+<span class="linenos">22</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos">23</span><span class="w">    </span><span class="o">}</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">26</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">(</span><span class="n">env</span><span class="o">.</span><span class="na">BRANCH_NAME</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">&#39;main&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">27</span><span class="w">            </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./deploy.sh production&#39;</span>
+<span class="linenos">28</span><span class="w">        </span><span class="o">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">29</span><span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;main 以外のブランチではデプロイをスキップします&#39;</span>
+<span class="linenos">30</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos">31</span><span class="w">    </span><span class="o">}</span>
+<span class="linenos">32</span><span class="o">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="05_pipeline_syntax.html" class="btn btn-neutral float-left" title="5. Declarative Pipeline 構文の詳細" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="07_multibranch.html" class="btn btn-neutral float-right" title="7. マルチブランチパイプライン" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

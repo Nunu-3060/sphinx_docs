@@ -1,0 +1,843 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7. テーブルの結合 &mdash; SQL 入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=47d01576" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="8. サブクエリと共通テーブル式" href="ch08_subquery.html" />
+    <link rel="prev" title="6. 集計とグループ化" href="ch06_aggregate.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SQL 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_overview.html">2. データベースと SQL の概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_setup.html">3. 環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_select.html">4. データの取得</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_null.html">5. NULL の扱い</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_aggregate.html">6. 集計とグループ化</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">7. テーブルの結合</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">7.1. 内部結合</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#inner-join">7.1.1. INNER JOIN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">7.1.2. テーブルの別名</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">7.1.3. 3 つ以上のテーブルの結合</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">7.2. 外部結合</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#left-join">7.2.1. LEFT JOIN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">7.2.2. 相手のない行を探す</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#on-where">7.2.3. ON 句と WHERE 句の違い</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#right-join-full-join">7.2.4. RIGHT JOIN と FULL JOIN</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">7.3. 自己結合</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">7.4. 交差結合</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">7.5. 集合演算</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pandas">7.6. pandas との対応</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exercises-ch07">7.7. 演習問題</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_subquery.html">8. サブクエリと共通テーブル式</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_window.html">9. ウィンドウ関数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_modify.html">10. データの追加・更新・削除</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_ddl.html">11. テーブルの設計と定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_transaction.html">12. トランザクション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_index.html">13. インデックスと性能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_python.html">14. Python から SQL を使う</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_answers.html">付録 A 演習問題の解答</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_dialects.html">付録 B SQL の方言比較</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_glossary.html">付録 C 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考資料</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_e_samples.html">付録 E サンプルファイル一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SQL 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">7. </span>テーブルの結合</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">7. </span>テーブルの結合<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>2 章で説明したとおり、リレーショナルデータベースでは、情報の重複を避けるためにデータを複数のテーブルに分けて格納します。たとえば <code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルには顧客の番号だけがあり、顧客の氏名は <code class="docutils literal notranslate"><span class="pre">customers</span></code> テーブルにあります。注文と顧客の氏名を一緒に表示するには、2 つのテーブルを組み合わせる必要があります。これを結合（join）と呼びます。</p>
+<section id="id2">
+<h2><span class="section-number">7.1. </span>内部結合<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="inner-join">
+<h3><span class="section-number">7.1.1. </span>INNER JOIN<a class="headerlink" href="#inner-join" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">INNER</span> <span class="pre">JOIN</span></code> は、2 つのテーブルの行のうち、指定した条件に一致する行どうしを組み合わせます。条件は <code class="docutils literal notranslate"><span class="pre">ON</span></code> の後に書きます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">orders</span><span class="p">.</span><span class="n">order_id</span><span class="p">,</span>
+<span class="linenos">2</span><span class="w">       </span><span class="n">orders</span><span class="p">.</span><span class="n">ordered_on</span><span class="p">,</span>
+<span class="linenos">3</span><span class="w">       </span><span class="n">customers</span><span class="p">.</span><span class="n">name</span>
+<span class="linenos">4</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">5</span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">orders</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">customers</span><span class="p">.</span><span class="n">customer_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>order_id</p></th>
+<th class="head"><p>ordered_on</p></th>
+<th class="head"><p>name</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>2025-01-10</p></td>
+<td><p>佐藤花子</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>2025-01-15</p></td>
+<td><p>鈴木一郎</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>2025-02-02</p></td>
+<td><p>佐藤花子</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>2025-02-20</p></td>
+<td><p>高橋美咲</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>2025-03-05</p></td>
+<td><p>田中健太</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>2025-03-18</p></td>
+<td><p>伊藤さくら</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>2025-04-01</p></td>
+<td><p>鈴木一郎</p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>2025-04-22</p></td>
+<td><p>渡辺翔</p></td>
+</tr>
+<tr class="row-even"><td><p>9</p></td>
+<td><p>2025-05-09</p></td>
+<td><p>佐藤花子</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>2025-05-30</p></td>
+<td><p>山本優子</p></td>
+</tr>
+<tr class="row-even"><td><p>11</p></td>
+<td><p>2025-06-12</p></td>
+<td><p>高橋美咲</p></td>
+</tr>
+<tr class="row-odd"><td><p>12</p></td>
+<td><p>2025-06-25</p></td>
+<td><p>伊藤さくら</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルの各行について、<code class="docutils literal notranslate"><span class="pre">customer_id</span></code> が等しい <code class="docutils literal notranslate"><span class="pre">customers</span></code> テーブルの行が組み合わされています。2 つのテーブルに同じ名前の列（ここでは <code class="docutils literal notranslate"><span class="pre">customer_id</span></code>）がある場合は、<code class="docutils literal notranslate"><span class="pre">orders.customer_id</span></code> のように「テーブル名.列名」の形で、どちらのテーブルの列かを明示します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">INNER</span> <span class="pre">JOIN</span></code> の <code class="docutils literal notranslate"><span class="pre">INNER</span></code> は省略して <code class="docutils literal notranslate"><span class="pre">JOIN</span></code> と書くこともできます。</p>
+</section>
+<section id="id3">
+<h3><span class="section-number">7.1.2. </span>テーブルの別名<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>テーブル名の後に別名を書くと、以降はその別名でテーブルを参照できます。結合を使う SQL 文では、テーブルに短い別名を付けるのが一般的です。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">ordered_on</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span>
+<span class="linenos">3</span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">c</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span>
+<span class="linenos">4</span><span class="k">WHERE</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">prefecture</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;東京都&#39;</span>
+<span class="linenos">5</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">ordered_on</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>order_id</p></th>
+<th class="head"><p>ordered_on</p></th>
+<th class="head"><p>name</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>2025-01-10</p></td>
+<td><p>佐藤花子</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>2025-02-02</p></td>
+<td><p>佐藤花子</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>2025-02-20</p></td>
+<td><p>高橋美咲</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>2025-05-09</p></td>
+<td><p>佐藤花子</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>2025-05-30</p></td>
+<td><p>山本優子</p></td>
+</tr>
+<tr class="row-odd"><td><p>11</p></td>
+<td><p>2025-06-12</p></td>
+<td><p>高橋美咲</p></td>
+</tr>
+</tbody>
+</table>
+<p>この例のように、結合した結果に対して <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句や <code class="docutils literal notranslate"><span class="pre">ORDER</span> <span class="pre">BY</span></code> 句を指定できます。</p>
+</section>
+<section id="id4">
+<h3><span class="section-number">7.1.3. </span>3 つ以上のテーブルの結合<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">JOIN</span></code> を続けて書くと、3 つ以上のテーブルを結合できます。次の例は、注文明細に注文日と商品名を付けて表示します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">,</span>
+<span class="linenos"> 2</span><span class="w">       </span><span class="n">o</span><span class="p">.</span><span class="n">ordered_on</span><span class="p">,</span>
+<span class="linenos"> 3</span><span class="w">       </span><span class="n">p</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">product_name</span><span class="p">,</span>
+<span class="linenos"> 4</span><span class="w">       </span><span class="n">oi</span><span class="p">.</span><span class="n">quantity</span><span class="p">,</span>
+<span class="linenos"> 5</span><span class="w">       </span><span class="n">oi</span><span class="p">.</span><span class="n">unit_price</span>
+<span class="linenos"> 6</span><span class="k">FROM</span><span class="w"> </span><span class="n">order_items</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">oi</span>
+<span class="linenos"> 7</span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">oi</span><span class="p">.</span><span class="n">order_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span>
+<span class="linenos"> 8</span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">oi</span><span class="p">.</span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">product_id</span>
+<span class="linenos"> 9</span><span class="k">WHERE</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">3</span>
+<span class="linenos">10</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">product_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>order_id</p></th>
+<th class="head"><p>ordered_on</p></th>
+<th class="head"><p>product_name</p></th>
+<th class="head"><p>quantity</p></th>
+<th class="head"><p>unit_price</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>2025-01-10</p></td>
+<td><p>ミルクチョコレート</p></td>
+<td><p>2</p></td>
+<td><p>200</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>2025-01-10</p></td>
+<td><p>ドリップコーヒー</p></td>
+<td><p>1</p></td>
+<td><p>800</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>2025-01-15</p></td>
+<td><p>ボールペン</p></td>
+<td><p>10</p></td>
+<td><p>100</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>2025-01-15</p></td>
+<td><p>ノート</p></td>
+<td><p>5</p></td>
+<td><p>180</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>2025-02-02</p></td>
+<td><p>ポテトチップス</p></td>
+<td><p>3</p></td>
+<td><p>150</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>2025-02-02</p></td>
+<td><p>缶コーヒー</p></td>
+<td><p>6</p></td>
+<td><p>120</p></td>
+</tr>
+</tbody>
+</table>
+<p>結合と集計を組み合わせることもできます。次の例は、顧客ごとの購入金額の合計を求めます。キャンセルされた注文は除きます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="p">,</span>
+<span class="linenos">2</span><span class="w">       </span><span class="k">SUM</span><span class="p">(</span><span class="n">oi</span><span class="p">.</span><span class="n">quantity</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">oi</span><span class="p">.</span><span class="n">unit_price</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">total_amount</span>
+<span class="linenos">3</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">c</span>
+<span class="linenos">4</span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span>
+<span class="linenos">5</span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">order_items</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">oi</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">oi</span><span class="p">.</span><span class="n">order_id</span>
+<span class="linenos">6</span><span class="k">WHERE</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="s1">&#39;キャンセル&#39;</span>
+<span class="linenos">7</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span>
+<span class="linenos">8</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">total_amount</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>total_amount</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>佐藤花子</p></td>
+<td><p>3870</p></td>
+</tr>
+<tr class="row-odd"><td><p>鈴木一郎</p></td>
+<td><p>3500</p></td>
+</tr>
+<tr class="row-even"><td><p>伊藤さくら</p></td>
+<td><p>2880</p></td>
+</tr>
+<tr class="row-odd"><td><p>高橋美咲</p></td>
+<td><p>1510</p></td>
+</tr>
+<tr class="row-even"><td><p>山本優子</p></td>
+<td><p>1440</p></td>
+</tr>
+<tr class="row-odd"><td><p>渡辺翔</p></td>
+<td><p>750</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> 句に <code class="docutils literal notranslate"><span class="pre">c.name</span></code> だけでなく <code class="docutils literal notranslate"><span class="pre">c.customer_id</span></code> も指定しているのは、同姓同名の顧客がいた場合に、別々の顧客として集計するためです。</p>
+</section>
+</section>
+<section id="id5">
+<h2><span class="section-number">7.2. </span>外部結合<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="left-join">
+<h3><span class="section-number">7.2.1. </span>LEFT JOIN<a class="headerlink" href="#left-join" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">INNER</span> <span class="pre">JOIN</span></code> では、相手のテーブルに一致する行がない行は結果に含まれません。前の例では、一度も注文していない顧客（中村大輔）や、キャンセルした注文しかない顧客（田中健太）は結果に現れていません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">LEFT</span> <span class="pre">JOIN</span></code> は、左側（<code class="docutils literal notranslate"><span class="pre">FROM</span></code> 句に書いた側）のテーブルの行をすべて残し、右側のテーブルに一致する行がない場合は、右側の列を NULL にして結果に含めます。このような結合を外部結合と呼びます。<code class="docutils literal notranslate"><span class="pre">LEFT</span> <span class="pre">OUTER</span> <span class="pre">JOIN</span></code> と書くこともできます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">c</span>
+<span class="linenos">3</span><span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span>
+<span class="linenos">4</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>order_id</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>9</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>鈴木一郎</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>鈴木一郎</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>高橋美咲</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>高橋美咲</p></td>
+<td><p>11</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>田中健太</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>伊藤さくら</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>伊藤さくら</p></td>
+<td><p>12</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>渡辺翔</p></td>
+<td><p>8</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>山本優子</p></td>
+<td><p>10</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>中村大輔</p></td>
+<td><p>NULL</p></td>
+</tr>
+</tbody>
+</table>
+<p>中村大輔（<code class="docutils literal notranslate"><span class="pre">customer_id</span></code> が 8）の行は、<code class="docutils literal notranslate"><span class="pre">order_id</span></code> が NULL になって結果に含まれています。</p>
+<p>外部結合と集計を組み合わせると、注文のない顧客を 0 件として数えられます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">order_count</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">c</span>
+<span class="linenos">3</span><span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span>
+<span class="linenos">4</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span>
+<span class="linenos">5</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>order_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>佐藤花子</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>鈴木一郎</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>高橋美咲</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>田中健太</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>伊藤さくら</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>渡辺翔</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>山本優子</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>中村大輔</p></td>
+<td><p>0</p></td>
+</tr>
+</tbody>
+</table>
+<p>ここでは <code class="docutils literal notranslate"><span class="pre">COUNT(*)</span></code> ではなく <code class="docutils literal notranslate"><span class="pre">COUNT(o.order_id)</span></code> を使っている点に注意してください。<code class="docutils literal notranslate"><span class="pre">COUNT(*)</span></code> は行数を数えるため、注文のない顧客も 1 と数えてしまいます。<code class="docutils literal notranslate"><span class="pre">COUNT(o.order_id)</span></code> は NULL を数えないため、正しく 0 になります。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">7.2.2. </span>相手のない行を探す<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">LEFT</span> <span class="pre">JOIN</span></code> の結果のうち、右側の列が NULL の行だけを取り出すと、「相手のテーブルに一致する行がない行」を探せます。次の例は、一度も注文されていない商品を探します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">name</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">p</span>
+<span class="linenos">3</span><span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">order_items</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">oi</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">oi</span><span class="p">.</span><span class="n">product_id</span>
+<span class="linenos">4</span><span class="k">WHERE</span><span class="w"> </span><span class="n">oi</span><span class="p">.</span><span class="n">product_id</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>product_id</p></th>
+<th class="head"><p>name</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>12</p></td>
+<td><p>抹茶ラテ</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="on-where">
+<h3><span class="section-number">7.2.3. </span>ON 句と WHERE 句の違い<a class="headerlink" href="#on-where" title="Link to this heading"></a></h3>
+<p>外部結合では、条件を <code class="docutils literal notranslate"><span class="pre">ON</span></code> 句に書くか <code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句に書くかによって結果が変わります。次の 2 つの SQL 文は、どちらも「顧客ごとの、状態が「発送済」の注文の件数」を求めるつもりのものです。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- 条件を WHERE 句に書いた場合</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shipped_count</span>
+<span class="linenos">3</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">c</span>
+<span class="linenos">4</span><span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span>
+<span class="linenos">5</span><span class="k">WHERE</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;発送済&#39;</span>
+<span class="linenos">6</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span>
+<span class="linenos">7</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>shipped_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>佐藤花子</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>鈴木一郎</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>高橋美咲</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>伊藤さくら</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>渡辺翔</p></td>
+<td><p>1</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- 条件を ON 句に書いた場合</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shipped_count</span>
+<span class="linenos">3</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">c</span>
+<span class="linenos">4</span><span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span>
+<span class="linenos">5</span><span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;発送済&#39;</span>
+<span class="linenos">6</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span>
+<span class="linenos">7</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>shipped_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>佐藤花子</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>鈴木一郎</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>高橋美咲</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>田中健太</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-even"><td><p>伊藤さくら</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>渡辺翔</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>山本優子</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>中村大輔</p></td>
+<td><p>0</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句に書いた場合は、結合した後に絞り込みが行われます。注文のない顧客の行は <code class="docutils literal notranslate"><span class="pre">o.status</span></code> が NULL になるため条件が UNKNOWN になり、状態が「発送済」の注文がない顧客の行は条件が FALSE になるため、どちらも除外されてしまいます。その結果、状態が「発送済」の注文が 0 件の顧客（田中健太、山本優子、中村大輔）が表示されません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ON</span></code> 句に書いた場合は、状態が「発送済」の注文だけが結合の相手になり、左側の顧客の行はすべて残ります。外部結合で右側のテーブルを絞り込む条件は、<code class="docutils literal notranslate"><span class="pre">ON</span></code> 句に書くのが基本です。</p>
+</section>
+<section id="right-join-full-join">
+<h3><span class="section-number">7.2.4. </span>RIGHT JOIN と FULL JOIN<a class="headerlink" href="#right-join-full-join" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">RIGHT</span> <span class="pre">JOIN</span></code> は、<code class="docutils literal notranslate"><span class="pre">LEFT</span> <span class="pre">JOIN</span></code> とは逆に、右側のテーブルの行をすべて残します。<code class="docutils literal notranslate"><span class="pre">A</span> <span class="pre">RIGHT</span> <span class="pre">JOIN</span> <span class="pre">B</span></code> は <code class="docutils literal notranslate"><span class="pre">B</span> <span class="pre">LEFT</span> <span class="pre">JOIN</span> <span class="pre">A</span></code> と同じ結果になるため、実際には <code class="docutils literal notranslate"><span class="pre">LEFT</span> <span class="pre">JOIN</span></code> で統一して書くことが多いです。</p>
+<p><code class="docutils literal notranslate"><span class="pre">FULL</span> <span class="pre">JOIN</span></code>（<code class="docutils literal notranslate"><span class="pre">FULL</span> <span class="pre">OUTER</span> <span class="pre">JOIN</span></code>）は、両方のテーブルの行をすべて残し、相手のない側の列を NULL にします。</p>
+<p>SQLite では、<code class="docutils literal notranslate"><span class="pre">RIGHT</span> <span class="pre">JOIN</span></code> と <code class="docutils literal notranslate"><span class="pre">FULL</span> <span class="pre">JOIN</span></code> はバージョン 3.39 から使用できます。MySQL は <code class="docutils literal notranslate"><span class="pre">FULL</span> <span class="pre">JOIN</span></code> に対応していません。</p>
+</section>
+</section>
+<section id="id7">
+<h2><span class="section-number">7.3. </span>自己結合<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>同じテーブルどうしを結合することもできます。これを自己結合と呼びます。自己結合では、同じテーブルに異なる別名を付けて区別します。</p>
+<p>次の例は、<code class="docutils literal notranslate"><span class="pre">categories</span></code> テーブルを自己結合して、各カテゴリの親カテゴリの名前を表示します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">child</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">parent</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">parent_category</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">categories</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">child</span>
+<span class="linenos">3</span><span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">categories</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">parent</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">child</span><span class="p">.</span><span class="n">parent_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parent</span><span class="p">.</span><span class="n">category_id</span>
+<span class="linenos">4</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">child</span><span class="p">.</span><span class="n">category_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>category</p></th>
+<th class="head"><p>parent_category</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>食品</p></td>
+<td><p>NULL</p></td>
+</tr>
+<tr class="row-odd"><td><p>飲料</p></td>
+<td><p>NULL</p></td>
+</tr>
+<tr class="row-even"><td><p>文房具</p></td>
+<td><p>NULL</p></td>
+</tr>
+<tr class="row-odd"><td><p>菓子</p></td>
+<td><p>食品</p></td>
+</tr>
+<tr class="row-even"><td><p>調味料</p></td>
+<td><p>食品</p></td>
+</tr>
+<tr class="row-odd"><td><p>コーヒー</p></td>
+<td><p>飲料</p></td>
+</tr>
+<tr class="row-even"><td><p>お茶</p></td>
+<td><p>飲料</p></td>
+</tr>
+<tr class="row-odd"><td><p>チョコレート</p></td>
+<td><p>菓子</p></td>
+</tr>
+</tbody>
+</table>
+<p>最上位のカテゴリも表示するため、<code class="docutils literal notranslate"><span class="pre">LEFT</span> <span class="pre">JOIN</span></code> を使用しています。</p>
+</section>
+<section id="id8">
+<h2><span class="section-number">7.4. </span>交差結合<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">CROSS</span> <span class="pre">JOIN</span></code> は、2 つのテーブルの行のすべての組み合わせを作ります。行数が <span class="math notranslate nohighlight">\(m\)</span> 行と <span class="math notranslate nohighlight">\(n\)</span> 行のテーブルを交差結合すると、結果は <span class="math notranslate nohighlight">\(m \times n\)</span> 行になります。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">status</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">categories</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">c</span>
+<span class="linenos">3</span><span class="k">CROSS</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">s</span>
+<span class="linenos">4</span><span class="k">WHERE</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">parent_id</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
+<span class="linenos">5</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">category_id</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">status</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>category</p></th>
+<th class="head"><p>status</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>食品</p></td>
+<td><p>キャンセル</p></td>
+</tr>
+<tr class="row-odd"><td><p>食品</p></td>
+<td><p>受付済</p></td>
+</tr>
+<tr class="row-even"><td><p>食品</p></td>
+<td><p>発送済</p></td>
+</tr>
+<tr class="row-odd"><td><p>飲料</p></td>
+<td><p>キャンセル</p></td>
+</tr>
+<tr class="row-even"><td><p>飲料</p></td>
+<td><p>受付済</p></td>
+</tr>
+<tr class="row-odd"><td><p>飲料</p></td>
+<td><p>発送済</p></td>
+</tr>
+<tr class="row-even"><td><p>文房具</p></td>
+<td><p>キャンセル</p></td>
+</tr>
+<tr class="row-odd"><td><p>文房具</p></td>
+<td><p>受付済</p></td>
+</tr>
+<tr class="row-even"><td><p>文房具</p></td>
+<td><p>発送済</p></td>
+</tr>
+</tbody>
+</table>
+<p>この例の <code class="docutils literal notranslate"><span class="pre">(SELECT</span> <span class="pre">DISTINCT</span> <span class="pre">status</span> <span class="pre">FROM</span> <span class="pre">orders)</span></code> は、<code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文の結果をテーブルとして使うサブクエリです。サブクエリについては 8 章で説明します。</p>
+<p>交差結合は、すべての組み合わせの一覧表を作る場合などに使用します。<code class="docutils literal notranslate"><span class="pre">INNER</span> <span class="pre">JOIN</span></code> で <code class="docutils literal notranslate"><span class="pre">ON</span></code> 句の条件を書き忘れると、SQLite では交差結合と同じ結果になり、大きなテーブルどうしでは膨大な行数になるため注意してください。</p>
+</section>
+<section id="id9">
+<h2><span class="section-number">7.5. </span>集合演算<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>集合演算は、2 つの <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文の結果を、行の集合として組み合わせる操作です。結合が列を横に並べるのに対し、集合演算は行を縦に組み合わせます。2 つの <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文の列の数は一致している必要があります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>演算子</p></th>
+<th class="head"><p>結果</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">UNION</span></code></p></td>
+<td><p>両方の結果を合わせたもの（重複する行は 1 行にまとめます）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">UNION</span> <span class="pre">ALL</span></code></p></td>
+<td><p>両方の結果を合わせたもの（重複する行もそのまま残します）</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">INTERSECT</span></code></p></td>
+<td><p>両方の結果に含まれる行</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EXCEPT</span></code></p></td>
+<td><p>1 つ目の結果に含まれ、2 つ目の結果に含まれない行</p></td>
+</tr>
+</tbody>
+</table>
+<p>次の例では、2025 年 1 月から 2 月に注文した顧客と、2025 年 5 月から 6 月に注文した顧客を比較します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- どちらかの期間に注文した顧客</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="s1">&#39;2025-01-01&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="s1">&#39;2025-02-28&#39;</span>
+<span class="linenos">4</span><span class="k">UNION</span>
+<span class="linenos">5</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">6</span><span class="k">WHERE</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="s1">&#39;2025-05-01&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="s1">&#39;2025-06-30&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- 両方の期間に注文した顧客</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="s1">&#39;2025-01-01&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="s1">&#39;2025-02-28&#39;</span>
+<span class="linenos">4</span><span class="k">INTERSECT</span>
+<span class="linenos">5</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">6</span><span class="k">WHERE</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="s1">&#39;2025-05-01&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="s1">&#39;2025-06-30&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- 1 月から 2 月に注文し、5 月から 6 月には注文していない顧客</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="s1">&#39;2025-01-01&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="s1">&#39;2025-02-28&#39;</span>
+<span class="linenos">4</span><span class="k">EXCEPT</span>
+<span class="linenos">5</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">6</span><span class="k">WHERE</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="s1">&#39;2025-05-01&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="s1">&#39;2025-06-30&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>2</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">UNION</span></code> は重複を取り除く処理が必要なため、重複がないことがわかっている場合や重複を残したい場合は、<code class="docutils literal notranslate"><span class="pre">UNION</span> <span class="pre">ALL</span></code> を使うほうが効率的です。</p>
+</section>
+<section id="pandas">
+<h2><span class="section-number">7.6. </span>pandas との対応<a class="headerlink" href="#pandas" title="Link to this heading"></a></h2>
+<p>結合は、pandas の <code class="docutils literal notranslate"><span class="pre">merge()</span></code> に相当します。<code class="docutils literal notranslate"><span class="pre">orders</span></code> と <code class="docutils literal notranslate"><span class="pre">customers</span></code> は、それぞれのテーブルの内容を格納した DataFrame とします。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SQL</p></th>
+<th class="head"><p>pandas</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">orders</span> <span class="pre">INNER</span> <span class="pre">JOIN</span> <span class="pre">customers</span> <span class="pre">ON</span> <span class="pre">orders.customer_id</span> <span class="pre">=</span> <span class="pre">customers.customer_id</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">orders.merge(customers,</span> <span class="pre">on=&quot;customer_id&quot;,</span> <span class="pre">how=&quot;inner&quot;)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">customers</span> <span class="pre">LEFT</span> <span class="pre">JOIN</span> <span class="pre">orders</span> <span class="pre">ON</span> <span class="pre">customers.customer_id</span> <span class="pre">=</span> <span class="pre">orders.customer_id</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">customers.merge(orders,</span> <span class="pre">on=&quot;customer_id&quot;,</span> <span class="pre">how=&quot;left&quot;)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FULL</span> <span class="pre">JOIN</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">how=&quot;outer&quot;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CROSS</span> <span class="pre">JOIN</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">how=&quot;cross&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">UNION</span> <span class="pre">ALL</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pd.concat([df1,</span> <span class="pre">df2])</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">UNION</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pd.concat([df1,</span> <span class="pre">df2]).drop_duplicates()</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>pandas の <code class="docutils literal notranslate"><span class="pre">merge()</span></code> では、両方の DataFrame に同じ名前の列があると、<code class="docutils literal notranslate"><span class="pre">name_x</span></code> と <code class="docutils literal notranslate"><span class="pre">name_y</span></code> のように接尾辞が付けられます。SQL では、<code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 句で <code class="docutils literal notranslate"><span class="pre">c.name</span></code> のように、どちらのテーブルの列かを明示して選びます。</p>
+</section>
+<section id="exercises-ch07">
+<span id="id10"></span><h2><span class="section-number">7.7. </span>演習問題<a class="headerlink" href="#exercises-ch07" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルと <code class="docutils literal notranslate"><span class="pre">categories</span></code> テーブルを結合し、商品名とカテゴリ名を表示してください。カテゴリのない商品も表示し、カテゴリ名は NULL としてください。</p></li>
+<li><p>注文番号 6 の注文について、商品名、数量、単価、小計（数量と単価を掛けた値）を表示してください。</p></li>
+<li><p>カテゴリごとに、そのカテゴリに属する商品の数を求めてください。商品が 1 つもないカテゴリ（「食品」など）も 0 として表示してください。</p></li>
+<li><p>一度も注文していない顧客の氏名を、<code class="docutils literal notranslate"><span class="pre">LEFT</span> <span class="pre">JOIN</span></code> を使って取り出してください。</p></li>
+<li><p>東京都の顧客が注文した商品の商品名を、重複なく取り出してください。キャンセルされた注文は除きます。</p></li>
+</ol>
+<p>解答は <a class="reference internal" href="appendix_a_answers.html#answers-ch07"><span class="std std-ref">7 章 テーブルの結合</span></a> にあります。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch06_aggregate.html" class="btn btn-neutral float-left" title="6. 集計とグループ化" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch08_subquery.html" class="btn btn-neutral float-right" title="8. サブクエリと共通テーブル式" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

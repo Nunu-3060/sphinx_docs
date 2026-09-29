@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>06 テクスチャ | GLSL 入門</title>
+<style>
+  body { margin: 0; padding: 12px; background: #1e1e1e; color: #ddd; font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  canvas { display: block; width: 100%; max-width: 600px; height: auto; background: #000; }
+  .controls { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .controls input[type="range"] { width: 140px; vertical-align: middle; }
+  #log { color: #ff8080; white-space: pre-wrap; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<h1>06 テクスチャ（フィルタリング・ラッピング・ミップマップ）</h1>
+<canvas id="canvas" width="600" height="400"></canvas>
+<div class="controls">
+  <label>テクスチャ座標の倍率 <input id="scale" type="range" min="0.25" max="16" step="0.25" value="1"> <span id="scale-value">1.00</span></label>
+  <label>ラッピング
+    <select id="wrap">
+      <option value="REPEAT">REPEAT</option>
+      <option value="CLAMP_TO_EDGE">CLAMP_TO_EDGE</option>
+      <option value="MIRRORED_REPEAT">MIRRORED_REPEAT</option>
+    </select>
+  </label>
+  <label>拡大時のフィルター
+    <select id="mag-filter">
+      <option value="NEAREST">NEAREST</option>
+      <option value="LINEAR">LINEAR</option>
+    </select>
+  </label>
+  <label>縮小時のフィルター
+    <select id="min-filter">
+      <option value="NEAREST">NEAREST</option>
+      <option value="LINEAR">LINEAR</option>
+      <option value="NEAREST_MIPMAP_NEAREST">NEAREST_MIPMAP_NEAREST</option>
+      <option value="LINEAR_MIPMAP_NEAREST">LINEAR_MIPMAP_NEAREST</option>
+      <option value="NEAREST_MIPMAP_LINEAR">NEAREST_MIPMAP_LINEAR</option>
+      <option value="LINEAR_MIPMAP_LINEAR">LINEAR_MIPMAP_LINEAR</option>
+    </select>
+  </label>
+  <label><input id="use-mask" type="checkbox"> 2 枚目のテクスチャ（マスク）を掛け合わせる</label>
+</div>
+<pre id="log"></pre>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+layout(location = 0) in vec2 aPosition;  // 頂点の位置
+layout(location = 1) in vec2 aTexCoord;  // テクスチャ座標（左下 (0, 0)、右上 (1, 1)）
+
+uniform float uScale;  // テクスチャ座標の倍率（中心を基準に拡大縮小する）
+
+out vec2 vTexCoord;    // 1 枚目のテクスチャ用の座標
+out vec2 vMaskCoord;   // マスク用の座標（倍率を掛けない）
+
+void main() {
+    vTexCoord = (aTexCoord - 0.5) * uScale + 0.5;
+    vMaskCoord = aTexCoord;
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+
+in vec2 vTexCoord;
+in vec2 vMaskCoord;
+
+uniform sampler2D uTexture;  // テクスチャユニット 0 に割り当てる
+uniform sampler2D uMask;     // テクスチャユニット 1 に割り当てる
+uniform bool uUseMask;
+
+out vec4 outColor;
+
+void main() {
+    // texture 関数：テクスチャ座標の位置の色を読み出す（サンプリング）
+    vec4 color = texture(uTexture, vTexCoord);
+    if (uUseMask) {
+        // マスクは白黒の画像なので、赤成分だけを明るさとして使う
+        float mask = texture(uMask, vMaskCoord).r;
+        color.rgb *= mask;
+    }
+    outColor = color;
+}
+</script>
+
+<script>
+"use strict";
+
+function compileShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const message = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("シェーダーのコンパイルに失敗しました。\n" + message);
+    }
+    return shader;
+}
+
+function createProgram(gl, vertexSource, fragmentSource) {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error("プログラムのリンクに失敗しました。\n" + gl.getProgramInfoLog(program));
+    }
+    return program;
+}
+
+function getShaderSource(id) {
+    return document.getElementById(id).textContent.trim();
+}
+
+// ---- テクスチャ用の画像を作る ----
+// 画像ファイルを読み込む代わりに、2D キャンバスに絵を描いてテクスチャの元データにする。
+// （ローカルの画像ファイルは、ブラウザーのセキュリティ制限により WebGL で使えないことがあるため）
+
+// 64 × 64 ピクセルの市松模様。左上に赤い四角、中央に「F」の文字を描き、向きが分かるようにする
+function createPatternImage() {
+    const size = 64;
+    const image = document.createElement("canvas");
+    image.width = size;
+    image.height = size;
+    const ctx = image.getContext("2d");
+    const cell = size / 8;
+    for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+            ctx.fillStyle = (x + y) % 2 === 0 ? "#f0f0f0" : "#3070d0";
+            ctx.fillRect(x * cell, y * cell, cell, cell);
+        }
+    }
+    ctx.fillStyle = "#e03030";
+    ctx.fillRect(0, 0, cell * 2, cell * 2);
+    ctx.fillStyle = "#202020";
+    ctx.font = "bold 36px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("F", size / 2, size / 2 + 2);
+    return image;
+}
+
+// 中央が白く、外側ほど黒くなる円形のグラデーション（マスク）
+function createMaskImage() {
+    const size = 64;
+    const image = document.createElement("canvas");
+    image.width = size;
+    image.height = size;
+    const ctx = image.getContext("2d");
+    const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, "#ffffff");
+    gradient.addColorStop(1, "#000000");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    return image;
+}
+// ---- テクスチャ用の画像ここまで ----
+
+// ---- テクスチャの作成 ----
+function createTexture(gl, image) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    // 画像は上の行から、テクスチャは下の行 (t = 0) から並ぶので、上下を反転して転送する
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    // ミップマップ（縮小画像の列）を自動生成する
+    gl.generateMipmap(gl.TEXTURE_2D);
+    return texture;
+}
+// ---- テクスチャの作成ここまで ----
+
+function main() {
+    const canvas = document.getElementById("canvas");
+    const gl = canvas.getContext("webgl2");
+    if (!gl) {
+        throw new Error("このブラウザーは WebGL 2.0 に対応していません。");
+    }
+    const program = createProgram(gl, getShaderSource("vertex-shader"), getShaderSource("fragment-shader"));
+
+    // 正方形（キャンバスが 600 × 400 なので、x は -0.6〜0.6、y は -0.9〜0.9 で正方形になる）
+    // 1 頂点あたり：x, y, s, t
+    const vertices = new Float32Array([
+        -0.6, -0.9,  0.0, 0.0,  // 左下
+         0.6, -0.9,  1.0, 0.0,  // 右下
+        -0.6,  0.9,  0.0, 1.0,  // 左上
+         0.6,  0.9,  1.0, 1.0,  // 右上
+    ]);
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 16, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 16, 8);
+
+    const patternTexture = createTexture(gl, createPatternImage());
+    const maskTexture = createTexture(gl, createMaskImage());
+    // マスクは繰り返さず、なめらかに補間する
+    gl.bindTexture(gl.TEXTURE_2D, maskTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    const locations = {
+        scale: gl.getUniformLocation(program, "uScale"),
+        texture: gl.getUniformLocation(program, "uTexture"),
+        mask: gl.getUniformLocation(program, "uMask"),
+        useMask: gl.getUniformLocation(program, "uUseMask"),
+    };
+    const input = (id) => document.getElementById(id);
+
+    function draw() {
+        const scale = Number(input("scale").value);
+        input("scale-value").textContent = scale.toFixed(2);
+
+        // ---- テクスチャの設定と描画 ----
+        // テクスチャユニット 0 に市松模様のテクスチャを割り当て、パラメーターを設定する
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, patternTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[input("wrap").value]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[input("wrap").value]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[input("mag-filter").value]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[input("min-filter").value]);
+        // テクスチャユニット 1 にマスクを割り当てる
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, maskTexture);
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0.1, 0.1, 0.1, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(program);
+        gl.uniform1f(locations.scale, scale);
+        // sampler2D の uniform 変数には、テクスチャユニットの番号を設定する
+        gl.uniform1i(locations.texture, 0);
+        gl.uniform1i(locations.mask, 1);
+        gl.uniform1i(locations.useMask, input("use-mask").checked ? 1 : 0);
+
+        gl.bindVertexArray(vao);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);  // 4 頂点で三角形 2 枚（四角形）を描く
+        // ---- テクスチャの設定と描画ここまで ----
+    }
+
+    for (const id of ["scale", "wrap", "mag-filter", "min-filter", "use-mask"]) {
+        input(id).addEventListener("input", draw);
+    }
+    draw();
+}
+
+try {
+    main();
+} catch (error) {
+    document.getElementById("log").textContent = error.message;
+    console.error(error);
+}
+</script>
+</body>
+</html>

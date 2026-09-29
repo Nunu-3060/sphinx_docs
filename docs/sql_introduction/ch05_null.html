@@ -1,0 +1,638 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5. NULL の扱い &mdash; SQL 入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=47d01576" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="6. 集計とグループ化" href="ch06_aggregate.html" />
+    <link rel="prev" title="4. データの取得" href="ch04_select.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SQL 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_overview.html">2. データベースと SQL の概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_setup.html">3. 環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_select.html">4. データの取得</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">5. NULL の扱い</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">5.1. NULL とは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">5.2. NULL を含む比較と計算</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#is-null-is-not-null">5.3. IS NULL と IS NOT NULL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">5.4. 三値論理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">5.5. 否定の条件と NULL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">5.6. NULL を別の値に置き換える</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">5.7. NULL の並べ替え</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pandas">5.8. pandas の欠損値との違い</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exercises-ch05">5.9. 演習問題</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_aggregate.html">6. 集計とグループ化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_join.html">7. テーブルの結合</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_subquery.html">8. サブクエリと共通テーブル式</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_window.html">9. ウィンドウ関数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_modify.html">10. データの追加・更新・削除</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_ddl.html">11. テーブルの設計と定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_transaction.html">12. トランザクション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_index.html">13. インデックスと性能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_python.html">14. Python から SQL を使う</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_answers.html">付録 A 演習問題の解答</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_dialects.html">付録 B SQL の方言比較</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_glossary.html">付録 C 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考資料</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_e_samples.html">付録 E サンプルファイル一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SQL 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">5. </span>NULL の扱い</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="null">
+<h1><span class="section-number">5. </span>NULL の扱い<a class="headerlink" href="#null" title="Link to this heading"></a></h1>
+<p>SQL には、値が存在しないことや不明であることを表す NULL という特別な値があります。NULL は多くの初学者がつまずく点であり、後の章で説明する集計や結合の結果にも影響します。本章では、NULL の性質と扱い方を説明します。</p>
+<section id="id1">
+<h2><span class="section-number">5.1. </span>NULL とは<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>サンプルデータベースでは、次の値が NULL になっています。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">customers</span></code> テーブルの <code class="docutils literal notranslate"><span class="pre">email</span></code> 列のうち、メールアドレスを登録していない顧客の値</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルの <code class="docutils literal notranslate"><span class="pre">category_id</span></code> 列のうち、どのカテゴリにも属さない商品（福袋）の値</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">categories</span></code> テーブルの <code class="docutils literal notranslate"><span class="pre">parent_id</span></code> 列のうち、最上位のカテゴリの値</p></li>
+</ul>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">email</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>email</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>hanako&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>鈴木一郎</p></td>
+<td><p>ichiro&#64;example.com</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>高橋美咲</p></td>
+<td><p>NULL</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>田中健太</p></td>
+<td><p>kenta&#64;example.com</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>伊藤さくら</p></td>
+<td><p>sakura&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>渡辺翔</p></td>
+<td><p>NULL</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>山本優子</p></td>
+<td><p>yuko&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>中村大輔</p></td>
+<td><p>daisuke&#64;example.com</p></td>
+</tr>
+</tbody>
+</table>
+<p>NULL は、数値の 0 や空文字列（<code class="docutils literal notranslate"><span class="pre">''</span></code>）とは異なります。0 は「0 という値がある」ことを、空文字列は「長さ 0 の文字列がある」ことを表しますが、NULL は「値がない」ことを表します。Python の <code class="docutils literal notranslate"><span class="pre">None</span></code> に近い概念ですが、次に説明するように、比較や計算での振る舞いは大きく異なります。</p>
+</section>
+<section id="id2">
+<h2><span class="section-number">5.2. </span>NULL を含む比較と計算<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>メールアドレスを登録していない顧客を探すつもりで、次のように書いてみます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>結果は 0 行です。</p>
+<p>1 行も取り出されないのは、NULL との比較の結果が、真（TRUE）でも偽（FALSE）でもなく、NULL になるためです。値が不明なので、比較の結果も不明になると考えてください。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;abc&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>NULL = NULL</p></th>
+<th class="head"><p>NULL &lt;&gt; 1</p></th>
+<th class="head"><p>NULL + 1</p></th>
+<th class="head"><p>NULL || 'abc'</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NULL</p></td>
+<td><p>NULL</p></td>
+<td><p>NULL</p></td>
+<td><p>NULL</p></td>
+</tr>
+</tbody>
+</table>
+<p>NULL どうしの比較も NULL になります。算術演算や文字列の連結でも、どちらかが NULL であれば結果は NULL になります。</p>
+<p>Python では <code class="docutils literal notranslate"><span class="pre">None</span> <span class="pre">==</span> <span class="pre">None</span></code> は <code class="docutils literal notranslate"><span class="pre">True</span></code> になり、<code class="docutils literal notranslate"><span class="pre">None</span> <span class="pre">+</span> <span class="pre">1</span></code> は <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> になります。SQL の NULL は、エラーにならずに静かに NULL を広げていく点に注意が必要です。</p>
+</section>
+<section id="is-null-is-not-null">
+<h2><span class="section-number">5.3. </span>IS NULL と IS NOT NULL<a class="headerlink" href="#is-null-is-not-null" title="Link to this heading"></a></h2>
+<p>値が NULL かどうかを調べるには、<code class="docutils literal notranslate"><span class="pre">IS</span> <span class="pre">NULL</span></code> または <code class="docutils literal notranslate"><span class="pre">IS</span> <span class="pre">NOT</span> <span class="pre">NULL</span></code> を使用します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">email</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+<th class="head"><p>name</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>高橋美咲</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>渡辺翔</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">email</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">email</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>email</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>hanako&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>鈴木一郎</p></td>
+<td><p>ichiro&#64;example.com</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>田中健太</p></td>
+<td><p>kenta&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>伊藤さくら</p></td>
+<td><p>sakura&#64;example.com</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>山本優子</p></td>
+<td><p>yuko&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>中村大輔</p></td>
+<td><p>daisuke&#64;example.com</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">IS</span> <span class="pre">NULL</span></code> と <code class="docutils literal notranslate"><span class="pre">IS</span> <span class="pre">NOT</span> <span class="pre">NULL</span></code> の結果は、必ず TRUE か FALSE のどちらかになります。</p>
+</section>
+<section id="id3">
+<h2><span class="section-number">5.4. </span>三値論理<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>SQL の条件式は、TRUE、FALSE に加えて、不明を表す UNKNOWN の 3 つの値をとります。NULL との比較の結果は UNKNOWN です。このような論理を三値論理と呼びます。SQLite では、UNKNOWN は NULL として表されます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">AND</span></code>、<code class="docutils literal notranslate"><span class="pre">OR</span></code>、<code class="docutils literal notranslate"><span class="pre">NOT</span></code> の結果は、次のようになります。</p>
+<table class="docutils align-default" id="id8">
+<caption><span class="caption-text">AND の結果</span><a class="headerlink" href="#id8" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head stub"><p><code class="docutils literal notranslate"><span class="pre">AND</span></code></p></th>
+<th class="head"><p>TRUE</p></th>
+<th class="head"><p>FALSE</p></th>
+<th class="head"><p>UNKNOWN</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><th class="stub"><p>TRUE</p></th>
+<td><p>TRUE</p></td>
+<td><p>FALSE</p></td>
+<td><p>UNKNOWN</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>FALSE</p></th>
+<td><p>FALSE</p></td>
+<td><p>FALSE</p></td>
+<td><p>FALSE</p></td>
+</tr>
+<tr class="row-even"><th class="stub"><p>UNKNOWN</p></th>
+<td><p>UNKNOWN</p></td>
+<td><p>FALSE</p></td>
+<td><p>UNKNOWN</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default" id="id9">
+<caption><span class="caption-text">OR の結果</span><a class="headerlink" href="#id9" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head stub"><p><code class="docutils literal notranslate"><span class="pre">OR</span></code></p></th>
+<th class="head"><p>TRUE</p></th>
+<th class="head"><p>FALSE</p></th>
+<th class="head"><p>UNKNOWN</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><th class="stub"><p>TRUE</p></th>
+<td><p>TRUE</p></td>
+<td><p>TRUE</p></td>
+<td><p>TRUE</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>FALSE</p></th>
+<td><p>TRUE</p></td>
+<td><p>FALSE</p></td>
+<td><p>UNKNOWN</p></td>
+</tr>
+<tr class="row-even"><th class="stub"><p>UNKNOWN</p></th>
+<td><p>TRUE</p></td>
+<td><p>UNKNOWN</p></td>
+<td><p>UNKNOWN</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default" id="id10">
+<caption><span class="caption-text">NOT の結果</span><a class="headerlink" href="#id10" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>値</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">NOT</span></code> を適用した結果</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TRUE</p></td>
+<td><p>FALSE</p></td>
+</tr>
+<tr class="row-odd"><td><p>FALSE</p></td>
+<td><p>TRUE</p></td>
+</tr>
+<tr class="row-even"><td><p>UNKNOWN</p></td>
+<td><p>UNKNOWN</p></td>
+</tr>
+</tbody>
+</table>
+<p>「UNKNOWN は TRUE にも FALSE にもなり得る値」と考えると理解しやすくなります。たとえば「FALSE AND UNKNOWN」は、UNKNOWN が TRUE と FALSE のどちらであっても FALSE になるため、結果は FALSE です。一方、「TRUE AND UNKNOWN」は、UNKNOWN の値によって結果が変わるため、UNKNOWN です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句は、条件が TRUE になる行だけを結果に含めます。条件が FALSE の行だけでなく、UNKNOWN の行も除外されます。</p>
+</section>
+<section id="id4">
+<h2><span class="section-number">5.5. </span>否定の条件と NULL<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>三値論理の影響で、否定の条件を使うと、NULL の行が意図せず除外されることがあります。次の例は、「チョコレート」カテゴリ（<code class="docutils literal notranslate"><span class="pre">category_id</span></code> が 8）以外の商品を取り出すつもりの SQL です。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">category_id</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">category_id</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>category_id</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ポテトチップス</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-odd"><td><p>醤油</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-even"><td><p>味噌</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-odd"><td><p>ドリップコーヒー</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-even"><td><p>缶コーヒー</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-odd"><td><p>緑茶ティーバッグ</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-even"><td><p>ボールペン</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>ノート</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>抹茶ラテ</p></td>
+<td><p>7</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">category_id</span></code> が NULL の「福袋」は結果に含まれていません。<code class="docutils literal notranslate"><span class="pre">NULL</span> <span class="pre">&lt;&gt;</span> <span class="pre">8</span></code> が UNKNOWN になるためです。NULL の行も含めたい場合は、次のように明示的に条件を追加します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">category_id</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">category_id</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="n">category_id</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>category_id</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ポテトチップス</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-odd"><td><p>醤油</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-even"><td><p>味噌</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-odd"><td><p>ドリップコーヒー</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-even"><td><p>缶コーヒー</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-odd"><td><p>緑茶ティーバッグ</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-even"><td><p>ボールペン</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>ノート</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>福袋</p></td>
+<td><p>NULL</p></td>
+</tr>
+<tr class="row-odd"><td><p>抹茶ラテ</p></td>
+<td><p>7</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">NOT</span> <span class="pre">IN</span></code> の括弧内に NULL が含まれる場合は、さらに注意が必要です。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">category_id</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">category_id</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="k">NULL</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>結果は 0 行です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">category_id</span> <span class="pre">NOT</span> <span class="pre">IN</span> <span class="pre">(8,</span> <span class="pre">NULL)</span></code> は <code class="docutils literal notranslate"><span class="pre">category_id</span> <span class="pre">&lt;&gt;</span> <span class="pre">8</span> <span class="pre">AND</span> <span class="pre">category_id</span> <span class="pre">&lt;&gt;</span> <span class="pre">NULL</span></code> と同じ意味であり、<code class="docutils literal notranslate"><span class="pre">category_id</span> <span class="pre">&lt;&gt;</span> <span class="pre">NULL</span></code> が常に UNKNOWN になるため、条件全体が TRUE になることがないからです。括弧内に NULL を直接書くことはまれですが、8 章で説明するサブクエリの結果に NULL が含まれる場合に、この問題が起こります。</p>
+</section>
+<section id="id5">
+<h2><span class="section-number">5.6. </span>NULL を別の値に置き換える<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">COALESCE()</span></code> 関数は、引数を左から順に調べ、最初の NULL でない値を返します。NULL を別の値に置き換えて表示したい場合に使用します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">COALESCE</span><span class="p">(</span><span class="n">email</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;（未登録）&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">email</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>email</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>佐藤花子</p></td>
+<td><p>hanako&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>鈴木一郎</p></td>
+<td><p>ichiro&#64;example.com</p></td>
+</tr>
+<tr class="row-even"><td><p>高橋美咲</p></td>
+<td><p>（未登録）</p></td>
+</tr>
+<tr class="row-odd"><td><p>田中健太</p></td>
+<td><p>kenta&#64;example.com</p></td>
+</tr>
+<tr class="row-even"><td><p>伊藤さくら</p></td>
+<td><p>sakura&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>渡辺翔</p></td>
+<td><p>（未登録）</p></td>
+</tr>
+<tr class="row-even"><td><p>山本優子</p></td>
+<td><p>yuko&#64;example.com</p></td>
+</tr>
+<tr class="row-odd"><td><p>中村大輔</p></td>
+<td><p>daisuke&#64;example.com</p></td>
+</tr>
+</tbody>
+</table>
+<p>SQLite では <code class="docutils literal notranslate"><span class="pre">IFNULL(x,</span> <span class="pre">y)</span></code> も使えますが、<code class="docutils literal notranslate"><span class="pre">COALESCE()</span></code> は標準 SQL の関数であり、多くの DBMS で使用できます。</p>
+<p>逆に、<code class="docutils literal notranslate"><span class="pre">NULLIF(a,</span> <span class="pre">b)</span></code> 関数は、<code class="docutils literal notranslate"><span class="pre">a</span></code> と <code class="docutils literal notranslate"><span class="pre">b</span></code> が等しい場合に NULL を、そうでない場合に <code class="docutils literal notranslate"><span class="pre">a</span></code> を返します。0 による割り算を避けたい場合などに使用します。SQLite では 0 で割った結果は NULL になりますが、DBMS によってはエラーになるため、<code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">/</span> <span class="pre">NULLIF(y,</span> <span class="pre">0)</span></code> のように書いておくと安全です。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">stock</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">NULLIF</span><span class="p">(</span><span class="n">stock</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">ratio</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">category_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>stock</p></th>
+<th class="head"><p>ratio</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>醤油</p></td>
+<td><p>20</p></td>
+<td><p>50</p></td>
+</tr>
+<tr class="row-odd"><td><p>味噌</p></td>
+<td><p>0</p></td>
+<td><p>NULL</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id6">
+<h2><span class="section-number">5.7. </span>NULL の並べ替え<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ORDER</span> <span class="pre">BY</span></code> 句で並べ替えると、SQLite では NULL は最も小さい値として扱われ、昇順では先頭に並びます。<code class="docutils literal notranslate"><span class="pre">NULLS</span> <span class="pre">FIRST</span></code> または <code class="docutils literal notranslate"><span class="pre">NULLS</span> <span class="pre">LAST</span></code> を指定すると、NULL の位置を明示できます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">category_id</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="linenos">3</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">category_id</span><span class="w"> </span><span class="n">NULLS</span><span class="w"> </span><span class="k">LAST</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>category_id</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ボールペン</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>ノート</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>ポテトチップス</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-odd"><td><p>醤油</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-even"><td><p>味噌</p></td>
+<td><p>5</p></td>
+</tr>
+<tr class="row-odd"><td><p>ドリップコーヒー</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-even"><td><p>缶コーヒー</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-odd"><td><p>緑茶ティーバッグ</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-even"><td><p>抹茶ラテ</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-odd"><td><p>ミルクチョコレート</p></td>
+<td><p>8</p></td>
+</tr>
+<tr class="row-even"><td><p>ビターチョコレート</p></td>
+<td><p>8</p></td>
+</tr>
+<tr class="row-odd"><td><p>福袋</p></td>
+<td><p>NULL</p></td>
+</tr>
+</tbody>
+</table>
+<p>NULL を先頭と末尾のどちらに並べるかの既定の動作は、DBMS によって異なります。たとえば PostgreSQL では、昇順で NULL は末尾に並びます。</p>
+</section>
+<section id="pandas">
+<h2><span class="section-number">5.8. </span>pandas の欠損値との違い<a class="headerlink" href="#pandas" title="Link to this heading"></a></h2>
+<p>pandas では、欠損値は <code class="docutils literal notranslate"><span class="pre">NaN</span></code>、<code class="docutils literal notranslate"><span class="pre">None</span></code>、<code class="docutils literal notranslate"><span class="pre">pd.NA</span></code> などで表されます。SQL の NULL と pandas の欠損値には、次のような対応関係があります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SQL</p></th>
+<th class="head"><p>pandas</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">email</span> <span class="pre">IS</span> <span class="pre">NULL</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">df[&quot;email&quot;].isna()</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">email</span> <span class="pre">IS</span> <span class="pre">NOT</span> <span class="pre">NULL</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">df[&quot;email&quot;].notna()</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">COALESCE(email,</span> <span class="pre">'（未登録）')</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">df[&quot;email&quot;].fillna(&quot;（未登録）&quot;)</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>pandas でも、<code class="docutils literal notranslate"><span class="pre">NaN</span> <span class="pre">==</span> <span class="pre">NaN</span></code> は <code class="docutils literal notranslate"><span class="pre">False</span></code> になり、欠損値との比較で意図しない結果になる点は SQL と共通しています。ただし、NumPy の型の列（欠損値が <code class="docutils literal notranslate"><span class="pre">NaN</span></code>）では、比較演算の結果は <code class="docutils literal notranslate"><span class="pre">True</span></code> か <code class="docutils literal notranslate"><span class="pre">False</span></code> のどちらかになり、SQL のような三値論理にはなりません。一方、欠損値を <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code> で表す型（<code class="docutils literal notranslate"><span class="pre">Int64</span></code> 型や <code class="docutils literal notranslate"><span class="pre">boolean</span></code> 型など）では、欠損値との比較の結果は <code class="docutils literal notranslate"><span class="pre">&lt;NA&gt;</span></code> になり、SQL に近い三値論理で扱われます。</p>
+</section>
+<section id="exercises-ch05">
+<span id="id7"></span><h2><span class="section-number">5.9. </span>演習問題<a class="headerlink" href="#exercises-ch05" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p><code class="docutils literal notranslate"><span class="pre">categories</span></code> テーブルから、最上位のカテゴリ（親カテゴリがないカテゴリ）の名前を取り出してください。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルから、商品名と、カテゴリ番号を表す列を取り出してください。カテゴリ番号が NULL の場合は 0 と表示してください。</p></li>
+<li><p>次の SQL 文の結果が何行になるかを、実行する前に考えてください。その後、実際に実行して確かめてください。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルから、カテゴリ番号が 3 でない商品の商品名を、カテゴリ番号が NULL の商品も含めて取り出してください。</p></li>
+</ol>
+<p>解答は <a class="reference internal" href="appendix_a_answers.html#answers-ch05"><span class="std std-ref">5 章 NULL の扱い</span></a> にあります。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch04_select.html" class="btn btn-neutral float-left" title="4. データの取得" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch06_aggregate.html" class="btn btn-neutral float-right" title="6. 集計とグループ化" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

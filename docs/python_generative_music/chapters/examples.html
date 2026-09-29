@@ -1,0 +1,454 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>実装例 &mdash; Python によるジェネラティブミュージック 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="まとめ" href="conclusion.html" />
+    <link rel="prev" title="アルゴリズム作曲の手法" href="algorithms.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Python によるジェネラティブミュージック
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="what_is_generative_music.html">ジェネラティブミュージックとは</a></li>
+<li class="toctree-l1"><a class="reference internal" href="environment_setup.html">開発環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_libraries.html">主要な Python ライブラリ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="midi_basics.html">MIDI の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sound_synthesis.html">音声合成の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">アルゴリズム作曲の手法</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">実装例</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">ランダムメロディジェネレーター</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">マルコフ連鎖メロディジェネレーター</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">ユークリッドリズムジェネレーター</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">サイン波シンセサイザー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">サンプルコードの検証方法</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">まとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Python によるジェネラティブミュージック</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">実装例</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>実装例<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本章では、これまでに解説した内容を踏まえた、 4 つの実装例を紹介します。いずれのサンプルコードも、本文中で内容を確認できるほか、各節の末尾に掲載したリンクからファイルをダウンロードすることができます。いずれのコードも PEP 8 に準拠し、 <code class="docutils literal notranslate"><span class="pre">flake8</span></code> および <code class="docutils literal notranslate"><span class="pre">mypy</span></code> によるチェックを通過しています。</p>
+<section id="id2">
+<h2>ランダムメロディジェネレーター<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>もっとも基本的な例として、乱数を用いてハ長調のメジャースケールからランダムに音を選び、旋律を生成するプログラムです。各音符の長さは、 4 分音符または 8 分音符の中からランダムに選択されます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;乱数を用いてランダムなメロディを生成し、MIDI ファイルへ出力するサンプル。&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="linenos"> 6</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="kn">import</span><span class="w"> </span><span class="nn">pretty_midi</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="n">SCALE</span> <span class="o">=</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">69</span><span class="p">,</span> <span class="mi">71</span><span class="p">,</span> <span class="mi">72</span><span class="p">]</span>
+<span class="linenos">11</span><span class="n">DURATIONS</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">]</span>
+<span class="linenos">12</span><span class="n">OUTPUT_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="s2">&quot;random_melody.mid&quot;</span><span class="p">)</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="k">def</span><span class="w"> </span><span class="nf">generate_melody</span><span class="p">(</span><span class="n">note_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="linenos">16</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;音階とリズムの候補からランダムに選んで旋律を生成する。&quot;&quot;&quot;</span>
+<span class="linenos">17</span>    <span class="n">melody</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">18</span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">note_count</span><span class="p">):</span>
+<span class="linenos">19</span>        <span class="n">pitch</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">SCALE</span><span class="p">)</span>
+<span class="linenos">20</span>        <span class="n">duration</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">DURATIONS</span><span class="p">)</span>
+<span class="linenos">21</span>        <span class="n">melody</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pitch</span><span class="p">,</span> <span class="n">duration</span><span class="p">))</span>
+<span class="linenos">22</span>    <span class="k">return</span> <span class="n">melody</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="k">def</span><span class="w"> </span><span class="nf">melody_to_midi</span><span class="p">(</span><span class="n">melody</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">26</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;旋律のリストを MIDI ファイルへ書き出す。&quot;&quot;&quot;</span>
+<span class="linenos">27</span>    <span class="n">midi_data</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">PrettyMIDI</span><span class="p">()</span>
+<span class="linenos">28</span>    <span class="n">instrument</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">Instrument</span><span class="p">(</span><span class="n">program</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span>    <span class="n">start_time</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="linenos">31</span>    <span class="k">for</span> <span class="n">pitch</span><span class="p">,</span> <span class="n">duration</span> <span class="ow">in</span> <span class="n">melody</span><span class="p">:</span>
+<span class="linenos">32</span>        <span class="n">note</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">Note</span><span class="p">(</span>
+<span class="linenos">33</span>            <span class="n">velocity</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="linenos">34</span>            <span class="n">pitch</span><span class="o">=</span><span class="n">pitch</span><span class="p">,</span>
+<span class="linenos">35</span>            <span class="n">start</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+<span class="linenos">36</span>            <span class="n">end</span><span class="o">=</span><span class="n">start_time</span> <span class="o">+</span> <span class="n">duration</span><span class="p">,</span>
+<span class="linenos">37</span>        <span class="p">)</span>
+<span class="linenos">38</span>        <span class="n">instrument</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+<span class="linenos">39</span>        <span class="n">start_time</span> <span class="o">+=</span> <span class="n">duration</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span>    <span class="n">midi_data</span><span class="o">.</span><span class="n">instruments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instrument</span><span class="p">)</span>
+<span class="linenos">42</span>    <span class="n">midi_data</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">))</span>
+<span class="linenos">43</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">46</span>    <span class="n">melody</span> <span class="o">=</span> <span class="n">generate_melody</span><span class="p">(</span><span class="n">note_count</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="linenos">47</span>    <span class="n">melody_to_midi</span><span class="p">(</span><span class="n">melody</span><span class="p">,</span> <span class="n">OUTPUT_PATH</span><span class="p">)</span>
+<span class="linenos">48</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">OUTPUT_PATH</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> を出力しました。&quot;</span><span class="p">)</span>
+<span class="linenos">49</span>
+<span class="linenos">50</span>
+<span class="linenos">51</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">52</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">generate_melody</span></code> 関数では、あらかじめ定義した音階 <code class="docutils literal notranslate"><span class="pre">SCALE</span></code> と、音の長さの候補 <code class="docutils literal notranslate"><span class="pre">DURATIONS</span></code> の中から、それぞれランダムに値を選択し、指定した数の音符からなる旋律を生成しています。 <code class="docutils literal notranslate"><span class="pre">melody_to_midi</span></code> 関数では、生成した旋律のリストを <code class="docutils literal notranslate"><span class="pre">pretty_midi.Note</span></code> オブジェクトへ変換した上で、 MIDI ファイルとして出力しています。</p>
+<p>このサンプルコードは <a class="reference download internal" download="" href="../_downloads/787560dcfab954395b2f1e44eab97e7e/random_melody_generator.py"><code class="xref download docutils literal notranslate"><span class="pre">random_melody_generator.py</span></code></a> からダウンロードできます。実行すると、スクリプトと同じディレクトリに <code class="docutils literal notranslate"><span class="pre">random_melody.mid</span></code> という MIDI ファイルが生成されます。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>random_melody_generator.py
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>マルコフ連鎖メロディジェネレーター<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>「アルゴリズム作曲の手法」の章で紹介したマルコフ連鎖を用いて、旋律を生成するプログラムです。 <code class="docutils literal notranslate"><span class="pre">TRANSITION_TABLE</span></code> には、各音符から遷移しうる次の音符の候補があらかじめ定義されており、 <code class="docutils literal notranslate"><span class="pre">generate_melody</span></code> 関数がその候補の中から乱数を用いて次の音を選択します。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;マルコフ連鎖を用いて旋律を生成し、MIDI ファイルへ出力するサンプル。&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="linenos"> 6</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="kn">import</span><span class="w"> </span><span class="nn">pretty_midi</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="n">TransitionTable</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="n">TRANSITION_TABLE</span><span class="p">:</span> <span class="n">TransitionTable</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">13</span>    <span class="mi">60</span><span class="p">:</span> <span class="p">[</span><span class="mi">62</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span>
+<span class="linenos">14</span>    <span class="mi">62</span><span class="p">:</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">65</span><span class="p">],</span>
+<span class="linenos">15</span>    <span class="mi">64</span><span class="p">:</span> <span class="p">[</span><span class="mi">62</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="mi">67</span><span class="p">],</span>
+<span class="linenos">16</span>    <span class="mi">65</span><span class="p">:</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">67</span><span class="p">],</span>
+<span class="linenos">17</span>    <span class="mi">67</span><span class="p">:</span> <span class="p">[</span><span class="mi">65</span><span class="p">,</span> <span class="mi">69</span><span class="p">,</span> <span class="mi">72</span><span class="p">],</span>
+<span class="linenos">18</span>    <span class="mi">69</span><span class="p">:</span> <span class="p">[</span><span class="mi">67</span><span class="p">,</span> <span class="mi">72</span><span class="p">],</span>
+<span class="linenos">19</span>    <span class="mi">72</span><span class="p">:</span> <span class="p">[</span><span class="mi">69</span><span class="p">,</span> <span class="mi">67</span><span class="p">],</span>
+<span class="linenos">20</span><span class="p">}</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span><span class="n">NOTE_DURATION</span> <span class="o">=</span> <span class="mf">0.4</span>
+<span class="linenos">23</span><span class="n">OUTPUT_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="s2">&quot;markov_melody.mid&quot;</span><span class="p">)</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span><span class="k">def</span><span class="w"> </span><span class="nf">generate_melody</span><span class="p">(</span>
+<span class="linenos">27</span>    <span class="n">transition_table</span><span class="p">:</span> <span class="n">TransitionTable</span><span class="p">,</span>
+<span class="linenos">28</span>    <span class="n">start_note</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos">29</span>    <span class="n">note_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="linenos">31</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;遷移確率表に従って、次に続く音をランダムに選びながら旋律を生成する。&quot;&quot;&quot;</span>
+<span class="linenos">32</span>    <span class="n">current_note</span> <span class="o">=</span> <span class="n">start_note</span>
+<span class="linenos">33</span>    <span class="n">melody</span> <span class="o">=</span> <span class="p">[</span><span class="n">current_note</span><span class="p">]</span>
+<span class="linenos">34</span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">note_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">35</span>        <span class="n">current_note</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">transition_table</span><span class="p">[</span><span class="n">current_note</span><span class="p">])</span>
+<span class="linenos">36</span>        <span class="n">melody</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_note</span><span class="p">)</span>
+<span class="linenos">37</span>    <span class="k">return</span> <span class="n">melody</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span><span class="k">def</span><span class="w"> </span><span class="nf">melody_to_midi</span><span class="p">(</span><span class="n">melody</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">41</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;旋律のリストを MIDI ファイルへ書き出す。&quot;&quot;&quot;</span>
+<span class="linenos">42</span>    <span class="n">midi_data</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">PrettyMIDI</span><span class="p">()</span>
+<span class="linenos">43</span>    <span class="n">instrument</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">Instrument</span><span class="p">(</span><span class="n">program</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span>    <span class="n">start_time</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="linenos">46</span>    <span class="k">for</span> <span class="n">pitch</span> <span class="ow">in</span> <span class="n">melody</span><span class="p">:</span>
+<span class="linenos">47</span>        <span class="n">note</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">Note</span><span class="p">(</span>
+<span class="linenos">48</span>            <span class="n">velocity</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="linenos">49</span>            <span class="n">pitch</span><span class="o">=</span><span class="n">pitch</span><span class="p">,</span>
+<span class="linenos">50</span>            <span class="n">start</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+<span class="linenos">51</span>            <span class="n">end</span><span class="o">=</span><span class="n">start_time</span> <span class="o">+</span> <span class="n">NOTE_DURATION</span><span class="p">,</span>
+<span class="linenos">52</span>        <span class="p">)</span>
+<span class="linenos">53</span>        <span class="n">instrument</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+<span class="linenos">54</span>        <span class="n">start_time</span> <span class="o">+=</span> <span class="n">NOTE_DURATION</span>
+<span class="linenos">55</span>
+<span class="linenos">56</span>    <span class="n">midi_data</span><span class="o">.</span><span class="n">instruments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instrument</span><span class="p">)</span>
+<span class="linenos">57</span>    <span class="n">midi_data</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">))</span>
+<span class="linenos">58</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">61</span>    <span class="n">melody</span> <span class="o">=</span> <span class="n">generate_melody</span><span class="p">(</span><span class="n">TRANSITION_TABLE</span><span class="p">,</span> <span class="n">start_note</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">note_count</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="linenos">62</span>    <span class="n">melody_to_midi</span><span class="p">(</span><span class="n">melody</span><span class="p">,</span> <span class="n">OUTPUT_PATH</span><span class="p">)</span>
+<span class="linenos">63</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">OUTPUT_PATH</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> を出力しました。&quot;</span><span class="p">)</span>
+<span class="linenos">64</span>
+<span class="linenos">65</span>
+<span class="linenos">66</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">67</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>ランダムメロディジェネレーターと比較すると、音の並びに一定の傾向が生まれ、より旋律らしい印象になることが確認できます。このサンプルコードは <a class="reference download internal" download="" href="../_downloads/de155ab1c02eb21085999e9f7067a616/markov_melody_generator.py"><code class="xref download docutils literal notranslate"><span class="pre">markov_melody_generator.py</span></code></a> からダウンロードできます。実行すると、 <code class="docutils literal notranslate"><span class="pre">markov_melody.mid</span></code> という MIDI ファイルが生成されます。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>markov_melody_generator.py
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2>ユークリッドリズムジェネレーター<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>「アルゴリズム作曲の手法」の章で紹介したユークリッドリズムを実装し、ドラムパターンとして MIDI ファイルへ出力するプログラムです。 <code class="docutils literal notranslate"><span class="pre">euclidean_rhythm</span></code> 関数が Bjorklund のアルゴリズムによってリズムパターンを計算し、 <code class="docutils literal notranslate"><span class="pre">pattern_to_midi</span></code> 関数がそのパターンをキック（ バスドラム ）の MIDI ノートへ変換します。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;ユークリッドリズムのアルゴリズムでリズムパターンを生成し、MIDI ファイルへ出力するサンプル。&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="kn">import</span><span class="w"> </span><span class="nn">pretty_midi</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="n">STEP_DURATION</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="linenos">10</span><span class="n">BAR_REPEAT_COUNT</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="linenos">11</span><span class="n">KICK_NOTE_NUMBER</span> <span class="o">=</span> <span class="mi">36</span>
+<span class="linenos">12</span><span class="n">OUTPUT_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="s2">&quot;euclidean_rhythm.mid&quot;</span><span class="p">)</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="k">def</span><span class="w"> </span><span class="nf">euclidean_rhythm</span><span class="p">(</span><span class="n">pulses</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<span class="linenos">16</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Bjorklund のアルゴリズムにより、pulses 個の拍を steps 個のステップへ均等に配置する。&quot;&quot;&quot;</span>
+<span class="linenos">17</span>    <span class="k">if</span> <span class="n">pulses</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">18</span>        <span class="k">return</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">steps</span>
+<span class="linenos">19</span>    <span class="k">if</span> <span class="n">pulses</span> <span class="o">&gt;=</span> <span class="n">steps</span><span class="p">:</span>
+<span class="linenos">20</span>        <span class="k">return</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="n">steps</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span>    <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">True</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pulses</span><span class="p">)]</span>
+<span class="linenos">23</span>    <span class="n">remainders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">False</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps</span> <span class="o">-</span> <span class="n">pulses</span><span class="p">)]</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span>    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">remainders</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+<span class="linenos">26</span>        <span class="n">pair_count</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">remainders</span><span class="p">))</span>
+<span class="linenos">27</span>        <span class="n">merged</span> <span class="o">=</span> <span class="p">[</span><span class="n">groups</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">remainders</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pair_count</span><span class="p">)]</span>
+<span class="linenos">28</span>        <span class="n">leftover_groups</span> <span class="o">=</span> <span class="n">groups</span><span class="p">[</span><span class="n">pair_count</span><span class="p">:]</span>
+<span class="linenos">29</span>        <span class="n">leftover_remainders</span> <span class="o">=</span> <span class="n">remainders</span><span class="p">[</span><span class="n">pair_count</span><span class="p">:]</span>
+<span class="linenos">30</span>        <span class="n">groups</span> <span class="o">=</span> <span class="n">merged</span>
+<span class="linenos">31</span>        <span class="n">remainders</span> <span class="o">=</span> <span class="p">(</span>
+<span class="linenos">32</span>            <span class="n">leftover_groups</span> <span class="k">if</span> <span class="n">leftover_groups</span> <span class="k">else</span> <span class="n">leftover_remainders</span>
+<span class="linenos">33</span>        <span class="p">)</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span>    <span class="n">result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">36</span>    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span> <span class="o">+</span> <span class="n">remainders</span><span class="p">:</span>
+<span class="linenos">37</span>        <span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+<span class="linenos">38</span>    <span class="k">return</span> <span class="n">result</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="k">def</span><span class="w"> </span><span class="nf">pattern_to_midi</span><span class="p">(</span>
+<span class="linenos">42</span>    <span class="n">pattern</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="n">repeat_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span>
+<span class="linenos">43</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">44</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;リズムパターンを繰り返しながら、ドラム用の MIDI ファイルへ書き出す。&quot;&quot;&quot;</span>
+<span class="linenos">45</span>    <span class="n">midi_data</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">PrettyMIDI</span><span class="p">()</span>
+<span class="linenos">46</span>    <span class="n">instrument</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">Instrument</span><span class="p">(</span><span class="n">program</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">is_drum</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span>    <span class="n">start_time</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="linenos">49</span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">repeat_count</span><span class="p">):</span>
+<span class="linenos">50</span>        <span class="k">for</span> <span class="n">hit</span> <span class="ow">in</span> <span class="n">pattern</span><span class="p">:</span>
+<span class="linenos">51</span>            <span class="k">if</span> <span class="n">hit</span><span class="p">:</span>
+<span class="linenos">52</span>                <span class="n">note</span> <span class="o">=</span> <span class="n">pretty_midi</span><span class="o">.</span><span class="n">Note</span><span class="p">(</span>
+<span class="linenos">53</span>                    <span class="n">velocity</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="linenos">54</span>                    <span class="n">pitch</span><span class="o">=</span><span class="n">KICK_NOTE_NUMBER</span><span class="p">,</span>
+<span class="linenos">55</span>                    <span class="n">start</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+<span class="linenos">56</span>                    <span class="n">end</span><span class="o">=</span><span class="n">start_time</span> <span class="o">+</span> <span class="n">STEP_DURATION</span><span class="p">,</span>
+<span class="linenos">57</span>                <span class="p">)</span>
+<span class="linenos">58</span>                <span class="n">instrument</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+<span class="linenos">59</span>            <span class="n">start_time</span> <span class="o">+=</span> <span class="n">STEP_DURATION</span>
+<span class="linenos">60</span>
+<span class="linenos">61</span>    <span class="n">midi_data</span><span class="o">.</span><span class="n">instruments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instrument</span><span class="p">)</span>
+<span class="linenos">62</span>    <span class="n">midi_data</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">))</span>
+<span class="linenos">63</span>
+<span class="linenos">64</span>
+<span class="linenos">65</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">66</span>    <span class="n">pattern</span> <span class="o">=</span> <span class="n">euclidean_rhythm</span><span class="p">(</span><span class="n">pulses</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="linenos">67</span>    <span class="n">pattern_to_midi</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">BAR_REPEAT_COUNT</span><span class="p">,</span> <span class="n">OUTPUT_PATH</span><span class="p">)</span>
+<span class="linenos">68</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">OUTPUT_PATH</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> を出力しました。&quot;</span><span class="p">)</span>
+<span class="linenos">69</span>
+<span class="linenos">70</span>
+<span class="linenos">71</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">72</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>既定の設定では、 8 ステップの中に 5 拍を配置したパターンを、 4 小節分繰り返した MIDI ファイル <code class="docutils literal notranslate"><span class="pre">euclidean_rhythm.mid</span></code> を生成します。 <code class="docutils literal notranslate"><span class="pre">euclidean_rhythm</span></code> 関数の引数を変更することで、さまざまな拍数とステップ数の組み合わせを試すことができます。このサンプルコードは <a class="reference download internal" download="" href="../_downloads/cec2f5a0474b007235415a4ee418ff36/euclidean_rhythm.py"><code class="xref download docutils literal notranslate"><span class="pre">euclidean_rhythm.py</span></code></a> からダウンロードできます。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>euclidean_rhythm.py
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h2>サイン波シンセサイザー<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>「音声合成の基礎」の章で紹介した内容に基づき、サイン波に ADSR エンベロープを適用して WAV ファイルへ出力するプログラムです。 <code class="docutils literal notranslate"><span class="pre">generate_sine_wave</span></code> 関数で波形を生成し、 <code class="docutils literal notranslate"><span class="pre">apply_adsr_envelope</span></code> 関数で音量変化を適用した後、 <code class="docutils literal notranslate"><span class="pre">write_wav</span></code> 関数で 16 ビット PCM の WAV ファイルとして書き出します。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;numpy でサイン波を合成し、ADSR エンベロープを適用して WAV ファイルへ出力するサンプル。&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="kn">import</span><span class="w"> </span><span class="nn">wave</span>
+<span class="linenos"> 6</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="n">SAMPLE_RATE</span> <span class="o">=</span> <span class="mi">44100</span>
+<span class="linenos">11</span><span class="n">FREQUENCY</span> <span class="o">=</span> <span class="mf">440.0</span>
+<span class="linenos">12</span><span class="n">DURATION</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="linenos">13</span><span class="n">OUTPUT_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="s2">&quot;sine_wave.wav&quot;</span><span class="p">)</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="k">def</span><span class="w"> </span><span class="nf">generate_sine_wave</span><span class="p">(</span>
+<span class="linenos">17</span>    <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">18</span>    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">19</span>    <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">21</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;指定した周波数のサイン波を、指定した長さ分だけ生成する。&quot;&quot;&quot;</span>
+<span class="linenos">22</span>    <span class="n">sample_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">duration</span><span class="p">)</span>
+<span class="linenos">23</span>    <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">sample_count</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos">24</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frequency</span> <span class="o">*</span> <span class="n">times</span><span class="p">)</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="k">def</span><span class="w"> </span><span class="nf">apply_adsr_envelope</span><span class="p">(</span>
+<span class="linenos">28</span>    <span class="n">samples</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos">29</span>    <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos">30</span>    <span class="n">attack</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">31</span>    <span class="n">decay</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">32</span>    <span class="n">sustain_level</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">33</span>    <span class="n">release</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">34</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">35</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;アタック・ディケイ・サステイン・リリースからなる音量変化を適用する。&quot;&quot;&quot;</span>
+<span class="linenos">36</span>    <span class="n">total_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+<span class="linenos">37</span>    <span class="n">attack_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">attack</span><span class="p">)</span>
+<span class="linenos">38</span>    <span class="n">decay_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">decay</span><span class="p">)</span>
+<span class="linenos">39</span>    <span class="n">release_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">release</span><span class="p">)</span>
+<span class="linenos">40</span>    <span class="n">sustain_count</span> <span class="o">=</span> <span class="n">total_count</span> <span class="o">-</span> <span class="n">attack_count</span> <span class="o">-</span> <span class="n">decay_count</span> <span class="o">-</span> <span class="n">release_count</span>
+<span class="linenos">41</span>    <span class="n">sustain_count</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">sustain_count</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="linenos">42</span>
+<span class="linenos">43</span>    <span class="n">envelope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+<span class="linenos">44</span>        <span class="p">[</span>
+<span class="linenos">45</span>            <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">attack_count</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<span class="linenos">46</span>            <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">sustain_level</span><span class="p">,</span> <span class="n">decay_count</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<span class="linenos">47</span>            <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">sustain_count</span><span class="p">,</span> <span class="n">sustain_level</span><span class="p">),</span>
+<span class="linenos">48</span>            <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sustain_level</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">release_count</span><span class="p">),</span>
+<span class="linenos">49</span>        <span class="p">]</span>
+<span class="linenos">50</span>    <span class="p">)</span>
+<span class="linenos">51</span>    <span class="n">envelope</span> <span class="o">=</span> <span class="n">envelope</span><span class="p">[:</span><span class="n">total_count</span><span class="p">]</span>
+<span class="linenos">52</span>    <span class="k">return</span> <span class="n">samples</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">envelope</span><span class="p">)]</span> <span class="o">*</span> <span class="n">envelope</span>
+<span class="linenos">53</span>
+<span class="linenos">54</span>
+<span class="linenos">55</span><span class="k">def</span><span class="w"> </span><span class="nf">write_wav</span><span class="p">(</span>
+<span class="linenos">56</span>    <span class="n">samples</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span>
+<span class="linenos">57</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">58</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;浮動小数点の波形データを 16 ビット PCM の WAV ファイルへ書き出す。&quot;&quot;&quot;</span>
+<span class="linenos">59</span>    <span class="n">normalized</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="linenos">60</span>    <span class="n">pcm_data</span> <span class="o">=</span> <span class="p">(</span><span class="n">normalized</span> <span class="o">*</span> <span class="mi">32767</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+<span class="linenos">61</span>
+<span class="linenos">62</span>    <span class="k">with</span> <span class="n">wave</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">),</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">wav_file</span><span class="p">:</span>
+<span class="linenos">63</span>        <span class="n">wav_file</span><span class="o">.</span><span class="n">setnchannels</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">64</span>        <span class="n">wav_file</span><span class="o">.</span><span class="n">setsampwidth</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="linenos">65</span>        <span class="n">wav_file</span><span class="o">.</span><span class="n">setframerate</span><span class="p">(</span><span class="n">sample_rate</span><span class="p">)</span>
+<span class="linenos">66</span>        <span class="n">wav_file</span><span class="o">.</span><span class="n">writeframes</span><span class="p">(</span><span class="n">pcm_data</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+<span class="linenos">67</span>
+<span class="linenos">68</span>
+<span class="linenos">69</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">70</span>    <span class="n">samples</span> <span class="o">=</span> <span class="n">generate_sine_wave</span><span class="p">(</span><span class="n">FREQUENCY</span><span class="p">,</span> <span class="n">DURATION</span><span class="p">,</span> <span class="n">SAMPLE_RATE</span><span class="p">)</span>
+<span class="linenos">71</span>    <span class="n">samples</span> <span class="o">=</span> <span class="n">apply_adsr_envelope</span><span class="p">(</span>
+<span class="linenos">72</span>        <span class="n">samples</span><span class="p">,</span>
+<span class="linenos">73</span>        <span class="n">SAMPLE_RATE</span><span class="p">,</span>
+<span class="linenos">74</span>        <span class="n">attack</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="linenos">75</span>        <span class="n">decay</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+<span class="linenos">76</span>        <span class="n">sustain_level</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+<span class="linenos">77</span>        <span class="n">release</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+<span class="linenos">78</span>    <span class="p">)</span>
+<span class="linenos">79</span>    <span class="n">write_wav</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">SAMPLE_RATE</span><span class="p">,</span> <span class="n">OUTPUT_PATH</span><span class="p">)</span>
+<span class="linenos">80</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">OUTPUT_PATH</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> を出力しました。&quot;</span><span class="p">)</span>
+<span class="linenos">81</span>
+<span class="linenos">82</span>
+<span class="linenos">83</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">84</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>実行すると、 440 Hz のサイン波（ 音楽で用いられる基準音、いわゆる A4 の音 ）を 2 秒間鳴らした <code class="docutils literal notranslate"><span class="pre">sine_wave.wav</span></code> が生成されます。このサンプルコードは <a class="reference download internal" download="" href="../_downloads/9e03b3c1c208a99e1856c32be467bb3a/sine_wave_synthesis.py"><code class="xref download docutils literal notranslate"><span class="pre">sine_wave_synthesis.py</span></code></a> からダウンロードできます。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>sine_wave_synthesis.py
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h2>サンプルコードの検証方法<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>ここまでに紹介した 4 つのサンプルコードは、以下のコマンドで静的解析を行うことができます。 <code class="docutils literal notranslate"><span class="pre">mypy</span></code> の実行には、 <a class="reference download internal" download="" href="../_downloads/8d44b47586c26961b5fcd97d48978a8d/mypy.ini"><code class="xref download docutils literal notranslate"><span class="pre">mypy.ini</span></code></a> をダウンロードし、各サンプルコードと同じディレクトリへ配置した上で使用します。</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>flake8<span class="w"> </span>mypy
+flake8<span class="w"> </span>random_melody_generator.py<span class="w"> </span>markov_melody_generator.py<span class="w"> </span>euclidean_rhythm.py<span class="w"> </span>sine_wave_synthesis.py
+mypy<span class="w"> </span>--config-file<span class="w"> </span>mypy.ini<span class="w"> </span>random_melody_generator.py<span class="w"> </span>markov_melody_generator.py<span class="w"> </span>euclidean_rhythm.py<span class="w"> </span>sine_wave_synthesis.py
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="algorithms.html" class="btn btn-neutral float-left" title="アルゴリズム作曲の手法" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="conclusion.html" class="btn btn-neutral float-right" title="まとめ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

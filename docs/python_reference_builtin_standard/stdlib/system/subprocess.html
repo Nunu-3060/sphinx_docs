@@ -1,0 +1,262 @@
+
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>subprocess &mdash; Python コア機能・標準ライブラリ解説書 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=19757887"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=4755f45a"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="検索" href="../../search.html" />
+    <link rel="next" title="argparse" href="argparse.html" />
+    <link rel="prev" title="sys" href="sys.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <a href="../../index.html" class="icon icon-home">
+    Python 解説書
+  </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../builtin_types/index.html">組み込み型のメソッド</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../operators/index.html">演算子</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../builtins/index.html">組み込み関数</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">標準モジュール</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../file_path/index.html">ファイル・パス操作</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datetime_time/index.html">日付・時刻</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_structures/index.html">データ構造・アルゴリズム補助</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../text/index.html">テキスト処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_format/index.html">データフォーマット・シリアライズ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../numeric/index.html">数値・数学</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">システム・実行環境</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sys.html">sys</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">subprocess</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#subprocess-run">subprocess.run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#capture-output-text">capture_output / text</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#check-true">check=True</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#timeout">timeout（タイムアウト）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#input">input による標準入力の送信</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#subprocess-popen">subprocess.Popen によるストリーミング処理</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="argparse.html">argparse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging.html">logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="venv.html">venv</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../concurrency/index.html">並行処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../testing/index.html">テスト・デバッグ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gui/index.html">GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/index.html">その他</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Python コア機能・標準ライブラリ解説書</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">標準モジュール</a></li>
+          <li class="breadcrumb-item"><a href="index.html">システム・実行環境</a></li>
+      <li class="breadcrumb-item active">subprocess</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="subprocess">
+<h1>subprocess<a class="headerlink" href="#subprocess" title="Link to this heading"></a></h1>
+<p>新しいプロセスを生成し、外部コマンドを実行してその入出力や終了コードを
+扱うためのモジュール。シェルコマンドを Python から呼び出したい場合の
+標準的な手段となる。</p>
+<section id="subprocess-run">
+<h2>subprocess.run<a class="headerlink" href="#subprocess-run" title="Link to this heading"></a></h2>
+<p>外部コマンドを実行し、完了を待ってから結果を返す最も基本的な関数。
+引数はコマンド名と引数を分けたリストで渡すのが標準的な方法。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="s2">&quot;hello&quot;</span><span class="p">])</span>
+<span class="go">hello</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span><span class="o">.</span><span class="n">returncode</span>
+<span class="go">0</span>
+</pre></div>
+</div>
+</section>
+<section id="capture-output-text">
+<h2>capture_output / text<a class="headerlink" href="#capture-output-text" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">capture_output=True</span></code> を指定すると標準出力・標準エラー出力をキャプチャできる。<code class="docutils literal notranslate"><span class="pre">text=True</span></code> を併用すると、結果が <code class="docutils literal notranslate"><span class="pre">bytes</span></code> ではなく <code class="docutils literal notranslate"><span class="pre">str</span></code> として得られる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">[</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="s2">&quot;hello&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span>
+<span class="go">&#39;hello\n&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span>
+<span class="go">&#39;&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="check-true">
+<h2>check=True<a class="headerlink" href="#check-true" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">check=True</span></code> を指定すると、コマンドが 0 以外の終了コードで終了した
+場合に <code class="docutils literal notranslate"><span class="pre">subprocess.CalledProcessError</span></code> 例外が送出される。エラーの
+見落としを防ぐため、本番コードでは指定しておくことが望ましい。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;false&quot;</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;コマンドが失敗しました: returncode=</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">コマンドが失敗しました: returncode=1</span>
+</pre></div>
+</div>
+</section>
+<section id="timeout">
+<h2>timeout（タイムアウト）<a class="headerlink" href="#timeout" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">run</span></code> に <code class="docutils literal notranslate"><span class="pre">timeout</span></code> 引数で秒数を指定すると、コマンドがその時間内に終了
+しなかった場合に <code class="docutils literal notranslate"><span class="pre">subprocess.TimeoutExpired</span></code> 例外が送出される。
+応答が返ってこない外部コマンドに処理をブロックされ続けないようにする
+ために使う。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;ping&quot;</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;10&quot;</span><span class="p">,</span> <span class="s2">&quot;localhost&quot;</span><span class="p">],</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;タイムアウトしました: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">タイムアウトしました: Command &#39;[&#39;ping&#39;, &#39;-c&#39;, &#39;10&#39;, &#39;localhost&#39;]&#39; timed out after 1 seconds</span>
+</pre></div>
+</div>
+</section>
+<section id="input">
+<h2>input による標準入力の送信<a class="headerlink" href="#input" title="Link to this heading"></a></h2>
+<p>サブプロセスの標準入力にデータを渡したい場合、<code class="docutils literal notranslate"><span class="pre">Popen</span></code> でパイプを手動で管理しなくても、文字列（<code class="docutils literal notranslate"><span class="pre">text=True</span></code> の場合）またはバイト列を <code class="docutils literal notranslate"><span class="pre">run</span></code> の <code class="docutils literal notranslate"><span class="pre">input</span></code> 引数に渡すだけで、そのまま標準入力として送り込める。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;import sys; print(sys.stdin.read().strip().upper())&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;hello</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span>
+<span class="go">&#39;HELLO\n&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="subprocess-popen">
+<h2>subprocess.Popen によるストリーミング処理<a class="headerlink" href="#subprocess-popen" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">run</span></code> はコマンドの完了を待って結果をまとめて返すのに対し、<code class="docutils literal notranslate"><span class="pre">Popen</span></code> を使うとプロセスを起動したまま、出力を逐次読み取ることができる。実行に時間がかかるコマンドの進捗をリアルタイムに扱いたい場合に使う。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">[</span><span class="s2">&quot;ping&quot;</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;localhost&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">proc</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="go">0</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>出力をリアルタイムに逐次処理する必要がなく、コマンドの完了を待って
+まとめて出力を受け取るだけでよい場合は、<code class="docutils literal notranslate"><span class="pre">proc.stdout</span></code> を手動で
+イテレートするよりも <code class="docutils literal notranslate"><span class="pre">Popen.communicate()</span></code> を使う方が簡単で安全
+（デッドロックの回避など）である。実質的には <code class="docutils literal notranslate"><span class="pre">subprocess.run</span></code> の
+内部でも <code class="docutils literal notranslate"><span class="pre">communicate()</span></code> が使われている。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">[</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="s2">&quot;hello&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stdout</span>
+<span class="go">&#39;hello\n&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p><code class="docutils literal notranslate"><span class="pre">shell=True</span></code> を指定すると、コマンド全体をシェル経由で実行できる反面、文字列にユーザー入力をそのまま埋め込むとシェルインジェクションの脆弱性につながる。外部からの入力を含むコマンドを実行する場合は、<code class="docutils literal notranslate"><span class="pre">shell=True</span></code> を避け、引数をリストで渡す方法を使うこと。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 危険な例: ユーザー入力をそのまま結合している</span>
+<span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;data.txt; rm -rf /&quot;</span>
+<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cat </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># doctest: +SKIP</span>
+
+<span class="c1"># 安全な例: リストで渡すためシェルを介さない</span>
+<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;cat&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">])</span>  <span class="c1"># doctest: +SKIP</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sys.html" class="btn btn-neutral float-left" title="sys" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="argparse.html" class="btn btn-neutral float-right" title="argparse" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

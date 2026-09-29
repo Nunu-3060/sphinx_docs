@@ -1,0 +1,775 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>パーティクルシステム &mdash; Python で作る
+ジェネラティブアート 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=64886222" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="進化的アルゴリズム" href="evolution.html" />
+    <link rel="prev" title="セルオートマトンと反応拡散系" href="automata.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python で作る
+ジェネラティブアート
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basics.html">基礎編：ジェネラティブアート特有の設計方針</a></li>
+<li class="toctree-l1"><a class="reference internal" href="color.html">色彩設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tiling.html">タイリングパターン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spirals.html">螺旋と曲線</a></li>
+<li class="toctree-l1"><a class="reference internal" href="noise.html">ノイズを使った表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shapes.html">距離関数による形状表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fractals.html">フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="automata.html">セルオートマトンと反応拡散系</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">パーティクルシステム</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">パーティクルの基本構造</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#boids">群れの動き（Boids）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#neighbor-search">近傍探索の高速化（格子による空間分割）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">物理法則の応用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">拘束によるロープとクロスの表現</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="evolution.html">進化的アルゴリズム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_effects.html">画像を素材にした生成技法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gallery/index.html">ギャラリー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python で作る
+ジェネラティブアート</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">パーティクルシステム</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>パーティクルシステム<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="id2">
+<h2>パーティクルの基本構造<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>パーティクルシステムは、位置・速度・加速度という 3 つのベクトルを持つ多数の「粒子」を 1 ステップずつ更新していくことで、煙・水・群衆・炎といった有機的な動きを表現する手法である。個々の粒子の振る舞いは単純な力学法則に従うだけだが、大量に集まることで複雑で予測しづらい全体像が生まれる。</p>
+<p>各粒子には位置 <span class="math notranslate nohighlight">\(\vec{p}\)</span>・速度 <span class="math notranslate nohighlight">\(\vec{v}\)</span>・加速度 <span class="math notranslate nohighlight">\(\vec{a}\)</span> を持たせ、外力を加速度として蓄積したうえで、もっとも単純な数値積分法であるオイラー法によって 1 ステップ分運動を進める。厳密には、位置の更新に「更新後」の速度 <span class="math notranslate nohighlight">\(\vec{v}_{t+1}\)</span> を使っているため、これは半陰的オイラー法（セミインプリシット・オイラー法、Euler-Cromer 法とも呼ばれる）と呼ばれる変種であり、通常の（陽的）オイラー法よりエネルギーが安定するという利点がある。クリエイティブコーディングの文脈では単に「オイラー法」と呼ばれることが多いため、本資料でもその慣習に従う。</p>
+<div class="math notranslate nohighlight">
+\[\vec{a} \mathrel{+}= \frac{\vec{F}}{m}\]</div>
+<div class="math notranslate nohighlight">
+\[\vec{v}_{t+1} = \vec{v}_t + \vec{a}_t \, \Delta t\]</div>
+<div class="math notranslate nohighlight">
+\[\vec{p}_{t+1} = \vec{p}_t + \vec{v}_{t+1} \, \Delta t\]</div>
+<p>力を加える <code class="docutils literal notranslate"><span class="pre">apply_force</span></code> と、1 ステップ進める <code class="docutils literal notranslate"><span class="pre">update</span></code> を分けておくと、重力・反発力・風など複数の力を独立に足し合わせてからまとめて積分できる。<code class="docutils literal notranslate"><span class="pre">update</span></code> の最後で加速度を 0 に戻しているのは、力は毎ステップ加え直す前提（次のステップに持ち越さない）にするためである。</p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">examples/particle.py の Particle クラス</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Particle</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;位置・速度・加速度を ``np.ndarray`` で保持するパーティクル。</span>
+
+<span class="sd">    ``apply_force`` で力を加え、``update`` で1ステップ分の運動を</span>
+<span class="sd">    オイラー積分によって進める。力は毎ステップ加速度に蓄積され、</span>
+<span class="sd">    ``update`` の最後にリセットされる（次のフレームに持ち越さない）。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">position</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">velocity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">acceleration</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">mass</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;ニュートンの運動方程式 F = ma に従い、加速度に力を加算する。&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acceleration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acceleration</span> <span class="o">+</span> <span class="n">force</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;オイラー積分で速度・位置を1ステップ更新し、加速度を0に戻す。&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velocity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">velocity</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">acceleration</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">velocity</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acceleration</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>オイラー法は実装が簡単な反面、<code class="docutils literal notranslate"><span class="pre">dt</span></code> が大きすぎたり力が急激に変化したりすると誤差が蓄積しやすい。パーティクルシステムでは見た目のもっともらしさが重要になる場面が多く、<code class="docutils literal notranslate"><span class="pre">dt</span></code> を十分小さく取れば実用上は問題にならないことがほとんどである。</p>
+</section>
+<section id="boids">
+<h2>群れの動き（Boids）<a class="headerlink" href="#boids" title="Link to this heading"></a></h2>
+<p>Craig Reynolds が 1987 年に提案した <strong>Boids</strong> モデルは、各個体が以下の 3 つの単純なルールに従うだけで、鳥の群れや魚群のような複雑な集団運動が創発することを示した。個々の粒子は群れ全体を俯瞰しているわけではなく、あくまで近傍の個体だけを見て反応する局所的なルールである点が重要である。</p>
+<dl>
+<dt>分離（separation）</dt><dd><p>近づきすぎた個体から離れる向きの力。近いほど強く働く。</p>
+<div class="math notranslate nohighlight">
+\[\vec{s}_i = \sum_{j \in N_i^{\mathrm{sep}}}
+\frac{\vec{p}_i - \vec{p}_j}{\lVert \vec{p}_i - \vec{p}_j \rVert^2}\]</div>
+</dd>
+<dt>整列（alignment）</dt><dd><p>近傍の個体の平均速度に、自分の速度を合わせようとする力。</p>
+<div class="math notranslate nohighlight">
+\[\vec{a}_i = \frac{1}{|N_i|}\sum_{j \in N_i} \vec{v}_j - \vec{v}_i\]</div>
+</dd>
+<dt>結合（cohesion）</dt><dd><p>近傍の個体の重心に向かおうとする力。群れがバラバラにならないようにする。</p>
+<div class="math notranslate nohighlight">
+\[\vec{c}_i = \frac{1}{|N_i|}\sum_{j \in N_i} \vec{p}_j - \vec{p}_i\]</div>
+</dd>
+</dl>
+<p>3 つのベクトルを重み付けして足し合わせたものが、その個体に働く加速度になる。</p>
+<div class="math notranslate nohighlight">
+\[\vec{a}_i^{\mathrm{total}} = w_s \vec{s}_i + w_a \vec{a}_i
++ w_c \vec{c}_i\]</div>
+<p>各個体の近傍を求めるとき、全ての個体の組を調べる素朴な方法では、個体数 <span class="math notranslate nohighlight">\(N\)</span> に対して計算量が <span class="math notranslate nohighlight">\(O(N^2)\)</span> になる。さらに、個体ごとに Python のループを回すと <span class="math notranslate nohighlight">\(N\)</span> が増えたときに極端に遅くなるため、以下の実装では位置・速度をまとめて <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">2)</span></code> の NumPy 配列として扱い、全個体間の差分・距離を <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">N,</span> <span class="pre">2)</span></code> のブロードキャスト演算で一括計算している（<code class="docutils literal notranslate"><span class="pre">perlin_noise.py</span></code> で座標配列をまとめて評価したのと同じ発想）。この方法でも計算量は <span class="math notranslate nohighlight">\(O(N^2)\)</span> のままだが、作例の 60 個体程度であれば十分に速い。個体数が数千を超える場合の高速化は、<a class="reference internal" href="#neighbor-search"><span class="std std-ref">近傍探索の高速化（格子による空間分割）</span></a>で扱う。境界は画面端でループするトーラス状にしており、群れが画面外に出ていかないようにするための別途の「壁を避ける」ルールを用意する必要がない。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">examples/boids.py</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;Craig Reynolds の Boids モデルによる群れシミュレーション。</span>
+
+<span class="sd">分離 (separation)・整列 (alignment)・結合 (cohesion) という3つの単純な</span>
+<span class="sd">ルールをすべての個体に同時適用するだけで、群れ全体としては魚群や</span>
+<span class="sd">鳥群のように見える複雑な動きが創発する。</span>
+
+<span class="sd">N体すべての組み合わせを Python の入れ子ループで処理すると N が</span>
+<span class="sd">増えたときに極端に遅くなるため、この実装では各個体間の距離や</span>
+<span class="sd">速度差を ``(N, N, 2)`` 配列にまとめてブロードキャストで一括計算する。</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pairwise_delta</span><span class="p">(</span><span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;全個体間の位置の差 ``positions[i] - positions[j]`` を返す。</span>
+
+<span class="sd">    shape ``(N, 2)`` から shape ``(N, N, 2)`` を作る。</span>
+<span class="sd">    ``delta[i, j]`` は「個体jから見た個体iの相対位置」。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">positions</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">positions</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_accelerations</span><span class="p">(</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">velocities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">perception_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">50.0</span><span class="p">,</span>
+    <span class="n">separation_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">15.0</span><span class="p">,</span>
+    <span class="n">separation_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">,</span>
+    <span class="n">alignment_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">cohesion_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">max_force</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;分離・整列・結合の3ルールを合成した加速度を、全個体分まとめて返す。</span>
+
+<span class="sd">    ``positions`` ・``velocities`` はともに shape ``(N, 2)``。</span>
+<span class="sd">    戻り値も同じ shape の加速度配列。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_pairwise_delta</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+    <span class="n">dist_sq</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="n">delta</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">dist_sq</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+    <span class="n">dist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dist_sq</span><span class="p">)</span>
+
+    <span class="n">perceived</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">&lt;</span> <span class="n">perception_radius</span>
+    <span class="n">perceived_count</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+        <span class="n">perceived</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="mi">1</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 結合: 知覚範囲内にいる仲間の重心へ向かうベクトル</span>
+    <span class="n">neighbor_positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">perceived</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">positions</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="mf">0.0</span>
+    <span class="p">)</span>
+    <span class="n">center_of_mass</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">neighbor_positions</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">perceived_count</span>
+    <span class="p">)</span>
+    <span class="n">cohesion</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">center_of_mass</span> <span class="o">-</span> <span class="n">positions</span>
+
+    <span class="c1"># 整列: 知覚範囲内にいる仲間の平均速度に合わせようとするベクトル</span>
+    <span class="n">neighbor_velocities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">perceived</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">velocities</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="mf">0.0</span>
+    <span class="p">)</span>
+    <span class="n">average_velocity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">neighbor_velocities</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">perceived_count</span>
+    <span class="p">)</span>
+    <span class="n">alignment</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">average_velocity</span> <span class="o">-</span> <span class="n">velocities</span>
+
+    <span class="c1"># 分離: 近づきすぎた個体から離れる向きに、距離が近いほど強く働く</span>
+    <span class="n">close</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">&lt;</span> <span class="n">separation_radius</span>
+    <span class="n">safe_dist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">close</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+    <span class="n">push</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">close</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">safe_dist</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.0</span>
+    <span class="p">)</span>
+    <span class="n">separation</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">push</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">acceleration</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">separation_weight</span> <span class="o">*</span> <span class="n">separation</span>
+        <span class="o">+</span> <span class="n">alignment_weight</span> <span class="o">*</span> <span class="n">alignment</span>
+        <span class="o">+</span> <span class="n">cohesion_weight</span> <span class="o">*</span> <span class="n">cohesion</span>
+    <span class="p">)</span>
+    <span class="n">magnitude</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">acceleration</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">max_force</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+        <span class="n">magnitude</span><span class="p">,</span> <span class="mf">1e-9</span>
+    <span class="p">))</span>
+    <span class="k">return</span> <span class="n">acceleration</span> <span class="o">*</span> <span class="n">scale</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">velocities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">max_speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">rule_kwargs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;1ステップ分シミュレーションを進め、更新後の位置・速度を返す。</span>
+
+<span class="sd">    空間はトーラス状（画面端でループする）とし、境界回避ルールを</span>
+<span class="sd">    別途用意しなくても群れが画面内に留まり続けるようにしている。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">bounds</span>
+
+    <span class="n">acceleration</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">compute_accelerations</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">,</span> <span class="n">velocities</span><span class="p">,</span> <span class="o">**</span><span class="n">rule_kwargs</span>
+    <span class="p">)</span>
+    <span class="n">new_velocities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">velocities</span> <span class="o">+</span> <span class="n">acceleration</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="n">speed</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">new_velocities</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">speed_scale</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+        <span class="mf">1.0</span><span class="p">,</span> <span class="n">max_speed</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">new_velocities</span> <span class="o">=</span> <span class="n">new_velocities</span> <span class="o">*</span> <span class="n">speed_scale</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+    <span class="n">new_positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">positions</span> <span class="o">+</span> <span class="n">new_velocities</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="n">new_positions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">%=</span> <span class="n">width</span>
+    <span class="n">new_positions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">%=</span> <span class="n">height</span>
+    <span class="k">return</span> <span class="n">new_positions</span><span class="p">,</span> <span class="n">new_velocities</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">simulate</span><span class="p">(</span>
+    <span class="n">n_boids</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+    <span class="n">n_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">150</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">150.0</span><span class="p">,</span> <span class="mf">150.0</span><span class="p">),</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;群れシミュレーションを実行し、全ステップの軌跡と最終速度を返す。</span>
+
+<span class="sd">    戻り値は軌跡 ``(n_steps, n_boids, 2)`` と、最終ステップの速度</span>
+<span class="sd">    ``(n_boids, 2)`` のタプル。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">bounds</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
+        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_boids</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">velocities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_boids</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_steps</span><span class="p">,</span> <span class="n">n_boids</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_steps</span><span class="p">):</span>
+        <span class="n">positions</span><span class="p">,</span> <span class="n">velocities</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">velocities</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+        <span class="n">trail</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+
+    <span class="k">return</span> <span class="n">trail</span><span class="p">,</span> <span class="n">velocities</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+    <span class="n">n_trail_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">150.0</span><span class="p">,</span> <span class="mf">150.0</span><span class="p">)</span>
+    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">velocities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">trail</span><span class="p">,</span> <span class="n">velocities</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">trail</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+    <span class="c1"># 直近数ステップの軌跡を薄く描画する。画面端をまたぐ移動は</span>
+    <span class="c1"># 線が横断してしまうため、差分が大きい区間は描かずに間引く。</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">bounds</span>
+    <span class="n">recent</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">trail</span><span class="p">[</span><span class="o">-</span><span class="n">n_trail_steps</span><span class="p">:]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">recent</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">xs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">recent</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">ys</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">recent</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">jumps</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">xs</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">jumps</span> <span class="o">|=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ys</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jumps</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">xs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jumps</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">ys</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;steelblue&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+    <span class="n">heading</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">velocities</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">velocities</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="mf">1e-9</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">quiver</span><span class="p">(</span>
+        <span class="n">positions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">positions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">heading</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">heading</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkslateblue&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.006</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 表示範囲は最終フレームの群れの位置を基準にする。トーラス境界を</span>
+    <span class="c1"># ラップした軌跡の断片が視界に紛れ込んでも自動スケールが</span>
+    <span class="c1"># 壊れないようにするため。</span>
+    <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">25.0</span>
+    <span class="n">x_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">positions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span> <span class="o">-</span> <span class="n">margin</span>
+    <span class="n">x_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">positions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span> <span class="o">+</span> <span class="n">margin</span>
+    <span class="n">y_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">positions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span> <span class="o">-</span> <span class="n">margin</span>
+    <span class="n">y_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">positions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span> <span class="o">+</span> <span class="n">margin</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Boids: separation, alignment, and cohesion&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;boids.png&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>初期状態ではランダムに散らばっていた個体群も、数十ステップも経つと 1 つのまとまった群れとして同じ方向へ移動するようになる。</p>
+<a class="reference internal image-reference" href="_images/boids.png"><img alt="Boids シミュレーションの最終フレーム。群れがまとまって移動し、各個体の進行方向が矢印で示されている" src="_images/boids.png" style="width: 400px;" />
+</a>
+<p>矢印は各個体の進行方向、薄い線は直近の軌跡を表す。分離・整列・結合の重みや知覚半径を変えると、群れの密度や動きのまとまり方が大きく変わる。知覚半径を狭くしすぎると個体群がいくつもの小さな群れに分裂し、逆に広くしすぎると密集した 1 つの塊になって分離の力が支配的になる。</p>
+</section>
+<section id="neighbor-search">
+<span id="id3"></span><h2>近傍探索の高速化（格子による空間分割）<a class="headerlink" href="#neighbor-search" title="Link to this heading"></a></h2>
+<p>Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で結ぶ表現のように、ジェネラティブアートでは「ある半径以内にある点の組を全て求める」処理が繰り返し必要になる。このように、近くにある点を探す処理を<strong>近傍探索</strong>と呼ぶ。前節の Boids の実装は、全ての組の差を <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">N,</span> <span class="pre">2)</span></code> の配列として計算していたため、計算量もメモリも <span class="math notranslate nohighlight">\(O(N^2)\)</span> になる。例えば点が 16000 個あると、位置の差を保持する配列だけで約 4 GB のメモリが必要になる。</p>
+<p>半径 <span class="math notranslate nohighlight">\(r\)</span> 以内の組だけが必要な場合は、平面を 1 辺 <span class="math notranslate nohighlight">\(r\)</span> のマスに区切り、各点を自分のマスに登録しておくとよい。距離が <span class="math notranslate nohighlight">\(r\)</span> 未満の 2 点は、x 座標の差も y 座標の差も <span class="math notranslate nohighlight">\(r\)</span> 未満なので、同じマスか、隣接する 8 マスのどれかに必ず入っている。したがって、マスごとに自分のマスと隣接するマスの点だけを調べれば、遠く離れた点どうしの組を調べずに済む。点の密度がおおよそ一様であれば、1 マスあたりの点の数はほぼ一定になるため、計算量は点の数にほぼ比例する程度に抑えられる。</p>
+<p>この考え方は、本資料でも既に 2 回使っている。<a class="reference internal" href="shapes.html"><span class="doc">距離関数による形状表現</span></a>のポアソン円盤サンプリングでは、1 マスに点が高々 1 つしか入らない大きさの格子に点を登録し、候補点の周囲 5×5 マスだけを調べていた。<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>の Worley ノイズでは、各マスに特徴点を 1 つずつ置き、周囲 3×3 マスの特徴点だけを調べていた。本節では、マスに入る点の数が決まっていない一般の場合を扱う。</p>
+<p>比較のため、まず全ての組を調べる総当たりの方法を示す。</p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">examples/neighbor_search.py の brute_force_pairs 関数</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">brute_force_pairs</span><span class="p">(</span><span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;全ての点の組の距離を調べ、半径 ``radius`` 未満の組を返す。</span>
+
+<span class="sd">    戻り値は形状 (M, 2) の整数配列で、各行は ``i &lt; j`` を満たす点の</span>
+<span class="sd">    番号の組。点の数を N とすると、N x N の距離の表を作るため、</span>
+<span class="sd">    計算量もメモリも O(N^2) になる。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">points</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+    <span class="n">dist_sq</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="n">delta</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">i</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">j</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">dist_sq</span> <span class="o">&lt;</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">radius</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>格子を使う方法では、まず各点をマスに振り分ける。点をマスの番号で並べ替え、番号が変わる位置で区切ることで、Python のループを使わずに振り分けている。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">examples/neighbor_search.py の build_grid 関数</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">build_grid</span><span class="p">(</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">cell_size</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;各点を1辺 ``cell_size`` のマスに登録し、マスごとの点の番号を返す。</span>
+
+<span class="sd">    点をマスの番号で並べ替えてから、マスの番号が変わる位置で区切る</span>
+<span class="sd">    ことで、Python のループを使わずに振り分けている。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cells</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">points</span> <span class="o">/</span> <span class="n">cell_size</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">((</span><span class="n">cells</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">cells</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span>
+    <span class="n">sorted_cells</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+    <span class="n">changes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">sorted_cells</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">grid</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">changes</span><span class="p">):</span>
+        <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">grid</span><span class="p">[(</span><span class="nb">int</span><span class="p">(</span><span class="n">cx</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">cy</span><span class="p">))]</span> <span class="o">=</span> <span class="n">members</span>
+    <span class="k">return</span> <span class="n">grid</span>
+</pre></div>
+</div>
+</div>
+<p>次に、マスごとに、自分のマスと隣接するマスの点どうしの距離を総当たりで調べる。隣接する 8 マスを全て調べると、同じ組をマス A から見たときとマス B から見たときの 2 回数えてしまう。そのため、自分のマスと、右・左下・下・右下の 4 マスだけを調べている。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">examples/neighbor_search.py の _FORWARD_OFFSETS</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 自分のマスと、右・左下・下・右下のマス。残りの4方向(左・上など)の</span>
+<span class="c1"># 組は、相手のマスから見たときにこの4方向のどれかとして数えられる</span>
+<span class="c1"># ため、ここに含めると同じ組を2回数えてしまう。</span>
+<span class="n">_FORWARD_OFFSETS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">examples/neighbor_search.py の grid_pairs 関数</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">grid_pairs</span><span class="p">(</span><span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;格子を使って、半径 ``radius`` 未満の点の組を返す。</span>
+
+<span class="sd">    マスの1辺を ``radius`` にすると、距離が ``radius`` 未満の2点は、</span>
+<span class="sd">    同じマスか、隣接する8マスのどれかに入っている。そこで、マスごとに</span>
+<span class="sd">    自分のマスと隣接するマスの点だけを総当たりで調べる。戻り値の形式は</span>
+<span class="sd">    ``brute_force_pairs`` と同じ(各行 ``i &lt; j``、行の並び順は異なる)。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">grid</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="n">build_grid</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">radius</span><span class="p">)</span>
+    <span class="n">found</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">),</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">grid</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="ow">in</span> <span class="n">_FORWARD_OFFSETS</span><span class="p">:</span>
+            <span class="n">others</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">cx</span> <span class="o">+</span> <span class="n">dx</span><span class="p">,</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">dy</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">others</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">members</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">others</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="p">)</span>
+            <span class="n">close</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="n">delta</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">radius</span><span class="o">**</span><span class="mi">2</span>
+            <span class="k">if</span> <span class="n">dx</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">dy</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">close</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">close</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># 同じマスの中は i &lt; j の組だけ</span>
+            <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+            <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">close</span><span class="p">)</span>
+            <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">members</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">others</span><span class="p">[</span><span class="n">b</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">pairs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">found</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># 各行を (小さい番号, 大きい番号) にそろえる</span>
+</pre></div>
+</div>
+</div>
+<p>800 × 800 の範囲に一様乱数で散らした点について、距離が 16 未満の組を求める時間を比べると、次のようになった。数値は 1 つの環境での計測例で、計算機によって変わる。どの点の数でも、2 つの方法で求めた組は完全に一致した。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>点の数</p></th>
+<th class="head"><p>総当たり</p></th>
+<th class="head"><p>格子</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1000</p></td>
+<td><p>0.06 秒</p></td>
+<td><p>0.06 秒</p></td>
+</tr>
+<tr class="row-odd"><td><p>2000</p></td>
+<td><p>0.22 秒</p></td>
+<td><p>0.12 秒</p></td>
+</tr>
+<tr class="row-even"><td><p>4000</p></td>
+<td><p>0.74 秒</p></td>
+<td><p>0.22 秒</p></td>
+</tr>
+<tr class="row-odd"><td><p>16000</p></td>
+<td><p>（約 4 GB のメモリが必要なため計測せず）</p></td>
+<td><p>0.47 秒</p></td>
+</tr>
+</tbody>
+</table>
+<p>点が少ないうちは、マスを 1 つずつ Python のループで処理する手間があるため、総当たりとの差はほとんどない。点が増えると、総当たりの時間は点の数の 2 乗に比例して増えるのに対し、格子の時間は緩やかにしか増えない。</p>
+<p>格子による近傍探索を使うと、多数の点を扱う表現も現実的な時間で作れる。次の作例は、パーリンノイズの値が大きい場所ほど密になるように 12000 個の点を散らし、距離が 16 未満の点どうしを、近いほど濃い線で結んだものである。総当たりでは 12000 × 12000 の組を調べる必要があるが、格子を使えば、各点の周りのマスにある点だけを調べれば済む。結ばれた組は約 16 万組である。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">examples/neighbor_search.py の render_links 関数</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">render_links</span><span class="p">(</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">pairs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">background</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">240</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">120</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;近い点どうしを線で結ぶ。距離が近い組ほど線を濃く描く。&quot;&quot;&quot;</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="n">background</span><span class="p">)</span>
+    <span class="n">draw</span><span class="p">:</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">ImageDraw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">lengths</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span>
+        <span class="n">points</span><span class="p">[</span><span class="n">pairs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="n">pairs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">back</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">background</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="c1"># 薄い線から先に描き、濃い線が上に重なるようにする。</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">lengths</span><span class="p">):</span>
+        <span class="n">strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">lengths</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">/</span> <span class="n">radius</span><span class="p">)</span> <span class="o">**</span> <span class="mf">1.5</span>
+        <span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">back</span> <span class="o">+</span> <span class="p">(</span><span class="n">front</span> <span class="o">-</span> <span class="n">back</span><span class="p">)</span> <span class="o">*</span> <span class="n">strength</span>
+        <span class="n">line_color</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">rgb</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">rgb</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">rgb</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">pairs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">j</span><span class="p">])],</span> <span class="n">fill</span><span class="o">=</span><span class="n">line_color</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">image</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/neighbor_links.png"><img alt="ノイズに従って密度を変えて散らした 12000 個の点のうち、近い点どうしを線で結んだ網目。点の密な場所ほど網目が細かく明るい" src="_images/neighbor_links.png" style="width: 400px;" />
+</a>
+<p>格子による方法には、次のような限界もある。</p>
+<ul class="simple">
+<li><p>点の密度に大きな偏りがあると、一部のマスに点が集中し、そのマスの中の総当たりに時間がかかる。そのような場合は、点の多い場所ほど細かく分割する四分木（<a class="reference internal" href="tiling.html#subdivision"><span class="std std-ref">再帰的分割</span></a>で扱った分割を点の数に応じて行うもの）や、k-d 木が使われる。「半径以内の全ての点」ではなく「もっとも近い点」を求めたい場合にも、これらの木構造が向いている。実用上は、<code class="docutils literal notranslate"><span class="pre">scipy.spatial.cKDTree</span></code> のようなライブラリを使うのが手軽である。</p></li>
+<li><p>次節の粒子間の反発力のように、距離に上限がなく全ての組に働く力には、調べる範囲を絞る格子の考え方はそのままでは使えない。粒子の数が多い場合は、遠くにある粒子の集まりを 1 つの重心で近似する Barnes-Hut 法（四分木を使う）によって、計算量を <span class="math notranslate nohighlight">\(O(N \log N)\)</span> 程度に減らせる。本資料の作例は粒子の数が少ないため、全ての組を計算している。</p></li>
+</ul>
+<p>なお、<a class="reference internal" href="shapes.html"><span class="doc">距離関数による形状表現</span></a>のロイド緩和で画素ごとにもっとも近い種点を求める処理も、近傍探索の一種である。本資料では画素を数行ずつに分けた総当たりで計算しているが、種点がさらに増える場合は、同じように格子や k-d 木で高速化できる。</p>
+</section>
+<section id="id4">
+<h2>物理法則の応用<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Particle</span></code> に力を加えていくことで、重力・反発・衝突判定といった素朴な物理法則をパーティクルシステムに組み込める。</p>
+<p>重力は全粒子に共通の一定の力（下向きの加速度）として、毎ステップ <code class="docutils literal notranslate"><span class="pre">apply_force</span></code> で加えるだけでよい。</p>
+<p>粒子間の反発力は、Boids の分離ルールと同様に全ペアの距離に依存する力だが、ここでは距離の 2 乗に反比例する斥力として実装し、Boids と同じくループを使わずブロードキャストで一括計算している。距離が 0 に近づくと力が発散してしまうため、<code class="docutils literal notranslate"><span class="pre">min_distance</span></code> で下限をクランプするソフトニングを入れている。</p>
+<div class="math notranslate nohighlight">
+\[\vec{F}_{ij} = k \, \frac{\vec{p}_i - \vec{p}_j}
+{\max(\lVert \vec{p}_i - \vec{p}_j \rVert, d_{\min})^3}\]</div>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">examples/particle.py の repulsion_forces 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">repulsion_forces</span><span class="p">(</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">150.0</span><span class="p">,</span>
+    <span class="n">min_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;全パーティクル間に働く反発力を、ループを使わず一括計算する。</span>
+
+<span class="sd">    ``positions`` は shape ``(N, 2)``。各粒子の受ける反発力の合計を</span>
+<span class="sd">    同じ shape で返す。力の大きさは距離の2乗に反比例させ、</span>
+<span class="sd">    ``min_distance`` で発散を防ぐ（ソフトニング）。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">diff</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">positions</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+    <span class="n">dist_sq</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">diff</span> <span class="o">*</span> <span class="n">diff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">dist_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">dist_sq</span><span class="p">,</span> <span class="n">min_distance</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">dist_sq</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+
+    <span class="n">dist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dist_sq</span><span class="p">)</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">diff</span> <span class="o">/</span> <span class="n">dist</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">magnitude</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">strength</span> <span class="o">/</span> <span class="n">dist_sq</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">direction</span> <span class="o">*</span> <span class="n">magnitude</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>衝突判定は、床や壁のような静的な形状であれば、位置がその形状を超えていないかを毎ステップチェックし、超えていればめり込み分を押し戻して速度を反転させる、という単純な処理で十分に実用になる。反発係数 <span class="math notranslate nohighlight">\(e \in [0, 1]\)</span> を掛けて反転させることで、跳ね返るたびにエネルギーが失われ、やがて床に静止する。</p>
+<div class="math notranslate nohighlight">
+\[v_y \leftarrow -e \, v_y \quad
+(y \le y_{\mathrm{floor}} \ \text{かつ} \ v_y &lt; 0)\]</div>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">examples/particle.py の simulate_gravity_bounce 関数</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">simulate_gravity_bounce</span><span class="p">(</span>
+    <span class="n">n_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span>
+    <span class="n">n_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+    <span class="n">gravity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">9.8</span><span class="p">,</span>
+    <span class="n">floor_y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">restitution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;重力・床との反発・粒子間反発を組み込んだ落下シミュレーション。</span>
+
+<span class="sd">    戻り値は各ステップの位置を記録した shape ``(n_steps, n_particles, 2)``</span>
+<span class="sd">    の軌跡配列。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">particles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Particle</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">Particle</span><span class="p">(</span>
+            <span class="n">position</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">*</span> <span class="n">width</span><span class="p">,</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">width</span><span class="p">),</span>
+                 <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">6.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">)],</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">velocity</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_particles</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_steps</span><span class="p">,</span> <span class="n">n_particles</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">gravity_force</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">gravity</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_steps</span><span class="p">):</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">position</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">particles</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">repulsions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">repulsion_forces</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">particle</span><span class="p">,</span> <span class="n">repulsion</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">repulsions</span><span class="p">):</span>
+            <span class="n">particle</span><span class="o">.</span><span class="n">apply_force</span><span class="p">(</span><span class="n">gravity_force</span> <span class="o">*</span> <span class="n">particle</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span>
+            <span class="n">particle</span><span class="o">.</span><span class="n">apply_force</span><span class="p">(</span><span class="n">repulsion</span><span class="p">)</span>
+            <span class="n">particle</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+
+            <span class="c1"># 床との衝突判定: めり込んだら押し戻し、速度を反転させる</span>
+            <span class="k">if</span> <span class="n">particle</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">floor_y</span><span class="p">:</span>
+                <span class="n">particle</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">floor_y</span>
+                <span class="k">if</span> <span class="n">particle</span><span class="o">.</span><span class="n">velocity</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">particle</span><span class="o">.</span><span class="n">velocity</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="n">restitution</span>
+            <span class="c1"># 左右の壁でも同様に跳ね返す</span>
+            <span class="k">if</span> <span class="n">particle</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="n">particle</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">particle</span><span class="o">.</span><span class="n">velocity</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="n">restitution</span>
+            <span class="k">elif</span> <span class="n">particle</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">width</span><span class="p">:</span>
+                <span class="n">particle</span><span class="o">.</span><span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">width</span>
+                <span class="n">particle</span><span class="o">.</span><span class="n">velocity</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="n">restitution</span>
+
+        <span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">position</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">particles</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">trail</span>
+</pre></div>
+</div>
+</div>
+<p>重力・粒子間反発・床と壁との衝突判定を組み合わせると、粒子が落下しながら互いに押しのけ合い、床でバウンドしながらやがて広がって静止する様子が得られる。</p>
+<a class="reference internal image-reference" href="_images/particle_gravity.png"><img alt="重力と粒子間の反発力、床・壁との衝突判定を組み込んだパーティクルの軌跡" src="_images/particle_gravity.png" style="width: 400px;" />
+</a>
+<p>反発力を強くしすぎたり、床・壁との反発係数を大きくしすぎたりすると、オイラー法による離散的な積分ではエネルギーが減衰せずに増幅してしまい、粒子が想定より高くバウンドし続ける不安定な挙動になりやすい。<code class="docutils literal notranslate"><span class="pre">min_distance</span></code> を大きめに取ってソフトニングを効かせるか、<code class="docutils literal notranslate"><span class="pre">dt</span></code> を小さくすることで安定する。</p>
+<p>なお、力を「その場の位置に応じて決まるベクトル場」として与えるという考え方は、<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>のフローフィールドとも共通している。フローフィールドをパーティクルの加速度としてそのまま <code class="docutils literal notranslate"><span class="pre">apply_force</span></code> に渡せば、ノイズの流れに沿って粒子が運動する表現にもつなげられる。</p>
+</section>
+<section id="id5">
+<h2>拘束によるロープとクロスの表現<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Particle</span></code> クラスは、速度を明示的な状態として持ち、力を毎ステップ加速度に蓄積してからオイラー法で積分する<strong>力ベース</strong>の方式だった。ロープやクロス（布）のように、多数の点が「一定の距離を保つ」という拘束（constraint）で連結された系では、これとは異なる <strong>Verlet 積分</strong>がよく使われる。速度を明示的には持たず、前ステップの位置との差分を暗黙の速度として扱う。</p>
+<div class="math notranslate nohighlight">
+\[p_{t+1} = p_t + (p_t - p_{t-1}) \cdot \mathrm{damping} + a_t \, dt^2\]</div>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">examples/particle.py の verlet_step 関数</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">verlet_step</span><span class="p">(</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">previous_positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">acceleration</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">damping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.995</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;位置ベースのVerlet積分で1ステップ進める。</span>
+
+<span class="sd">    ``Particle`` クラスは速度を明示的な状態として持ち、力を毎ステップ</span>
+<span class="sd">    加速度に蓄積してから積分する **力ベース** の方式だった。Verlet積分</span>
+<span class="sd">    はこれとは異なり、速度を陽には持たず、前ステップの位置との差分</span>
+<span class="sd">    ``position - previous_position`` を「暗黙の速度」として扱う。</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       p_{t+1} = p_t + (p_t - p_{t-1}) \\cdot \\mathrm{damping}</span>
+<span class="sd">                + a_t \\, dt^2</span>
+
+<span class="sd">    速度を明示的に持たないこの方式は、後述する距離拘束(constraint)を</span>
+<span class="sd">    位置に対して直接押し引きするだけで安定して解けるという利点があり、</span>
+<span class="sd">    ロープやクロスのような、多数の点が拘束で連結された系でよく使われる</span>
+<span class="sd">    (Thomas Jakobsenの &quot;Advanced Character Physics&quot;, 2001)。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">velocity_like</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span><span class="n">positions</span> <span class="o">-</span> <span class="n">previous_positions</span><span class="p">)</span> <span class="o">*</span> <span class="n">damping</span>
+    <span class="n">new_positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">positions</span> <span class="o">+</span> <span class="n">velocity_like</span> <span class="o">+</span> <span class="n">acceleration</span> <span class="o">*</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_positions</span><span class="p">,</span> <span class="n">positions</span>
+</pre></div>
+</div>
+</div>
+<p>速度を持たないこの方式は、拘束を位置に対して直接押し引きするだけで安定して解けるという利点がある。2 点間の距離を一定に保つ拘束は、目標距離との差の半分ずつを互いに押し戻すだけで実装できる。1 回の修正では別の拘束とのつじつまが合わなくなるため、これを何度も繰り返すことで全体を緩やかに収束させる（Thomas Jakobsen の &quot;Advanced Character Physics&quot;, 2001）。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">examples/particle.py の satisfy_distance_constraints 関数</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">satisfy_distance_constraints</span><span class="p">(</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">pinned</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;2点間の距離を ``rest_length`` に近づける拘束を繰り返し解く。</span>
+
+<span class="sd">    各拘束 ``(i, j, rest_length)`` について、2点の距離と目標距離との</span>
+<span class="sd">    差の半分ずつを、互いに離れる/近づく向きに押し戻す。1回の反復では</span>
+<span class="sd">    他の拘束とのつじつまが合わなくなる(1つ直すと別の1つがずれる)ため、</span>
+<span class="sd">    ``iterations`` 回繰り返すことで全体を緩やかに目標距離へ収束させる</span>
+<span class="sd">    (Gauss-Seidel法に近い緩和法)。``pinned`` に含まれる点は固定点として</span>
+<span class="sd">    動かさない。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">positions</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">rest_length</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+            <span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">positions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="o">*</span><span class="n">delta</span><span class="p">))</span> <span class="ow">or</span> <span class="mf">1e-9</span>
+            <span class="n">correction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">distance</span> <span class="o">-</span> <span class="n">rest_length</span><span class="p">)</span> <span class="o">/</span> <span class="n">distance</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pinned</span> <span class="ow">and</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">pinned</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pinned</span><span class="p">:</span>
+                <span class="n">positions</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-=</span> <span class="n">correction</span>
+            <span class="k">elif</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">pinned</span><span class="p">:</span>
+                <span class="n">positions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">correction</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">positions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">correction</span> <span class="o">*</span> <span class="mf">0.5</span>
+                <span class="n">positions</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-=</span> <span class="n">correction</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="k">return</span> <span class="n">positions</span>
+</pre></div>
+</div>
+</div>
+<p>両端を固定した点の鎖に、この拘束を隣接点どうしで適用しながら重力下で Verlet 積分すると、垂れ下がったロープが理論上の懸垂線（カテナリー曲線）に近い形に落ち着く。</p>
+<a class="reference internal image-reference" href="_images/particle_rope.png"><img alt="両端を固定したロープが重力で垂れ下がり、懸垂線に近い形に落ち着いた様子" src="_images/particle_rope.png" style="width: 350px;" />
+</a>
+<p>同じ拘束を格子状に並んだ点に縦横 2 方向で適用すると、上端の両角だけを固定したクロス（布）のシミュレーションになる。ロープが 1 本の鎖だったのに対し、クロスは格子状のネットワークが拘束を通じて力を伝え合う点が異なる。斜め方向のシア拘束を加えていないため、正方形のマスが台形状に歪みながら垂れる、やや伸縮性の高い布になる。</p>
+<a class="reference internal image-reference" href="_images/particle_cloth.png"><img alt="上端の両角だけを固定したクロスが重力で垂れ下がった様子。格子状のマスが台形状に歪んでいる" src="_images/particle_cloth.png" style="width: 350px;" />
+</a>
+<p>力ベースの積分と拘束ベースの Verlet 積分は、どちらも「毎ステップ位置を更新する」という骨格は同じだが、速度をどう扱うか、複数の粒子・点の関係をどう表現するか（独立に力を及ぼし合うか、拘束で直接連結するか）という設計が異なる。Boids の分離・整列・結合が「近傍を見て力を加減する」緩やかな協調だったのに対し、拘束は「破ってはいけない関係」を毎ステップ強制的に満たし直す、より硬い結びつきだと言える。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="automata.html" class="btn btn-neutral float-left" title="セルオートマトンと反応拡散系" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="evolution.html" class="btn btn-neutral float-right" title="進化的アルゴリズム" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

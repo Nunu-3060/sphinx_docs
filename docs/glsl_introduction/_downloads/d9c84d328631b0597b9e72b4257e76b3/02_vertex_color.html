@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 頂点カラーと uniform 変数 | GLSL 入門</title>
+<style>
+  body { margin: 0; padding: 12px; background: #1e1e1e; color: #ddd; font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  canvas { display: block; width: 100%; max-width: 600px; height: auto; background: #000; }
+  .controls { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  #log { color: #ff8080; white-space: pre-wrap; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<h1>02 頂点カラーと uniform 変数</h1>
+<canvas id="canvas" width="600" height="400"></canvas>
+<div class="controls">
+  <label>明るさ (uBrightness) <input id="brightness" type="range" min="0" max="2" step="0.01" value="1"> <span id="brightness-value">1.00</span></label>
+  <label><input id="use-flat" type="checkbox"> flat 修飾子の変数を使う（補間しない）</label>
+</div>
+<pre id="log"></pre>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+// 頂点属性：頂点ごとに異なる値
+layout(location = 0) in vec2 aPosition;  // 頂点の位置
+layout(location = 1) in vec3 aColor;     // 頂点の色
+
+// ステージ間変数：フラグメントシェーダーへ渡す値
+out vec3 vColor;           // 三角形の内部で補間される（smooth は既定なので省略している）
+flat out vec3 vFlatColor;  // 補間されず、プロボーキング頂点（最後の頂点）の値が使われる
+
+void main() {
+    vColor = aColor;
+    vFlatColor = aColor;
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+
+// 頂点シェーダーの出力と同じ名前・型で宣言する
+in vec3 vColor;
+flat in vec3 vFlatColor;
+
+// uniform 変数：1 回の描画の間、すべてのフラグメントで同じ値
+uniform float uBrightness;  // 明るさの倍率
+uniform bool uUseFlat;      // true のとき補間しない色を使う
+
+out vec4 outColor;
+
+void main() {
+    vec3 color = uUseFlat ? vFlatColor : vColor;
+    outColor = vec4(color * uBrightness, 1.0);
+}
+</script>
+
+<script>
+"use strict";
+
+// ---- シェーダーのコンパイルとリンクを行う関数（01 と同じ） ----
+
+function compileShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const message = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("シェーダーのコンパイルに失敗しました。\n" + message);
+    }
+    return shader;
+}
+
+function createProgram(gl, vertexSource, fragmentSource) {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error("プログラムのリンクに失敗しました。\n" + gl.getProgramInfoLog(program));
+    }
+    return program;
+}
+
+function getShaderSource(id) {
+    return document.getElementById(id).textContent.trim();
+}
+
+function main() {
+    const canvas = document.getElementById("canvas");
+    const gl = canvas.getContext("webgl2");
+    if (!gl) {
+        throw new Error("このブラウザーは WebGL 2.0 に対応していません。");
+    }
+    const program = createProgram(gl, getShaderSource("vertex-shader"), getShaderSource("fragment-shader"));
+
+    // ---- 頂点データ（位置と色を交互に並べる） ----
+    // 1 頂点あたり float 5 個：x, y, r, g, b
+    const vertices = new Float32Array([
+    //    x     y     r    g    b
+         0.0,  0.7,  1.0, 0.0, 0.0,  // 上：赤
+        -0.7, -0.7,  0.0, 1.0, 0.0,  // 左下：緑
+         0.7, -0.7,  0.0, 0.0, 1.0,  // 右下：青（最後の頂点）
+    ]);
+    const FLOAT_SIZE = 4;               // float 1 個のバイト数
+    const STRIDE = 5 * FLOAT_SIZE;      // 1 頂点分のバイト数 (20)
+    const COLOR_OFFSET = 2 * FLOAT_SIZE; // 色データの開始位置 (8)
+
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+    // location = 0：位置 (float 2 個、先頭から)
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, STRIDE, 0);
+    // location = 1：色 (float 3 個、8 バイト目から)
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, STRIDE, COLOR_OFFSET);
+    // ---- 頂点データここまで ----
+
+    // ---- uniform 変数の設定と描画 ----
+    // uniform 変数の場所は、プログラムのリンク後に 1 回だけ取得しておく
+    const brightnessLocation = gl.getUniformLocation(program, "uBrightness");
+    const useFlatLocation = gl.getUniformLocation(program, "uUseFlat");
+
+    const brightnessInput = document.getElementById("brightness");
+    const brightnessValue = document.getElementById("brightness-value");
+    const useFlatInput = document.getElementById("use-flat");
+
+    function draw() {
+        const brightness = Number(brightnessInput.value);
+        brightnessValue.textContent = brightness.toFixed(2);
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0.1, 0.1, 0.1, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(program);  // uniform 変数を設定する前に、使うプログラムを選ぶ
+        gl.uniform1f(brightnessLocation, brightness);
+        gl.uniform1i(useFlatLocation, useFlatInput.checked ? 1 : 0);  // bool は uniform1i で設定する
+
+        gl.bindVertexArray(vao);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    // ---- 描画ここまで ----
+
+    brightnessInput.addEventListener("input", draw);
+    useFlatInput.addEventListener("change", draw);
+    draw();
+}
+
+try {
+    main();
+} catch (error) {
+    document.getElementById("log").textContent = error.message;
+    console.error(error);
+}
+</script>
+</body>
+</html>

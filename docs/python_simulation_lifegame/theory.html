@@ -1,0 +1,168 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>セルオートマトンの理論 &mdash; Python によるライフゲームの実装 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="実装の全体構成" href="architecture.html" />
+    <link rel="prev" title="概要" href="overview.html" />
+ 
+<style>
+  .wy-side-nav-search > a.icon-home {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+</style>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+<a href="index.html" class="icon icon-home">
+  Python による<br/>ライフゲームの実装
+</a>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">概要</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">セルオートマトンの理論</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">セルオートマトンとは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">ライフゲームのルール</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">ムーア近傍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">境界条件</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">同期更新</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">実装の全体構成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.html">コアロジックの実装（LifeGame.py）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">可視化の実装（LifeGameImage.py）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gui.html">GUI アプリケーションの実装</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">実行方法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html">まとめと発展的な話題</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">スクリプト一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API リファレンス</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python によるライフゲームの実装</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">セルオートマトンの理論</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>セルオートマトンの理論<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="id2">
+<h2>セルオートマトンとは<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>セルオートマトン（Cellular Automaton）とは、格子状に並んだ「セル」の集合と、各セルの状態を更新するための「ルール」からなる離散的な計算モデルである。各セルは有限個の状態（多くの場合 0 か 1 の 2 状態）のいずれかを取り、時間ステップごとに、あらかじめ定められたルールに従ってすべてのセルが同時に（同期的に）状態を更新する。</p>
+<p>セルオートマトンは以下の要素によって定義される。</p>
+<ul class="simple">
+<li><p><strong>格子（lattice）</strong>: セルが配置される空間の構造。1 次元・2 次元格子がよく用いられる。</p></li>
+<li><p><strong>近傍（neighbourhood）</strong>: 各セルの状態更新に影響を与える周囲のセルの集合。</p></li>
+<li><p><strong>状態（state）</strong>: 各セルが取り得る値の集合。</p></li>
+<li><p><strong>遷移規則（rule）</strong>: 現在の自セルの状態と近傍の状態から、次の状態を決定する規則。</p></li>
+<li><p><strong>境界条件（boundary condition）</strong>: 格子の端をどのように扱うかの規則。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>ライフゲームのルール<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>ライフゲーム（Conway's Game of Life）は、2 次元格子上で定義されるセルオートマトンの代表例である。各セルは「生 (1)」または「死 (0)」のいずれかの状態を取り、以下のルールに従って次の世代の状態が決定される。</p>
+<ul class="simple">
+<li><p><strong>誕生</strong>: 死んでいるセルの周囲にちょうど 3 つの生きたセルがあれば、そのセルは次の世代で誕生する。</p></li>
+<li><p><strong>生存</strong>: 生きているセルの周囲に 2 つまたは 3 つの生きたセルがあれば、そのセルは次の世代でも生存する。</p></li>
+<li><p><strong>過疎・過密による死</strong>: 生きているセルの周囲の生きたセルが 1 つ以下、または 4 つ以上であれば、そのセルは次の世代で死ぬ。</p></li>
+</ul>
+<p>このルールは、生存する近傍セル数の集合を <span class="math notranslate nohighlight">\(S\)</span>、誕生する近傍セル数の集合を <span class="math notranslate nohighlight">\(B\)</span> として <span class="math notranslate nohighlight">\(B3/S23\)</span> のように表記されることが多い。本資料で扱う実装では、誕生条件・生存条件をそれぞれリストとして与えることで、標準ルール以外の任意のライフゲーム系ルールも表現できるようにしている（詳細は <a class="reference internal" href="core.html"><span class="doc">コアロジックの実装（LifeGame.py）</span></a> を参照）。</p>
+</section>
+<section id="id4">
+<h2>ムーア近傍<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>ライフゲームでは、あるセルの状態更新に影響する近傍として、上下左右および斜め方向を含む 8 近傍（<strong>ムーア近傍</strong>, Moore neighbourhood）が用いられる。すなわち、格子上の座標 <span class="math notranslate nohighlight">\((i, j)\)</span> にあるセルの近傍は</p>
+<div class="math notranslate nohighlight">
+\[\{(i + di,\ j + dj) \mid di, dj \in \{-1, 0, 1\},\ (di, dj) \neq (0, 0)\}\]</div>
+<p>の 8 マスである。これに対し、斜め方向を含まない上下左右 4 近傍は <strong>フォン・ノイマン近傍</strong> （von Neumann neighbourhood）と呼ばれる。</p>
+</section>
+<section id="id5">
+<h2>境界条件<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>格子の端に位置するセルは近傍の一部が格子の外側にはみ出すため、これをどう扱うかを別途定める必要がある。代表的な境界条件には以下のようなものがある。</p>
+<ul class="simple">
+<li><p><strong>周期境界条件（トーラス境界）</strong>: 格子の端を反対側の端に接続する。上端の外側は下端、左端の外側は右端とみなすことで、格子全体がトーラス（ドーナツ）状の位相を持つことになる。</p></li>
+<li><p><strong>固定境界条件</strong>: 格子の外側を常に「死」（あるいは特定の固定値）とみなす。</p></li>
+</ul>
+<p>本資料の実装では、NumPy の <code class="docutils literal notranslate"><span class="pre">np.roll</span></code> を用いて格子全体をシフトさせることで周期境界条件による近傍計算を実現している。また、固定境界条件を再現したい場合には、各世代の更新後に最外周のセルを強制的に 0 にすることで、実質的に外側が常に死んでいる状態を模している（詳細は <a class="reference internal" href="core.html"><span class="doc">コアロジックの実装（LifeGame.py）</span></a> を参照）。</p>
+</section>
+<section id="id6">
+<h2>同期更新<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>ライフゲームでは、全セルの状態を同時に（他のセルの更新結果を参照せずに）次の状態へ遷移させる <strong>同期更新</strong> が用いられる。これは、あるセルを更新した結果を別のセルの更新に使ってしまう「逐次更新」とは異なる。実装上は、更新前の格子全体から近傍セル数を計算し、その結果をもとに新しい格子を作成してから、最後にまとめて置き換えることで同期更新を実現する。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="overview.html" class="btn btn-neutral float-left" title="概要" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="architecture.html" class="btn btn-neutral float-right" title="実装の全体構成" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

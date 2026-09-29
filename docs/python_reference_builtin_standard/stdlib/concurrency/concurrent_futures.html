@@ -1,0 +1,240 @@
+
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>concurrent.futures &mdash; Python コア機能・標準ライブラリ解説書 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=19757887"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/translations.js?v=4755f45a"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="検索" href="../../search.html" />
+    <link rel="next" title="テスト・デバッグ" href="../testing/index.html" />
+    <link rel="prev" title="asyncio" href="asyncio.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <a href="../../index.html" class="icon icon-home">
+    Python 解説書
+  </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../builtin_types/index.html">組み込み型のメソッド</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../operators/index.html">演算子</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../builtins/index.html">組み込み関数</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">標準モジュール</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../file_path/index.html">ファイル・パス操作</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datetime_time/index.html">日付・時刻</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_structures/index.html">データ構造・アルゴリズム補助</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../text/index.html">テキスト処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../data_format/index.html">データフォーマット・シリアライズ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../numeric/index.html">数値・数学</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../system/index.html">システム・実行環境</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">並行処理</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="threading.html">threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="multiprocessing.html">multiprocessing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asyncio.html">asyncio</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">concurrent.futures</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#threadpoolexecutor">ThreadPoolExecutor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#processpoolexecutor">ProcessPoolExecutor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#submit-future">submit と Future</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#as-completed">as_completed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1">例外の伝播</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../testing/index.html">テスト・デバッグ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gui/index.html">GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/index.html">その他</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Python コア機能・標準ライブラリ解説書</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">標準モジュール</a></li>
+          <li class="breadcrumb-item"><a href="index.html">並行処理</a></li>
+      <li class="breadcrumb-item active">concurrent.futures</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="concurrent-futures">
+<h1>concurrent.futures<a class="headerlink" href="#concurrent-futures" title="Link to this heading"></a></h1>
+<p>スレッドやプロセスを用いた並行・並列処理を、統一された高レベル API（<code class="docutils literal notranslate"><span class="pre">Executor</span></code>）で扱うためのモジュール。<code class="docutils literal notranslate"><span class="pre">threading</span></code> や <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> を直接使うよりも簡潔に、非同期に実行したタスクの結果を取り扱うことができる。</p>
+<section id="threadpoolexecutor">
+<h2>ThreadPoolExecutor<a class="headerlink" href="#threadpoolexecutor" title="Link to this heading"></a></h2>
+<p>スレッドのプールを使って処理を並行実行する。ファイル I/O やネットワーク
+アクセスのような I/O バウンドな処理に向いている。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># ネットワーク遅延を模したもの</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> のデータ&quot;</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;http://a.example&quot;</span><span class="p">,</span> <span class="s2">&quot;http://b.example&quot;</span><span class="p">,</span> <span class="s2">&quot;http://c.example&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">results</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">executor</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">))</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span>
+<span class="go">[&#39;http://a.example のデータ&#39;, &#39;http://b.example のデータ&#39;, &#39;http://c.example のデータ&#39;]</span>
+</pre></div>
+</div>
+</section>
+<section id="processpoolexecutor">
+<h2>ProcessPoolExecutor<a class="headerlink" href="#processpoolexecutor" title="Link to this heading"></a></h2>
+<p>プロセスのプールを使って処理を並列実行する。GIL の影響を受けないため、CPU バウンドな計算処理を複数コアで高速化したい場合に向いている。インタフェースは <code class="docutils literal notranslate"><span class="pre">ThreadPoolExecutor</span></code> とほぼ同じ。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">is_prime</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="kc">False</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">n</span> <span class="o">%</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">numbers</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1000003</span><span class="p">,</span> <span class="mi">1000033</span><span class="p">,</span> <span class="mi">1000037</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="k">with</span> <span class="n">ProcessPoolExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">results</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">executor</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">is_prime</span><span class="p">,</span> <span class="n">numbers</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">[True, True, True]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p><code class="docutils literal notranslate"><span class="pre">ProcessPoolExecutor</span></code> に渡す関数も、<code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> と同様に pickle 可能である必要がある。つまりモジュールのトップレベルで定義された（import 可能な）関数でなければならず、ラムダ式や関数内で定義したクロージャ、対話モードでその場に定義した関数は使えない。詳しくは <a class="reference internal" href="multiprocessing.html"><span class="doc">multiprocessing</span></a> を参照。</p>
+</div>
+</section>
+<section id="submit-future">
+<h2>submit と Future<a class="headerlink" href="#submit-future" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">map()</span></code> が複数の入力に同じ関数を適用するのに対し、<code class="docutils literal notranslate"><span class="pre">submit()</span></code> は1 つのタスクを投入し、その結果を表す <code class="docutils literal notranslate"><span class="pre">Future</span></code> オブジェクトを即座に返す。<code class="docutils literal notranslate"><span class="pre">Future.result()</span></code> を呼ぶと、タスクの完了まで待って結果を取得する。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="s2">&quot;http://d.example&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">done</span><span class="p">())</span>  <span class="c1"># まだ完了していないかもしれない</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">())</span>  <span class="c1"># 完了を待って結果を取得</span>
+<span class="gp">...</span>
+<span class="go">False</span>
+<span class="go">http://d.example のデータ</span>
+</pre></div>
+</div>
+</section>
+<section id="as-completed">
+<h2>as_completed<a class="headerlink" href="#as-completed" title="Link to this heading"></a></h2>
+<p>複数のタスクを <code class="docutils literal notranslate"><span class="pre">submit()</span></code> した場合、完了した順に結果を処理したい
+ことがある。<code class="docutils literal notranslate"><span class="pre">as_completed()</span></code> は、渡された <code class="docutils literal notranslate"><span class="pre">Future</span></code> の集合の中から
+完了したものを順次イテレートする。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_completed</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">futures</span> <span class="o">=</span> <span class="p">{</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span> <span class="n">url</span> <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">}</span>
+<span class="gp">... </span>    <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">url</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+<span class="gp">... </span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h2>例外の伝播<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>ワーカー内のタスクで例外が発生しても、その場でエラーが表面化するわけ
+ではない。例外は <code class="docutils literal notranslate"><span class="pre">Future</span></code> に保持され、<code class="docutils literal notranslate"><span class="pre">Future.result()</span></code> を呼び出した時点で再送出される。<code class="docutils literal notranslate"><span class="pre">Future.exception()</span></code> を使うと、例外を発生させずにその例外オブジェクトを取得できる（例外が発生していなければ <code class="docutils literal notranslate"><span class="pre">None</span></code> を返す）。タスクが失敗していても <code class="docutils literal notranslate"><span class="pre">result()</span></code> を呼ぶまで気づかない、というのはよくある落とし穴である。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">fail</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;boom&quot;</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fail</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">())</span>
+<span class="gp">...</span>
+<span class="go">boom</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">fail</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+<span class="gp">...</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="w">    </span><span class="o">...</span>
+<span class="gr">ValueError</span>: <span class="n">boom</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p><code class="docutils literal notranslate"><span class="pre">ThreadPoolExecutor</span></code> と <code class="docutils literal notranslate"><span class="pre">ProcessPoolExecutor</span></code> は同じ <code class="docutils literal notranslate"><span class="pre">Executor</span></code> インタフェース（<code class="docutils literal notranslate"><span class="pre">submit</span></code> / <code class="docutils literal notranslate"><span class="pre">map</span></code> / <code class="docutils literal notranslate"><span class="pre">shutdown</span></code>）を共有しているため、I/O バウンドな処理か CPU バウンドな処理かに応じて、コードをほとんど変更せずに切り替えることができる。より細かく低レベルな制御が必要な場合は <a class="reference internal" href="threading.html"><span class="doc">threading</span></a> や <a class="reference internal" href="multiprocessing.html"><span class="doc">multiprocessing</span></a> を、非同期 I/O を中心に設計する場合は <a class="reference internal" href="asyncio.html"><span class="doc">asyncio</span></a> を検討するとよい。</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="asyncio.html" class="btn btn-neutral float-left" title="asyncio" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../testing/index.html" class="btn btn-neutral float-right" title="テスト・デバッグ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

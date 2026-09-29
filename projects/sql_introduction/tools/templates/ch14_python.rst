@@ -1,0 +1,234 @@
+Python から SQL を使う
+======================
+
+本章では、Python のプログラムから SQL を実行する方法を説明します。前半では標準ライブラリの ``sqlite3`` モジュールを、後半では pandas と SQL を組み合わせる方法を扱います。
+
+本章のサンプルは、``examples`` フォルダーで ``python ch14_basics.py`` のように実行します。実行する前に、3 章の手順で ``shop.db`` を作成しておいてください。
+
+DB-API 2.0
+----------
+
+Python には、データベースを操作するモジュールが備えるべきインターフェースの仕様として、PEP 249（Python Database API Specification v2.0、DB-API 2.0）があります。``sqlite3`` モジュールはこの仕様に従っています。PostgreSQL 用の psycopg や MySQL 用の mysqlclient など、他の DBMS 用のモジュールも同じ仕様に従っているため、本章で説明する使い方の多くは、他の DBMS でもほぼ同じです。
+
+DB-API 2.0 の主な要素は次のとおりです。
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - 要素
+     - 役割
+   * - 接続（Connection）
+     - データベースへの接続を表します。``commit()`` と ``rollback()`` でトランザクションを制御し、``close()`` で接続を閉じます。
+   * - カーソル（Cursor）
+     - SQL の実行と、結果の取り出しを行います。``execute()`` で SQL を実行し、``fetchone()`` や ``fetchall()`` で結果を取り出します。
+
+``sqlite3`` モジュールでは、接続の ``execute()`` メソッドを呼ぶと、内部でカーソルが作成されて SQL が実行され、そのカーソルが返されます。本章の例では、この簡略化された書き方を使います。
+
+基本的な使い方
+--------------
+
+接続と結果の取り出し
+^^^^^^^^^^^^^^^^^^^^
+
+``ch14_basics.py`` は、``sqlite3`` モジュールの基本的な使い方を示すスクリプトです。
+
+.. literalinclude:: ../examples/ch14_basics.py
+   :language: python
+   :caption: ch14_basics.py
+   :linenos:
+
+実行結果は次のとおりです。
+
+.. pyoutput:: ch14_basics.py
+
+ポイントを説明します。
+
+接続を閉じる
+   ``sqlite3.connect()`` で開いた接続は、使い終わったら ``close()`` で閉じます。``contextlib.closing()`` を使うと、``with`` 文を抜けるときに自動的に閉じられます。接続オブジェクトをそのまま ``with`` 文に渡した場合の動作は、後述します。
+
+結果の取り出し
+   ``fetchone()`` は結果を 1 行ずつ、``fetchall()`` はすべての行をリストとして返します。カーソルを ``for`` 文で反復すると、1 行ずつ処理できます。結果の行数が多い場合は、すべての行を一度にメモリに読み込む ``fetchall()`` より、``for`` 文で反復するほうがメモリの使用量を抑えられます。
+
+行の形式
+   既定では、各行はタプルとして返されます。接続の ``row_factory`` 属性に ``sqlite3.Row`` を設定すると、``row["name"]`` のように列名で値を参照できるようになります。
+
+データ型の対応
+   SQLite の値は、次のように Python の値に変換されます。
+
+   .. list-table::
+      :header-rows: 1
+
+      * - SQLite
+        - Python
+      * - ``NULL``
+        - ``None``
+      * - ``INTEGER``
+        - ``int``
+      * - ``REAL``
+        - ``float``
+      * - ``TEXT``
+        - ``str``
+      * - ``BLOB``
+        - ``bytes``
+
+プレースホルダー
+^^^^^^^^^^^^^^^^
+
+SQL 文に値を渡すときは、SQL 文の中に ``?`` を書き、値を ``execute()`` の第 2 引数にタプルやリストで渡します。この ``?`` をプレースホルダーと呼びます。``:pref`` のように名前を付けたプレースホルダーを使い、値を辞書で渡すこともできます。
+
+値が 1 つだけの場合も、``(min_price,)`` のようにタプルで渡します。``(min_price)`` と書くと、括弧は単なる式の括弧とみなされ、タプルにならないので注意してください。
+
+``IN`` の括弧内の値の個数が実行時に決まる場合は、``ch14_basics.py`` の ``show_placeholders()`` 関数のように、値の個数だけ ``?`` を並べた文字列を作ってから SQL 文に埋め込みます。埋め込むのは ``?`` だけであり、値そのものはプレースホルダーで渡している点が重要です。
+
+SQL インジェクション
+--------------------
+
+プレースホルダーを使わずに、f 文字列などで値を SQL 文に直接埋め込んではいけません。利用者が入力した文字列を埋め込むと、SQL 文の意味が書き換えられてしまうおそれがあるためです。このような攻撃を SQL インジェクションと呼びます。
+
+``ch14_injection.py`` は、SQL インジェクションの危険性を示すスクリプトです。
+
+.. literalinclude:: ../examples/ch14_injection.py
+   :language: python
+   :caption: ch14_injection.py
+   :linenos:
+
+実行結果は次のとおりです。
+
+.. pyoutput:: ch14_injection.py
+
+入力として ``' OR '1'='1`` を与えると、危険な例では SQL 文が ``WHERE name = '' OR '1'='1'`` となり、条件が常に真になるため、すべての顧客の氏名が返されてしまいます。入力によっては、データの削除などの操作が行われるおそれもあります。
+
+プレースホルダーを使った安全な例では、入力された文字列は常に 1 つの値として扱われ、SQL 文の一部として解釈されることはありません。そのため、``' OR '1'='1`` という氏名の顧客を探すことになり、結果は空になります。
+
+.. warning::
+
+   SQL 文に値を渡すときは、必ずプレースホルダーを使用してください。テーブル名や列名はプレースホルダーで渡せないため、実行時に切り替える必要がある場合は、あらかじめ用意した名前の一覧に含まれるかを確認してから埋め込みます。
+
+トランザクションの制御
+----------------------
+
+autocommit 属性
+^^^^^^^^^^^^^^^
+
+``sqlite3`` モジュールのトランザクションの扱いは、``sqlite3.connect()`` の ``autocommit`` 引数（Python 3.12 で追加）によって、次のように変わります。
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 65
+
+   * - ``autocommit`` の値
+     - 動作
+   * - ``False``
+     - 接続した時点と ``commit()`` や ``rollback()`` を呼んだ直後に、トランザクションが自動的に開始されます。常にトランザクションの中にある状態になり、``commit()`` を呼ぶまで変更は確定しません。PEP 249 に従った動作であり、Python のドキュメントで推奨されています。
+   * - ``True``
+     - SQLite の自動コミット（12 章を参照）で動作します。トランザクションは、SQL の ``BEGIN`` を実行した場合だけ開始されます。
+   * - ``sqlite3.LEGACY_TRANSACTION_CONTROL``
+     - 現在の既定値。``INSERT``、``UPDATE``、``DELETE``、``REPLACE`` 文の前に、トランザクションが自動的に開始されます。``SELECT`` 文や ``CREATE TABLE`` 文などでは開始されません。
+
+Python のドキュメントでは、既定値は将来のバージョンで ``False`` に変更される予定とされています。どの値の場合でも、トランザクションの中で行った変更は、``commit()`` を呼ばずに接続を閉じると失われます。本資料の ``run_query.py`` は、SQL の ``BEGIN`` や ``COMMIT`` を書いたとおりに実行するため、``autocommit=True`` を指定しています。
+
+with 文によるトランザクション
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+接続オブジェクトを ``with`` 文に渡すと、ブロックを正常に抜けたときに ``commit()`` が、例外が発生したときに ``rollback()`` が自動的に呼ばれます。「一連の処理がすべて成功したら確定し、途中で失敗したらすべて取り消す」処理を簡潔に書けます。
+
+ただし、この ``with`` 文は接続を閉じません。接続を閉じるには、別途 ``close()`` を呼ぶか、``contextlib.closing()`` を使います。
+
+``ch14_transaction.py`` は、12 章で説明した注文の処理を Python で実装したスクリプトです。在庫が足りない商品が含まれている場合は例外を発生させ、その注文に関するすべての変更を取り消します。
+
+.. literalinclude:: ../examples/ch14_transaction.py
+   :language: python
+   :caption: ch14_transaction.py
+   :linenos:
+
+実行結果は次のとおりです。
+
+.. pyoutput:: ch14_transaction.py
+
+注文 14 では、商品番号 1 の明細の追加と在庫数の更新が行われた後で、商品番号 5 の在庫不足が見つかっています。``with conn:`` のブロックで例外が発生したため ``rollback()`` が呼ばれ、商品番号 1 に関する変更も含めて、注文 14 のすべての変更が取り消されています。
+
+.. note::
+
+   ``autocommit=False`` の場合、接続した時点でトランザクションが開始されます。SQLite の ``PRAGMA foreign_keys = ON;`` はトランザクションの中で実行しても効果がないため、``ch14_transaction.py`` の ``open_copy()`` 関数では、``autocommit=True`` で接続して設定を行った後で、``autocommit`` 属性を ``False`` に変更しています。
+
+型ヒントを付けたデータアクセス
+------------------------------
+
+アプリケーションでは、SQL を実行する処理を関数にまとめ、結果をデータクラスなどの型の決まったオブジェクトに変換して返すと、呼び出す側のコードが読みやすくなります。また、型ヒントを付けておくと、mypy などの型チェッカーで誤りを見つけやすくなります。
+
+.. literalinclude:: ../examples/ch14_repository.py
+   :language: python
+   :caption: ch14_repository.py
+   :linenos:
+
+実行結果は次のとおりです。
+
+.. pyoutput:: ch14_repository.py
+
+``find_products()`` 関数では、引数に応じて条件を追加していますが、追加する条件の値もプレースホルダーで渡しています。SQL 文を組み立てる場合でも、値を直接埋め込まないようにしてください。
+
+``fetchone()`` や ``fetchall()``、カーソルの反復で得られる行の型は ``Any`` であるため、型チェッカーは SQL の結果の型を検査できません。データクラスの型ヒントと、SQL 文の列の並びや型が一致しているかは、テストなどで確認する必要があります。
+
+pandas と組み合わせる
+---------------------
+
+pandas の ``read_sql_query()`` 関数を使うと、SQL の結果を DataFrame として読み込めます。また、DataFrame の ``to_sql()`` メソッドを使うと、DataFrame をデータベースのテーブルとして書き込めます。
+
+.. literalinclude:: ../examples/ch14_pandas.py
+   :language: python
+   :caption: ch14_pandas.py
+   :linenos:
+
+実行結果は次のとおりです。
+
+.. pyoutput:: ch14_pandas.py
+
+1 つ目の結果は、状態が「発送済」の注文だけを集計しているため、9 章の月ごとの売上金額（キャンセル以外のすべての注文を集計）とは値が異なります。``read_sql_query()`` の ``params`` 引数で、プレースホルダーに渡す値を指定できます。``sqlite3`` モジュールの接続はそのまま渡せますが、他の DBMS では、SQLAlchemy（後述）の接続を渡すことが推奨されています。
+
+2 つ目の結果の ``category_id`` が ``3.0`` のように実数で表示されているのは、列に NULL が含まれているためです。pandas では、整数の列に欠損値（``NaN``）があると、列全体が実数型になります。
+
+SQL と pandas の使い分け
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+SQL と pandas のどちらでも、絞り込みや集計を行えます。一般的には、次のように使い分けます。
+
+* データベースのデータ量が多い場合は、SQL で必要な行と列に絞り込み、集計してから読み込みます。すべてのデータを読み込んでから pandas で処理すると、転送に時間がかかり、メモリも多く使います。
+* 読み込んだ後のデータの整形、統計処理、可視化は、pandas や NumPy で行います。
+
+ORM
+---
+
+SQL を直接書く代わりに、Python のクラスとテーブルを対応づけ、オブジェクトの操作としてデータベースを扱う仕組みを ORM（Object-Relational Mapping）と呼びます。Python では SQLAlchemy や Django の ORM がよく使われています。
+
+ORM を使うと、DBMS の方言の違いを意識せずにコードを書けるなどの利点があります。しかし、ORM も内部では SQL を生成して実行しています。性能の問題を調べたり、複雑な集計を行ったりする場面では、SQL の知識が必要になります。
+
+.. _exercises-ch14:
+
+演習問題
+--------
+
+1. 都道府県名を引数に取り、その都道府県の顧客の氏名のリストを返す関数 ``customers_in(conn: sqlite3.Connection, prefecture: str) -> list[str]`` を作成してください。値はプレースホルダーで渡してください。
+2. 次の関数には問題があります。問題点を説明し、修正してください。
+
+   .. code-block:: python
+      :linenos:
+
+      def find_products_by_name(conn: sqlite3.Connection, keyword: str) -> list[str]:
+          sql = f"SELECT name FROM products WHERE name LIKE '%{keyword}%'"
+          return [row[0] for row in conn.execute(sql)]
+
+3. 次のプログラムを実行した後、``shop.db`` の ``categories`` テーブルに「ジュース」が追加されていませんでした。原因を説明し、修正してください。
+
+   .. code-block:: python
+      :linenos:
+
+      import sqlite3
+
+      conn = sqlite3.connect("shop.db")
+      conn.execute("INSERT INTO categories (name, parent_id) VALUES ('ジュース', 2)")
+      conn.close()
+
+4. ``pd.read_sql_query()`` を使い、カテゴリ名ごとの商品数と平均価格を SQL で集計した結果を DataFrame として読み込んでください。
+
+解答は :ref:`answers-ch14` にあります。

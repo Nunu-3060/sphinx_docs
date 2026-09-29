@@ -1,0 +1,557 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8. 非同期処理と通信 &mdash; HTML &amp; CSS &amp; JavaScript 入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=9e57e4b1" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="9. 実践：ToDo アプリの作成" href="todo_app.html" />
+    <link rel="prev" title="7. DOM 操作とイベント" href="dom_events.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            HTML & CSS & JavaScript 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="html_basics.html">2. HTML の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="html_advanced.html">3. HTML の応用</a></li>
+<li class="toctree-l1"><a class="reference internal" href="css_basics.html">4. CSS の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="css_layout.html">5. CSS によるレイアウト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="js_basics.html">6. JavaScript の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dom_events.html">7. DOM 操作とイベント</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">8. 非同期処理と通信</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">8.1. イベントループとシングルスレッド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#settimeout">8.2. コールバックと setTimeout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#promise">8.3. Promise</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#async-await">8.4. async / await</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fetch-http">8.5. fetch による HTTP 通信</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cors">8.6. 同一オリジンポリシーと CORS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#web-storage">8.7. Web Storage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="todo_app.html">9. 実践：ToDo アプリの作成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">10. おわりに</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix.html">付録</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">HTML & CSS & JavaScript 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">8. </span>非同期処理と通信</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">8. </span>非同期処理と通信<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="id2">
+<h2><span class="section-number">8.1. </span>イベントループとシングルスレッド<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>ブラウザの JavaScript は、シングルスレッドで動作する。つまり、同時に実行されるのは常に 1 つの処理だけである。そのため、時間のかかる処理（サーバーからの応答待ちなど）を実行中に待ち続けると、その間はボタンのクリックにも反応できず、ページ全体が固まってしまう。</p>
+<p>これを避けるため、JavaScript では時間のかかる処理を非同期処理として扱う。非同期処理では、処理を開始したらその完了を待たずに次の処理へ進み、完了したときに、あらかじめ登録しておいた関数（コールバック）が呼び出される。</p>
+<p>この仕組みを支えているのがイベントループである。ブラウザは、実行を待っているコールバックを待ち行列（キュー）に保持し、実行中の処理が終わるたびに、キューから次のコールバックを取り出して実行する。第 7 章で扱ったイベントリスナーも、イベントの発生時にこのキューに入れられて実行される。</p>
+<p>Python の <code class="docutils literal notranslate"><span class="pre">asyncio</span></code> も同じくイベントループによる仕組みだが、Python では <code class="docutils literal notranslate"><span class="pre">asyncio.run</span></code> などで明示的にイベントループを起動する必要がある。ブラウザの JavaScript では、イベントループは最初から動いている。</p>
+</section>
+<section id="settimeout">
+<h2><span class="section-number">8.2. </span>コールバックと setTimeout<a class="headerlink" href="#settimeout" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">setTimeout</span></code> は、指定した時間が経過した後に関数を実行するよう予約する関数である。</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">);</span>
+<span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;3&quot;</span><span class="p">),</span><span class="w"> </span><span class="mf">1000</span><span class="p">);</span><span class="w"> </span><span class="c1">// 1000 ms (1 秒) 後に実行する</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>この例の出力は 1、2、3 の順になる。<code class="docutils literal notranslate"><span class="pre">setTimeout</span></code> は予約をするだけですぐに戻り、1 秒待つのはブラウザの役割だからである。待ち時間に 0 を指定しても、コールバックは現在実行中の処理がすべて終わってから実行される。</p>
+<p>非同期処理の完了をコールバックで受け取る書き方は、処理を順番に行いたい場合に、コールバックの中にさらにコールバックを書くことになり、入れ子が深くなって読みにくくなる。この問題を解決するのが、次に説明する Promise である。</p>
+</section>
+<section id="promise">
+<h2><span class="section-number">8.3. </span>Promise<a class="headerlink" href="#promise" title="Link to this heading"></a></h2>
+<p>Promise は、非同期処理の結果を表すオブジェクトである。Promise は次の 3 つの状態のいずれかを持つ。</p>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">Promise の状態</span><a class="headerlink" href="#id3" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>状態</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>pending（待機）</p></td>
+<td><p>処理が完了していない。</p></td>
+</tr>
+<tr class="row-odd"><td><p>fulfilled（成功）</p></td>
+<td><p>処理が成功し、結果の値を持つ。</p></td>
+</tr>
+<tr class="row-even"><td><p>rejected（失敗）</p></td>
+<td><p>処理が失敗し、失敗の理由（通常は <code class="docutils literal notranslate"><span class="pre">Error</span></code> オブジェクト）を持つ。</p></td>
+</tr>
+</tbody>
+</table>
+<p>Promise の結果は、<code class="docutils literal notranslate"><span class="pre">then</span></code> メソッドと <code class="docutils literal notranslate"><span class="pre">catch</span></code> メソッドにコールバックを登録して受け取る。</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="nx">fetchScore</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="nx">then</span><span class="p">((</span><span class="nx">data</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">data</span><span class="p">))</span><span class="w">            </span><span class="c1">// 成功したときに呼ばれる</span>
+<span class="w">  </span><span class="p">.</span><span class="k">catch</span><span class="p">((</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="p">));</span><span class="w"> </span><span class="c1">// 失敗したときに呼ばれる</span>
+</pre></div>
+</div>
+<p>Promise を返す関数を自分で作るには、<code class="docutils literal notranslate"><span class="pre">new</span> <span class="pre">Promise</span></code> に関数を渡す。この関数は <code class="docutils literal notranslate"><span class="pre">resolve</span></code> と <code class="docutils literal notranslate"><span class="pre">reject</span></code> の 2 つの関数を引数に受け取る。処理が成功したら <code class="docutils literal notranslate"><span class="pre">resolve(結果)</span></code> を、失敗したら <code class="docutils literal notranslate"><span class="pre">reject(理由)</span></code> を呼び出す。</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="c1">// 指定したミリ秒後に成功する Promise を返す</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">sleep</span><span class="p">(</span><span class="nx">ms</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">setTimeout</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span><span class="w"> </span><span class="nx">ms</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Promise.resolve()</span></code> のように完了済みの Promise であっても、<code class="docutils literal notranslate"><span class="pre">then</span></code> に登録したコールバックはすぐには実行されず、現在実行中の処理が終わってから実行される。また、Promise のコールバックは <code class="docutils literal notranslate"><span class="pre">setTimeout</span></code> のコールバックよりも優先して実行される。</p>
+</section>
+<section id="async-await">
+<h2><span class="section-number">8.4. </span>async / await<a class="headerlink" href="#async-await" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">async</span></code> と <code class="docutils literal notranslate"><span class="pre">await</span></code> を使うと、Promise を使った非同期処理を、同期処理と同じように上から順に書ける。</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">sleep</span><span class="p">(</span><span class="mf">1000</span><span class="p">);</span><span class="w"> </span><span class="c1">// 1 秒待つ</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetchScore</span><span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// 結果が得られるまで待つ</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils align-default" id="id4">
+<caption><span class="caption-text">async / await の要点</span><a class="headerlink" href="#id4" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>記述</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">function</span></code></p></td>
+<td><p>非同期関数を定義する。非同期関数は常に Promise を返す。<code class="docutils literal notranslate"><span class="pre">return</span></code> した値は、その Promise の結果になる。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">await</span> <span class="pre">Promise</span></code></p></td>
+<td><p>Promise が完了するまで関数の実行を中断し、結果の値を取り出す。<code class="docutils literal notranslate"><span class="pre">async</span></code> を付けた関数の中と、モジュールの最上位でだけ使える。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">try...catch</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">await</span></code> した Promise が失敗すると例外が発生するため、<code class="docutils literal notranslate"><span class="pre">try...catch</span></code> で受け取れる。</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">await</span></code> で中断している間も、ブラウザは他のイベントを処理できる。中断するのはその非同期関数だけであり、ページ全体が止まるわけではない。</p>
+<p>書き方は Python の <code class="docutils literal notranslate"><span class="pre">asyncio</span></code> とよく似ている。</p>
+<table class="docutils align-default" id="id5">
+<caption><span class="caption-text">Python の asyncio との対応</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>JavaScript</p></th>
+<th class="head"><p>Python</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">function</span> <span class="pre">f()</span> <span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">def</span> <span class="pre">f():</span> <span class="pre">...</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">await</span> <span class="pre">sleep(1000)</span></code> （自作の関数）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">await</span> <span class="pre">asyncio.sleep(1)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">await</span> <span class="pre">Promise.all([a(),</span> <span class="pre">b()])</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">await</span> <span class="pre">asyncio.gather(a(),</span> <span class="pre">b())</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">main();</span></code> （そのまま呼び出す）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">asyncio.run(main())</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">Promise.all</span></code> は、複数の Promise がすべて成功するのを待ち、結果を配列で返す。複数の処理を並行して実行できるため、1 つずつ <code class="docutils literal notranslate"><span class="pre">await</span></code> するよりも短い時間で済む。どれか 1 つでも失敗すると、<code class="docutils literal notranslate"><span class="pre">Promise.all</span></code> の結果も失敗になる。</p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">examples/ch08/async.js</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="c1">// 非同期処理の例</span>
+<span class="c1">// async.html をブラウザで開き、開発者ツールのコンソールで結果を確認する。</span>
+
+<span class="c1">// ===== イベントループ: 実行順序の確認 =====</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;1: 同期処理&quot;</span><span class="p">);</span>
+<span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;4: setTimeout (待ち時間 0 ms)&quot;</span><span class="p">),</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
+<span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">().</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;3: Promise の then&quot;</span><span class="p">));</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;2: 同期処理&quot;</span><span class="p">);</span>
+<span class="c1">// 出力順は 1 → 2 → 3 → 4 になる。</span>
+<span class="c1">// 同期処理がすべて終わってから、Promise のコールバック、setTimeout のコールバックの順に実行される。</span>
+
+<span class="c1">// ===== Promise を返す関数 =====</span>
+<span class="c1">// 指定したミリ秒後に解決される Promise を返す (Python の asyncio.sleep に相当)</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">sleep</span><span class="p">(</span><span class="nx">ms</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">setTimeout</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span><span class="w"> </span><span class="nx">ms</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="c1">// 名前に応じた点数を 300 ms 後に返す処理 (サーバーへの問い合わせを模したもの)</span>
+<span class="c1">// 名前が空のときは失敗する</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">fetchScore</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">reject</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">&quot;名前が空です&quot;</span><span class="p">));</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">resolve</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">score</span><span class="o">:</span><span class="w"> </span><span class="nx">name</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">10</span><span class="w"> </span><span class="p">});</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="mf">300</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="p">}</span>
+
+<span class="c1">// ===== then / catch による書き方 =====</span>
+<span class="nx">fetchScore</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="nx">then</span><span class="p">((</span><span class="nx">data</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;then:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">))</span>
+<span class="w">  </span><span class="p">.</span><span class="k">catch</span><span class="p">((</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;catch:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="p">));</span>
+
+<span class="c1">// ===== async / await による書き方 =====</span>
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">sleep</span><span class="p">(</span><span class="mf">1000</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;----- 1 秒待った -----&quot;</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// await は Promise の完了を待ち、結果を取り出す</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetchScore</span><span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;await:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 失敗した Promise は try...catch で受け取る</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nx">fetchScore</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;try...catch:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// Promise.all: 複数の処理を並行して実行し、すべての完了を待つ</span>
+<span class="w">  </span><span class="c1">// (Python の asyncio.gather に相当)</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">performance</span><span class="p">.</span><span class="nx">now</span><span class="p">();</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nb">Promise</span><span class="p">.</span><span class="nx">all</span><span class="p">([</span>
+<span class="w">    </span><span class="nx">fetchScore</span><span class="p">(</span><span class="s2">&quot;Carol&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">fetchScore</span><span class="p">(</span><span class="s2">&quot;Dave&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">fetchScore</span><span class="p">(</span><span class="s2">&quot;Eve&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="p">]);</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">elapsed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">round</span><span class="p">(</span><span class="nx">performance</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nx">start</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Promise.all:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">results</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`3 件で約 </span><span class="si">${</span><span class="nx">elapsed</span><span class="si">}</span><span class="sb"> ms (順番に待つと約 900 ms かかる)`</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">main</span><span class="p">();</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/ea4ae88973d0d8b2a8cfc334a21d9fef/async.js"><code class="xref download docutils literal notranslate"><span class="pre">async.js</span> <span class="pre">をダウンロード</span></code></a> ／ <a class="reference download internal" download="" href="_downloads/360b6183427c0318fe0e872ec8dce661/async.html"><code class="xref download docutils literal notranslate"><span class="pre">async.html</span> <span class="pre">をダウンロード</span></code></a> ／ <a class="reference external" href="examples/ch08/async.html">ブラウザで表示</a></p>
+</section>
+<section id="fetch-http">
+<h2><span class="section-number">8.5. </span>fetch による HTTP 通信<a class="headerlink" href="#fetch-http" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">fetch</span></code> は、HTTP リクエストを送り、レスポンスを Promise で返す関数である。Python の <code class="docutils literal notranslate"><span class="pre">requests</span></code> ライブラリや <code class="docutils literal notranslate"><span class="pre">urllib.request</span></code> に相当するが、非同期で動作する点が異なる。</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;data.json&quot;</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">response</span><span class="p">.</span><span class="nx">ok</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`HTTP エラー: </span><span class="si">${</span><span class="nx">response</span><span class="p">.</span><span class="nx">status</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span><span class="w"> </span><span class="c1">// 本体を JSON として解析する</span>
+</pre></div>
+</div>
+<table class="docutils align-default" id="id7">
+<caption><span class="caption-text">レスポンスの主なプロパティとメソッド</span><a class="headerlink" href="#id7" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>記述</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">response.ok</span></code></p></td>
+<td><p>ステータスコードが 200 番台なら <code class="docutils literal notranslate"><span class="pre">true</span></code>。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">response.status</span></code></p></td>
+<td><p>ステータスコード（200、404 など）。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">response.json()</span></code></p></td>
+<td><p>本体を JSON として解析した結果を、Promise で返す。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">response.text()</span></code></p></td>
+<td><p>本体を文字列として、Promise で返す。</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">fetch</span></code> は、ネットワークに接続できないなど通信自体が失敗した場合にだけ失敗の Promise を返す。サーバーが 404（ファイルが見つからない）や 500（サーバー内部のエラー）を返した場合は、通信自体は成功しているため、失敗にはならない。そのため、<code class="docutils literal notranslate"><span class="pre">response.ok</span></code> を確認して自分でエラーとして扱う必要がある。</p>
+<p>データを送信する場合は、第 2 引数にリクエストの内容を指定する。</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/users&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">method</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;application/json&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;山田&quot;</span><span class="w"> </span><span class="p">}),</span>
+<span class="p">});</span>
+</pre></div>
+</div>
+<p>次のサンプルは、同じフォルダーにある data.json を取得し、表に表示する。<code class="docutils literal notranslate"><span class="pre">fetch</span></code> は <code class="docutils literal notranslate"><span class="pre">file://</span></code> で開いたページでは使えないため、第 1 章で説明したローカルサーバーを起動してから開くこと。</p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">examples/ch08/data.json</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;updated&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-04-01&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;books&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HTML 入門&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;author&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;山田 太郎&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;price&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2200</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CSS 実践ガイド&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;author&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;佐藤 花子&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;price&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2800</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;JavaScript の基礎&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;author&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;鈴木 一郎&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;price&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3000</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">examples/ch08/fetch.html</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">&quot;ja&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;UTF-8&quot;</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width, initial-scale=1&quot;</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>fetch の例<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">style</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="nt">table</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">border-collapse</span><span class="p">:</span><span class="w"> </span><span class="kc">collapse</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="nt">th</span><span class="o">,</span><span class="w"> </span><span class="nt">td</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">border</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="kt">px</span><span class="w"> </span><span class="kc">solid</span><span class="w"> </span><span class="mh">#999</span><span class="p">;</span><span class="w"> </span><span class="k">padding</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="kt">px</span><span class="w"> </span><span class="mi">8</span><span class="kt">px</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">.</span><span class="nc">error</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">color</span><span class="p">:</span><span class="w"> </span><span class="kc">crimson</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">&lt;/</span><span class="nt">style</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>fetch による JSON の取得<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>file:// で開くと取得に失敗する。ローカルサーバー経由で開くこと。<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">button</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;load-button&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;button&quot;</span><span class="p">&gt;</span>書籍一覧を読み込む<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">p</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;status&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">table</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">thead</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">tr</span><span class="p">&gt;&lt;</span><span class="nt">th</span><span class="p">&gt;</span>書名<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">th</span><span class="p">&gt;</span>著者<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;&lt;</span><span class="nt">th</span><span class="p">&gt;</span>価格<span class="p">&lt;/</span><span class="nt">th</span><span class="p">&gt;&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">thead</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">tbody</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;book-list&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">tbody</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">statusText</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s2">&quot;#status&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">bookList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s2">&quot;#book-list&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">loadBooks</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">statusText</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">;</span>
+<span class="w">      </span><span class="nx">statusText</span><span class="p">.</span><span class="nx">textContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;読み込み中...&quot;</span><span class="p">;</span>
+
+<span class="w">      </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;data.json&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// fetch は HTTP エラー (404 など) では例外を投げないため、自分で確認する</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">response</span><span class="p">.</span><span class="nx">ok</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`HTTP エラー: </span><span class="si">${</span><span class="nx">response</span><span class="p">.</span><span class="nx">status</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span>
+
+<span class="w">        </span><span class="nx">bookList</span><span class="p">.</span><span class="nx">replaceChildren</span><span class="p">();</span><span class="w"> </span><span class="c1">// 既存の行を消す</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">book</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">data</span><span class="p">.</span><span class="nx">books</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="kd">const</span><span class="w"> </span><span class="nx">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;tr&quot;</span><span class="p">);</span>
+<span class="w">          </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="p">[</span><span class="nx">book</span><span class="p">.</span><span class="nx">title</span><span class="p">,</span><span class="w"> </span><span class="nx">book</span><span class="p">.</span><span class="nx">author</span><span class="p">,</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">book</span><span class="p">.</span><span class="nx">price</span><span class="si">}</span><span class="sb"> 円`</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">);</span>
+<span class="w">            </span><span class="nx">cell</span><span class="p">.</span><span class="nx">textContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span><span class="p">;</span>
+<span class="w">            </span><span class="nx">row</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">cell</span><span class="p">);</span>
+<span class="w">          </span><span class="p">}</span>
+<span class="w">          </span><span class="nx">bookList</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">row</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="nx">statusText</span><span class="p">.</span><span class="nx">textContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`更新日: </span><span class="si">${</span><span class="nx">data</span><span class="p">.</span><span class="nx">updated</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// ネットワークエラーや CORS による失敗もここに来る</span>
+<span class="w">        </span><span class="nx">statusText</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">statusText</span><span class="p">.</span><span class="nx">textContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`読み込みに失敗しました (</span><span class="si">${</span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="si">}</span><span class="sb">)`</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s2">&quot;#load-button&quot;</span><span class="p">).</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">loadBooks</span><span class="p">);</span>
+<span class="w">  </span><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/c167be7fb176eab8aab12b7e459db755/data.json"><code class="xref download docutils literal notranslate"><span class="pre">data.json</span> <span class="pre">をダウンロード</span></code></a> ／ <a class="reference download internal" download="" href="_downloads/20453640562dad6b034279e9dce76d04/fetch.html"><code class="xref download docutils literal notranslate"><span class="pre">fetch.html</span> <span class="pre">をダウンロード</span></code></a> ／ <a class="reference external" href="examples/ch08/fetch.html">ブラウザで表示</a></p>
+</section>
+<section id="cors">
+<h2><span class="section-number">8.6. </span>同一オリジンポリシーと CORS<a class="headerlink" href="#cors" title="Link to this heading"></a></h2>
+<p>オリジンとは、URL のスキーム・ホスト・ポートの組み合わせである。たとえば <code class="docutils literal notranslate"><span class="pre">https://example.com</span></code> と <code class="docutils literal notranslate"><span class="pre">https://api.example.com</span></code> は、ホストが異なるため別のオリジンになる。</p>
+<p>ブラウザには、あるオリジンのページで動く JavaScript が、別のオリジンのデータを勝手に読み取れないようにする仕組みがある。これを同一オリジンポリシーと呼ぶ。この制限が無いと、悪意のあるページを開いただけで、そのページの JavaScript が、利用者がログイン中の別のサイトから個人情報を読み取れてしまう。</p>
+<p>別のオリジンのデータを <code class="docutils literal notranslate"><span class="pre">fetch</span></code> で読み取れるのは、相手のサーバーがレスポンスのヘッダーで許可している場合だけである。この許可の仕組みを CORS（Cross-Origin Resource Sharing）と呼ぶ。サーバーが <code class="docutils literal notranslate"><span class="pre">Access-Control-Allow-Origin</span></code> ヘッダーで読み取りを許可するオリジンを示し、ブラウザはそれを確認してから JavaScript にデータを渡す。</p>
+<p>公開されている API を <code class="docutils literal notranslate"><span class="pre">fetch</span></code> で使おうとして「CORS」を含むエラーがコンソールに表示された場合、それはサーバー側が許可していないことを意味する。これはブラウザ側の JavaScript だけでは解決できない。Python のプログラムからは同じ API にアクセスできることがあるのは、同一オリジンポリシーがブラウザ独自の仕組みだからである。</p>
+</section>
+<section id="web-storage">
+<h2><span class="section-number">8.7. </span>Web Storage<a class="headerlink" href="#web-storage" title="Link to this heading"></a></h2>
+<p>Web Storage は、ブラウザの中にデータを保存する仕組みである。キーと値の組でデータを保存し、2 種類がある。</p>
+<table class="docutils align-default" id="id10">
+<caption><span class="caption-text">Web Storage の種類</span><a class="headerlink" href="#id10" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>名前</p></th>
+<th class="head"><p>データが保存される期間</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">localStorage</span></code></p></td>
+<td><p>明示的に削除するまで。ブラウザを閉じても残る。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sessionStorage</span></code></p></td>
+<td><p>タブを閉じるまで。</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default" id="id11">
+<caption><span class="caption-text">Web Storage の主なメソッド</span><a class="headerlink" href="#id11" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 45.0%" />
+<col style="width: 55.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>記述</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">localStorage.setItem(&quot;key&quot;,</span> <span class="pre">&quot;value&quot;)</span></code></p></td>
+<td><p>値を保存する。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">localStorage.getItem(&quot;key&quot;)</span></code></p></td>
+<td><p>値を取得する。キーが無ければ <code class="docutils literal notranslate"><span class="pre">null</span></code> を返す。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">localStorage.removeItem(&quot;key&quot;)</span></code></p></td>
+<td><p>値を削除する。</p></td>
+</tr>
+</tbody>
+</table>
+<p>保存できる値は文字列だけである。数値は文字列に変換され、オブジェクトや配列はそのままでは保存できない。オブジェクトや配列を保存するには <code class="docutils literal notranslate"><span class="pre">JSON.stringify</span></code> で文字列に変換し、取り出すときに <code class="docutils literal notranslate"><span class="pre">JSON.parse</span></code> で元に戻す。</p>
+<p>保存されたデータは、オリジンごとに分けて管理される。また、利用者は開発者ツールの「アプリケーション」タブ（Firefox では「ストレージ」タブ）で内容を確認・変更できる。パスワードなどの機密情報を保存してはならない。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">examples/ch08/storage.html</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">&quot;ja&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;UTF-8&quot;</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width, initial-scale=1&quot;</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Web Storage の例<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>Web Storage の例<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>入力した内容はページを再読み込みしても残る。<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">&quot;memo&quot;</span><span class="p">&gt;</span>メモ<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">textarea</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;memo&quot;</span> <span class="na">rows</span><span class="o">=</span><span class="s">&quot;4&quot;</span> <span class="na">cols</span><span class="o">=</span><span class="s">&quot;40&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">textarea</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">button</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;clear-button&quot;</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;button&quot;</span><span class="p">&gt;</span>メモを消去<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>このページを開いた回数 (このタブ内): <span class="p">&lt;</span><span class="nt">span</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;visit-count&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">MEMO_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;storage-sample-memo&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">memo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s2">&quot;#memo&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// localStorage: ブラウザを閉じても残る。値は文字列として保存される</span>
+<span class="w">    </span><span class="nx">memo</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">localStorage</span><span class="p">.</span><span class="nx">getItem</span><span class="p">(</span><span class="nx">MEMO_KEY</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nx">memo</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">localStorage</span><span class="p">.</span><span class="nx">setItem</span><span class="p">(</span><span class="nx">MEMO_KEY</span><span class="p">,</span><span class="w"> </span><span class="nx">memo</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s2">&quot;#clear-button&quot;</span><span class="p">).</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">localStorage</span><span class="p">.</span><span class="nx">removeItem</span><span class="p">(</span><span class="nx">MEMO_KEY</span><span class="p">);</span>
+<span class="w">      </span><span class="nx">memo</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// sessionStorage: タブを閉じると消える</span>
+<span class="w">    </span><span class="c1">// 文字列しか保存できないため、数値は Number で変換する</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Number</span><span class="p">(</span><span class="nx">sessionStorage</span><span class="p">.</span><span class="nx">getItem</span><span class="p">(</span><span class="s2">&quot;visit-count&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s2">&quot;0&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">sessionStorage</span><span class="p">.</span><span class="nx">setItem</span><span class="p">(</span><span class="s2">&quot;visit-count&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">String</span><span class="p">(</span><span class="nx">count</span><span class="p">));</span>
+<span class="w">    </span><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s2">&quot;#visit-count&quot;</span><span class="p">).</span><span class="nx">textContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">count</span><span class="p">;</span>
+<span class="w">  </span><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/ba2e0cf349fb964138fa93ad443cb972/storage.html"><code class="xref download docutils literal notranslate"><span class="pre">storage.html</span> <span class="pre">をダウンロード</span></code></a> ／ <a class="reference external" href="examples/ch08/storage.html">ブラウザで表示</a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dom_events.html" class="btn btn-neutral float-left" title="7. DOM 操作とイベント" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="todo_app.html" class="btn btn-neutral float-right" title="9. 実践：ToDo アプリの作成" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

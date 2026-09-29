@@ -1,0 +1,405 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>基礎編：ジェネラティブアート特有の設計方針 &mdash; Python で作る
+ジェネラティブアート 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=64886222" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="色彩設計" href="color.html" />
+    <link rel="prev" title="はじめに" href="intro.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python で作る
+ジェネラティブアート
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">はじめに</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">基礎編：ジェネラティブアート特有の設計方針</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">座標系の正規化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">シードと再現性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basics-composition">構図とレイヤーの考え方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#easing">補間とイージング関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#animation">時間変化の表現：静止画とアニメーション</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="color.html">色彩設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tiling.html">タイリングパターン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spirals.html">螺旋と曲線</a></li>
+<li class="toctree-l1"><a class="reference internal" href="noise.html">ノイズを使った表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shapes.html">距離関数による形状表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fractals.html">フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="automata.html">セルオートマトンと反応拡散系</a></li>
+<li class="toctree-l1"><a class="reference internal" href="particles.html">パーティクルシステム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evolution.html">進化的アルゴリズム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_effects.html">画像を素材にした生成技法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gallery/index.html">ギャラリー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python で作る
+ジェネラティブアート</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">基礎編：ジェネラティブアート特有の設計方針</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>基礎編：ジェネラティブアート特有の設計方針<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>Python・NumPy・Pillow・matplotlib 自体の使い方には立ち入らず、ジェネラティブアート作品を作る上で共通して必要になる設計上の考え方をまとめる。</p>
+<section id="id2">
+<h2>座標系の正規化<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>作品のロジックを <code class="docutils literal notranslate"><span class="pre">800</span> <span class="pre">x</span> <span class="pre">800</span></code> のような特定の解像度に結びつけて書くと、後から出力サイズを変えたくなったときに、拡大縮小や余白の計算をあちこちに書き足す羽目になる。座標を最初から <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> あるいは <code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">1]</span></code> のような正規化された範囲で組み立て、実際にピクセル配列や画像へ書き出す最後の段階だけでピクセル座標に変換すると、解像度の変更が「最後の変換関数に渡す <code class="docutils literal notranslate"><span class="pre">width</span></code> / <code class="docutils literal notranslate"><span class="pre">height</span></code> を変えるだけ」で済むようになる。</p>
+<p>本資料のサンプルコードでは、簡潔さを優先してピクセル座標を直接扱っている箇所も多いが（<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>のノイズ画像など）、複数の解像度で書き出したい作品や、印刷用に大きな解像度が必要になる作品では、正規化座標を採用する価値がある。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">to_pixel</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;正規化座標 (u, v) （それぞれ0〜1）をピクセル座標に変換する。&quot;&quot;&quot;</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">u</span> <span class="o">*</span> <span class="n">width</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span> <span class="o">*</span> <span class="n">height</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>シードと再現性<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>ジェネラティブアートは乱数を多用するため、シードを固定しない限り実行のたびに違う結果になる。これは狙った効果である一方、「さっき気に入った出力をもう一度得たい」「1 つのパラメータだけを変えて見た目の違いを比較したい」といった場面では、同じシードから同じ乱数列を再現できることが重要になる。実際、本資料の<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>の作例でも、<code class="docutils literal notranslate"><span class="pre">make_permutation(seed=...)</span></code> に固定のシードを渡すことで、生成される画像を再現可能にしている。</p>
+<p><code class="docutils literal notranslate"><span class="pre">np.random.seed</span></code> のようにグローバルな乱数状態を書き換える方式は、モジュールをまたいで暗黙の状態を共有してしまうため、複数の作品や複数のパーティクル群を同時に扱うコードでは思わぬ干渉が起きやすい。<code class="docutils literal notranslate"><span class="pre">np.random.default_rng(seed)</span></code> でジェネレータのインスタンスを明示的に作り、それを関数の引数として持ち回す方式のほうが、「このシードでこのジェネレータから生成した」という対応関係がコード上に残り、再現性・独立性の両面で扱いやすい。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="basics-composition">
+<span id="id4"></span><h2>構図とレイヤーの考え方<a class="headerlink" href="#basics-composition" title="Link to this heading"></a></h2>
+<p>1 枚の絵を「1 つの決め打ちの手続き」として書くのではなく、「パラメータを受け取って画像（または画像の一部）を返す関数」として設計しておくと、同じコードから多様なバリエーションを生み出せる。本資料の作例でも、<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>の <code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> / <code class="docutils literal notranslate"><span class="pre">domain_warp2d</span></code> は座標配列とシード・オクターブ数などのパラメータを受け取り、<a class="reference internal" href="fractals.html"><span class="doc">フラクタル</span></a>の <code class="docutils literal notranslate"><span class="pre">draw_l_system</span></code> は axiom・書き換え規則・角度を受け取る、というように、いずれも「描画関数 + パラメータ」の形をとっている。</p>
+<p>この形にしておくと、少なくとも 2 つの組み立て方ができるようになる。</p>
+<dl class="simple">
+<dt>グリッド配置</dt><dd><p>パラメータ（シード、色相、角度など）を格子状に少しずつ変えながら同じ描画関数を繰り返し呼び出し、結果を並べて 1 枚の画像に敷き詰める。バリエーションを一覧して比較したいときや、パラメータが作品の見た目にどう影響するかを把握したいときに向く。</p>
+</dd>
+<dt>レイヤー合成</dt><dd><p>同じ座標系に対して、性質の異なる描画関数を複数回呼び出し、その結果を重ね合わせる。例えば背景をノイズで塗り、その上にパーティクルシステムの軌跡を重ね、さらにフラクタルの輪郭を重ねる、といった組み合わせが考えられる。Pillow であれば <code class="docutils literal notranslate"><span class="pre">Image.alpha_composite</span></code> やアルファブレンドで、透明度を持たせながら重ねられる。</p>
+</dd>
+</dl>
+<p>いずれの場合も、「1 回描画する処理」と「複数の結果を並べる・重ねる処理」を分けて実装しておくことが鍵になる。前者を作品ごとに使い回し、後者はグリッド配置・レイヤー合成のどちらにも共通して使える汎用的なユーティリティとして持っておくとよい。</p>
+</section>
+<section id="easing">
+<span id="id5"></span><h2>補間とイージング関数<a class="headerlink" href="#easing" title="Link to this heading"></a></h2>
+<p>ジェネラティブアートでは、「2 つの値の間をなめらかにつなぐ」処理が至るところに現れる。2 色の間のグラデーション、図形の大きさを中心から外側へ変化させる処理、格子点の値からその間の値を求めるノイズの計算などは、いずれも <code class="docutils literal notranslate"><span class="pre">t</span></code>（0〜1）を使った補間として書ける。もっとも単純なのは、<code class="docutils literal notranslate"><span class="pre">t</span></code> に比例して値を変化させる線形補間（lerp）である。</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{lerp}(a, b, t) = a + (b - a)\,t\]</div>
+<p>線形補間は変化の速さが常に一定であるため、両端で変化が急に始まり急に止まる、機械的な印象になりやすい。そこで、<code class="docutils literal notranslate"><span class="pre">t</span></code> をいったん<strong>イージング関数</strong> <span class="math notranslate nohighlight">\(f(t)\)</span>（<span class="math notranslate nohighlight">\(f(0) = 0\)</span>、<span class="math notranslate nohighlight">\(f(1) = 1\)</span> を満たす関数）に通してから補間に使うと、変化の緩急を自由に設計できる。</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{lerp}\bigl(a, b, f(t)\bigr)\]</div>
+<p>代表的なイージング関数には次のようなものがある。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>名前</p></th>
+<th class="head"><p>式</p></th>
+<th class="head"><p>変化の特徴</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>linear</p></td>
+<td><p><span class="math notranslate nohighlight">\(f(t) = t\)</span></p></td>
+<td><p>一定の速さで変化する（線形補間そのもの）。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ease-in（3 次）</p></td>
+<td><p><span class="math notranslate nohighlight">\(f(t) = t^3\)</span></p></td>
+<td><p>始まりがゆっくりで、終わりに向かって加速する。</p></td>
+</tr>
+<tr class="row-even"><td><p>ease-out（3 次）</p></td>
+<td><p><span class="math notranslate nohighlight">\(f(t) = 1 - (1 - t)^3\)</span></p></td>
+<td><p>始まりが速く、終わりに向かって減速する。</p></td>
+</tr>
+<tr class="row-odd"><td><p>smoothstep</p></td>
+<td><p><span class="math notranslate nohighlight">\(f(t) = 3t^2 - 2t^3\)</span></p></td>
+<td><p>両端でゆっくり、中央で速く変化する（ease-in-out）。両端で 1 階微分が 0 になる。</p></td>
+</tr>
+<tr class="row-even"><td><p>smootherstep</p></td>
+<td><p><span class="math notranslate nohighlight">\(f(t) = 6t^5 - 15t^4 + 10t^3\)</span></p></td>
+<td><p>smoothstep と同様の形で、両端で 1 階・2 階微分がともに 0 になる。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">examples/easing.py の smoothstep 関数</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">smoothstep</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;3次のエルミート補間。両端で1階微分が0になる。&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="mf">3.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">examples/easing.py の smootherstep 関数</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">smootherstep</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;5次の補間。両端で1階・2階微分がともに0になる。</span>
+
+<span class="sd">    パーリンノイズの fade 関数と同じ式である。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="mf">6.0</span> <span class="o">*</span> <span class="n">t</span> <span class="o">-</span> <span class="mf">15.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">10.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>上の表の関数を、横軸を <code class="docutils literal notranslate"><span class="pre">t</span></code>、縦軸を出力として左から順に描くと次のようになる。薄い対角線は比較用の線形補間である。</p>
+<a class="reference internal image-reference" href="_images/easing_curves.png"><img alt="linear・ease-in・ease-out・smoothstep・smootherstep の 5 つのイージング関数のグラフを横に並べた図" src="_images/easing_curves.png" style="width: 600px;" />
+</a>
+<p>イージング関数は、UI やアニメーションで「動きの緩急」を付けるための道具として知られているが、本資料で扱う静止画でも、補間の割合 <code class="docutils literal notranslate"><span class="pre">t</span></code> を空間上の位置と見なせばそのまま使える。例えば、同じ 2 色の間のグラデーションを、イージング関数だけを変えて補間すると、色の変化が画像のどこに集中するかが変わる（上から linear・ease-in・ease-out・smoothstep・smootherstep の順）。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">examples/easing.py の render_eased_gradient 関数</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">render_eased_gradient</span><span class="p">(</span>
+    <span class="n">easings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EasingFunction</span><span class="p">],</span>
+    <span class="n">start_color</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span>
+    <span class="n">end_color</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">250</span><span class="p">,</span> <span class="mi">190</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">800</span><span class="p">,</span>
+    <span class="n">band_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;同じ2色の間を、イージング関数ごとに補間したグラデーションを縦に並べる。&quot;&quot;&quot;</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+    <span class="n">start</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">start_color</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">end</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">end_color</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">easing</span> <span class="ow">in</span> <span class="n">easings</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">eased</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">easing</span><span class="p">(</span><span class="n">t</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+        <span class="n">row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">lerp</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">eased</span><span class="p">)</span>
+        <span class="n">bands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">band_height</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">bands</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">pixels</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/easing_gradient.png"><img alt="同じ 2 色の間を 5 種類のイージング関数で補間したグラデーションを縦に並べた画像" src="_images/easing_gradient.png" style="width: 600px;" />
+</a>
+<p>同様に、図形を並べる間隔をイージング関数で決めれば、間隔の疎密で奥行きや集中を表現できる。次の 2 枚は、同心円の半径を等間隔の <code class="docutils literal notranslate"><span class="pre">t</span></code> から求めたもの（左、linear）と、ease-in に通してから求めたもの（右）である。ease-in では中心付近の円が密に、外側の円が疎になり、中心に向かって吸い込まれるような印象になる。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">examples/easing.py の render_eased_rings 関数</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">render_eased_rings</span><span class="p">(</span>
+    <span class="n">easing</span><span class="p">:</span> <span class="n">EasingFunction</span><span class="p">,</span>
+    <span class="n">num_rings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">480</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;同心円の半径をイージング関数で決め、間隔の疎密で奥行きを表現する。</span>
+
+<span class="sd">    ``i / num_rings`` を等間隔に振り、それをイージング関数に通した値を</span>
+<span class="sd">    半径の割合として使う。線形なら等間隔の同心円になり、</span>
+<span class="sd">    ``ease_in_cubic`` なら中心付近が密で外側ほど疎になる。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">40</span><span class="p">))</span>
+    <span class="n">draw</span><span class="p">:</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">ImageDraw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">center</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">size</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">max_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">size</span> <span class="o">*</span> <span class="mf">0.46</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">num_rings</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">radii</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">easing</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">max_radius</span>
+    <span class="n">colors</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">lerp</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">90.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">,</span> <span class="mf">220.0</span><span class="p">]),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">250.0</span><span class="p">,</span> <span class="mf">120.0</span><span class="p">,</span> <span class="mf">90.0</span><span class="p">]),</span>
+        <span class="n">t</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">radius</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">radii</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">colors</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)):</span>
+        <span class="n">draw</span><span class="o">.</span><span class="n">ellipse</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">center</span> <span class="o">-</span> <span class="n">radius</span><span class="p">,</span>
+                <span class="n">center</span> <span class="o">-</span> <span class="n">radius</span><span class="p">,</span>
+                <span class="n">center</span> <span class="o">+</span> <span class="n">radius</span><span class="p">,</span>
+                <span class="n">center</span> <span class="o">+</span> <span class="n">radius</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">outline</span><span class="o">=</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">color</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">color</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">color</span><span class="p">[</span><span class="mi">2</span><span class="p">])),</span>
+            <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">image</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/easing_rings_linear.png"><img alt="半径を等間隔に取った同心円" src="_images/easing_rings_linear.png" style="width: 300px;" />
+</a>
+<a class="reference internal image-reference" href="_images/easing_rings_ease_in.png"><img alt="半径を ease-in で決めた同心円。中心付近が密で外側ほど間隔が広い" src="_images/easing_rings_ease_in.png" style="width: 300px;" />
+</a>
+<p>本資料の他の章にも、イージング関数は名前を変えて登場する。<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>のパーリンノイズで格子点の値を補間する fade 関数は smootherstep そのものであり、<a class="reference internal" href="shapes.html"><span class="doc">距離関数による形状表現</span></a>で SDF の輪郭をアンチエイリアスする処理や等高線を描く処理には smoothstep を使っている。いずれも「両端で傾きが 0 になる」性質を利用して、隣り合う領域の継ぎ目を目立たなくしている。</p>
+</section>
+<section id="animation">
+<span id="id6"></span><h2>時間変化の表現：静止画とアニメーション<a class="headerlink" href="#animation" title="Link to this heading"></a></h2>
+<p>本資料で扱う技法の多くは、本来は時間とともに変化するものである。セルオートマトンや反応拡散系は世代ごとに状態が更新され、パーティクルシステムや Boids は 1 ステップごとに粒子が動き、進化的アルゴリズムは世代を重ねるごとに目標へ近づいていく。本資料はこれらを 1 枚の静止画として示しており、その方法は大きく 2 つに分かれる。</p>
+<dl class="simple">
+<dt>最終状態を描く</dt><dd><p>十分なステップ数だけ進めた時点の状態を 1 枚にする。<a class="reference internal" href="automata.html"><span class="doc">セルオートマトンと反応拡散系</span></a>の反応拡散系や、<a class="reference internal" href="evolution.html"><span class="doc">進化的アルゴリズム</span></a>の最終結果がこれにあたる。</p>
+</dd>
+<dt>軌跡を重ねる</dt><dd><p>各ステップの状態を 1 枚に重ね合わせる（古いステップほど薄くする場合もある）。<a class="reference internal" href="automata.html"><span class="doc">セルオートマトンと反応拡散系</span></a>のライフゲームの軌跡や、<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>のフローフィールドがこれにあたり、時間の流れを空間上の模様として表現できる。</p>
+</dd>
+</dl>
+<p>一方で、変化そのものを見せたい場合は、各ステップの画像（フレーム）を順に並べたアニメーションとして書き出せばよい。<a class="reference internal" href="#basics-composition"><span class="std std-ref">構図とレイヤーの考え方</span></a>で述べた通り、本資料の作例はどれも「パラメータや状態を受け取って 1 枚の画像を返す関数」として書かれているため、その関数を時刻ごとに繰り返し呼び出すだけでフレームの列が得られる。フレームの作り方には、次の 2 通りがある。</p>
+<dl class="simple">
+<dt>状態を更新する</dt><dd><p>シミュレーションを 1 ステップ進めるごとに、その時点の状態を 1 フレームとして描く。セルオートマトンやパーティクルシステムのように、次の状態が現在の状態から決まる系に向く。</p>
+</dd>
+<dt>時刻をパラメータとして渡す</dt><dd><p>時刻 <span class="math notranslate nohighlight">\(t\)</span> を描画関数のパラメータ（位相・角度・ノイズの座標など）に対応させ、<span class="math notranslate nohighlight">\(t\)</span> を少しずつ変えながら描く。<span class="math notranslate nohighlight">\(t\)</span> の関数として周期的なもの（<span class="math notranslate nohighlight">\(\sin(2\pi t)\)</span> や、角度として使う <span class="math notranslate nohighlight">\(2\pi t\)</span> など）を選べば、最後のフレームから最初のフレームへなめらかにつながる、継ぎ目のないループアニメーションになる。動きに緩急を付けたい場合は、<a class="reference internal" href="#easing"><span class="std std-ref">補間とイージング関数</span></a>で扱ったイージング関数に <span class="math notranslate nohighlight">\(t\)</span> を通してから使えばよい。</p>
+</dd>
+</dl>
+<p>Pillow は複数の画像をアニメーション GIF として保存できるため、追加のライブラリなしで書き出せる。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">examples/animation.py の save_gif 関数</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">save_gif</span><span class="p">(</span>
+    <span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">frame_duration_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;フレームの列をアニメーション GIF として保存する。</span>
+
+<span class="sd">    ``loop=0`` は無限に繰り返すことを表す。GIF は 256 色までしか</span>
+<span class="sd">    扱えないため、各フレームはパレット形式 (&quot;P&quot;) に変換してから渡す。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">palette_frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">Palette</span><span class="o">.</span><span class="n">ADAPTIVE</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span>
+    <span class="p">]</span>
+    <span class="n">palette_frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">save_all</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">append_images</span><span class="o">=</span><span class="n">palette_frames</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+        <span class="n">duration</span><span class="o">=</span><span class="n">frame_duration_ms</span><span class="p">,</span>
+        <span class="n">loop</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>「状態を更新する」例として、<a class="reference internal" href="automata.html"><span class="doc">セルオートマトンと反応拡散系</span></a>のライフゲームの <code class="docutils literal notranslate"><span class="pre">simulate_life</span></code> が返す履歴を、1 世代ずつフレームにする。静止画の作例では同じ履歴を 1 枚に重ね合わせていたが、ここでは時間方向に並べる。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">examples/animation.py の life_frames 関数</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">life_frames</span><span class="p">(</span>
+    <span class="n">grid_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">90</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">120</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ライフゲームを世代ごとに描いたフレームの列を作る。</span>
+
+<span class="sd">    ``simulate_life`` が返す履歴の 1 世代分を、そのまま 1 フレームとして</span>
+<span class="sd">    描画する。静止画の作例 (``render_life_trail``) が同じ履歴を</span>
+<span class="sd">    1 枚に重ね合わせていたのに対し、こちらは時間方向に並べる。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">initial</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">grid_size</span><span class="p">,</span> <span class="n">grid_size</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mf">0.25</span>
+    <span class="n">history</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">simulate_life</span><span class="p">(</span><span class="n">initial</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">grid_size</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">grid_size</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">render_grid</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">NEAREST</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">grid</span> <span class="ow">in</span> <span class="n">history</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/animation_life.gif"><img alt="ライフゲームを 120 世代分、1 世代ずつフレームにしたアニメーション" src="_images/animation_life.gif" style="width: 270px;" />
+</a>
+<p>「時刻をパラメータとして渡す」例として、<a class="reference internal" href="spirals.html"><span class="doc">螺旋と曲線</span></a>のリサージュ曲線の位相 <span class="math notranslate nohighlight">\(\phi\)</span> を <span class="math notranslate nohighlight">\(2\pi t\)</span> として 1 周期分動かす。位相は <span class="math notranslate nohighlight">\(2\pi\)</span> を周期とするため、最後のフレームの次に最初のフレームへ戻っても変化がつながる。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">examples/animation.py の lissajous_loop_frames 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">lissajous_loop_frames</span><span class="p">(</span>
+    <span class="n">num_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">240</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;位相を 1 周期分ずらしながら描いたリサージュ曲線のフレームの列を作る。</span>
+
+<span class="sd">    位相は ``2*pi`` を周期とするため、最後のフレームの次に最初の</span>
+<span class="sd">    フレームへ戻っても変化がなめらかにつながり、継ぎ目のない</span>
+<span class="sd">    ループアニメーションになる。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_frames</span><span class="p">):</span>
+        <span class="n">t</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">index</span> <span class="o">/</span> <span class="n">num_frames</span>
+        <span class="n">phase</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">t</span>
+        <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">lissajous_points</span><span class="p">(</span>
+            <span class="n">freq_x</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">freq_y</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="mi">1000</span>
+        <span class="p">)</span>
+        <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">render_curve</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">180</span><span class="p">))</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">frames</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/animation_lissajous.gif"><img alt="周波数比 3:2 のリサージュ曲線の位相を 1 周期分動かした、継ぎ目のないループアニメーション" src="_images/animation_lissajous.gif" style="width: 240px;" />
+</a>
+<p>GIF は 1 フレームあたり 256 色までしか扱えず、フレーム数や画像サイズを増やすとファイルサイズも急速に大きくなる。本節の作例は、フレーム数・画像サイズを小さく抑えている。なめらかなグラデーションを含む作品や長いアニメーションを書き出す場合は、フレームを連番の PNG として保存し、動画編集ソフトや ffmpeg などで動画に変換する方法が向く。また、マウス操作に反応させるなど、実行中にリアルタイムで描画し続ける作品には、<a class="reference internal" href="intro.html"><span class="doc">はじめに</span></a>で触れた py5 のようなフレームベースの描画環境が適している。本資料では、アニメーションについてはここで述べた書き出し方の基本にとどめ、以降の章の作例は静止画で示す。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="intro.html" class="btn btn-neutral float-left" title="はじめに" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="color.html" class="btn btn-neutral float-right" title="色彩設計" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

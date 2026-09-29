@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fetch の例</title>
+  <style>
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid #999; padding: 4px 8px; }
+    .error { color: crimson; }
+  </style>
+</head>
+<body>
+  <h1>fetch による JSON の取得</h1>
+  <p>file:// で開くと取得に失敗する。ローカルサーバー経由で開くこと。</p>
+  <button id="load-button" type="button">書籍一覧を読み込む</button>
+  <p id="status"></p>
+  <table>
+    <thead>
+      <tr><th>書名</th><th>著者</th><th>価格</th></tr>
+    </thead>
+    <tbody id="book-list"></tbody>
+  </table>
+
+  <script>
+    const statusText = document.querySelector("#status");
+    const bookList = document.querySelector("#book-list");
+
+    async function loadBooks() {
+      statusText.className = "";
+      statusText.textContent = "読み込み中...";
+
+      try {
+        const response = await fetch("data.json");
+        // fetch は HTTP エラー (404 など) では例外を投げないため、自分で確認する
+        if (!response.ok) {
+          throw new Error(`HTTP エラー: ${response.status}`);
+        }
+        const data = await response.json();
+
+        bookList.replaceChildren(); // 既存の行を消す
+        for (const book of data.books) {
+          const row = document.createElement("tr");
+          for (const value of [book.title, book.author, `${book.price} 円`]) {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.append(cell);
+          }
+          bookList.append(row);
+        }
+        statusText.textContent = `更新日: ${data.updated}`;
+      } catch (error) {
+        // ネットワークエラーや CORS による失敗もここに来る
+        statusText.className = "error";
+        statusText.textContent = `読み込みに失敗しました (${error.message})`;
+      }
+    }
+
+    document.querySelector("#load-button").addEventListener("click", loadBooks);
+  </script>
+</body>
+</html>

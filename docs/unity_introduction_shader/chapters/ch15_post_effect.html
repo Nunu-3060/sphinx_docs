@@ -1,0 +1,378 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 15 章 ポストエフェクト &mdash; Unity シェーダー・グラフィック入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=01157622" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="第 16 章 Shader Graph" href="ch16_shader_graph.html" />
+    <link rel="prev" title="第 14 章 表現テクニック" href="ch14_effects.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity シェーダー・グラフィックス入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 1 部 導入と理論</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">第 1 章 はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_cg_math.html">第 2 章 コンピューターグラフィックスの数学</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_coordinate_transform.html">第 3 章 座標変換</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_rendering_pipeline.html">第 4 章 GPU とレンダリングパイプライン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_unity_rendering.html">第 5 章 Unity の描画のしくみ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 2 部 シェーダーの基本</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch06_shaderlab_hlsl.html">第 6 章 ShaderLab と HLSL の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_first_shader.html">第 7 章 最初のシェーダー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_texture_uv.html">第 8 章 テクスチャーと UV</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 3 部 ライティング</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch09_lighting.html">第 9 章 ライティング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_normal_map.html">第 10 章 法線マップ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_shadow.html">第 11 章 影</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 4 部 表現の幅を広げる</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch12_transparency.html">第 12 章 透明と描画順</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_vertex_animation.html">第 13 章 頂点アニメーション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_effects.html">第 14 章 表現テクニック</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 15 章 ポストエフェクト</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">ポストエフェクトのしくみ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">グレースケール</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">輝度の計算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#full-screen-pass-renderer-feature">Full Screen Pass Renderer Feature の設定</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">ビネット</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch16_shader_graph.html">第 16 章 Shader Graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17_debug_optimize.html">第 17 章 デバッグと最適化</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/formulas.html">付録 B 数式のまとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/references.html">付録 C 参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity シェーダー・グラフィックス入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 15 章 ポストエフェクト</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch14_effects.html" class="btn btn-neutral float-left" title="第 14 章 表現テクニック" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch16_shader_graph.html" class="btn btn-neutral float-right" title="第 16 章 Shader Graph" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 15 章 ポストエフェクト<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>ポストエフェクトは、シーンを描画し終えた画面全体の画像に対して、あとから加工を行う処理である。色調の補正、白黒化、画面の周辺を暗くする、ぼかすなどの表現に使う。この章では、URP の Full Screen Pass Renderer Feature を使って、自作のポストエフェクトを画面に適用する。</p>
+<p>この章のサンプルコードは、<code class="docutils literal notranslate"><span class="pre">examples/chapter15</span></code> フォルダーにある。</p>
+<section id="id2">
+<h2>ポストエフェクトのしくみ<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>ポストエフェクトは、次の手順で行う。</p>
+<ol class="arabic simple">
+<li><p>シーンを通常どおり描画し、結果の画像をテクスチャーとして保持する。</p></li>
+<li><p>画面全体を覆う図形を描画する。その図形のフラグメントシェーダーで、1 で保持したテクスチャーを読み取り、加工した色を出力する。</p></li>
+</ol>
+<p>2 のフラグメントシェーダーは、画面のピクセルごとに 1 回実行される。UV 座標は画面の位置に対応し、左下が (0, 0)、右上が (1, 1) になる。</p>
+<p>URP には、Bloom、Vignette、Color Adjustments などのポストエフェクトが、Volume の機能として用意されている。用意されているもので足りる場合は、Volume を使うのが簡単である。自作のポストエフェクトが必要な場合に、この章の方法を使う。</p>
+</section>
+<section id="id3">
+<h2>グレースケール<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>次のシェーダーは、画面全体を白黒にする。</p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">Grayscale.shader</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">// 第 15 章：画面全体をグレースケール（白黒）にするポストエフェクト用のシェーダー。</span>
+<span class="linenos"> 2</span><span class="c1">// Full Screen Pass Renderer Feature の Pass Material に設定して使う。</span>
+<span class="linenos"> 3</span><span class="n">Shader</span><span class="w"> </span><span class="s">&quot;Introduction/Chapter15/Grayscale&quot;</span>
+<span class="linenos"> 4</span><span class="p">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="n">Properties</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="c1">// 0 で元の色、1 で完全な白黒</span>
+<span class="linenos"> 8</span><span class="w">        </span><span class="n">_Intensity</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Intensity&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="w">    </span><span class="n">SubShader</span>
+<span class="linenos">12</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">13</span><span class="w">        </span><span class="n">Tags</span>
+<span class="linenos">14</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">15</span><span class="w">            </span><span class="s">&quot;RenderType&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Opaque&quot;</span>
+<span class="linenos">16</span><span class="w">            </span><span class="s">&quot;RenderPipeline&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalPipeline&quot;</span>
+<span class="linenos">17</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="w">        </span><span class="c1">// 画面全体を覆う三角形を描くだけなので、深度とカリングは使わない</span>
+<span class="linenos">20</span><span class="w">        </span><span class="n">ZWrite</span><span class="w"> </span><span class="n">Off</span>
+<span class="linenos">21</span><span class="w">        </span><span class="n">ZTest</span><span class="w"> </span><span class="n">Always</span>
+<span class="linenos">22</span><span class="w">        </span><span class="n">Cull</span><span class="w"> </span><span class="n">Off</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos">25</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">26</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;Grayscale&quot;</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos">29</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl&quot;</span>
+<span class="linenos">30</span><span class="w">            </span><span class="c1">// 全画面描画用の頂点シェーダー Vert と、</span>
+<span class="linenos">31</span><span class="w">            </span><span class="c1">// 画面の色が入ったテクスチャー _BlitTexture が定義されている</span>
+<span class="linenos">32</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl&quot;</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span><span class="w">            </span><span class="cp">#pragma vertex Vert</span>
+<span class="linenos">35</span><span class="w">            </span><span class="cp">#pragma fragment GrayscaleFrag</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span><span class="w">            </span><span class="n">CBUFFER_START</span><span class="p">(</span><span class="n">UnityPerMaterial</span><span class="p">)</span>
+<span class="linenos">38</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">_Intensity</span><span class="p">;</span>
+<span class="linenos">39</span><span class="w">            </span><span class="n">CBUFFER_END</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">GrayscaleFrag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos">42</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">43</span><span class="w">                </span><span class="n">UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="w">                </span><span class="c1">// レンダリング済みの画面の色を読み取る</span>
+<span class="linenos">46</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">color</span><span class="w"> </span><span class="o">=</span>
+<span class="linenos">47</span><span class="w">                    </span><span class="n">SAMPLE_TEXTURE2D_X</span><span class="p">(</span><span class="n">_BlitTexture</span><span class="p">,</span><span class="w"> </span><span class="n">sampler_LinearClamp</span><span class="p">,</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">texcoord</span><span class="p">);</span>
+<span class="linenos">48</span>
+<span class="linenos">49</span><span class="w">                </span><span class="c1">// 人の目は緑に敏感で青に鈍感なため、</span>
+<span class="linenos">50</span><span class="w">                </span><span class="c1">// 重みを付けて輝度を求める（ITU-R BT.709 の係数）</span>
+<span class="linenos">51</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">luminance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">dot</span><span class="p">(</span><span class="n">color</span><span class="p">.</span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="kt">half3</span><span class="p">(</span><span class="mf">0.2126</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7152</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0722</span><span class="p">));</span>
+<span class="linenos">52</span>
+<span class="linenos">53</span><span class="w">                </span><span class="n">color</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">lerp</span><span class="p">(</span><span class="n">color</span><span class="p">.</span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="n">luminance</span><span class="p">.</span><span class="n">xxx</span><span class="p">,</span><span class="w"> </span><span class="n">_Intensity</span><span class="p">);</span>
+<span class="linenos">54</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">color</span><span class="p">;</span>
+<span class="linenos">55</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">56</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">57</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">58</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">59</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/85322035e53fc815c67f6db461dbb317/Grayscale.shader"><code class="xref download docutils literal notranslate"><span class="pre">Grayscale.shader</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>これまでのシェーダーとの違いは、次のとおりである。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Blit.hlsl</span></code> を読み込み、そこで定義されている頂点シェーダー <code class="docutils literal notranslate"><span class="pre">Vert</span></code> をそのまま使っている。<code class="docutils literal notranslate"><span class="pre">Vert</span></code> は、画面全体を覆う三角形を描画し、<code class="docutils literal notranslate"><span class="pre">Varyings</span></code> の <code class="docutils literal notranslate"><span class="pre">texcoord</span></code> に画面の UV 座標を入れる。そのため、<code class="docutils literal notranslate"><span class="pre">Attributes</span></code> と <code class="docutils literal notranslate"><span class="pre">Varyings</span></code> の構造体は自分で定義しない。</p></li>
+<li><p>画面の画像は、<code class="docutils literal notranslate"><span class="pre">Blit.hlsl</span></code> で宣言されている <code class="docutils literal notranslate"><span class="pre">_BlitTexture</span></code> から読み取る。サンプラーには、URP のライブラリで宣言されている <code class="docutils literal notranslate"><span class="pre">sampler_LinearClamp</span></code>（Filter Mode が Bilinear、Wrap Mode が Clamp のサンプラー）を使う。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_BlitTexture</span></code> は、VR などで左右の目の画像を 1 つのテクスチャーにまとめる場合に備えて <code class="docutils literal notranslate"><span class="pre">TEXTURE2D_X</span></code> で宣言されている。そのため、読み取りには <code class="docutils literal notranslate"><span class="pre">SAMPLE_TEXTURE2D_X</span></code> マクロを使う。<code class="docutils literal notranslate"><span class="pre">UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX</span></code> マクロも、同じ理由で呼んでいる。</p></li>
+<li><p>画面全体を覆うだけなので、<code class="docutils literal notranslate"><span class="pre">ZWrite</span> <span class="pre">Off</span></code>、<code class="docutils literal notranslate"><span class="pre">ZTest</span> <span class="pre">Always</span></code>、<code class="docutils literal notranslate"><span class="pre">Cull</span> <span class="pre">Off</span></code> を指定している。</p></li>
+</ul>
+<section id="id4">
+<h3>輝度の計算<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>色を白黒にするには、RGB の各成分から明るさ（輝度）を求め、その値を RGB のすべてに入れる。人の目は緑に最も敏感で、青に最も鈍感なため、単純な平均ではなく、次の重みを付けた和を使う。</p>
+<div class="math notranslate nohighlight">
+\[Y = 0.2126 R + 0.7152 G + 0.0722 B\]</div>
+<p>これは、ITU-R BT.709 という規格で定められた係数で、Linear の色空間の RGB に対して使う。本資料の前提の環境では、カラースペースは Linear である（第 1 章を参照）。</p>
+</section>
+</section>
+<section id="full-screen-pass-renderer-feature">
+<h2>Full Screen Pass Renderer Feature の設定<a class="headerlink" href="#full-screen-pass-renderer-feature" title="Link to this heading"></a></h2>
+<p>作成したシェーダーを、次の手順で画面に適用する。</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Grayscale.shader</span></code> をプロジェクトに追加し、このシェーダーを使うマテリアルを作成する。</p></li>
+<li><p>Project ウィンドウで、使っている Universal Renderer Data アセットを選択する。Universal 3D テンプレートでは、<code class="docutils literal notranslate"><span class="pre">Assets/Settings</span></code> フォルダーにある <code class="docutils literal notranslate"><span class="pre">PC_Renderer</span></code> などのアセットである。</p></li>
+<li><p>Inspector ウィンドウの下部にある <span class="guilabel">Add Renderer Feature</span> を押し、<span class="guilabel">Full Screen Pass Renderer Feature</span> を選ぶ。</p></li>
+<li><p>追加した Renderer Feature の <span class="guilabel">Pass Material</span> に、1 で作成したマテリアルを設定する。</p></li>
+<li><p><span class="guilabel">Injection Point</span> が <span class="guilabel">After Rendering Post Processing</span>（既定値）になっていることを確認する。</p></li>
+<li><p><span class="guilabel">Fetch Color Buffer</span> にチェックを入れる。</p></li>
+</ol>
+<p>Game ビューで、画面全体が白黒になることを確認する。マテリアルの <span class="guilabel">Intensity</span> を変えると、白黒の度合いが変わる。</p>
+<p>各項目の意味は、次のとおりである。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>項目</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="guilabel">Pass Material</span></p></td>
+<td><p>画面全体の描画に使うマテリアル。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="guilabel">Injection Point</span></p></td>
+<td><p>URP の描画の流れの中で、どのタイミングでこの処理を行うか。<span class="guilabel">After Rendering Post Processing</span> は、URP の Volume のポストエフェクトのあとである。</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="guilabel">Fetch Color Buffer</span></p></td>
+<td><p>それまでに描画された画面の画像を、<code class="docutils literal notranslate"><span class="pre">_BlitTexture</span></code> としてシェーダーに渡すかどうか。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="guilabel">Pass</span></p></td>
+<td><p>マテリアルのシェーダーのどのパスを使うか。既定では表示されず、Renderer Feature の右上の <span class="guilabel">⋮</span> メニューで <span class="guilabel">Advanced Properties</span> を有効にすると表示される。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>PC とスマートフォンで異なる Universal Renderer Data アセットを使っている場合は（Universal 3D テンプレートでは <code class="docutils literal notranslate"><span class="pre">PC_Renderer</span></code> と <code class="docutils literal notranslate"><span class="pre">Mobile_Renderer</span></code>）、それぞれに Renderer Feature を追加する必要がある。どのアセットが使われているかは、<span class="menuselection">Edit ‣ Project Settings ‣ Quality</span> で選ばれている品質レベルの URP Asset から確認できる。</p>
+</div>
+</section>
+<section id="id5">
+<h2>ビネット<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>次のシェーダーは、画面の中心から離れるほど暗くする。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">Vignette.shader</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">// 第 15 章：画面の周辺を暗くする（ビネット）ポストエフェクト用のシェーダー。</span>
+<span class="linenos"> 2</span><span class="c1">// Full Screen Pass Renderer Feature の Pass Material に設定して使う。</span>
+<span class="linenos"> 3</span><span class="n">Shader</span><span class="w"> </span><span class="s">&quot;Introduction/Chapter15/Vignette&quot;</span>
+<span class="linenos"> 4</span><span class="p">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="n">Properties</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="n">_VignetteColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Vignette Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 8</span><span class="w">        </span><span class="c1">// 画面の中心からこの距離までは暗くしない（画面の高さを 1 とした距離）</span>
+<span class="linenos"> 9</span><span class="w">        </span><span class="n">_Radius</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Radius&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.4</span>
+<span class="linenos">10</span><span class="w">        </span><span class="c1">// 暗くなり始めてから完全に暗くなるまでの距離</span>
+<span class="linenos">11</span><span class="w">        </span><span class="n">_Softness</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Softness&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.4</span>
+<span class="linenos">12</span><span class="w">        </span><span class="n">_Intensity</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Intensity&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.8</span>
+<span class="linenos">13</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="w">    </span><span class="n">SubShader</span>
+<span class="linenos">16</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">17</span><span class="w">        </span><span class="n">Tags</span>
+<span class="linenos">18</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">19</span><span class="w">            </span><span class="s">&quot;RenderType&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Opaque&quot;</span>
+<span class="linenos">20</span><span class="w">            </span><span class="s">&quot;RenderPipeline&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalPipeline&quot;</span>
+<span class="linenos">21</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span><span class="w">        </span><span class="n">ZWrite</span><span class="w"> </span><span class="n">Off</span>
+<span class="linenos">24</span><span class="w">        </span><span class="n">ZTest</span><span class="w"> </span><span class="n">Always</span>
+<span class="linenos">25</span><span class="w">        </span><span class="n">Cull</span><span class="w"> </span><span class="n">Off</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos">28</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">29</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;Vignette&quot;</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos">32</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl&quot;</span>
+<span class="linenos">33</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl&quot;</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="w">            </span><span class="cp">#pragma vertex Vert</span>
+<span class="linenos">36</span><span class="w">            </span><span class="cp">#pragma fragment VignetteFrag</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span><span class="w">            </span><span class="n">CBUFFER_START</span><span class="p">(</span><span class="n">UnityPerMaterial</span><span class="p">)</span>
+<span class="linenos">39</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">_VignetteColor</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">_Radius</span><span class="p">;</span>
+<span class="linenos">41</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">_Softness</span><span class="p">;</span>
+<span class="linenos">42</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">_Intensity</span><span class="p">;</span>
+<span class="linenos">43</span><span class="w">            </span><span class="n">CBUFFER_END</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">VignetteFrag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos">46</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">47</span><span class="w">                </span><span class="n">UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
+<span class="linenos">48</span>
+<span class="linenos">49</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">color</span><span class="w"> </span><span class="o">=</span>
+<span class="linenos">50</span><span class="w">                    </span><span class="n">SAMPLE_TEXTURE2D_X</span><span class="p">(</span><span class="n">_BlitTexture</span><span class="p">,</span><span class="w"> </span><span class="n">sampler_LinearClamp</span><span class="p">,</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">texcoord</span><span class="p">);</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span><span class="w">                </span><span class="c1">// 画面の中心から見た位置。横方向に縦横比を掛け、</span>
+<span class="linenos">53</span><span class="w">                </span><span class="c1">// 周辺が楕円ではなく円形に暗くなるようにする。</span>
+<span class="linenos">54</span><span class="w">                </span><span class="c1">// _ScreenParams.x と _ScreenParams.y には、</span>
+<span class="linenos">55</span><span class="w">                </span><span class="c1">// 描画先の幅と高さ（ピクセル数）が入っている。</span>
+<span class="linenos">56</span><span class="w">                </span><span class="kt">float2</span><span class="w"> </span><span class="n">fromCenter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">texcoord</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">57</span><span class="w">                </span><span class="n">fromCenter</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">_ScreenParams</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">_ScreenParams</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">58</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">distanceFromCenter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">length</span><span class="p">(</span><span class="n">fromCenter</span><span class="p">);</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span><span class="w">                </span><span class="c1">// 中心付近は 0、周辺ほど 1 に近づく値</span>
+<span class="linenos">61</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">vignette</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">smoothstep</span><span class="p">(</span><span class="n">_Radius</span><span class="p">,</span><span class="w"> </span><span class="n">_Radius</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">_Softness</span><span class="p">,</span><span class="w"> </span><span class="n">distanceFromCenter</span><span class="p">);</span>
+<span class="linenos">62</span><span class="w">                </span><span class="n">vignette</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">_Intensity</span><span class="p">;</span>
+<span class="linenos">63</span>
+<span class="linenos">64</span><span class="w">                </span><span class="n">color</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">lerp</span><span class="p">(</span><span class="n">color</span><span class="p">.</span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="n">_VignetteColor</span><span class="p">.</span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="n">vignette</span><span class="p">);</span>
+<span class="linenos">65</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">color</span><span class="p">;</span>
+<span class="linenos">66</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">67</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">68</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">69</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">70</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/3e55c1dedfcf2362fce740761efbcba1/Vignette.shader"><code class="xref download docutils literal notranslate"><span class="pre">Vignette.shader</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>グレースケールと同じ手順で、別の Full Screen Pass Renderer Feature を追加して設定する。複数の Renderer Feature を追加した場合は、同じ <span class="guilabel">Injection Point</span> の中では、リストの上にあるものから順に処理される。</p>
+<p>画面の UV 座標から 0.5 を引くと、画面の中心が原点になる。そのまま距離を求めると、横長の画面では暗くなる範囲が横に伸びた楕円になる。そこで、x 座標に画面の縦横比（幅 ÷ 高さ）を掛けてから距離を求め、円形に暗くなるようにしている。<code class="docutils literal notranslate"><span class="pre">_ScreenParams</span></code> は、Unity が設定する変数で、x に描画先の幅、y に高さがピクセル単位で入っている。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>Full Screen Pass Renderer Feature は、URP に用意されている Renderer Feature である。より複雑な処理（複数回の描画を組み合わせるなど）が必要な場合は、C# で独自の Renderer Feature を書く。Unity 6 の URP では、Renderer Feature の描画処理を Render Graph と呼ばれるしくみで記述する。独自の Renderer Feature の書き方は、本資料の範囲を超えるため扱わない。</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch14_effects.html" class="btn btn-neutral float-left" title="第 14 章 表現テクニック" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch16_shader_graph.html" class="btn btn-neutral float-right" title="第 16 章 Shader Graph" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

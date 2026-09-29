@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01 三角形の描画 | GLSL 入門</title>
+<style>
+  body { margin: 0; padding: 12px; background: #1e1e1e; color: #ddd; font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  canvas { display: block; width: 100%; max-width: 600px; height: auto; background: #000; }
+  #log { color: #ff8080; white-space: pre-wrap; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<h1>01 三角形の描画</h1>
+<canvas id="canvas" width="600" height="400"></canvas>
+<pre id="log"></pre>
+
+<!--
+  頂点シェーダー：頂点ごとに 1 回実行され、頂点の位置を決める。
+  "#version 300 es" はシェーダーの先頭行に書く必要がある。
+-->
+<script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+// 頂点属性：JavaScript から渡される頂点の位置 (x, y)
+layout(location = 0) in vec2 aPosition;
+
+void main() {
+    // 頂点の位置をクリップ座標として出力する（z = 0.0、w = 1.0）
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+</script>
+
+<!-- フラグメントシェーダー：フラグメントごとに 1 回実行され、色を決める。 -->
+<script id="fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+
+// フラグメントシェーダーでは float の精度を必ず指定する
+precision highp float;
+
+// 出力変数：このフラグメントの色 (R, G, B, A)。各成分は 0.0 から 1.0
+out vec4 outColor;
+
+void main() {
+    outColor = vec4(1.0, 0.5, 0.2, 1.0);  // オレンジ色
+}
+</script>
+
+<script>
+"use strict";
+
+// ---- (1) シェーダーのコンパイルとリンクを行う関数 ----
+
+// シェーダーのソースコードをコンパイルする
+function compileShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const message = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("シェーダーのコンパイルに失敗しました。\n" + message);
+    }
+    return shader;
+}
+
+// 頂点シェーダーとフラグメントシェーダーをリンクして、プログラムを作る
+function createProgram(gl, vertexSource, fragmentSource) {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    // リンクが終わればシェーダーオブジェクトは不要になる
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error("プログラムのリンクに失敗しました。\n" + gl.getProgramInfoLog(program));
+    }
+    return program;
+}
+
+// <script> 要素からシェーダーのソースコードを取り出す。
+// "#version 300 es" を先頭行にするため、前後の空白と改行を取り除く。
+function getShaderSource(id) {
+    return document.getElementById(id).textContent.trim();
+}
+
+// ---- (1) ここまで ----
+
+function main() {
+    const canvas = document.getElementById("canvas");
+
+    // ---- (2) WebGL 2.0 の準備 ----
+    const gl = canvas.getContext("webgl2");
+    if (!gl) {
+        throw new Error("このブラウザーは WebGL 2.0 に対応していません。");
+    }
+    const program = createProgram(gl, getShaderSource("vertex-shader"), getShaderSource("fragment-shader"));
+
+    // ---- (3) 頂点データの準備 ----
+    // 三角形の 3 つの頂点の位置 (x, y)。画面の中央が (0, 0)、端が -1 と 1 になる
+    const positions = new Float32Array([
+         0.0,  0.6,  // 上
+        -0.6, -0.6,  // 左下
+         0.6, -0.6,  // 右下
+    ]);
+
+    // 頂点配列オブジェクト (VAO)：頂点属性の設定をまとめて記録する
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+
+    // 頂点バッファー：頂点データを GPU のメモリに転送する
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+    // location = 0 の頂点属性 (aPosition) に、float 2 個を 1 組として読み込ませる
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    // ---- (4) 描画 ----
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0.1, 0.1, 0.1, 1.0);  // 背景色
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(program);
+    gl.bindVertexArray(vao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);  // 3 頂点で三角形を 1 枚描く
+
+    // ---- (4) ここまで ----
+}
+
+try {
+    main();
+} catch (error) {
+    document.getElementById("log").textContent = error.message;
+    console.error(error);
+}
+</script>
+</body>
+</html>

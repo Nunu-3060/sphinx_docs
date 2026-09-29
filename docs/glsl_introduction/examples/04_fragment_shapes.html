@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>04 フラグメントシェーダーで図形を描く | GLSL 入門</title>
+<style>
+  body { margin: 0; padding: 12px; background: #1e1e1e; color: #ddd; font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  canvas { display: block; width: 100%; max-width: 600px; height: auto; background: #000; }
+  .controls { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  #log { color: #ff8080; white-space: pre-wrap; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<h1>04 フラグメントシェーダーで図形を描く</h1>
+<canvas id="canvas" width="600" height="400"></canvas>
+<div class="controls">
+  <label>表示内容 (uMode)
+    <select id="mode">
+      <option value="0">0：グラデーション</option>
+      <option value="1">1：円（step）</option>
+      <option value="2">2：円（smoothstep で輪郭をなめらかにする）</option>
+      <option value="3">3：縞模様（fract）</option>
+      <option value="4">4：市松模様（floor と mod）</option>
+      <option value="5">5：図形の合成（mix）</option>
+      <option value="6">6：discard で穴を開ける</option>
+    </select>
+  </label>
+</div>
+<pre id="log"></pre>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+// 画面全体を覆う大きな三角形の 3 頂点。頂点バッファーを使わず、gl_VertexID で選ぶ
+const vec2 POSITIONS[3] = vec2[3](
+    vec2(-1.0, -1.0),
+    vec2( 3.0, -1.0),
+    vec2(-1.0,  3.0)
+);
+
+void main() {
+    gl_Position = vec4(POSITIONS[gl_VertexID], 0.0, 1.0);
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;  // キャンバスの大きさ（ピクセル）
+uniform int uMode;         // 表示内容の番号
+
+out vec4 outColor;
+
+void main() {
+    // uv：左下が (0, 0)、右上が (1, 1) になる座標
+    vec2 uv = gl_FragCoord.xy / uResolution;
+    // p：画面の中心が (0, 0)、短辺方向が -1 から 1 になる座標（縦横比を補正している）
+    vec2 p = (gl_FragCoord.xy * 2.0 - uResolution) / min(uResolution.x, uResolution.y);
+    // 1 ピクセルが p の座標系でどれだけの長さになるか
+    float pixel = 2.0 / min(uResolution.x, uResolution.y);
+
+    vec3 color = vec3(0.0);
+
+    if (uMode == 0) {
+        // グラデーション：座標をそのまま色にする（赤 = 横方向、緑 = 縦方向）
+        color = vec3(uv, 0.5);
+    } else if (uMode == 1) {
+        // 円：中心からの距離が 0.5 以下なら白
+        float d = length(p);
+        color = vec3(step(d, 0.5));
+    } else if (uMode == 2) {
+        // 円の輪郭を 2 ピクセル分だけなめらかに変化させる（アンチエイリアス）
+        float d = length(p);
+        color = vec3(1.0 - smoothstep(0.5 - 2.0 * pixel, 0.5, d));
+    } else if (uMode == 3) {
+        // 縞模様：横方向を 10 等分し、各区間の後半を白にする
+        color = vec3(step(0.5, fract(uv.x * 10.0)));
+    } else if (uMode == 4) {
+        // 市松模様：マス目の番号 (x, y) の和が偶数か奇数かで色を変える
+        vec2 cell = floor(uv * vec2(12.0, 8.0));
+        color = vec3(mod(cell.x + cell.y, 2.0));
+    } else if (uMode == 5) {
+        // 図形の合成：背景の上に、円とリングを mix で重ねる
+        vec3 background = mix(vec3(0.10, 0.10, 0.30), vec3(0.35, 0.10, 0.25), uv.y);
+        float circle = 1.0 - smoothstep(0.45 - pixel, 0.45 + pixel, length(p - vec2(-0.5, 0.0)));
+        float ring = 1.0 - smoothstep(0.03 - pixel, 0.03 + pixel, abs(length(p - vec2(0.5, 0.0)) - 0.35));
+        color = mix(background, vec3(1.0, 0.8, 0.2), circle);
+        color = mix(color, vec3(0.3, 0.9, 1.0), ring);
+    } else {
+        // discard：横 6 × 縦 4 のマス目に分け、各マスの円の外側は描画しない
+        vec2 cell = fract(uv * vec2(6.0, 4.0)) - 0.5;
+        if (length(cell) > 0.4) {
+            discard;  // このフラグメントを捨てる（背景色が見える）
+        }
+        color = vec3(uv, 1.0);
+    }
+
+    outColor = vec4(color, 1.0);
+}
+</script>
+
+<script>
+"use strict";
+
+function compileShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const message = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("シェーダーのコンパイルに失敗しました。\n" + message);
+    }
+    return shader;
+}
+
+function createProgram(gl, vertexSource, fragmentSource) {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error("プログラムのリンクに失敗しました。\n" + gl.getProgramInfoLog(program));
+    }
+    return program;
+}
+
+function getShaderSource(id) {
+    return document.getElementById(id).textContent.trim();
+}
+
+function main() {
+    const canvas = document.getElementById("canvas");
+    const gl = canvas.getContext("webgl2");
+    if (!gl) {
+        throw new Error("このブラウザーは WebGL 2.0 に対応していません。");
+    }
+    const program = createProgram(gl, getShaderSource("vertex-shader"), getShaderSource("fragment-shader"));
+    const resolutionLocation = gl.getUniformLocation(program, "uResolution");
+    const modeLocation = gl.getUniformLocation(program, "uMode");
+
+    // 頂点属性を使わないので、空の VAO を用意するだけでよい
+    const vao = gl.createVertexArray();
+    const modeInput = document.getElementById("mode");
+
+    function draw() {
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0.15, 0.15, 0.15, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(program);
+        gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+        gl.uniform1i(modeLocation, Number(modeInput.value));
+
+        gl.bindVertexArray(vao);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);  // gl_VertexID = 0, 1, 2 で頂点シェーダーが実行される
+    }
+
+    modeInput.addEventListener("change", draw);
+    draw();
+}
+
+try {
+    main();
+} catch (error) {
+    document.getElementById("log").textContent = error.message;
+    console.error(error);
+}
+</script>
+</body>
+</html>

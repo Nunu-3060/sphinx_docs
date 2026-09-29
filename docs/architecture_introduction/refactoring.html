@@ -1,0 +1,506 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14. リファクタリング &mdash; ソフトウェア設計入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=20bc2eae" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="15. 設計の記録と伝達" href="documentation.html" />
+    <link rel="prev" title="13. テストと設計" href="testing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ソフトウェア設計入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="what_is_design.html">2. ソフトウェア設計とは</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">3. 良い設計の指標</a></li>
+<li class="toctree-l1"><a class="reference internal" href="functions.html">4. 関数の設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">5. データの設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="oop.html">6. オブジェクト指向設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="solid.html">7. SOLID 原則</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patterns.html">8. デザインパターン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">9. モジュールとパッケージの設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dependency.html">10. 依存関係の管理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">11. アーキテクチャパターン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="domain.html">12. ドメインのモデリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">13. テストと設計</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">14. リファクタリング</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">14.1. リファクタリングとは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">14.2. リファクタリングの前提はテスト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">14.3. コードの臭い</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">14.4. 代表的なリファクタリングの手法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">14.5. 例: 請求書を作る処理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">14.5.1. 手順 1: 仕様化テストを書く</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">14.5.2. 手順 2: 小さな段階に分けて書き換える</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">14.5.3. 書き換えの注意点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">14.6. ツールを活用する</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">14.7. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="documentation.html">15. 設計の記録と伝達</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exercise.html">16. 総合演習</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="checklist.html">設計チェックリスト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">サンプルコード一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ソフトウェア設計入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">14. </span>リファクタリング</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">14. </span>リファクタリング<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>最初から完璧な設計を作ることはできません。要求は変わり、理解は深まり、昨日の良い設計が今日の悪い設計になることもあります。設計は、コードを書いたあとも改善し続けるものです。この章では、既存のコードの設計を安全に改善する技法であるリファクタリングを説明します。</p>
+<section id="id2">
+<h2><span class="section-number">14.1. </span>リファクタリングとは<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="glossary.html#term-55"><span class="xref std std-term">リファクタリング</span></a> とは、M. Fowler の定義によれば、<strong>外部から見た振る舞いを保ったまま、ソフトウェアの内部の構造を改善すること</strong> です。</p>
+<p>この定義で重要なのは、「振る舞いを保ったまま」という部分です。機能の追加や不具合の修正は、振る舞いを変える変更なので、リファクタリングではありません。リファクタリングと振る舞いの変更を同時に行うと、問題が起きたときに、どちらの変更が原因なのかを切り分けられなくなります。そのため、2 つの作業ははっきりと分けて行います。</p>
+<p>リファクタリングを行うのは、主に次のようなときです。</p>
+<ul class="simple">
+<li><p>機能を追加する前に、追加しやすい構造に整えるとき</p></li>
+<li><p>不具合を直す前に、原因を見つけやすい構造に整えるとき</p></li>
+<li><p>コードを読んで理解したことを、名前や構造に反映させるとき</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2><span class="section-number">14.2. </span>リファクタリングの前提はテスト<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>振る舞いを保っていることを確かめるには、テストが必要です。テストのないコードを書き換えるのは、命綱なしで高い所を歩くようなものです。</p>
+<p>テストのない既存のコードをリファクタリングする場合は、まず現在の振る舞いをそのまま記録するテストを書きます。このテストを <a class="reference internal" href="glossary.html#term-29"><span class="xref std std-term">仕様化テスト</span></a>（characterization test）と呼びます。仕様化テストは、「正しい振る舞い」ではなく「現在の振る舞い」を記録します。現在の振る舞いに不具合が含まれていたとしても、それを直すのはリファクタリングが終わってからです。</p>
+</section>
+<section id="id4">
+<h2><span class="section-number">14.3. </span>コードの臭い<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>リファクタリングが必要な箇所の兆候を、Fowler と K. Beck は <a class="reference internal" href="glossary.html#term-21"><span class="xref std std-term">コードの臭い</span></a> と呼びました。臭いは、必ずしも問題があることを意味しませんが、調べてみる価値のある兆候です。代表的なものを次に示します。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 45.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>臭い</p></th>
+<th class="head"><p>説明</p></th>
+<th class="head"><p>主な対処</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>長い関数</p></td>
+<td><p>1 つの関数が多くのことをしていて、全体を把握できません。</p></td>
+<td><p>関数の抽出</p></td>
+</tr>
+<tr class="row-odd"><td><p>巨大なクラス</p></td>
+<td><p>1 つのクラスが多くの責任を持っています。</p></td>
+<td><p>クラスの抽出</p></td>
+</tr>
+<tr class="row-even"><td><p>重複したコード</p></td>
+<td><p>同じ知識が複数の場所に書かれています。</p></td>
+<td><p>関数の抽出、定数の導入</p></td>
+</tr>
+<tr class="row-odd"><td><p>長い引数リスト</p></td>
+<td><p>引数が多く、呼び出し方を間違えやすくなっています。</p></td>
+<td><p>引数オブジェクトの導入</p></td>
+</tr>
+<tr class="row-even"><td><p>変更の発散</p></td>
+<td><p>1 つのクラスが、異なる理由で何度も変更されます。</p></td>
+<td><p>責任ごとのクラスへの分割（単一責任の原則）</p></td>
+</tr>
+<tr class="row-odd"><td><p>変更の分散</p></td>
+<td><p>1 つの変更のために、多くのクラスを少しずつ修正する必要があります。</p></td>
+<td><p>関連する処理の 1 か所への集約</p></td>
+</tr>
+<tr class="row-even"><td><p>特性の横恋慕</p></td>
+<td><p>あるメソッドが、自分のクラスよりもほかのクラスのデータを多く使っています。</p></td>
+<td><p>データのあるクラスへのメソッドの移動</p></td>
+</tr>
+<tr class="row-odd"><td><p>データの群れ</p></td>
+<td><p>いつも一緒に現れる複数のデータ（開始日と終了日など）が、ばらばらに扱われています。</p></td>
+<td><p>データクラスへの集約</p></td>
+</tr>
+<tr class="row-even"><td><p>基本データ型への執着</p></td>
+<td><p>金額や住所などの概念を、基本的な型のまま扱っています。</p></td>
+<td><p>値オブジェクトの導入（<a class="reference internal" href="data.html"><span class="doc">データの設計</span></a>）</p></td>
+</tr>
+<tr class="row-odd"><td><p>繰り返される分岐</p></td>
+<td><p>同じ種類の分岐（種類ごとの <code class="docutils literal notranslate"><span class="pre">if</span></code> 文）が、あちこちに現れます。</p></td>
+<td><p>ポリモーフィズムによる分岐の置き換え（<a class="reference internal" href="solid.html"><span class="doc">SOLID 原則</span></a> の開放閉鎖の原則）</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id5">
+<h2><span class="section-number">14.4. </span>代表的なリファクタリングの手法<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>Fowler の書籍には、多くのリファクタリングの手法が、名前と手順付きでまとめられています。よく使われるものを次に示します。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>手法</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>関数の抽出</p></td>
+<td><p>コードの一部を、意味の分かる名前を付けた関数に切り出します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>変数の抽出</p></td>
+<td><p>複雑な式の一部を、名前を付けた変数に置き換えます。</p></td>
+</tr>
+<tr class="row-even"><td><p>名前の変更</p></td>
+<td><p>変数、関数、クラスの名前を、役割が分かるものに変えます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>引数オブジェクトの導入</p></td>
+<td><p>いつも一緒に渡される引数を、1 つのデータクラスにまとめます。</p></td>
+</tr>
+<tr class="row-even"><td><p>マジックナンバーの定数への置き換え</p></td>
+<td><p>意味の分からない数値（<a class="reference internal" href="glossary.html#term-52"><span class="xref std std-term">マジックナンバー</span></a>）を、名前の付いた定数に置き換えます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>条件の分解</p></td>
+<td><p>複雑な条件式を、条件の意味を表す名前の関数や変数に置き換えます。</p></td>
+</tr>
+<tr class="row-even"><td><p>フラグ引数の除去</p></td>
+<td><p>真偽値の引数で動作を切り替える関数を、動作ごとの関数に分けます。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id6">
+<h2><span class="section-number">14.5. </span>例: 請求書を作る処理<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>次の関数は、顧客と明細から請求書の文字列を作ります。動作はしますが、多くのコードの臭いがあります。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">ch14_refactoring/before.py</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">make_invoice</span><span class="p">(</span><span class="n">customer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+                 <span class="n">ja</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;food&quot;</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;qty&quot;</span><span class="p">]</span>
+            <span class="n">tax</span> <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="mf">0.08</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;qty&quot;</span><span class="p">]</span>
+            <span class="n">tax</span> <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="mf">0.1</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">p</span> <span class="o">+</span> <span class="n">tax</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; x&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;qty&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">tax</span><span class="p">))</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="n">customer</span><span class="p">[</span><span class="s2">&quot;rank&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;gold&quot;</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="mf">0.95</span>
+    <span class="k">if</span> <span class="n">customer</span><span class="p">[</span><span class="s2">&quot;rank&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;gold&quot;</span> <span class="ow">and</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mi">10000</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">-</span> <span class="mi">500</span>
+    <span class="k">if</span> <span class="n">ja</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="s2">&quot;合計: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; 円&quot;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">customer</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; 様</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">s</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="s2">&quot;Total: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; JPY&quot;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;Dear &quot;</span> <span class="o">+</span> <span class="n">customer</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">s</span>
+    <span class="k">return</span> <span class="n">s</span>
+</pre></div>
+</div>
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>臭い</p></th>
+<th class="head"><p>この関数での現れ方</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>長い関数</p></td>
+<td><p>税額の計算、会員の割引、請求書の整形が、すべて 1 つの関数にあります。</p></td>
+</tr>
+<tr class="row-odd"><td><p>マジックナンバー</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0.08</span></code>、<code class="docutils literal notranslate"><span class="pre">0.1</span></code>、<code class="docutils literal notranslate"><span class="pre">0.95</span></code>、<code class="docutils literal notranslate"><span class="pre">10000</span></code>、<code class="docutils literal notranslate"><span class="pre">500</span></code> の意味が書かれていません。</p></td>
+</tr>
+<tr class="row-even"><td><p>重複したコード</p></td>
+<td><p>小計の計算 <code class="docutils literal notranslate"><span class="pre">i[&quot;price&quot;]</span> <span class="pre">*</span> <span class="pre">i[&quot;qty&quot;]</span></code> が、<code class="docutils literal notranslate"><span class="pre">if</span></code> と <code class="docutils literal notranslate"><span class="pre">else</span></code> の両方にあります。</p></td>
+</tr>
+<tr class="row-odd"><td><p>意味の分からない名前</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">s</span></code>、<code class="docutils literal notranslate"><span class="pre">t</span></code>、<code class="docutils literal notranslate"><span class="pre">p</span></code>、<code class="docutils literal notranslate"><span class="pre">i</span></code> が何を表すのか分かりません。</p></td>
+</tr>
+<tr class="row-even"><td><p>フラグ引数</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ja</span></code> によって出力の言語が変わります。</p></td>
+</tr>
+<tr class="row-odd"><td><p>基本データ型への執着</p></td>
+<td><p>顧客や明細を、辞書のまま扱っています。</p></td>
+</tr>
+</tbody>
+</table>
+<section id="id7">
+<h3><span class="section-number">14.5.1. </span>手順 1: 仕様化テストを書く<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>書き換えを始める前に、現在の振る舞いを記録するテストを用意します。会員のランク、税率の異なる明細、割引の境界（割引後の金額が 10000 円をわずかに超える場合と超えない場合）を組み合わせて、書き換える前の関数（<code class="docutils literal notranslate"><span class="pre">before</span></code>）と書き換えたあとの関数（<code class="docutils literal notranslate"><span class="pre">after</span></code>）の出力が一致することを確かめます。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">ch14_refactoring/test_invoice.py</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ITEM_SETS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">[],</span>
+    <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;りんご&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;food&quot;</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">120</span><span class="p">,</span> <span class="s2">&quot;qty&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}],</span>
+    <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;りんご&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;food&quot;</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">120</span><span class="p">,</span> <span class="s2">&quot;qty&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+     <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;ノート&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;goods&quot;</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">250</span><span class="p">,</span> <span class="s2">&quot;qty&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span>
+    <span class="c1"># ゴールド会員の割引後に 10000 円をわずかに超える / 超えない</span>
+    <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;椅子&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;goods&quot;</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">9570</span><span class="p">,</span> <span class="s2">&quot;qty&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+    <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;椅子&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;goods&quot;</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">9569</span><span class="p">,</span> <span class="s2">&quot;qty&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+    <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;米&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;food&quot;</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">4999</span><span class="p">,</span> <span class="s2">&quot;qty&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+     <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;机&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;goods&quot;</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mi">33333</span><span class="p">,</span> <span class="s2">&quot;qty&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+<span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">InvoiceCharacterizationTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;before と after の出力を比較します.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_same_output</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">customer</span> <span class="ow">in</span> <span class="n">CUSTOMERS</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">items</span> <span class="ow">in</span> <span class="n">ITEM_SETS</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">ja</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">subTest</span><span class="p">(</span><span class="n">customer</span><span class="o">=</span><span class="n">customer</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+                                      <span class="n">items</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">),</span> <span class="n">ja</span><span class="o">=</span><span class="n">ja</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+                            <span class="n">before</span><span class="o">.</span><span class="n">make_invoice</span><span class="p">(</span><span class="n">customer</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">ja</span><span class="p">),</span>
+                            <span class="n">after</span><span class="o">.</span><span class="n">make_invoice</span><span class="p">(</span><span class="n">customer</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">ja</span><span class="p">))</span>
+
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id8">
+<h3><span class="section-number">14.5.2. </span>手順 2: 小さな段階に分けて書き換える<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>書き換えは、一度に行わず、小さな段階に分けて進めます。1 つの段階が終わるたびにテストを実行し、振る舞いが変わっていないことを確かめます。テストが失敗したら、直前の段階だけを見直せば済みます。</p>
+<ol class="arabic simple">
+<li><p>マジックナンバーを、名前の付いた定数に置き換えます。</p></li>
+<li><p>重複した小計の計算を 1 か所にまとめます。</p></li>
+<li><p>辞書を、データクラス（<code class="docutils literal notranslate"><span class="pre">Customer</span></code>、<code class="docutils literal notranslate"><span class="pre">LineItem</span></code>）に置き換えます。</p></li>
+<li><p>明細の計算、会員の特典、請求書の整形を、それぞれ別の関数に抽出します。</p></li>
+<li><p>フラグ引数をやめ、言語ごとの関数に分けます。</p></li>
+</ol>
+<p>書き換えた結果は、次のとおりです。</p>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">ch14_refactoring/after.py</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">REDUCED_TAX_RATE</span> <span class="o">=</span> <span class="mf">0.08</span>  <span class="c1"># 食品に適用する軽減税率</span>
+<span class="n">STANDARD_TAX_RATE</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">REDUCED_TAX_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;food&quot;</span><span class="p">})</span>
+
+<span class="n">GOLD_DISCOUNT_FACTOR</span> <span class="o">=</span> <span class="mf">0.95</span>  <span class="c1"># ゴールド会員は 5% 引き</span>
+<span class="n">GOLD_BONUS_THRESHOLD</span> <span class="o">=</span> <span class="mi">10000</span>  <span class="c1"># この金額を超えると、さらに値引きする</span>
+<span class="n">GOLD_BONUS</span> <span class="o">=</span> <span class="mi">500</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Customer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;請求先の顧客です.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rank</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_gold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="s2">&quot;gold&quot;</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineItem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;請求書の明細です.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">item_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subtotal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;税抜きの小計を返します.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tax</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;消費税額を返します.&quot;&quot;&quot;</span>
+        <span class="n">rate</span> <span class="o">=</span> <span class="p">(</span><span class="n">REDUCED_TAX_RATE</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_type</span> <span class="ow">in</span> <span class="n">REDUCED_TAX_TYPES</span>
+                <span class="k">else</span> <span class="n">STANDARD_TAX_RATE</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subtotal</span> <span class="o">*</span> <span class="n">rate</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;税込みの金額を返します.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subtotal</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tax</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_member_benefits</span><span class="p">(</span><span class="n">amount</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">customer</span><span class="p">:</span> <span class="n">Customer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;会員の特典を適用した金額を返します.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">customer</span><span class="o">.</span><span class="n">is_gold</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">amount</span>
+    <span class="n">amount</span> <span class="o">=</span> <span class="n">amount</span> <span class="o">*</span> <span class="n">GOLD_DISCOUNT_FACTOR</span>
+    <span class="k">if</span> <span class="n">amount</span> <span class="o">&gt;</span> <span class="n">GOLD_BONUS_THRESHOLD</span><span class="p">:</span>
+        <span class="n">amount</span> <span class="o">=</span> <span class="n">amount</span> <span class="o">-</span> <span class="n">GOLD_BONUS</span>
+    <span class="k">return</span> <span class="n">amount</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">invoice_total</span><span class="p">(</span><span class="n">customer</span><span class="p">:</span> <span class="n">Customer</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">LineItem</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;請求額を返します.&quot;&quot;&quot;</span>
+    <span class="n">amount</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="n">amount</span> <span class="o">+=</span> <span class="n">item</span><span class="o">.</span><span class="n">total</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">apply_member_benefits</span><span class="p">(</span><span class="n">amount</span><span class="p">,</span> <span class="n">customer</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_lines</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">LineItem</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> x</span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">quantity</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">total</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                   <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_invoice_ja</span><span class="p">(</span><span class="n">customer</span><span class="p">:</span> <span class="n">Customer</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LineItem</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;日本語の請求書を返します.&quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">invoice_total</span><span class="p">(</span><span class="n">customer</span><span class="p">,</span> <span class="n">items</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">customer</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> 様</span><span class="se">\n</span><span class="si">{</span><span class="n">_format_lines</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="si">}</span><span class="s2">合計: </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> 円&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">format_invoice_en</span><span class="p">(</span><span class="n">customer</span><span class="p">:</span> <span class="n">Customer</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LineItem</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;英語の請求書を返します.&quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">invoice_total</span><span class="p">(</span><span class="n">customer</span><span class="p">,</span> <span class="n">items</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Dear </span><span class="si">{</span><span class="n">customer</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">_format_lines</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="si">}</span><span class="s2">Total: </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> JPY&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">make_invoice</span><span class="p">(</span><span class="n">customer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+                 <span class="n">ja</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;元の関数と同じ呼び出し方を残すための関数です.</span>
+
+<span class="sd">    呼び出し側をすべて format_invoice_ja と format_invoice_en に移行したら</span>
+<span class="sd">    削除します。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">converted_customer</span> <span class="o">=</span> <span class="n">Customer</span><span class="p">(</span><span class="n">customer</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="n">customer</span><span class="p">[</span><span class="s2">&quot;rank&quot;</span><span class="p">])</span>
+    <span class="n">converted_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">LineItem</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="s2">&quot;qty&quot;</span><span class="p">])</span>
+                       <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">ja</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">format_invoice_ja</span><span class="p">(</span><span class="n">converted_customer</span><span class="p">,</span> <span class="n">converted_items</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">format_invoice_en</span><span class="p">(</span><span class="n">converted_customer</span><span class="p">,</span> <span class="n">converted_items</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/5385e282b3bf76863a2441562f4762ce/before.py"><code class="xref download docutils literal notranslate"><span class="pre">before.py</span></code></a>、<a class="reference download internal" download="" href="_downloads/2d71cab9c5aa26a46db584b83f673ce7/after.py"><code class="xref download docutils literal notranslate"><span class="pre">after.py</span></code></a>、<a class="reference download internal" download="" href="_downloads/bcfb06a4cb758502b7fd60c3bb7cc8ba/test_invoice.py"><code class="xref download docutils literal notranslate"><span class="pre">test_invoice.py</span></code></a></p>
+<p>テストは、<code class="docutils literal notranslate"><span class="pre">examples</span></code> フォルダーで次のように実行します。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>ch14_refactoring.test_invoice<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+<section id="id9">
+<h3><span class="section-number">14.5.3. </span>書き換えの注意点<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>この例では、次の点に注意しています。</p>
+<ul class="simple">
+<li><p><strong>元の呼び出し方を残しました。</strong> <code class="docutils literal notranslate"><span class="pre">make_invoice</span></code> の呼び出し側は、プログラムのあちこちにあるかもしれません。そこで、<code class="docutils literal notranslate"><span class="pre">make_invoice</span></code> は元と同じ引数で呼べるようにしたまま、中で新しい関数を呼ぶだけの関数にしました。呼び出し側を少しずつ新しい関数に移行し、すべて移行したら <code class="docutils literal notranslate"><span class="pre">make_invoice</span></code> を削除します。</p></li>
+<li><p><strong>端数の扱いや計算の順序は変えていません。</strong> 金額の計算に浮動小数点数を使い、<code class="docutils literal notranslate"><span class="pre">int</span></code> で切り捨てるのは、本来は見直すべき点です。しかし、これを整数での計算や四捨五入に変えると、出力が変わる可能性があります。浮動小数点数の計算は、足し算の順序を変えるだけでも結果が変わることがあるので、合計の計算の順序も元のコードに合わせています。計算の方法を改めるのは、振る舞いを変える変更として、リファクタリングとは別に行います。</p></li>
+</ul>
+</section>
+</section>
+<section id="id10">
+<h2><span class="section-number">14.6. </span>ツールを活用する<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>リファクタリングは、ツールの助けを借りると、より安全に行えます。</p>
+<ul class="simple">
+<li><p><strong>エディターの機能</strong>: 多くのエディターや IDE には、名前の変更や関数の抽出を自動で行う機能があります。手作業での書き換えよりも、書き換え漏れが起きません。</p></li>
+<li><p><strong>flake8</strong>: <code class="docutils literal notranslate"><span class="pre">--max-complexity</span></code> オプションで、循環的複雑度の高い関数を見つけられます（<a class="reference internal" href="metrics.html"><span class="doc">良い設計の指標</span></a> を参照）。リファクタリングの候補を探すのに役立ちます。</p></li>
+<li><p><strong>mypy</strong>: 型ヒントを付けておくと、関数の引数を変えたときに、修正の漏れた呼び出し側を検出できます。型ヒントのない既存のコードでも、リファクタリングする範囲から少しずつ型ヒントを追加していくと、安全に書き換えられる範囲が広がります。</p></li>
+</ul>
+</section>
+<section id="id11">
+<h2><span class="section-number">14.7. </span>まとめ<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>リファクタリングは、外部から見た振る舞いを保ったまま、内部の構造を改善することです。</p></li>
+<li><p>リファクタリングと振る舞いの変更は、分けて行います。</p></li>
+<li><p>テストのないコードは、まず現在の振る舞いを記録する仕様化テストを書きます。</p></li>
+<li><p>コードの臭いを手がかりに、改善すべき箇所を見つけます。</p></li>
+<li><p>小さな段階に分けて書き換え、段階ごとにテストを実行します。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="testing.html" class="btn btn-neutral float-left" title="13. テストと設計" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="documentation.html" class="btn btn-neutral float-right" title="15. 設計の記録と伝達" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

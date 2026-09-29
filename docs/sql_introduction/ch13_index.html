@@ -1,0 +1,484 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>13. インデックスと性能 &mdash; SQL 入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=47d01576" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="14. Python から SQL を使う" href="ch14_python.html" />
+    <link rel="prev" title="12. トランザクション" href="ch12_transaction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SQL 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_overview.html">2. データベースと SQL の概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_setup.html">3. 環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_select.html">4. データの取得</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_null.html">5. NULL の扱い</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_aggregate.html">6. 集計とグループ化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_join.html">7. テーブルの結合</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_subquery.html">8. サブクエリと共通テーブル式</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_window.html">9. ウィンドウ関数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_modify.html">10. データの追加・更新・削除</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_ddl.html">11. テーブルの設計と定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_transaction.html">12. トランザクション</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">13. インデックスと性能</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">13.1. インデックスとは</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">13.1.1. インデックスの役割</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">13.1.2. インデックスの効果</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">13.2. 実行計画を確認する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#explain-query-plan">13.2.1. EXPLAIN QUERY PLAN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">13.2.2. インデックスを作成する</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">13.2.3. 自動的に作成されるインデックス</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">13.2.4. 結合の実行計画</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">13.3. インデックスの使い方</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">13.3.1. 複合インデックス</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">13.3.2. インデックスが使われない書き方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">13.3.3. カバリングインデックス</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">13.4. インデックスのコスト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exercises-ch13">13.5. 演習問題</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_python.html">14. Python から SQL を使う</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_answers.html">付録 A 演習問題の解答</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_dialects.html">付録 B SQL の方言比較</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_glossary.html">付録 C 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考資料</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_e_samples.html">付録 E サンプルファイル一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SQL 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">13. </span>インデックスと性能</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">13. </span>インデックスと性能<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>2 章で説明したとおり、SQL ではデータをどのような手順で探すかを DBMS が判断します。しかし、DBMS が効率よくデータを探せるかどうかは、テーブルの設計や SQL 文の書き方に左右されます。本章では、検索を高速にするためのインデックスと、DBMS がどのような手順で SQL 文を実行するかを確認する方法を説明します。</p>
+<section id="id2">
+<h2><span class="section-number">13.1. </span>インデックスとは<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3><span class="section-number">13.1.1. </span>インデックスの役割<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>インデックスは、特定の列の値から行をすばやく見つけるためのデータ構造です。書籍の巻末にある索引と同じ役割を果たします。</p>
+<p>インデックスがない場合、<code class="docutils literal notranslate"><span class="pre">WHERE</span> <span class="pre">customer_id</span> <span class="pre">=</span> <span class="pre">1</span></code> のような条件に合う行を見つけるには、テーブルのすべての行を先頭から順に調べる必要があります。これを全件走査（フルスキャン）と呼びます。全件走査にかかる時間は、行数 <span class="math notranslate nohighlight">\(n\)</span> に比例します。</p>
+<p>インデックスは、列の値を並べ替えた状態で保持しています。SQLite を含む多くの DBMS では、B-tree（B 木）と呼ばれる木構造が使われており、値を探すのにかかる時間は <span class="math notranslate nohighlight">\(\log n\)</span> に比例する程度で済みます。たとえば <span class="math notranslate nohighlight">\(n = 1{,}000{,}000\)</span> の場合、全件走査では最大で 100 万行を調べる必要がありますが、B-tree では数十回程度の比較で目的の行にたどり着けます。</p>
+<p>Python にたとえると、インデックスのない検索はリストを先頭から順に調べる処理に、インデックスを使った検索は <code class="docutils literal notranslate"><span class="pre">bisect</span></code> モジュールで並べ替え済みのリストを二分探索する処理に近いものです。</p>
+</section>
+<section id="id4">
+<h3><span class="section-number">13.1.2. </span>インデックスの効果<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ch13_index_benchmark.py</span></code> は、100 万行のテーブルで、インデックスがない場合とある場合の検索時間を比較するスクリプトです。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">ch13_index_benchmark.py</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;インデックスの有無による検索時間の違いを測定するスクリプト（13 章）.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">メモリ上のデータベースに 100 万行のテーブルを作成し、</span>
+<span class="linenos"> 4</span><span class="sd">インデックスがない場合とある場合で、同じ検索にかかる時間を比べます。</span>
+<span class="linenos"> 5</span><span class="sd">測定結果は実行する環境によって異なります。</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="sd">使い方::</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">    python ch13_index_benchmark.py</span>
+<span class="linenos">10</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="linenos">13</span><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="linenos">14</span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="linenos">15</span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="n">ROW_COUNT</span> <span class="o">=</span> <span class="mi">1_000_000</span>
+<span class="linenos">18</span><span class="n">SEARCH_COUNT</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="k">def</span><span class="w"> </span><span class="nf">generate_rows</span><span class="p">(</span><span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos">22</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;(order_id, customer_id, amount) の組を count 件生成します.&quot;&quot;&quot;</span>
+<span class="linenos">23</span>    <span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># 毎回同じデータになるよう乱数の種を固定します</span>
+<span class="linenos">24</span>    <span class="k">for</span> <span class="n">order_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">25</span>        <span class="k">yield</span> <span class="n">order_id</span><span class="p">,</span> <span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100_000</span><span class="p">),</span> <span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">)</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">customer_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="linenos">29</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;customer_id による検索を繰り返し、1 回あたりの平均時間（ミリ秒）を返します.&quot;&quot;&quot;</span>
+<span class="linenos">30</span>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="linenos">31</span>    <span class="k">for</span> <span class="n">customer_id</span> <span class="ow">in</span> <span class="n">customer_ids</span><span class="p">:</span>
+<span class="linenos">32</span>        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">33</span>            <span class="s2">&quot;SELECT order_id, amount FROM big_orders WHERE customer_id = ?&quot;</span><span class="p">,</span>
+<span class="linenos">34</span>            <span class="p">(</span><span class="n">customer_id</span><span class="p">,),</span>
+<span class="linenos">35</span>        <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+<span class="linenos">36</span>    <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+<span class="linenos">37</span>    <span class="k">return</span> <span class="n">elapsed</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">customer_ids</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span><span class="k">def</span><span class="w"> </span><span class="nf">show_plan</span><span class="p">(</span><span class="n">conn</span><span class="p">:</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">41</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;検索の実行計画を表示します.&quot;&quot;&quot;</span>
+<span class="linenos">42</span>    <span class="n">rows</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">43</span>        <span class="s2">&quot;EXPLAIN QUERY PLAN&quot;</span>
+<span class="linenos">44</span>        <span class="s2">&quot; SELECT order_id, amount FROM big_orders WHERE customer_id = ?&quot;</span><span class="p">,</span>
+<span class="linenos">45</span>        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+<span class="linenos">46</span>    <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+<span class="linenos">47</span>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+<span class="linenos">48</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  実行計画: </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">49</span>
+<span class="linenos">50</span>
+<span class="linenos">51</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">52</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;インデックスの作成前と作成後の検索時間を表示します.&quot;&quot;&quot;</span>
+<span class="linenos">53</span>    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+<span class="linenos">54</span>    <span class="k">try</span><span class="p">:</span>
+<span class="linenos">55</span>        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">56</span>            <span class="s2">&quot;CREATE TABLE big_orders (&quot;</span>
+<span class="linenos">57</span>            <span class="s2">&quot; order_id INTEGER PRIMARY KEY,&quot;</span>
+<span class="linenos">58</span>            <span class="s2">&quot; customer_id INTEGER NOT NULL,&quot;</span>
+<span class="linenos">59</span>            <span class="s2">&quot; amount INTEGER NOT NULL)&quot;</span>
+<span class="linenos">60</span>        <span class="p">)</span>
+<span class="linenos">61</span>        <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>  <span class="c1"># 100 万行の追加を 1 つのトランザクションで行います</span>
+<span class="linenos">62</span>            <span class="n">conn</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span>
+<span class="linenos">63</span>                <span class="s2">&quot;INSERT INTO big_orders VALUES (?, ?, ?)&quot;</span><span class="p">,</span>
+<span class="linenos">64</span>                <span class="n">generate_rows</span><span class="p">(</span><span class="n">ROW_COUNT</span><span class="p">),</span>
+<span class="linenos">65</span>            <span class="p">)</span>
+<span class="linenos">66</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ROW_COUNT</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> 行のテーブルを作成しました。&quot;</span><span class="p">)</span>
+<span class="linenos">67</span>
+<span class="linenos">68</span>        <span class="n">customer_ids</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100_001</span><span class="p">),</span> <span class="n">SEARCH_COUNT</span><span class="p">)</span>
+<span class="linenos">69</span>
+<span class="linenos">70</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;インデックスなし:&quot;</span><span class="p">)</span>
+<span class="linenos">71</span>        <span class="n">show_plan</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos">72</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  1 回の検索の平均時間: </span><span class="si">{</span><span class="n">measure</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span><span class="w"> </span><span class="n">customer_ids</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ミリ秒&quot;</span><span class="p">)</span>
+<span class="linenos">73</span>
+<span class="linenos">74</span>        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="linenos">75</span>            <span class="s2">&quot;CREATE INDEX idx_big_orders_customer_id&quot;</span>
+<span class="linenos">76</span>            <span class="s2">&quot; ON big_orders (customer_id)&quot;</span>
+<span class="linenos">77</span>        <span class="p">)</span>
+<span class="linenos">78</span>
+<span class="linenos">79</span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;インデックスあり:&quot;</span><span class="p">)</span>
+<span class="linenos">80</span>        <span class="n">show_plan</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<span class="linenos">81</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  1 回の検索の平均時間: </span><span class="si">{</span><span class="n">measure</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span><span class="w"> </span><span class="n">customer_ids</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ミリ秒&quot;</span><span class="p">)</span>
+<span class="linenos">82</span>    <span class="k">finally</span><span class="p">:</span>
+<span class="linenos">83</span>        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="linenos">84</span>
+<span class="linenos">85</span>
+<span class="linenos">86</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">87</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果の例を次に示します。測定される時間は、実行する環境によって異なります。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>1,000,000 行のテーブルを作成しました。
+インデックスなし:
+  実行計画: SCAN big_orders
+  1 回の検索の平均時間: 55.242 ミリ秒
+インデックスあり:
+  実行計画: SEARCH big_orders USING INDEX idx_big_orders_customer_id (customer_id=?)
+  1 回の検索の平均時間: 0.020 ミリ秒
+</pre></div>
+</div>
+<p>インデックスを作成すると、検索時間が大幅に短くなることがわかります。「実行計画」の行については、次の節で説明します。</p>
+</section>
+</section>
+<section id="id5">
+<h2><span class="section-number">13.2. </span>実行計画を確認する<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="explain-query-plan">
+<h3><span class="section-number">13.2.1. </span>EXPLAIN QUERY PLAN<a class="headerlink" href="#explain-query-plan" title="Link to this heading"></a></h3>
+<p>DBMS が SQL 文をどのような手順で実行するかを、実行計画と呼びます。SQLite では、SQL 文の前に <code class="docutils literal notranslate"><span class="pre">EXPLAIN</span> <span class="pre">QUERY</span> <span class="pre">PLAN</span></code> を付けて実行すると、実行計画を確認できます。以降の例では、実行計画を sqlite3 コマンドと同様の形式で示します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+`--SCAN orders
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SCAN</span> <span class="pre">orders</span></code> は、<code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルを全件走査することを表します。<code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルの <code class="docutils literal notranslate"><span class="pre">customer_id</span></code> 列にはインデックスがないためです。</p>
+<p><code class="docutils literal notranslate"><span class="pre">run_query.py</span></code> で <code class="docutils literal notranslate"><span class="pre">EXPLAIN</span> <span class="pre">QUERY</span> <span class="pre">PLAN</span></code> を実行すると、<code class="docutils literal notranslate"><span class="pre">id</span></code>、<code class="docutils literal notranslate"><span class="pre">parent</span></code>、<code class="docutils literal notranslate"><span class="pre">notused</span></code>、<code class="docutils literal notranslate"><span class="pre">detail</span></code> の 4 列の表が表示されます。実行計画の内容は <code class="docutils literal notranslate"><span class="pre">detail</span></code> 列に表示されます。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">13.2.2. </span>インデックスを作成する<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>インデックスを作成するには、<code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">INDEX</span></code> 文を使用します。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>CREATE INDEX インデックス名 ON テーブル名 (列名);
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_orders_customer_id</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="p">(</span><span class="n">customer_id</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>インデックスを作成した後、同じ SQL 文の実行計画を確認します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+`--SEARCH orders USING INDEX idx_orders_customer_id (customer_id=?)
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SEARCH</span> <span class="pre">orders</span> <span class="pre">USING</span> <span class="pre">INDEX</span> <span class="pre">idx_orders_customer_id</span> <span class="pre">(customer_id=?)</span></code> は、インデックス <code class="docutils literal notranslate"><span class="pre">idx_orders_customer_id</span></code> を使って、<code class="docutils literal notranslate"><span class="pre">customer_id</span></code> が指定の値である行を探すことを表します。</p>
+<p>インデックスを作成しても、SQL 文を書き換える必要はありません。DBMS が、利用できるインデックスを自動的に選んで使用します。インデックスを削除するには <code class="docutils literal notranslate"><span class="pre">DROP</span> <span class="pre">INDEX</span> <span class="pre">インデックス名;</span></code> を実行します。</p>
+</section>
+<section id="id7">
+<h3><span class="section-number">13.2.3. </span>自動的に作成されるインデックス<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>主キーと <code class="docutils literal notranslate"><span class="pre">UNIQUE</span></code> 制約を設定した列には、値の重複を効率よく検査するために、インデックスが自動的に作成されます。SQLite では、<code class="docutils literal notranslate"><span class="pre">sqlite_schema</span></code> テーブルでインデックスの一覧を確認できます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">tbl_name</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">sqlite_schema</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;index&#39;</span>
+<span class="linenos">4</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">tbl_name</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>tbl_name</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>sqlite_autoindex_categories_1</p></td>
+<td><p>categories</p></td>
+</tr>
+<tr class="row-odd"><td><p>sqlite_autoindex_customers_1</p></td>
+<td><p>customers</p></td>
+</tr>
+<tr class="row-even"><td><p>sqlite_autoindex_order_items_1</p></td>
+<td><p>order_items</p></td>
+</tr>
+<tr class="row-odd"><td><p>idx_orders_customer_id</p></td>
+<td><p>orders</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">sqlite_autoindex_</span></code> で始まるものが、自動的に作成されたインデックスです。<code class="docutils literal notranslate"><span class="pre">categories</span></code> テーブルでは <code class="docutils literal notranslate"><span class="pre">name</span></code> 列の <code class="docutils literal notranslate"><span class="pre">UNIQUE</span></code> 制約に対して、<code class="docutils literal notranslate"><span class="pre">customers</span></code> テーブルでは <code class="docutils literal notranslate"><span class="pre">email</span></code> 列の <code class="docutils literal notranslate"><span class="pre">UNIQUE</span></code> 制約に対して、<code class="docutils literal notranslate"><span class="pre">order_items</span></code> テーブルでは主キー（<code class="docutils literal notranslate"><span class="pre">order_id</span></code> と <code class="docutils literal notranslate"><span class="pre">product_id</span></code> の組）に対して作成されています。<code class="docutils literal notranslate"><span class="pre">INTEGER</span> <span class="pre">PRIMARY</span> <span class="pre">KEY</span></code> の列は rowid の別名（11 章を参照）であり、テーブル自体が rowid の順に格納されているため、別のインデックスは作成されません。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+`--SEARCH products USING INTEGER PRIMARY KEY (rowid=?)
+</pre></div>
+</div>
+<p>一方、外部キーの列には、インデックスは自動的に作成されません。<code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルの <code class="docutils literal notranslate"><span class="pre">customer_id</span></code> 列のように、結合や検索の条件によく使う外部キーの列には、インデックスを作成することを検討してください。</p>
+</section>
+<section id="id8">
+<h3><span class="section-number">13.2.4. </span>結合の実行計画<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>結合を含む SQL 文でも、インデックスが使われているかを確認できます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">ordered_on</span>
+<span class="linenos">3</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">c</span>
+<span class="linenos">4</span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span>
+<span class="linenos">5</span><span class="k">WHERE</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+|--SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+`--SEARCH o USING INDEX idx_orders_customer_id (customer_id=?)
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">customers</span></code> テーブルは主キーで 1 行を探し、<code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルは <code class="docutils literal notranslate"><span class="pre">idx_orders_customer_id</span></code> を使って、その顧客の注文を探しています。</p>
+</section>
+</section>
+<section id="id9">
+<h2><span class="section-number">13.3. </span>インデックスの使い方<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<section id="id10">
+<h3><span class="section-number">13.3.1. </span>複合インデックス<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>複数の列を組み合わせたインデックスを、複合インデックスと呼びます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_orders_customer_date</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="p">(</span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">ordered_on</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>複合インデックスは、列を指定した順に並べ替えた状態で保持しています。電話帳が「姓」で並び、姓が同じ人は「名」で並んでいるのと同じです。そのため、このインデックスは次の条件の検索に使えます。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">customer_id</span></code> だけの条件</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">customer_id</span></code> と <code class="docutils literal notranslate"><span class="pre">ordered_on</span></code> の両方の条件</p></li>
+</ul>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="s1">&#39;2025-02-01&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+`--SEARCH orders USING INDEX idx_orders_customer_date (customer_id=? AND ordered_on&gt;?)
+</pre></div>
+</div>
+<p>一方、2 番目の列である <code class="docutils literal notranslate"><span class="pre">ordered_on</span></code> だけの条件では、このインデックスを使った効率のよい検索はできません。電話帳で「名」だけから人を探せないのと同じです。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;2025-03-05&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+`--SCAN orders
+</pre></div>
+</div>
+<p>複合インデックスを作成するときは、条件によく使う列、特に <code class="docutils literal notranslate"><span class="pre">=</span></code> で比較する列を先に指定します。</p>
+</section>
+<section id="id11">
+<h3><span class="section-number">13.3.2. </span>インデックスが使われない書き方<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>インデックスがあっても、SQL 文の書き方によっては使われないことがあります。代表的な例は、条件の中で列に関数や演算を適用する場合です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ordered_on</span></code> 列にインデックスを作成し、2025 年 3 月の注文を探す 2 つの SQL 文の実行計画を比べます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_orders_ordered_on</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="p">(</span><span class="n">ordered_on</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- 列に関数を適用した条件</span>
+<span class="linenos">2</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">3</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">substr</span><span class="p">(</span><span class="n">ordered_on</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;2025-03&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+`--SCAN orders
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- 列をそのまま比較する条件</span>
+<span class="linenos">2</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">3</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">4</span><span class="k">WHERE</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="s1">&#39;2025-03-01&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="s1">&#39;2025-04-01&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+`--SEARCH orders USING INDEX idx_orders_ordered_on (ordered_on&gt;? AND ordered_on&lt;?)
+</pre></div>
+</div>
+<p>インデックスは <code class="docutils literal notranslate"><span class="pre">ordered_on</span></code> の値そのものを並べ替えて保持しているため、<code class="docutils literal notranslate"><span class="pre">substr(ordered_on,</span> <span class="pre">1,</span> <span class="pre">7)</span></code> の値で探すことはできず、全件走査になります。範囲の条件に書き換えると、インデックスが使われます。</p>
+<p>同様に、<code class="docutils literal notranslate"><span class="pre">LIKE</span> <span class="pre">'%コーヒー'</span></code> のように先頭が <code class="docutils literal notranslate"><span class="pre">%</span></code> のパターンでは、インデックスを使った検索はできません。なお、SQLite の <code class="docutils literal notranslate"><span class="pre">LIKE</span></code> は英字の大文字と小文字を区別しないため、先頭が <code class="docutils literal notranslate"><span class="pre">%</span></code> でないパターンでも、通常のインデックスは使われません。</p>
+</section>
+<section id="id12">
+<h3><span class="section-number">13.3.3. </span>カバリングインデックス<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>インデックスには、インデックスを作成した列の値と、行の位置（rowid）が格納されています。SQL 文で必要な列がすべてインデックスに含まれている場合、DBMS はテーブル本体を読まずに、インデックスだけで結果を返せます。このように使われるインデックスをカバリングインデックスと呼びます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">EXPLAIN</span><span class="w"> </span><span class="n">QUERY</span><span class="w"> </span><span class="n">PLAN</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">ordered_on</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>QUERY PLAN
+`--SEARCH orders USING COVERING INDEX idx_orders_customer_date (customer_id=?)
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">USING</span> <span class="pre">COVERING</span> <span class="pre">INDEX</span></code> は、インデックスだけで結果を求めていることを表します。<code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span></code> のようにすべての列を取り出すと、カバリングインデックスは使えません。必要な列だけを指定することは、性能の面でも効果があります。</p>
+</section>
+</section>
+<section id="id13">
+<h2><span class="section-number">13.4. </span>インデックスのコスト<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<p>インデックスは検索を速くしますが、次のようなコストもあります。</p>
+<ul class="simple">
+<li><p>行を追加・更新・削除するたびに、インデックスも更新する必要があるため、書き込みが遅くなります。</p></li>
+<li><p>インデックスを格納するための記憶領域が必要になります。</p></li>
+</ul>
+<p>そのため、すべての列にインデックスを作成すればよいわけではありません。インデックスは、次のような列に作成するのが効果的です。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句の条件や結合の条件によく使われる列</p></li>
+<li><p>値の種類が多く、条件によって行を大きく絞り込める列</p></li>
+</ul>
+<p>性別のように値の種類が少ない列や、行数の少ないテーブルでは、インデックスの効果はほとんどありません。DBMS は、インデックスを使うより全件走査のほうが速いと判断した場合、インデックスがあっても使いません。</p>
+<p>実際に性能の問題が起きたときは、推測でインデックスを作成するのではなく、<code class="docutils literal notranslate"><span class="pre">EXPLAIN</span> <span class="pre">QUERY</span> <span class="pre">PLAN</span></code> で実行計画を確認し、実行時間を測定したうえで対策を検討してください。</p>
+</section>
+<section id="exercises-ch13">
+<span id="id14"></span><h2><span class="section-number">13.5. </span>演習問題<a class="headerlink" href="#exercises-ch13" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>次の SQL 文の実行計画を確認してください。その後、実行計画が <code class="docutils literal notranslate"><span class="pre">SEARCH</span></code> になるようなインデックスを作成し、もう一度実行計画を確認してください。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">order_items</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">customers</span></code> テーブルで、<code class="docutils literal notranslate"><span class="pre">prefecture</span></code> 列と <code class="docutils literal notranslate"><span class="pre">registered_on</span></code> 列を条件に使う次の SQL 文があります。この SQL 文に適した複合インデックスを作成し、実行計画を確認してください。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span>
+<span class="linenos">2</span><span class="k">WHERE</span><span class="w"> </span><span class="n">prefecture</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;東京都&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">registered_on</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="s1">&#39;2024-06-01&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+</li>
+<li><p>次の SQL 文は、<code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルの <code class="docutils literal notranslate"><span class="pre">price</span></code> 列にインデックスがあっても、インデックスを使った検索になりません。理由を説明し、インデックスを使える形に書き換えてください。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">price</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">price</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">1</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">550</span><span class="p">;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>解答は <a class="reference internal" href="appendix_a_answers.html#answers-ch13"><span class="std std-ref">13 章 インデックスと性能</span></a> にあります。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch12_transaction.html" class="btn btn-neutral float-left" title="12. トランザクション" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch14_python.html" class="btn btn-neutral float-right" title="14. Python から SQL を使う" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

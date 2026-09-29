@@ -1,0 +1,240 @@
+
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>オブジェクト検査・リフレクション &mdash; Python コア機能・標準ライブラリ解説書 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="文字列表現・フォーマット" href="string_repr.html" />
+    <link rel="prev" title="数値演算" href="numeric.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <a href="../index.html" class="icon icon-home">
+    Python 解説書
+  </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../builtin_types/index.html">組み込み型のメソッド</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../operators/index.html">演算子</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">組み込み関数</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="type_conversion.html">型変換・生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iteration.html">イテレーション・コレクション操作</a></li>
+<li class="toctree-l2"><a class="reference internal" href="numeric.html">数値演算</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">オブジェクト検査・リフレクション</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#type">type</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#isinstance">isinstance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#issubclass">issubclass</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id">id</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hasattr-getattr-setattr-delattr">hasattr / getattr / setattr / delattr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dir">dir</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vars">vars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hash">hash</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#callable">callable</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="string_repr.html">文字列表現・フォーマット</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">入出力</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class_helpers.html">クラス設計支援</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../stdlib/index.html">標準モジュール</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Python コア機能・標準ライブラリ解説書</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">組み込み関数</a></li>
+      <li class="breadcrumb-item active">オブジェクト検査・リフレクション</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>オブジェクト検査・リフレクション<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>オブジェクトの型や属性を実行時に調べる・操作するための関数群。</p>
+<section id="type">
+<h2>type<a class="headerlink" href="#type" title="Link to this heading"></a></h2>
+<p>オブジェクトの型を返す。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="go">&lt;class &#39;int&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="s2">&quot;abc&quot;</span><span class="p">)</span>
+<span class="go">&lt;class &#39;str&#39;&gt;</span>
+</pre></div>
+</div>
+<p>3引数版 <code class="docutils literal notranslate"><span class="pre">type(name,</span> <span class="pre">bases,</span> <span class="pre">namespace)</span></code> を使うと、<code class="docutils literal notranslate"><span class="pre">class</span></code> 文を使わずに動的にクラスを生成できる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Point</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s2">&quot;Point&quot;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Point</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">x</span>
+<span class="go">0</span>
+</pre></div>
+</div>
+</section>
+<section id="isinstance">
+<h2>isinstance<a class="headerlink" href="#isinstance" title="Link to this heading"></a></h2>
+<p>オブジェクトが指定した型（またはそのサブクラス）のインスタンスかどうかを判定する。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">isinstance</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">isinstance</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</section>
+<section id="issubclass">
+<h2>issubclass<a class="headerlink" href="#issubclass" title="Link to this heading"></a></h2>
+<p>クラスが指定したクラス（またはそのサブクラス）かどうかを判定する。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</section>
+<section id="id">
+<h2>id<a class="headerlink" href="#id" title="Link to this heading"></a></h2>
+<p>オブジェクトの識別値（CPythonではメモリアドレス相当）を返す。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">a</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">b</span></code> は <code class="docutils literal notranslate"><span class="pre">a</span></code> と同じオブジェクトを指しているため識別値が一致するが、<code class="docutils literal notranslate"><span class="pre">c</span></code> は値が等しくても別のオブジェクトなので識別値は異なる。</p>
+</section>
+<section id="hasattr-getattr-setattr-delattr">
+<h2>hasattr / getattr / setattr / delattr<a class="headerlink" href="#hasattr-getattr-setattr-delattr" title="Link to this heading"></a></h2>
+<p>オブジェクトの属性の有無を調べたり、取得・設定・削除したりする。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">Point</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Point</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">getattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">setattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">y</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">delattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="dir">
+<h2>dir<a class="headerlink" href="#dir" title="Link to this heading"></a></h2>
+<p>オブジェクトが持つ属性・メソッドの名前一覧を返す。引数を省略すると現在のスコープの名前一覧を返す。また、<a class="reference internal" href="class_helpers.html"><span class="doc">クラス設計支援</span></a> で説明する <code class="docutils literal notranslate"><span class="pre">super</span></code> や <code class="docutils literal notranslate"><span class="pre">property</span></code> などの機能を使って定義したクラスの属性も、<code class="docutils literal notranslate"><span class="pre">dir</span></code> で確認できる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">([])[:</span><span class="mi">3</span><span class="p">]</span>
+<span class="go">[&#39;__add__&#39;, &#39;__class__&#39;, &#39;__contains__&#39;]</span>
+</pre></div>
+</div>
+</section>
+<section id="vars">
+<h2>vars<a class="headerlink" href="#vars" title="Link to this heading"></a></h2>
+<p>オブジェクトの <code class="docutils literal notranslate"><span class="pre">__dict__</span></code> 属性を返す。引数を省略すると現在のローカル変数の辞書を返し、これは <code class="docutils literal notranslate"><span class="pre">locals()</span></code> と等価である（モジュールレベルの変数一覧を得るには <code class="docutils literal notranslate"><span class="pre">globals()</span></code> を使う）。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">Point</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">vars</span><span class="p">(</span><span class="n">Point</span><span class="p">())</span>
+<span class="go">{&#39;x&#39;: 1}</span>
+</pre></div>
+</div>
+</section>
+<section id="hash">
+<h2>hash<a class="headerlink" href="#hash" title="Link to this heading"></a></h2>
+<p>オブジェクトのハッシュ値（整数）を返す。ハッシュ可能なオブジェクトのみ辞書のキーや集合（<code class="docutils literal notranslate"><span class="pre">set</span></code> / <code class="docutils literal notranslate"><span class="pre">frozenset</span></code>）の要素にできる（<a class="reference internal" href="type_conversion.html"><span class="doc">型変換・生成</span></a> の <code class="docutils literal notranslate"><span class="pre">frozenset</span></code> の項も参照）。リストや辞書のようなミュータブルなオブジェクトはハッシュ可能ではない。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">hash</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="go">42</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">hash</span><span class="p">(</span><span class="s2">&quot;abc&quot;</span><span class="p">)</span>  <span class="c1"># 実行毎にランダム化されるため値は環境によって異なる</span>
+<span class="go">-4044789205657692274</span>
+</pre></div>
+</div>
+</section>
+<section id="callable">
+<h2>callable<a class="headerlink" href="#callable" title="Link to this heading"></a></h2>
+<p>オブジェクトが呼び出し可能（関数のように <code class="docutils literal notranslate"><span class="pre">()</span></code> で呼べる）かどうかを判定する。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">callable</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">callable</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="numeric.html" class="btn btn-neutral float-left" title="数値演算" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="string_repr.html" class="btn btn-neutral float-right" title="文字列表現・フォーマット" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

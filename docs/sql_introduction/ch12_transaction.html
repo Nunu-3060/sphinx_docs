@@ -1,0 +1,483 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12. トランザクション &mdash; SQL 入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=47d01576" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="13. インデックスと性能" href="ch13_index.html" />
+    <link rel="prev" title="11. テーブルの設計と定義" href="ch11_ddl.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SQL 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_overview.html">2. データベースと SQL の概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_setup.html">3. 環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_select.html">4. データの取得</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_null.html">5. NULL の扱い</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_aggregate.html">6. 集計とグループ化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_join.html">7. テーブルの結合</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_subquery.html">8. サブクエリと共通テーブル式</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_window.html">9. ウィンドウ関数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_modify.html">10. データの追加・更新・削除</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_ddl.html">11. テーブルの設計と定義</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">12. トランザクション</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">12.1. トランザクションが必要な理由</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#acid">12.2. ACID 特性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">12.3. トランザクションの制御</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#begincommitrollback">12.3.1. BEGIN、COMMIT、ROLLBACK</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">12.3.2. トランザクションの途中でエラーが発生した場合</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">12.3.3. 自動コミット</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">12.3.4. セーブポイント</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">12.4. 同時実行の制御</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">12.4.1. 同時実行で起こる問題</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">12.4.2. 分離レベル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sqlite">12.4.3. SQLite の同時実行</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#exercises-ch12">12.5. 演習問題</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_index.html">13. インデックスと性能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_python.html">14. Python から SQL を使う</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_answers.html">付録 A 演習問題の解答</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_dialects.html">付録 B SQL の方言比較</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_glossary.html">付録 C 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考資料</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_e_samples.html">付録 E サンプルファイル一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SQL 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">12. </span>トランザクション</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">12. </span>トランザクション<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本章の例は、サンプルデータベースの初期状態から始めて、前の例を実行した後のデータに対して順に実行していくものとします。</p>
+<section id="id2">
+<h2><span class="section-number">12.1. </span>トランザクションが必要な理由<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>ネットショップで商品が注文されたときには、たとえば次の処理を行う必要があります。</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルに注文を追加します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">order_items</span></code> テーブルに注文明細を追加します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルの在庫数を減らします。</p></li>
+</ol>
+<p>もし 2 の処理の後でプログラムが異常終了し、3 の処理が行われなかったとすると、注文は記録されているのに在庫数は減っていない、という矛盾した状態になります。</p>
+<p>このような問題を防ぐには、一連の処理を「すべて成功する」か「すべて行われなかったことになる」かのどちらかにする必要があります。このように、分割できない一連の処理のまとまりをトランザクションと呼びます。</p>
+</section>
+<section id="acid">
+<h2><span class="section-number">12.2. </span>ACID 特性<a class="headerlink" href="#acid" title="Link to this heading"></a></h2>
+<p>トランザクションが備えるべき性質は、それぞれの頭文字をとって ACID 特性と呼ばれます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>性質</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>原子性（Atomicity）</p></td>
+<td><p>トランザクション内の処理は、すべて実行されるか、まったく実行されないかのどちらかです。</p></td>
+</tr>
+<tr class="row-odd"><td><p>一貫性（Consistency）</p></td>
+<td><p>トランザクションの前後で、データは制約などの規則を満たした状態に保たれます。</p></td>
+</tr>
+<tr class="row-even"><td><p>独立性（Isolation）</p></td>
+<td><p>同時に実行される複数のトランザクションは、互いに干渉しません。</p></td>
+</tr>
+<tr class="row-odd"><td><p>永続性（Durability）</p></td>
+<td><p>確定したトランザクションの結果は、その後に障害が発生しても失われません。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id3">
+<h2><span class="section-number">12.3. </span>トランザクションの制御<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<section id="begincommitrollback">
+<h3><span class="section-number">12.3.1. </span>BEGIN、COMMIT、ROLLBACK<a class="headerlink" href="#begincommitrollback" title="Link to this heading"></a></h3>
+<p>トランザクションは、次の文で制御します。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>文</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BEGIN</span></code></p></td>
+<td><p>トランザクションを開始します。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">COMMIT</span></code></p></td>
+<td><p>トランザクション内の変更を確定します。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ROLLBACK</span></code></p></td>
+<td><p>トランザクション内の変更をすべて取り消し、トランザクションを開始する前の状態に戻します。</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">BEGIN</span></code> は、DBMS によっては <code class="docutils literal notranslate"><span class="pre">BEGIN</span> <span class="pre">TRANSACTION</span></code> や <code class="docutils literal notranslate"><span class="pre">START</span> <span class="pre">TRANSACTION</span></code> と書きます。</p>
+<p>まず、ミルクチョコレート（<code class="docutils literal notranslate"><span class="pre">product_id</span></code> が 1）の現在の在庫数を確認します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>product_id</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>stock</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>ミルクチョコレート</p></td>
+<td><p>50</p></td>
+</tr>
+</tbody>
+</table>
+<p>トランザクションを開始し、注文の追加と在庫数の更新を行います。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">BEGIN</span><span class="p">;</span>
+<span class="linenos">2</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">ordered_on</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">)</span>
+<span class="linenos">3</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;2025-07-01&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;受付済&#39;</span><span class="p">);</span>
+<span class="linenos">4</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">order_items</span><span class="w"> </span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="p">,</span><span class="w"> </span><span class="n">unit_price</span><span class="p">)</span>
+<span class="linenos">5</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">);</span>
+<span class="linenos">6</span><span class="k">UPDATE</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>トランザクションの中では、変更後のデータを参照できます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>product_id</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>stock</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>ミルクチョコレート</p></td>
+<td><p>45</p></td>
+</tr>
+</tbody>
+</table>
+<p>ここで <code class="docutils literal notranslate"><span class="pre">ROLLBACK</span></code> を実行すると、トランザクション内のすべての変更が取り消されます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">ROLLBACK</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>product_id</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>stock</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>ミルクチョコレート</p></td>
+<td><p>50</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">order_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">13</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>結果は 0 行です。</p>
+<p>在庫数は元の 50 に戻り、注文 13 も存在しません。<code class="docutils literal notranslate"><span class="pre">ROLLBACK</span></code> の代わりに <code class="docutils literal notranslate"><span class="pre">COMMIT</span></code> を実行していれば、変更が確定します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">BEGIN</span><span class="p">;</span>
+<span class="linenos">2</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">ordered_on</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">)</span>
+<span class="linenos">3</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;2025-07-01&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;受付済&#39;</span><span class="p">);</span>
+<span class="linenos">4</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">order_items</span><span class="w"> </span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="p">,</span><span class="w"> </span><span class="n">unit_price</span><span class="p">)</span>
+<span class="linenos">5</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">);</span>
+<span class="linenos">6</span><span class="k">UPDATE</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">7</span><span class="k">COMMIT</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>product_id</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>stock</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>ミルクチョコレート</p></td>
+<td><p>45</p></td>
+</tr>
+</tbody>
+</table>
+<p>確定した変更は、<code class="docutils literal notranslate"><span class="pre">ROLLBACK</span></code> を実行しても取り消せません。</p>
+</section>
+<section id="id4">
+<h3><span class="section-number">12.3.2. </span>トランザクションの途中でエラーが発生した場合<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>トランザクションの途中で文がエラーになったとき、SQLite では、原則としてエラーになった文の変更だけが取り消され、トランザクションは継続します。次の例では、2 つ目の <code class="docutils literal notranslate"><span class="pre">INSERT</span></code> 文が外部キーの制約に違反します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">BEGIN</span><span class="p">;</span>
+<span class="linenos">2</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">ordered_on</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">)</span>
+<span class="linenos">3</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">14</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;2025-07-02&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;受付済&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- 存在しない商品（product_id が 99）の明細</span>
+<span class="linenos">2</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">order_items</span><span class="w"> </span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">quantity</span><span class="p">,</span><span class="w"> </span><span class="n">unit_price</span><span class="p">)</span>
+<span class="linenos">3</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">14</span><span class="p">,</span><span class="w"> </span><span class="mi">99</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sqlite3.IntegrityError: FOREIGN KEY constraint failed
+</pre></div>
+</div>
+<p>この時点でも、トランザクションは継続しており、注文 14 の追加は取り消されていません。このまま <code class="docutils literal notranslate"><span class="pre">COMMIT</span></code> を実行すると、明細のない注文 14 が確定してしまいます。エラーが発生した場合は、アプリケーションの側で <code class="docutils literal notranslate"><span class="pre">ROLLBACK</span></code> を実行し、トランザクション全体を取り消す必要があります。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">ROLLBACK</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">order_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">14</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>結果は 0 行です。</p>
+<p>エラーが発生したときの動作は DBMS によって異なります。たとえば PostgreSQL では、トランザクション内でエラーが発生すると、そのトランザクションでは <code class="docutils literal notranslate"><span class="pre">ROLLBACK</span></code> 以外の文を実行できなくなります。</p>
+</section>
+<section id="id5">
+<h3><span class="section-number">12.3.3. </span>自動コミット<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">BEGIN</span></code> を実行せずに <code class="docutils literal notranslate"><span class="pre">INSERT</span></code> 文などを実行した場合、SQLite はその文だけを含むトランザクションを自動的に開始し、文の実行が終わると自動的に確定します。これを自動コミットと呼びます。10 章と 11 章の例は、自動コミットによって 1 文ごとに確定していました。</p>
+<p>複数の文を 1 つずつ自動コミットで実行するよりも、1 つのトランザクションにまとめて実行するほうが、確定の処理が 1 回で済むため、大幅に速くなります。大量の行を追加する場合は、トランザクションにまとめることをお勧めします。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>Python の <code class="docutils literal notranslate"><span class="pre">sqlite3</span></code> モジュールでは、トランザクションの扱いが SQL を直接実行する場合と異なります。詳しくは 14 章（<a class="reference internal" href="ch14_python.html"><span class="doc">Python から SQL を使う</span></a>）で説明します。</p>
+</div>
+</section>
+<section id="id6">
+<h3><span class="section-number">12.3.4. </span>セーブポイント<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">SAVEPOINT</span></code> 文を使うと、トランザクションの途中に名前付きの地点（セーブポイント）を設定できます。<code class="docutils literal notranslate"><span class="pre">ROLLBACK</span> <span class="pre">TO</span> <span class="pre">セーブポイント名</span></code> を実行すると、トランザクション全体ではなく、セーブポイント以降の変更だけを取り消せます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">BEGIN</span><span class="p">;</span>
+<span class="linenos">2</span><span class="k">UPDATE</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="linenos">3</span><span class="n">SAVEPOINT</span><span class="w"> </span><span class="n">before_update_3</span><span class="p">;</span>
+<span class="linenos">4</span><span class="k">UPDATE</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span>
+<span class="linenos">5</span><span class="k">ROLLBACK</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="n">before_update_3</span><span class="p">;</span>
+<span class="linenos">6</span><span class="k">COMMIT</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">stock</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>product_id</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>stock</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>ビターチョコレート</p></td>
+<td><p>130</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>ポテトチップス</p></td>
+<td><p>80</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">product_id</span></code> が 2 の商品の変更は確定し、セーブポイントの後に行った <code class="docutils literal notranslate"><span class="pre">product_id</span></code> が 3 の商品の変更は取り消されています。</p>
+</section>
+</section>
+<section id="id7">
+<h2><span class="section-number">12.4. </span>同時実行の制御<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<section id="id8">
+<h3><span class="section-number">12.4.1. </span>同時実行で起こる問題<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>複数のトランザクションが同時に同じデータを読み書きすると、次のような問題が起こることがあります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>問題</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ダーティリード</p></td>
+<td><p>他のトランザクションが確定していない変更を読んでしまいます。その変更が取り消されると、存在しなかったデータを読んだことになります。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ノンリピータブルリード</p></td>
+<td><p>同じトランザクション内で同じ行を 2 回読んだとき、間に他のトランザクションが変更を確定したために、異なる値が読まれます。</p></td>
+</tr>
+<tr class="row-even"><td><p>ファントムリード</p></td>
+<td><p>同じトランザクション内で同じ条件の検索を 2 回行ったとき、間に他のトランザクションが行を追加したために、1 回目にはなかった行が現れます。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id9">
+<h3><span class="section-number">12.4.2. </span>分離レベル<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>標準 SQL では、これらの問題をどこまで防ぐかによって、次の 4 つの分離レベルが定義されています。下にいくほど分離の度合いが高く、問題が起こりにくくなりますが、同時に実行できる処理が制限されやすくなります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 31.0%" />
+<col style="width: 23.0%" />
+<col style="width: 23.0%" />
+<col style="width: 23.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>分離レベル</p></th>
+<th class="head"><p>ダーティリード</p></th>
+<th class="head"><p>ノンリピータブルリード</p></th>
+<th class="head"><p>ファントムリード</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>READ UNCOMMITTED</p></td>
+<td><p>起こりえます</p></td>
+<td><p>起こりえます</p></td>
+<td><p>起こりえます</p></td>
+</tr>
+<tr class="row-odd"><td><p>READ COMMITTED</p></td>
+<td><p>起こりません</p></td>
+<td><p>起こりえます</p></td>
+<td><p>起こりえます</p></td>
+</tr>
+<tr class="row-even"><td><p>REPEATABLE READ</p></td>
+<td><p>起こりません</p></td>
+<td><p>起こりません</p></td>
+<td><p>起こりえます</p></td>
+</tr>
+<tr class="row-odd"><td><p>SERIALIZABLE</p></td>
+<td><p>起こりません</p></td>
+<td><p>起こりません</p></td>
+<td><p>起こりません</p></td>
+</tr>
+</tbody>
+</table>
+<p>既定の分離レベルは DBMS によって異なります。たとえば、PostgreSQL の既定は READ COMMITTED、MySQL（InnoDB）の既定は REPEATABLE READ です。</p>
+</section>
+<section id="sqlite">
+<h3><span class="section-number">12.4.3. </span>SQLite の同時実行<a class="headerlink" href="#sqlite" title="Link to this heading"></a></h3>
+<p>SQLite は、データベースのファイル全体に対するロックによって同時実行を制御します。書き込みを行えるトランザクションは、同時に 1 つだけです。そのため、SQLite のトランザクションは SERIALIZABLE に相当する分離を実現しています。</p>
+<p>他の接続が書き込み中のときに書き込もうとすると、<code class="docutils literal notranslate"><span class="pre">database</span> <span class="pre">is</span> <span class="pre">locked</span></code> というエラーになることがあります。Python の <code class="docutils literal notranslate"><span class="pre">sqlite3.connect()</span></code> の <code class="docutils literal notranslate"><span class="pre">timeout</span></code> 引数（既定は 5 秒）を指定すると、ロックが解除されるまで待つ時間を設定できます。</p>
+<p>SQLite は、1 台のコンピューターで動くアプリケーションや、読み込みが中心の用途に適しています。多数のユーザーが同時に書き込むシステムでは、PostgreSQL や MySQL などのサーバー型の DBMS を使うのが一般的です。</p>
+</section>
+</section>
+<section id="exercises-ch12">
+<span id="id10"></span><h2><span class="section-number">12.5. </span>演習問題<a class="headerlink" href="#exercises-ch12" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>トランザクションを開始し、すべての商品の在庫数を 0 に更新した後、<code class="docutils literal notranslate"><span class="pre">ROLLBACK</span></code> で取り消してください。取り消す前と後で、在庫数の合計を確認してください。</p></li>
+<li><p>1 つのトランザクションで、次の処理を行ってください。</p>
+<ul class="simple">
+<li><p>顧客番号 8 の顧客の注文（注文番号 13、注文日 2025-07-05、状態「受付済」）を追加します。</p></li>
+<li><p>注文 13 に、ノート（商品番号 10）を 3 冊、単価 180 円で追加します。</p></li>
+<li><p>ノートの在庫数を 3 減らします。</p></li>
+</ul>
+<p>最後に変更を確定し、注文 13 の明細とノートの在庫数を確認してください。</p>
+</li>
+<li><p>トランザクションの途中でエラーが発生した場合、SQLite ではトランザクションがどうなるかを説明してください。また、アプリケーションはどのように対処すべきかを説明してください。</p></li>
+</ol>
+<p>解答は <a class="reference internal" href="appendix_a_answers.html#answers-ch12"><span class="std std-ref">12 章 トランザクション</span></a> にあります。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch11_ddl.html" class="btn btn-neutral float-left" title="11. テーブルの設計と定義" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch13_index.html" class="btn btn-neutral float-right" title="13. インデックスと性能" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

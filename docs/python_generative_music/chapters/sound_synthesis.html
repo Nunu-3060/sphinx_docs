@@ -1,0 +1,169 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>音声合成の基礎 &mdash; Python によるジェネラティブミュージック 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="アルゴリズム作曲の手法" href="algorithms.html" />
+    <link rel="prev" title="MIDI の基礎" href="midi_basics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Python によるジェネラティブミュージック
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="what_is_generative_music.html">ジェネラティブミュージックとは</a></li>
+<li class="toctree-l1"><a class="reference internal" href="environment_setup.html">開発環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python_libraries.html">主要な Python ライブラリ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="midi_basics.html">MIDI の基礎</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">音声合成の基礎</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">デジタルオーディオの基礎</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">サイン波の生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adsr">ADSR エンベロープ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wav">WAV ファイルへの出力</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">生成音楽における音声合成の位置付け</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">アルゴリズム作曲の手法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">実装例</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">まとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Python によるジェネラティブミュージック</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">音声合成の基礎</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>音声合成の基礎<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>これまでの章では、 MIDI という形式で演奏情報を生成する方法を扱ってきました。 MIDI データは音の高さやタイミングといった演奏情報のみを表し、実際の音そのものは音源やソフトウェアシンセサイザーが生成します。本章では、これとは異なるアプローチとして、 Python を用いて波形そのものを合成し、音声ファイルとして出力する方法を説明します。</p>
+<section id="id2">
+<h2>デジタルオーディオの基礎<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>コンピューターで音を扱う際には、連続的な音の波形を、一定の間隔でサンプリング（ 標本化 ）した数値の列として表現します。 1 秒間に何回サンプリングするかを表す値をサンプリングレートと呼び、 CD 音質では 44100 （ Hz ）が用いられます。また、各サンプルの値をどれだけの精度で記録するかを表す値をビット深度と呼び、一般的な WAV ファイルでは 16 ビットが用いられます。</p>
+</section>
+<section id="id3">
+<h2>サイン波の生成<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>もっとも基本的な音の波形はサイン波です。 <code class="docutils literal notranslate"><span class="pre">numpy</span></code> を用いると、以下のように任意の周波数のサイン波を数値の配列として生成することができます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">44100</span>
+<span class="n">frequency</span> <span class="o">=</span> <span class="mf">440.0</span>
+<span class="n">duration</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="n">sample_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">duration</span><span class="p">)</span>
+<span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">sample_count</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frequency</span> <span class="o">*</span> <span class="n">times</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>このコードでは、 440 Hz （ 音楽で用いられる基準音、いわゆる A4 の音 ）のサイン波を、 1 秒間分だけ生成しています。</p>
+</section>
+<section id="adsr">
+<h2>ADSR エンベロープ<a class="headerlink" href="#adsr" title="Link to this heading"></a></h2>
+<p>サイン波をそのまま鳴らすと、音の始まりと終わりで急激に音量が変化し、不自然なクリック音が発生します。実際の楽器の音は、発音してから減衰するまでの間に音量が滑らかに変化しており、この音量変化を近似するためにアタック（ Attack ）、ディケイ（ Decay ）、サステイン（ Sustain ）、リリース（ Release ）の 4 段階からなる ADSR エンベロープがよく用いられます。</p>
+<ul class="simple">
+<li><p><strong>アタック</strong>： 発音してから最大音量に達するまでの時間。</p></li>
+<li><p><strong>ディケイ</strong>： 最大音量からサステインレベルまで音量が下がる時間。</p></li>
+<li><p><strong>サステイン</strong>： 音を維持している間の音量レベル。</p></li>
+<li><p><strong>リリース</strong>： 発音を止めてから音量が 0 になるまでの時間。</p></li>
+</ul>
+<p>波形データに、これら 4 段階の音量変化を表す配列を掛け合わせることで、自然な音量変化を持つ音を合成することができます。</p>
+</section>
+<section id="wav">
+<h2>WAV ファイルへの出力<a class="headerlink" href="#wav" title="Link to this heading"></a></h2>
+<p>生成した波形データは、 Python の標準ライブラリである <code class="docutils literal notranslate"><span class="pre">wave</span></code> モジュールを用いて、 WAV ファイルとして出力することができます。 <code class="docutils literal notranslate"><span class="pre">wave</span></code> モジュールは -1.0 から 1.0 の範囲の浮動小数点数ではなく、整数のバイト列を扱うため、出力前に 16 ビット整数の範囲へ変換する必要があります。</p>
+<p>具体的な実装例は、次章の「実装例」で紹介します。</p>
+</section>
+<section id="id4">
+<h2>生成音楽における音声合成の位置付け<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>MIDI による生成が「どの高さの音を、いつ鳴らすか」という演奏情報の生成であるのに対し、本章で紹介した音声合成は「どのような音色で鳴らすか」という、より低いレベルでの音作りに相当します。両者を組み合わせることで、アルゴリズムによって決定された演奏情報を、自ら合成した音色で鳴らすといった、より自由度の高いジェネラティブミュージックの制作が可能になります。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="midi_basics.html" class="btn btn-neutral float-left" title="MIDI の基礎" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="algorithms.html" class="btn btn-neutral float-right" title="アルゴリズム作曲の手法" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>08 アニメーション | GLSL 入門</title>
+<style>
+  body { margin: 0; padding: 12px; background: #1e1e1e; color: #ddd; font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  canvas { display: block; width: 100%; max-width: 600px; height: auto; background: #000; }
+  .controls { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .controls input[type="range"] { width: 110px; vertical-align: middle; }
+  #log { color: #ff8080; white-space: pre-wrap; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<h1>08 アニメーション</h1>
+<canvas id="canvas" width="600" height="400"></canvas>
+<div class="controls">
+  <label>表示内容
+    <select id="mode">
+      <option value="wave">頂点アニメーション（波）</option>
+      <option value="easing">イージング（上から linear、ease-in、ease-out、smoothstep）</option>
+    </select>
+  </label>
+  <label>速さ <input id="speed" type="range" min="0" max="3" step="0.1" value="1"></label>
+  <label>波の高さ <input id="amplitude" type="range" min="0" max="0.4" step="0.01" value="0.15"></label>
+  <button id="pause" type="button">一時停止</button>
+  <span id="time">uTime = 0.00</span>
+</div>
+<pre id="log"></pre>
+
+<!-- ======== 頂点アニメーション（波）用のシェーダー ======== -->
+<script id="wave-vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+layout(location = 0) in vec2 aGrid;  // 格子点の位置 (x, z)。-1 から 1 の範囲
+
+uniform mat4 uViewProjection;  // 射影行列 × ビュー行列
+uniform float uTime;           // 経過時間（秒）
+uniform float uAmplitude;      // 波の高さ
+
+out float vHeight;  // 高さ（-1 から 1 に正規化した値）
+
+const float WAVE_NUMBER = 12.0;  // 波数：大きいほど波の間隔が狭い
+const float ANGULAR_SPEED = 3.0; // 角速度：大きいほど速く進む
+
+void main() {
+    // 中心からの距離に応じて高さを変え、同心円状に広がる波を作る
+    float r = length(aGrid);
+    float wave = sin(WAVE_NUMBER * r - ANGULAR_SPEED * uTime);
+    vHeight = wave;
+    vec3 position = vec3(aGrid.x, uAmplitude * wave, aGrid.y);
+    gl_Position = uViewProjection * vec4(position, 1.0);
+}
+</script>
+
+<script id="wave-fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+
+in float vHeight;
+out vec4 outColor;
+
+void main() {
+    // 低い所は青、高い所は白
+    vec3 color = mix(vec3(0.1, 0.3, 0.9), vec3(0.9, 0.95, 1.0), vHeight * 0.5 + 0.5);
+    outColor = vec4(color, 1.0);
+}
+</script>
+
+<!-- ======== イージング用のシェーダー ======== -->
+<script id="easing-vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+const vec2 POSITIONS[3] = vec2[3](vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));
+
+void main() {
+    gl_Position = vec4(POSITIONS[gl_VertexID], 0.0, 1.0);
+}
+</script>
+
+<script id="easing-fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+uniform float uTime;
+
+out vec4 outColor;
+
+const float PI = 3.14159265;
+
+// イージング関数：0 から 1 に進む t を、動きの緩急を付けた値に変換する
+float easeLinear(float t)  { return t; }
+float easeInQuad(float t)  { return t * t; }                        // 始めはゆっくり
+float easeOutQuad(float t) { return 1.0 - (1.0 - t) * (1.0 - t); }  // 終わりはゆっくり
+float easeSmooth(float t)  { return t * t * (3.0 - 2.0 * t); }      // 始めと終わりがゆっくり
+
+// コサイン関数を使ったカラーパレット：t が 1 増えるごとに色が一周する
+vec3 palette(float t) {
+    return 0.5 + 0.5 * cos(2.0 * PI * (t + vec3(0.0, 0.33, 0.67)));
+}
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / uResolution;
+
+    // 背景：時間とともに色相が変わる暗めのグラデーション
+    vec3 color = 0.25 * palette(0.1 * uTime + 0.2 * uv.x);
+
+    // 0 → 1 → 0 と 4 秒で往復する値
+    float t = 1.0 - abs(2.0 * fract(uTime / 4.0) - 1.0);
+
+    // 画面を縦に 4 段に分け、上の段から順に 0, 1, 2, 3 と番号を付ける
+    float rowHeight = uResolution.y / 4.0;
+    int row = 3 - int(gl_FragCoord.y / rowHeight);
+
+    float e;
+    if (row == 0) {
+        e = easeLinear(t);
+    } else if (row == 1) {
+        e = easeInQuad(t);
+    } else if (row == 2) {
+        e = easeOutQuad(t);
+    } else {
+        e = easeSmooth(t);
+    }
+
+    // 円の中心：横方向は e に応じて左端から右端まで動く
+    float margin = 40.0;
+    vec2 center = vec2(mix(margin, uResolution.x - margin, e), (3.5 - float(row)) * rowHeight);
+
+    // 円の通り道を示す線
+    float line = 1.0 - smoothstep(0.5, 1.5, abs(gl_FragCoord.y - center.y));
+    color += 0.15 * line;
+
+    // 円（半径 20 ピクセル、輪郭を 1 ピクセルなめらかにする）
+    float circle = 1.0 - smoothstep(19.0, 21.0, length(gl_FragCoord.xy - center));
+    color = mix(color, palette(float(row) * 0.25), circle);
+
+    outColor = vec4(color, 1.0);
+}
+</script>
+
+<script>
+"use strict";
+
+const mat4 = {
+    multiply(a, b) {
+        const out = new Float32Array(16);
+        for (let col = 0; col < 4; col++) {
+            for (let row = 0; row < 4; row++) {
+                let sum = 0;
+                for (let k = 0; k < 4; k++) {
+                    sum += a[k * 4 + row] * b[col * 4 + k];
+                }
+                out[col * 4 + row] = sum;
+            }
+        }
+        return out;
+    },
+    translation(x, y, z) {
+        return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1]);
+    },
+    rotationX(angle) {
+        const c = Math.cos(angle), s = Math.sin(angle);
+        return new Float32Array([1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]);
+    },
+    perspective(fovY, aspect, near, far) {
+        const f = 1 / Math.tan(fovY / 2);
+        const nf = 1 / (near - far);
+        return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
+    },
+};
+
+function compileShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const message = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("シェーダーのコンパイルに失敗しました。\n" + message);
+    }
+    return shader;
+}
+
+function createProgram(gl, vertexSource, fragmentSource) {
+    const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error("プログラムのリンクに失敗しました。\n" + gl.getProgramInfoLog(program));
+    }
+    return program;
+}
+
+function getShaderSource(id) {
+    return document.getElementById(id).textContent.trim();
+}
+
+// 格子状に並んだ点と、それらを結ぶ線分のインデックスを作る
+function createGrid(divisions) {
+    const points = [];
+    for (let i = 0; i <= divisions; i++) {
+        for (let j = 0; j <= divisions; j++) {
+            points.push(-1 + 2 * j / divisions, -1 + 2 * i / divisions);
+        }
+    }
+    const indices = [];
+    const index = (i, j) => i * (divisions + 1) + j;
+    for (let i = 0; i <= divisions; i++) {
+        for (let j = 0; j < divisions; j++) {
+            indices.push(index(i, j), index(i, j + 1));  // 横方向の線分
+            indices.push(index(j, i), index(j + 1, i));  // 縦方向の線分
+        }
+    }
+    return { points: new Float32Array(points), indices: new Uint16Array(indices) };
+}
+
+function main() {
+    const canvas = document.getElementById("canvas");
+    const gl = canvas.getContext("webgl2");
+    if (!gl) {
+        throw new Error("このブラウザーは WebGL 2.0 に対応していません。");
+    }
+
+    // 波のプログラムと頂点データ
+    const waveProgram = createProgram(gl, getShaderSource("wave-vertex-shader"), getShaderSource("wave-fragment-shader"));
+    const waveLoc = {
+        viewProjection: gl.getUniformLocation(waveProgram, "uViewProjection"),
+        time: gl.getUniformLocation(waveProgram, "uTime"),
+        amplitude: gl.getUniformLocation(waveProgram, "uAmplitude"),
+    };
+    const grid = createGrid(60);
+    const gridVao = gl.createVertexArray();
+    gl.bindVertexArray(gridVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, grid.points, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, grid.indices, gl.STATIC_DRAW);
+
+    // イージングのプログラム
+    const easingProgram = createProgram(gl, getShaderSource("easing-vertex-shader"), getShaderSource("easing-fragment-shader"));
+    const easingLoc = {
+        resolution: gl.getUniformLocation(easingProgram, "uResolution"),
+        time: gl.getUniformLocation(easingProgram, "uTime"),
+    };
+    const emptyVao = gl.createVertexArray();
+
+    // ビュー行列：少し上から見下ろす。射影行列と掛け合わせておく
+    const view = mat4.multiply(mat4.translation(0, -0.1, -3.0), mat4.rotationX(0.55));
+    const projection = mat4.perspective(45 * Math.PI / 180, canvas.width / canvas.height, 0.1, 100);
+    const viewProjection = mat4.multiply(projection, view);
+
+    const input = (id) => document.getElementById(id);
+
+    // ---- 時間の管理 ----
+    // requestAnimationFrame が渡す時刻（ミリ秒）から前のフレームとの差を求め、
+    // 速さを掛けて経過時間 time に足していく。一時停止中は足さない。
+    let time = 0;
+    let lastNow = null;
+    let paused = false;
+    input("pause").addEventListener("click", () => {
+        paused = !paused;
+        input("pause").textContent = paused ? "再開" : "一時停止";
+    });
+
+    function frame(now) {
+        const deltaTime = lastNow === null ? 0 : (now - lastNow) / 1000;
+        lastNow = now;
+        if (!paused) {
+            time += deltaTime * Number(input("speed").value);
+        }
+        input("time").textContent = "uTime = " + time.toFixed(2);
+        // ---- 時間の管理ここまで ----
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0.05, 0.05, 0.08, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        if (input("mode").value === "wave") {
+            gl.enable(gl.DEPTH_TEST);
+            gl.useProgram(waveProgram);
+            gl.uniformMatrix4fv(waveLoc.viewProjection, false, viewProjection);
+            gl.uniform1f(waveLoc.time, time);
+            gl.uniform1f(waveLoc.amplitude, Number(input("amplitude").value));
+            gl.bindVertexArray(gridVao);
+            gl.drawElements(gl.LINES, grid.indices.length, gl.UNSIGNED_SHORT, 0);  // 線分として描く
+        } else {
+            gl.disable(gl.DEPTH_TEST);
+            gl.useProgram(easingProgram);
+            gl.uniform2f(easingLoc.resolution, canvas.width, canvas.height);
+            gl.uniform1f(easingLoc.time, time);
+            gl.bindVertexArray(emptyVao);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+        }
+
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+}
+
+try {
+    main();
+} catch (error) {
+    document.getElementById("log").textContent = error.message;
+    console.error(error);
+}
+</script>
+</body>
+</html>

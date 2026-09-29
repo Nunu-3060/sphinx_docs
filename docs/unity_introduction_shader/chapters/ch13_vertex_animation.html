@@ -1,0 +1,399 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 13 章 頂点アニメーション &mdash; Unity シェーダー・グラフィック入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=01157622" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="第 14 章 表現テクニック" href="ch14_effects.html" />
+    <link rel="prev" title="第 12 章 透明と描画順" href="ch12_transparency.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity シェーダー・グラフィックス入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 1 部 導入と理論</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">第 1 章 はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_cg_math.html">第 2 章 コンピューターグラフィックスの数学</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_coordinate_transform.html">第 3 章 座標変換</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_rendering_pipeline.html">第 4 章 GPU とレンダリングパイプライン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_unity_rendering.html">第 5 章 Unity の描画のしくみ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 2 部 シェーダーの基本</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch06_shaderlab_hlsl.html">第 6 章 ShaderLab と HLSL の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_first_shader.html">第 7 章 最初のシェーダー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_texture_uv.html">第 8 章 テクスチャーと UV</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 3 部 ライティング</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch09_lighting.html">第 9 章 ライティング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_normal_map.html">第 10 章 法線マップ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_shadow.html">第 11 章 影</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 4 部 表現の幅を広げる</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch12_transparency.html">第 12 章 透明と描画順</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 13 章 頂点アニメーション</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">頂点アニメーションの特徴</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">波打つ表面</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">頂点の変位</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">法線の再計算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">ビルボード</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">ビルボードのしくみ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">バッチングの無効化</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_effects.html">第 14 章 表現テクニック</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch15_post_effect.html">第 15 章 ポストエフェクト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch16_shader_graph.html">第 16 章 Shader Graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17_debug_optimize.html">第 17 章 デバッグと最適化</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/formulas.html">付録 B 数式のまとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/references.html">付録 C 参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity シェーダー・グラフィックス入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 13 章 頂点アニメーション</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch12_transparency.html" class="btn btn-neutral float-left" title="第 12 章 透明と描画順" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch14_effects.html" class="btn btn-neutral float-right" title="第 14 章 表現テクニック" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 13 章 頂点アニメーション<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>頂点シェーダーでは、頂点の位置を自由に変えられる。この章では、この性質を使って、メッシュを波打たせる表現と、オブジェクトを常にカメラの方に向ける表現（ビルボード）を作る。</p>
+<p>この章のサンプルコードは、<code class="docutils literal notranslate"><span class="pre">examples/chapter13</span></code> フォルダーにある。</p>
+<section id="id2">
+<h2>頂点アニメーションの特徴<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>頂点アニメーションは、C# のスクリプトでメッシュの頂点を書き換える方法と比べて、次の特徴がある。</p>
+<ul class="simple">
+<li><p>GPU で計算するため、頂点の数が多くても高速である。</p></li>
+<li><p>メッシュのデータ自体は変わらないため、物理演算の当たり判定（Collider）には反映されない。</p></li>
+<li><p>頂点を動かした結果は、カメラの視錐台によるカリングに反映されない。メッシュの元の範囲（バウンディングボックス）が画面の外にあると、動かした頂点が画面の中にあっても描画されないことがある。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>波打つ表面<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>次のシェーダーは、頂点の y 座標を、x 座標と時間から求めた正弦波で上下に動かす。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">Wave.shader</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">// 第 13 章：頂点シェーダーで頂点を上下に動かし、波打つ表面を作るシェーダー。</span>
+<span class="linenos"> 2</span><span class="c1">// 頂点の多いメッシュ（Plane など）に使う。</span>
+<span class="linenos"> 3</span><span class="n">Shader</span><span class="w"> </span><span class="s">&quot;Introduction/Chapter13/Wave&quot;</span>
+<span class="linenos"> 4</span><span class="p">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="n">Properties</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="p">[</span><span class="n">MainColor</span><span class="p">]</span><span class="w"> </span><span class="n">_BaseColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Base Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 8</span><span class="w">        </span><span class="c1">// 波の高さ（オブジェクト空間の単位）</span>
+<span class="linenos"> 9</span><span class="w">        </span><span class="n">_Amplitude</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Amplitude&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Float</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.3</span>
+<span class="linenos">10</span><span class="w">        </span><span class="c1">// 1 単位の距離あたりの波の数（値が大きいほど波が細かくなる）</span>
+<span class="linenos">11</span><span class="w">        </span><span class="n">_Frequency</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Frequency&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Float</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="linenos">12</span><span class="w">        </span><span class="c1">// 波の進む速さ</span>
+<span class="linenos">13</span><span class="w">        </span><span class="n">_Speed</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Speed&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Float</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="linenos">14</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="w">    </span><span class="n">SubShader</span>
+<span class="linenos">17</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">18</span><span class="w">        </span><span class="n">Tags</span>
+<span class="linenos">19</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">20</span><span class="w">            </span><span class="s">&quot;RenderType&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Opaque&quot;</span>
+<span class="linenos">21</span><span class="w">            </span><span class="s">&quot;Queue&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Geometry&quot;</span>
+<span class="linenos">22</span><span class="w">            </span><span class="s">&quot;RenderPipeline&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalPipeline&quot;</span>
+<span class="linenos">23</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos">26</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">27</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;Wave&quot;</span>
+<span class="linenos">28</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalForward&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos">31</span><span class="w">            </span><span class="cp">#pragma vertex Vert</span>
+<span class="linenos">32</span><span class="w">            </span><span class="cp">#pragma fragment Frag</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl&quot;</span>
+<span class="linenos">35</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl&quot;</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos">38</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">39</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos">43</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">44</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos">45</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD0</span><span class="p">;</span>
+<span class="linenos">46</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span><span class="w">            </span><span class="n">CBUFFER_START</span><span class="p">(</span><span class="n">UnityPerMaterial</span><span class="p">)</span>
+<span class="linenos">49</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">;</span>
+<span class="linenos">50</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">_Amplitude</span><span class="p">;</span>
+<span class="linenos">51</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">_Frequency</span><span class="p">;</span>
+<span class="linenos">52</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">_Speed</span><span class="p">;</span>
+<span class="linenos">53</span><span class="w">            </span><span class="n">CBUFFER_END</span>
+<span class="linenos">54</span>
+<span class="linenos">55</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">Vert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos">56</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">57</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">58</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xyz</span><span class="p">;</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span><span class="w">                </span><span class="c1">// x 座標と時間から、正弦波（sin）で y 方向の変位を求める</span>
+<span class="linenos">61</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">phase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">positionOS</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_Frequency</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">_Time</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_Speed</span><span class="p">;</span>
+<span class="linenos">62</span><span class="w">                </span><span class="n">positionOS</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="nb">sin</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_Amplitude</span><span class="p">;</span>
+<span class="linenos">63</span>
+<span class="linenos">64</span><span class="w">                </span><span class="c1">// 頂点を動かすと元の法線は使えなくなるため、</span>
+<span class="linenos">65</span><span class="w">                </span><span class="c1">// 波の傾きから法線を計算し直す。</span>
+<span class="linenos">66</span><span class="w">                </span><span class="c1">// y = A sin(fx + st) の x での微分は A f cos(fx + st) なので、</span>
+<span class="linenos">67</span><span class="w">                </span><span class="c1">// 接線は (1, A f cos, 0)、法線はそれに垂直な (-A f cos, 1, 0) になる。</span>
+<span class="linenos">68</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">slope</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_Amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_Frequency</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">cos</span><span class="p">(</span><span class="n">phase</span><span class="p">);</span>
+<span class="linenos">69</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalOS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="kt">float3</span><span class="p">(</span><span class="o">-</span><span class="n">slope</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">70</span>
+<span class="linenos">71</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToHClip</span><span class="p">(</span><span class="n">positionOS</span><span class="p">);</span>
+<span class="linenos">72</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorldNormal</span><span class="p">(</span><span class="n">normalOS</span><span class="p">);</span>
+<span class="linenos">73</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">74</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">75</span>
+<span class="linenos">76</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">Frag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos">77</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">78</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">normalWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">normalize</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">normalWS</span><span class="p">);</span>
+<span class="linenos">79</span><span class="w">                </span><span class="n">Light</span><span class="w"> </span><span class="n">mainLight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetMainLight</span><span class="p">();</span>
+<span class="linenos">80</span>
+<span class="linenos">81</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">ambient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SampleSH</span><span class="p">(</span><span class="n">normalWS</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="p">;</span>
+<span class="linenos">82</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">nDotL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">saturate</span><span class="p">(</span><span class="nb">dot</span><span class="p">(</span><span class="n">normalWS</span><span class="p">,</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">direction</span><span class="p">));</span>
+<span class="linenos">83</span><span class="w">                </span><span class="kt">half3</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mainLight</span><span class="p">.</span><span class="n">color</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nDotL</span><span class="p">;</span>
+<span class="linenos">84</span>
+<span class="linenos">85</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="kt">half4</span><span class="p">(</span><span class="n">ambient</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">diffuse</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">86</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">87</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">88</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">89</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">90</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/5d36328696c3bbc23d709f646324703d/Wave.shader"><code class="xref download docutils literal notranslate"><span class="pre">Wave.shader</span> <span class="pre">をダウンロード</span></code></a></p>
+<p><span class="menuselection">GameObject ‣ 3D Object ‣ Plane</span> で Plane を作成し、このシェーダーのマテリアルを設定すると、表面が波打つ。Plane は 10×10 単位の大きさで、縦横 11 個ずつ（121 個）の頂点を持つ。</p>
+<section id="id4">
+<h3>頂点の変位<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>頂点の変位は、次の式で求めている。<span class="math notranslate nohighlight">\(A\)</span> は振幅（<code class="docutils literal notranslate"><span class="pre">_Amplitude</span></code>）、<span class="math notranslate nohighlight">\(f\)</span> は周波数（<code class="docutils literal notranslate"><span class="pre">_Frequency</span></code>）、<span class="math notranslate nohighlight">\(s\)</span> は速さ（<code class="docutils literal notranslate"><span class="pre">_Speed</span></code>）、<span class="math notranslate nohighlight">\(t\)</span> は経過時間（<code class="docutils literal notranslate"><span class="pre">_Time.y</span></code>）である。</p>
+<div class="math notranslate nohighlight">
+\[y = A \sin(f x + s t)\]</div>
+<p><span class="math notranslate nohighlight">\(t\)</span> が増えるにつれて波の形が x の負の方向へ移動し、波が流れているように見える。</p>
+</section>
+<section id="id5">
+<h3>法線の再計算<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>頂点を動かすと、面の向きが変わるため、メッシュに記録された元の法線は使えなくなる。そのまま使うと、形は波打っているのに陰影は平らなままになる。そこで、波の傾きから法線を計算し直している。</p>
+<p>波の式を x で微分すると、傾きは <span class="math notranslate nohighlight">\(\frac{dy}{dx} = A f \cos(f x + s t)\)</span> になる。x 方向に 1 進むと y が傾きの分だけ変わるので、表面に沿った方向（接線）は <span class="math notranslate nohighlight">\((1,\ \frac{dy}{dx},\ 0)\)</span> である。法線はこれに垂直な方向なので、次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{n} = \mathrm{normalize}\left(-\frac{dy}{dx},\ 1,\ 0\right)\]</div>
+<p>接線との内積を計算すると <span class="math notranslate nohighlight">\(-\frac{dy}{dx} + \frac{dy}{dx} = 0\)</span> となり、垂直であることが確かめられる。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>Plane の頂点は 1 単位ごとにしかないため、<code class="docutils literal notranslate"><span class="pre">_Frequency</span></code> を大きくすると、波の山と谷の間に頂点がなくなり、波の形が崩れる。細かい波を表現するには、頂点の多いメッシュを使う必要がある。テッセレーションで実行時に頂点を増やす方法もあるが、動作する環境が限られるため、本資料では扱わない（第 4 章を参照）。</p>
+</div>
+</section>
+</section>
+<section id="id6">
+<h2>ビルボード<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>ビルボードは、板ポリゴンを常にカメラの方に向けて描画する技法である。木や草、炎、パーティクルなどを、少ない頂点で表現するときに使う。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">Billboard.shader</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">// 第 13 章：オブジェクトがいつもカメラの方を向くようにする（ビルボード）シェーダー。</span>
+<span class="linenos"> 2</span><span class="c1">// XY 平面上に作られた Quad メッシュに使う。</span>
+<span class="linenos"> 3</span><span class="n">Shader</span><span class="w"> </span><span class="s">&quot;Introduction/Chapter13/Billboard&quot;</span>
+<span class="linenos"> 4</span><span class="p">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="n">Properties</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="p">[</span><span class="n">MainTexture</span><span class="p">]</span><span class="w"> </span><span class="n">_BaseMap</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Base Map&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="n">D</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;white&quot;</span><span class="w"> </span><span class="p">{}</span>
+<span class="linenos"> 8</span><span class="w">        </span><span class="p">[</span><span class="n">MainColor</span><span class="p">]</span><span class="w"> </span><span class="n">_BaseColor</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Base Color&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 9</span><span class="w">        </span><span class="n">_Cutoff</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;Alpha Cutoff&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Range</span><span class="p">(</span><span class="mo">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span>
+<span class="linenos">10</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="w">    </span><span class="n">SubShader</span>
+<span class="linenos">13</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">14</span><span class="w">        </span><span class="c1">// DisableBatching：</span>
+<span class="linenos">15</span><span class="w">        </span><span class="c1">// 複数のメッシュが 1 つにまとめられるとオブジェクトの中心が分からなくなるため、</span>
+<span class="linenos">16</span><span class="w">        </span><span class="c1">// バッチングを無効にする</span>
+<span class="linenos">17</span><span class="w">        </span><span class="n">Tags</span>
+<span class="linenos">18</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">19</span><span class="w">            </span><span class="s">&quot;RenderType&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;TransparentCutout&quot;</span>
+<span class="linenos">20</span><span class="w">            </span><span class="s">&quot;Queue&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;AlphaTest&quot;</span>
+<span class="linenos">21</span><span class="w">            </span><span class="s">&quot;RenderPipeline&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalPipeline&quot;</span>
+<span class="linenos">22</span><span class="w">            </span><span class="s">&quot;DisableBatching&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+<span class="linenos">23</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="w">        </span><span class="n">Pass</span>
+<span class="linenos">26</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">27</span><span class="w">            </span><span class="n">Name</span><span class="w"> </span><span class="s">&quot;Billboard&quot;</span>
+<span class="linenos">28</span><span class="w">            </span><span class="n">Tags</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;LightMode&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;UniversalForward&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span><span class="w">            </span><span class="n">HLSLPROGRAM</span>
+<span class="linenos">31</span><span class="w">            </span><span class="cp">#pragma vertex Vert</span>
+<span class="linenos">32</span><span class="w">            </span><span class="cp">#pragma fragment Frag</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span><span class="w">            </span><span class="cp">#include &quot;Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl&quot;</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Attributes</span>
+<span class="linenos">37</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">38</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionOS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">POSITION</span><span class="p">;</span>
+<span class="linenos">39</span><span class="w">                </span><span class="kt">float2</span><span class="w"> </span><span class="n">uv</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD0</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span><span class="w">            </span><span class="k">struct</span><span class="w"> </span><span class="n">Varyings</span>
+<span class="linenos">43</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">44</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">positionCS</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SV_POSITION</span><span class="p">;</span>
+<span class="linenos">45</span><span class="w">                </span><span class="kt">float2</span><span class="w"> </span><span class="n">uv</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">TEXCOORD0</span><span class="p">;</span>
+<span class="linenos">46</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span><span class="w">            </span><span class="n">TEXTURE2D</span><span class="p">(</span><span class="n">_BaseMap</span><span class="p">);</span>
+<span class="linenos">49</span><span class="w">            </span><span class="n">SAMPLER</span><span class="p">(</span><span class="n">sampler_BaseMap</span><span class="p">);</span>
+<span class="linenos">50</span>
+<span class="linenos">51</span><span class="w">            </span><span class="n">CBUFFER_START</span><span class="p">(</span><span class="n">UnityPerMaterial</span><span class="p">)</span>
+<span class="linenos">52</span><span class="w">                </span><span class="kt">float4</span><span class="w"> </span><span class="n">_BaseMap_ST</span><span class="p">;</span>
+<span class="linenos">53</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">;</span>
+<span class="linenos">54</span><span class="w">                </span><span class="kt">half</span><span class="w"> </span><span class="n">_Cutoff</span><span class="p">;</span>
+<span class="linenos">55</span><span class="w">            </span><span class="n">CBUFFER_END</span>
+<span class="linenos">56</span>
+<span class="linenos">57</span><span class="w">            </span><span class="n">Varyings</span><span class="w"> </span><span class="n">Vert</span><span class="p">(</span><span class="n">Attributes</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
+<span class="linenos">58</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">59</span><span class="w">                </span><span class="n">Varyings</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">60</span>
+<span class="linenos">61</span><span class="w">                </span><span class="c1">// オブジェクトの中心（原点）をビュー空間に変換する</span>
+<span class="linenos">62</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">centerWS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformObjectToWorld</span><span class="p">(</span><span class="kt">float3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">63</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">centerVS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformWorldToView</span><span class="p">(</span><span class="n">centerWS</span><span class="p">);</span>
+<span class="linenos">64</span>
+<span class="linenos">65</span><span class="w">                </span><span class="c1">// ビュー空間では x 軸が画面の右、y 軸が画面の上を向いている。</span>
+<span class="linenos">66</span><span class="w">                </span><span class="c1">// 中心から頂点の xy 分だけずらすと、頂点が常に画面と平行な面に並ぶ。</span>
+<span class="linenos">67</span><span class="w">                </span><span class="c1">// ワールド行列を通らないため、Transform の Scale は反映されない。</span>
+<span class="linenos">68</span><span class="w">                </span><span class="kt">float3</span><span class="w"> </span><span class="n">positionVS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">centerVS</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">float3</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">positionOS</span><span class="p">.</span><span class="n">xy</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">69</span>
+<span class="linenos">70</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">positionCS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TransformWViewToHClip</span><span class="p">(</span><span class="n">positionVS</span><span class="p">);</span>
+<span class="linenos">71</span><span class="w">                </span><span class="n">output</span><span class="p">.</span><span class="n">uv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TRANSFORM_TEX</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="n">uv</span><span class="p">,</span><span class="w"> </span><span class="n">_BaseMap</span><span class="p">);</span>
+<span class="linenos">72</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span>
+<span class="linenos">73</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">74</span>
+<span class="linenos">75</span><span class="w">            </span><span class="kt">half4</span><span class="w"> </span><span class="n">Frag</span><span class="p">(</span><span class="n">Varyings</span><span class="w"> </span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_Target</span>
+<span class="linenos">76</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">77</span><span class="w">                </span><span class="kt">half4</span><span class="w"> </span><span class="n">color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SAMPLE_TEXTURE2D</span><span class="p">(</span><span class="n">_BaseMap</span><span class="p">,</span><span class="w"> </span><span class="n">sampler_BaseMap</span><span class="p">,</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="n">uv</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_BaseColor</span><span class="p">;</span>
+<span class="linenos">78</span><span class="w">                </span><span class="nb">clip</span><span class="p">(</span><span class="n">color</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">_Cutoff</span><span class="p">);</span>
+<span class="linenos">79</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="kt">half4</span><span class="p">(</span><span class="n">color</span><span class="p">.</span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">80</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">81</span><span class="w">            </span><span class="n">ENDHLSL</span>
+<span class="linenos">82</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">83</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">84</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/d16508a145c23ac15f67d0b8355d4590/Billboard.shader"><code class="xref download docutils literal notranslate"><span class="pre">Billboard.shader</span> <span class="pre">をダウンロード</span></code></a></p>
+<p><span class="menuselection">GameObject ‣ 3D Object ‣ Quad</span> で Quad を作成し、このシェーダーのマテリアルを設定する。Scene ビューでカメラを回り込ませても、Quad は常にこちらを向いて表示される。</p>
+<section id="id7">
+<h3>ビルボードのしくみ<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>ビュー空間では、x 軸が画面の右、y 軸が画面の上を向いている（第 3 章を参照）。そのため、ビュー空間で頂点を xy 方向にずらすと、頂点は常に画面と平行な面に並ぶ。</p>
+<p>サンプルでは、次の手順で頂点の位置を求めている。</p>
+<ol class="arabic simple">
+<li><p>オブジェクトの中心（オブジェクト空間の原点）を、ワールド空間を経由してビュー空間に変換する。</p></li>
+<li><p>ビュー空間の中心の位置に、頂点のオブジェクト空間の xy 座標を加える。Quad の頂点は、オブジェクト空間の XY 平面上にあるため、これで画面と平行な Quad になる。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TransformWViewToHClip</span></code> 関数で、ビュー空間からクリップ空間に変換する。</p></li>
+</ol>
+<p>モデル変換の行列を頂点に直接適用しないため、Transform の Rotation と Scale は反映されない。大きさを変えたい場合は、シェーダーにプロパティを追加して、xy 座標に掛ける必要がある。</p>
+</section>
+<section id="id8">
+<h3>バッチングの無効化<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>サブシェーダーのタグで <code class="docutils literal notranslate"><span class="pre">&quot;DisableBatching&quot;</span> <span class="pre">=</span> <span class="pre">&quot;True&quot;</span></code> を指定している。Unity の静的バッチングなどは、複数のオブジェクトのメッシュを 1 つにまとめ、頂点をワールド空間の座標にして描画する。その場合、オブジェクト空間の原点が各オブジェクトの中心ではなくなるため、ビルボードの計算が正しく行えない。このタグを指定すると、このシェーダーを使うオブジェクトはバッチングの対象から外れる。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch12_transparency.html" class="btn btn-neutral float-left" title="第 12 章 透明と描画順" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch14_effects.html" class="btn btn-neutral float-right" title="第 14 章 表現テクニック" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

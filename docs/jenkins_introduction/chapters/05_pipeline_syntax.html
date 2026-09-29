@@ -1,0 +1,593 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5. Declarative Pipeline 構文の詳細 &mdash; Jenkins &amp; Jenkins Pipeline 入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="6. Scripted Pipeline と Groovy の基礎" href="06_scripted_pipeline.html" />
+    <link rel="prev" title="4. Jenkins Pipeline の基礎" href="04_pipeline_basics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Jenkins & Jenkins Pipeline 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. Jenkins とは</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_installation.html">2. インストールとセットアップ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_basic_usage.html">3. Jenkins の基本操作（Freestyle ジョブ）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_pipeline_basics.html">4. Jenkins Pipeline の基礎</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">5. Declarative Pipeline 構文の詳細</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#agent">5.1. agent ディレクティブ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#options">5.2. options ディレクティブ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#triggers">5.3. triggers ディレクティブ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#environment-parameters">5.4. environment と parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stages-steps">5.5. stages と steps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#when">5.6. 条件分岐: when ディレクティブ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#post">5.7. post セクション（後処理）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parallel-matrix">5.8. 並列実行: parallel と matrix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input">5.9. 手動承認: input ステップ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#steps">5.10. よく使う Steps 一覧</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sample-app-jenkinsfile">5.11. サンプル全体（sample-app/Jenkinsfile）</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="06_scripted_pipeline.html">6. Scripted Pipeline と Groovy の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_multibranch.html">7. マルチブランチパイプライン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_shared_libraries.html">8. 共有ライブラリ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_integration.html">9. 外部ツールとの連携</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_best_practices.html">10. ベストプラクティスとトラブルシューティング</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/a_glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/b_references.html">参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Jenkins & Jenkins Pipeline 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">5. </span>Declarative Pipeline 構文の詳細</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="declarative-pipeline">
+<h1><span class="section-number">5. </span>Declarative Pipeline 構文の詳細<a class="headerlink" href="#declarative-pipeline" title="Link to this heading"></a></h1>
+<p>Declarative Pipeline の主要なディレクティブを、プログラミング言語の構文要素になぞらえながら解説します。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>本章で扱う <code class="docutils literal notranslate"><span class="pre">agent</span></code>/<code class="docutils literal notranslate"><span class="pre">options</span></code>/<code class="docutils literal notranslate"><span class="pre">triggers</span></code>/<code class="docutils literal notranslate"><span class="pre">parameters</span></code>/<code class="docutils literal notranslate"><span class="pre">when</span></code>/<code class="docutils literal notranslate"><span class="pre">post</span></code>/<code class="docutils literal notranslate"><span class="pre">parallel</span></code>/<code class="docutils literal notranslate"><span class="pre">input</span></code> のうち、<code class="docutils literal notranslate"><span class="pre">triggers</span></code> 以外はサンプルリポジトリの <code class="docutils literal notranslate"><span class="pre">sample-app/Jenkinsfile</span></code> に一通り実例として含まれています（<code class="docutils literal notranslate"><span class="pre">triggers</span></code> を使わない理由は該当節で説明します）。手元で動かしながら読み進めると理解しやすくなります。ファイル全体は本章末尾に掲載しているほか、<a class="reference download internal" download="" href="../_downloads/38452bc87c1a6a7888b280cf192295c2/Jenkinsfile"><code class="xref download docutils literal notranslate"><span class="pre">ここから直接ダウンロード</span></code></a> することもできます。</p>
+</div>
+<section id="agent">
+<h2><span class="section-number">5.1. </span>agent ディレクティブ<a class="headerlink" href="#agent" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">agent</span></code> は、Pipeline（またはステージ単位）をどこで実行するかを指定するディレクティブです。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="s1">&#39;linux &amp;&amp; docker&#39;</span><span class="w"> </span><span class="o">}</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>主な指定方法は次のとおりです。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">agent</span> <span class="pre">any</span></code> ── 利用可能な任意のエージェントで実行します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">agent</span> <span class="pre">none</span></code> ── トップレベルでは実行環境を確保せず、各 <code class="docutils literal notranslate"><span class="pre">stage</span></code> 側で個別に <code class="docutils literal notranslate"><span class="pre">agent</span></code> を指定することを強制します。ステージごとに異なる実行環境（OS やコンテナ）を使い分けたい場合に使います。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">agent</span> <span class="pre">{</span> <span class="pre">label</span> <span class="pre">'xxx'</span> <span class="pre">}</span></code> ── 指定したラベルを持つエージェントで実行します。ラベルは <a class="reference internal" href="02_installation.html"><span class="doc">インストールとセットアップ</span></a> で触れたエージェント側に設定する任意の文字列で、<code class="docutils literal notranslate"><span class="pre">linux</span></code>、<code class="docutils literal notranslate"><span class="pre">gpu</span></code> のように実行環境の特徴を表すことが多いです。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">agent</span> <span class="pre">{</span> <span class="pre">docker</span> <span class="pre">{</span> <span class="pre">image</span> <span class="pre">'python:3.12'</span> <span class="pre">}</span> <span class="pre">}</span></code> ── 指定した Docker イメージをコンテナとして起動し、その中で実行します。詳細は <a class="reference internal" href="09_integration.html"><span class="doc">外部ツールとの連携</span></a> で扱います。</p></li>
+</ul>
+</section>
+<section id="options">
+<h2><span class="section-number">5.2. </span>options ディレクティブ<a class="headerlink" href="#options" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">options</span></code> は、個々のステップではなく Pipeline 全体の挙動を設定するディレクティブです。関数のデコレータに近い位置づけと考えるとイメージしやすいでしょう。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">any</span>
+
+<span class="w">    </span><span class="n">options</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">timeout</span><span class="o">(</span><span class="nl">time:</span><span class="w"> </span><span class="mi">30</span><span class="o">,</span><span class="w"> </span><span class="nl">unit:</span><span class="w"> </span><span class="s1">&#39;MINUTES&#39;</span><span class="o">)</span>
+<span class="w">        </span><span class="n">retry</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>
+<span class="w">        </span><span class="n">disableConcurrentBuilds</span><span class="o">()</span>
+<span class="w">        </span><span class="n">buildDiscarder</span><span class="o">(</span><span class="n">logRotator</span><span class="o">(</span><span class="nl">numToKeepStr:</span><span class="w"> </span><span class="s1">&#39;30&#39;</span><span class="o">))</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">timeout(time:</span> <span class="pre">30,</span> <span class="pre">unit:</span> <span class="pre">'MINUTES')</span></code> ── Pipeline 全体の実行時間に上限を設けます。ハングしたビルドがエージェントを占有し続けるのを防ぎます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">retry(2)</span></code> ── 失敗した場合に、指定回数まで自動的に再実行します。ネットワークの一時的な不調など、リトライで解決する問題に有効です。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">disableConcurrentBuilds()</span></code> ── 同じジョブの複数ビルドが同時に走らないようにします。デプロイ先を共有するジョブなど、並行実行が競合を招く場合に使います。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">buildDiscarder(logRotator(numToKeepStr:</span> <span class="pre">'30'))</span></code> ── 古いビルド履歴を自動的に削除します。指定しない場合、ビルド履歴とそのログ・成果物が無制限に蓄積され、ディスクを圧迫します。</p></li>
+</ul>
+</section>
+<section id="triggers">
+<h2><span class="section-number">5.3. </span>triggers ディレクティブ<a class="headerlink" href="#triggers" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">triggers</span></code> は、<a class="reference internal" href="03_basic_usage.html"><span class="doc">Jenkins の基本操作（Freestyle ジョブ）</span></a> で扱った Freestyle ジョブの「ビルドトリガーの種類」を、Declarative Pipeline の中で宣言的に記述するためのディレクティブです。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">any</span>
+
+<span class="w">    </span><span class="n">triggers</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">cron</span><span class="o">(</span><span class="s1">&#39;H 2 * * *&#39;</span><span class="o">)</span>
+<span class="w">        </span><span class="n">pollSCM</span><span class="o">(</span><span class="s1">&#39;H/15 * * * *&#39;</span><span class="o">)</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cron(...)</span></code> ── 指定した cron 形式のスケジュールで、変更の有無にかかわらず定期的にビルドを起動します。夜間バッチのように、コミットの有無とは無関係に毎日決まった時刻に実行したい処理に向いています。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pollSCM(...)</span></code> ── 指定した間隔でリポジトリをポーリングし、新しいコミットがあった場合にのみビルドを起動します。<a class="reference internal" href="03_basic_usage.html"><span class="doc">Jenkins の基本操作（Freestyle ジョブ）</span></a> で触れた「SCM ポーリング」の Pipeline 版です。</p></li>
+</ul>
+<p><a class="reference internal" href="07_multibranch.html"><span class="doc">マルチブランチパイプライン</span></a> で扱う Multibranch Pipeline では、リポジトリのスキャン自体が Webhook あるいは定期スキャンによって行われるため、多くの場合 <code class="docutils literal notranslate"><span class="pre">triggers</span></code> を明示的に書く必要はありません。<code class="docutils literal notranslate"><span class="pre">triggers</span></code> が主に役立つのは、単一の Jenkinsfile を対象とする通常の Pipeline ジョブで、Webhook を設定できない環境において定期的な確認や夜間バッチを組みたい場合です。サンプルリポジトリ <code class="docutils literal notranslate"><span class="pre">sample-app</span></code> は Multibranch Pipeline を前提としているため、<code class="docutils literal notranslate"><span class="pre">sample-app/Jenkinsfile</span></code> には <code class="docutils literal notranslate"><span class="pre">triggers</span></code> の実例を含めていません。</p>
+</section>
+<section id="environment-parameters">
+<h2><span class="section-number">5.4. </span>environment と parameters<a class="headerlink" href="#environment-parameters" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">environment</span></code> と <code class="docutils literal notranslate"><span class="pre">parameters</span></code> は、いずれも Pipeline に値を渡すための仕組みですが、役割が異なります。関数における「デフォルト値付きの内部変数」と「呼び出し時に渡す引数」の違いに近いイメージです。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">any</span>
+
+<span class="w">    </span><span class="n">parameters</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">string</span><span class="o">(</span><span class="nl">name:</span><span class="w"> </span><span class="s1">&#39;TARGET_ENV&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">defaultValue:</span><span class="w"> </span><span class="s1">&#39;staging&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">description:</span><span class="w"> </span><span class="s1">&#39;デプロイ先&#39;</span><span class="o">)</span>
+<span class="w">        </span><span class="n">choice</span><span class="o">(</span><span class="nl">name:</span><span class="w"> </span><span class="s1">&#39;LOG_LEVEL&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">choices:</span><span class="w"> </span><span class="o">[</span><span class="s1">&#39;INFO&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;DEBUG&#39;</span><span class="o">],</span><span class="w"> </span><span class="nl">description:</span><span class="w"> </span><span class="s1">&#39;ログレベル&#39;</span><span class="o">)</span>
+<span class="w">        </span><span class="n">booleanParam</span><span class="o">(</span><span class="nl">name:</span><span class="w"> </span><span class="s1">&#39;SKIP_TESTS&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">defaultValue:</span><span class="w"> </span><span class="kc">false</span><span class="o">,</span><span class="w"> </span><span class="nl">description:</span><span class="w"> </span><span class="s1">&#39;テストをスキップする&#39;</span><span class="o">)</span>
+<span class="w">    </span><span class="o">}</span>
+
+<span class="w">    </span><span class="n">environment</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">APP_ENV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${params.TARGET_ENV}&quot;</span>
+<span class="w">    </span><span class="o">}</span>
+
+<span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Show env&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;Deploying to ${env.APP_ENV} (log level: ${params.LOG_LEVEL})&quot;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">parameters</span></code> は、ビルド実行時にユーザーが値を選択・入力できるようにするディレクティブです。「ビルド実行」ボタンを押す前にフォームが表示され、そこで指定した値が <code class="docutils literal notranslate"><span class="pre">params.&lt;名前&gt;</span></code> として参照できます。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">environment</span></code> は、Pipeline 内で使う環境変数を定義します。値は <code class="docutils literal notranslate"><span class="pre">env.&lt;名前&gt;</span></code> または単に <code class="docutils literal notranslate"><span class="pre">&lt;名前&gt;</span></code> として参照でき、<code class="docutils literal notranslate"><span class="pre">sh</span></code> ステップで実行するシェルコマンドにも自動的に環境変数として引き渡されます。</p></li>
+</ul>
+</section>
+<section id="stages-steps">
+<h2><span class="section-number">5.5. </span>stages と steps<a class="headerlink" href="#stages-steps" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">stages</span></code> は 1 つ以上の <code class="docutils literal notranslate"><span class="pre">stage</span></code> をまとめるブロックで、Pipeline の処理を「ビルド」「テスト」「デプロイ」のような意味のある単位に分割します。各 <code class="docutils literal notranslate"><span class="pre">stage</span></code> の中の <code class="docutils literal notranslate"><span class="pre">steps</span></code> に、実際に実行する処理を並べます。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Build&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;pip install -r requirements.txt&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;pytest&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./deploy.sh&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>制御構造として見ると、<code class="docutils literal notranslate"><span class="pre">stages</span></code> は関数本体、<code class="docutils literal notranslate"><span class="pre">stage</span></code> はその中の意味のある処理ブロック（コメントで区切っていた部分を明示的な単位にしたもの）に相当します。この単位ごとに、実行時間や成否がステージビュー（<a class="reference internal" href="04_pipeline_basics.html"><span class="doc">Jenkins Pipeline の基礎</span></a> 参照）に記録されます。</p>
+</section>
+<section id="when">
+<h2><span class="section-number">5.6. </span>条件分岐: when ディレクティブ<a class="headerlink" href="#when" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">when</span></code> は、特定の条件を満たす場合にのみ <code class="docutils literal notranslate"><span class="pre">stage</span></code> を実行するディレクティブです。<code class="docutils literal notranslate"><span class="pre">if</span></code> 文に相当しますが、Declarative Pipeline では条件を専用の構文で表現します。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy to production&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">when</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">branch</span><span class="w"> </span><span class="s1">&#39;main&#39;</span>
+<span class="w">        </span><span class="n">expression</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">params</span><span class="o">.</span><span class="na">SKIP_TESTS</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./deploy.sh production&#39;</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>主な条件は次のとおりです。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">branch</span> <span class="pre">'main'</span></code> ── 実行中のブランチが <code class="docutils literal notranslate"><span class="pre">main</span></code> の場合にのみ実行します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">expression</span> <span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code> ── 任意の Groovy 式を評価し、<code class="docutils literal notranslate"><span class="pre">true</span></code> の場合にのみ実行します。<code class="docutils literal notranslate"><span class="pre">if</span></code> 文の条件式そのものに近い書き方です。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">changeset</span> <span class="pre">&quot;**/*.py&quot;</span></code> ── 指定したパターンに一致するファイルが変更されている場合にのみ実行します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">environment</span> <span class="pre">name:</span> <span class="pre">'APP_ENV',</span> <span class="pre">value:</span> <span class="pre">'production'</span></code> ── 指定した環境変数が特定の値を持つ場合にのみ実行します。</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">when</span></code> ブロック内に複数の条件を並べると、デフォルトではすべての条件を満たした場合（AND）に実行されます。<code class="docutils literal notranslate"><span class="pre">anyOf</span> <span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code> を使うと OR 条件を表現できます。</p>
+</section>
+<section id="post">
+<h2><span class="section-number">5.7. </span>post セクション（後処理）<a class="headerlink" href="#post" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">post</span></code> は、<code class="docutils literal notranslate"><span class="pre">stage</span></code> または Pipeline 全体の結果に応じて実行する後処理を定義します。<code class="docutils literal notranslate"><span class="pre">try</span></code>/<code class="docutils literal notranslate"><span class="pre">finally</span></code> に相当する仕組みです。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">any</span>
+<span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;pytest&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">    </span><span class="n">post</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">always</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;このブロックは成否にかかわらず必ず実行される&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">success</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;ビルドが成功した場合のみ実行される&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">failure</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;ビルドが失敗した場合のみ実行される&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">changed</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;前回の結果からステータスが変化した場合のみ実行される&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">always</span></code> は、Python の <code class="docutils literal notranslate"><span class="pre">finally</span></code> ブロックのように、成否を問わず必ず実行したい処理（一時ファイルの削除、通知など）に使います。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">success</span></code>/<code class="docutils literal notranslate"><span class="pre">failure</span></code> は、それぞれ正常終了時の処理／<code class="docutils literal notranslate"><span class="pre">except</span></code> に相当します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">changed</span></code> は、「前回は失敗していたが今回は成功した」（またはその逆）といったステータスの変化を検知したい場合に便利です。連続失敗時に毎回通知が飛ぶのを避けたいケースで使われます。</p></li>
+</ul>
+</section>
+<section id="parallel-matrix">
+<h2><span class="section-number">5.8. </span>並列実行: parallel と matrix<a class="headerlink" href="#parallel-matrix" title="Link to this heading"></a></h2>
+<p>複数のステージを並列に実行したい場合は <code class="docutils literal notranslate"><span class="pre">parallel</span></code> を使います。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">parallel</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Unit tests&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;pytest tests/unit&#39;</span><span class="w"> </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Lint&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;ruff check .&#39;</span><span class="w"> </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">matrix</span></code> は、複数の軸（例: OS × Python バージョン）の組み合わせを自動的に展開し、それぞれを並列実行する仕組みです。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Cross test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">matrix</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">axes</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">axis</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">name</span><span class="w"> </span><span class="s1">&#39;PYTHON_VERSION&#39;</span>
+<span class="w">                </span><span class="n">values</span><span class="w"> </span><span class="s1">&#39;3.11&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;3.12&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;3.13&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">            </span><span class="n">axis</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">name</span><span class="w"> </span><span class="s1">&#39;OS&#39;</span>
+<span class="w">                </span><span class="n">values</span><span class="w"> </span><span class="s1">&#39;linux&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;windows&#39;</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">        </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">                    </span><span class="n">sh</span><span class="w"> </span><span class="s2">&quot;tox -e py${PYTHON_VERSION}&quot;</span>
+<span class="w">                </span><span class="o">}</span>
+<span class="w">            </span><span class="o">}</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>上記の例では 3 × 2 = 6 通りの組み合わせが自動的に生成され、それぞれが並列に実行されます。テストマトリクスを手で <code class="docutils literal notranslate"><span class="pre">parallel</span></code> として書き並べる代わりに、軸の定義だけで組み合わせを表現できます。</p>
+</section>
+<section id="input">
+<h2><span class="section-number">5.9. </span>手動承認: input ステップ<a class="headerlink" href="#input" title="Link to this heading"></a></h2>
+<p>本番環境へのデプロイなど、自動化の途中に人間の承認を挟みたい場合は <code class="docutils literal notranslate"><span class="pre">input</span></code> ステップを使います。実行が一時停止し、Jenkins の UI 上で承認（または入力）が行われるまで待機します。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Approval&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">timeout</span><span class="o">(</span><span class="nl">time:</span><span class="w"> </span><span class="mi">1</span><span class="o">,</span><span class="w"> </span><span class="nl">unit:</span><span class="w"> </span><span class="s1">&#39;HOURS&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="n">input</span><span class="w"> </span><span class="nl">message:</span><span class="w"> </span><span class="s1">&#39;本番環境へデプロイしますか？&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">ok:</span><span class="w"> </span><span class="s1">&#39;Deploy&#39;</span>
+<span class="w">        </span><span class="o">}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+
+<span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy to production&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./deploy.sh production&#39;</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><code class="docutils literal notranslate"><span class="pre">input</span></code> は実行中のエージェントを確保したまま待機するため、<code class="docutils literal notranslate"><span class="pre">timeout</span></code> と組み合わせて無期限の待機を避けるのが定石です。また、<code class="docutils literal notranslate"><span class="pre">input</span></code> は Groovy の値を戻り値として受け取れるため、承認時に追加の選択（デプロイ先の指定など）を求めることもできます。</p>
+</div>
+</section>
+<section id="steps">
+<h2><span class="section-number">5.10. </span>よく使う Steps 一覧<a class="headerlink" href="#steps" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">steps</span></code> の中で使う代表的なステップを一覧にまとめます。文法・用途はリファレンスとして押さえておき、実践的な使い方は該当章で扱います。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>ステップ</p></th>
+<th class="head"><p>用途</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sh</span></code> / <code class="docutils literal notranslate"><span class="pre">bat</span></code></p></td>
+<td><p>シェルコマンド（Linux/macOS は <code class="docutils literal notranslate"><span class="pre">sh</span></code>、Windows は <code class="docutils literal notranslate"><span class="pre">bat</span></code>）を実行する。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">checkout</span> <span class="pre">scm</span></code></p></td>
+<td><p>ジョブに設定されたリポジトリからソースコードを取得する。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">stash</span></code> / <code class="docutils literal notranslate"><span class="pre">unstash</span></code></p></td>
+<td><p>あるステージで生成したファイルを、別のステージ（別のエージェント上でも）に引き渡す。複数エージェントを跨ぐビルドで使う。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">archiveArtifacts</span></code></p></td>
+<td><p>生成物（ビルド済みバイナリ、レポート等）をビルド結果に添付して保存する。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">junit</span></code></p></td>
+<td><p>JUnit 形式のテストレポートを読み込み、Jenkins の UI 上で成功/失敗件数として集計・表示する。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">isUnix</span></code></p></td>
+<td><p>実行中のエージェントが Unix 系 OS かどうかを判定する。<code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">(isUnix())</span> <span class="pre">{</span> <span class="pre">sh</span> <span class="pre">'...'</span> <span class="pre">}</span> <span class="pre">else</span> <span class="pre">{</span> <span class="pre">bat</span> <span class="pre">'...'</span> <span class="pre">}</span></code> のように、OS に応じて <code class="docutils literal notranslate"><span class="pre">sh</span></code>/<code class="docutils literal notranslate"><span class="pre">bat</span></code> を切り替える際に使う。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dir</span></code></p></td>
+<td><p>ブロック内でのカレントディレクトリを一時的に変更する。<code class="docutils literal notranslate"><span class="pre">dir('subdir')</span> <span class="pre">{</span> <span class="pre">sh</span> <span class="pre">'...'</span> <span class="pre">}</span></code> のように使う。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">deleteDir</span></code></p></td>
+<td><p>カレントディレクトリの中身を再帰的に削除する。ワークスペースのクリーンアップに使う。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">readFile</span></code> / <code class="docutils literal notranslate"><span class="pre">writeFile</span></code></p></td>
+<td><p>ワークスペース内のファイルをテキストとして読み書きする。設定値の受け渡しなどに使う。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sleep</span></code></p></td>
+<td><p>指定した時間だけ処理を一時停止する。外部システムが安定するまでの待機やデバッグに使う。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">unstable</span></code></p></td>
+<td><p>ビルドを失敗させずに、明示的に「不安定（<code class="docutils literal notranslate"><span class="pre">UNSTABLE</span></code>）」として終了させる。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">nodesByLabel</span></code></p></td>
+<td><p>指定したラベルを持つ、現在利用可能なノード名の一覧を取得する。<code class="docutils literal notranslate"><span class="pre">parallel</span></code> と組み合わせて、動的にステージを生成する場合などに使う。</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">archiveArtifacts</span></code> と <code class="docutils literal notranslate"><span class="pre">junit</span></code> の基本文法はここで押さえ、複数ジョブ・複数言語のレポートを扱う実践的な活用パターンは <a class="reference internal" href="09_integration.html"><span class="doc">外部ツールとの連携</span></a> で扱います。この表に挙げたステップは、本章末尾に掲載する <code class="docutils literal notranslate"><span class="pre">sample-app/Jenkinsfile</span></code> の中でひととおり実際に使われています。</p>
+</section>
+<section id="sample-app-jenkinsfile">
+<h2><span class="section-number">5.11. </span>サンプル全体（sample-app/Jenkinsfile）<a class="headerlink" href="#sample-app-jenkinsfile" title="Link to this heading"></a></h2>
+<p>ここまでで個別に説明してきたディレクティブを組み合わせた、実際に動作する Jenkinsfile 全体です。<a class="reference download internal" download="" href="../_downloads/38452bc87c1a6a7888b280cf192295c2/Jenkinsfile"><code class="xref download docutils literal notranslate"><span class="pre">sample-app/Jenkinsfile</span></code></a> としてダウンロードし、手元の Jenkins でそのまま試すこともできます。</p>
+<div class="highlight-groovy notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="c1">// 「Jenkins &amp; Jenkins Pipeline 入門」第4・5・7・9・10章に対応するサンプル。</span>
+<span class="linenos">  2</span><span class="c1">// Multibranch Pipeline ジョブとして読み込むことを想定している</span>
+<span class="linenos">  3</span><span class="c1">// （develop ブランチはステージング、main ブランチは本番承認付きデプロイ）。</span>
+<span class="linenos">  4</span><span class="c1">// 第5章「よく使う Steps 一覧」で紹介したステップ</span>
+<span class="linenos">  5</span><span class="c1">// （checkout / stash・unstash / archiveArtifacts / junit / isUnix / dir /</span>
+<span class="linenos">  6</span><span class="c1">//   deleteDir / readFile・writeFile / sleep / unstable / nodesByLabel）を</span>
+<span class="linenos">  7</span><span class="c1">// できるだけ実際に使う形で構成している。</span>
+<span class="linenos">  8</span><span class="n">pipeline</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">  9</span><span class="w">    </span><span class="n">agent</span><span class="w"> </span><span class="n">any</span>
+<span class="linenos"> 10</span>
+<span class="linenos"> 11</span><span class="w">    </span><span class="n">options</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 12</span><span class="w">        </span><span class="n">timeout</span><span class="o">(</span><span class="nl">time:</span><span class="w"> </span><span class="mi">30</span><span class="o">,</span><span class="w"> </span><span class="nl">unit:</span><span class="w"> </span><span class="s1">&#39;MINUTES&#39;</span><span class="o">)</span>
+<span class="linenos"> 13</span><span class="w">        </span><span class="n">buildDiscarder</span><span class="o">(</span><span class="n">logRotator</span><span class="o">(</span><span class="nl">numToKeepStr:</span><span class="w"> </span><span class="s1">&#39;20&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">artifactNumToKeepStr:</span><span class="w"> </span><span class="s1">&#39;5&#39;</span><span class="o">))</span>
+<span class="linenos"> 14</span><span class="w">        </span><span class="n">disableConcurrentBuilds</span><span class="o">()</span>
+<span class="linenos"> 15</span><span class="w">    </span><span class="o">}</span>
+<span class="linenos"> 16</span>
+<span class="linenos"> 17</span><span class="w">    </span><span class="n">parameters</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 18</span><span class="w">        </span><span class="n">choice</span><span class="o">(</span><span class="nl">name:</span><span class="w"> </span><span class="s1">&#39;TARGET_ENV&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">choices:</span><span class="w"> </span><span class="o">[</span><span class="s1">&#39;staging&#39;</span><span class="o">,</span><span class="w"> </span><span class="s1">&#39;production&#39;</span><span class="o">],</span><span class="w"> </span><span class="nl">description:</span><span class="w"> </span><span class="s1">&#39;手動実行時のデプロイ先&#39;</span><span class="o">)</span>
+<span class="linenos"> 19</span><span class="w">        </span><span class="n">booleanParam</span><span class="o">(</span><span class="nl">name:</span><span class="w"> </span><span class="s1">&#39;SKIP_TESTS&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">defaultValue:</span><span class="w"> </span><span class="kc">false</span><span class="o">,</span><span class="w"> </span><span class="nl">description:</span><span class="w"> </span><span class="s1">&#39;テストをスキップする&#39;</span><span class="o">)</span>
+<span class="linenos"> 20</span><span class="w">    </span><span class="o">}</span>
+<span class="linenos"> 21</span>
+<span class="linenos"> 22</span><span class="w">    </span><span class="n">stages</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 23</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Clean workspace&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 24</span><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 25</span><span class="w">                </span><span class="n">script</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 26</span><span class="w">                    </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;linux ラベルを持つノード: ${nodesByLabel(&#39;linux&#39;)}&quot;</span>
+<span class="linenos"> 27</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos"> 28</span><span class="w">                </span><span class="n">deleteDir</span><span class="o">()</span>
+<span class="linenos"> 29</span><span class="w">                </span><span class="n">checkout</span><span class="w"> </span><span class="n">scm</span>
+<span class="linenos"> 30</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos"> 31</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos"> 32</span>
+<span class="linenos"> 33</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Check linux agents&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 34</span><span class="w">            </span><span class="c1">// nodesByLabel と parallel を組み合わせ、ラベルに一致する</span>
+<span class="linenos"> 35</span><span class="w">            </span><span class="c1">// エージェントの数だけ動的に並列ステージを生成する例。</span>
+<span class="linenos"> 36</span><span class="w">            </span><span class="c1">// 一致するエージェントが無い場合は 0 件のまま何もせず完了する。</span>
+<span class="linenos"> 37</span><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 38</span><span class="w">                </span><span class="n">script</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 39</span><span class="w">                    </span><span class="kt">def</span><span class="w"> </span><span class="n">branches</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[:]</span>
+<span class="linenos"> 40</span><span class="w">                    </span><span class="n">nodesByLabel</span><span class="o">(</span><span class="s1">&#39;linux&#39;</span><span class="o">).</span><span class="na">each</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">nodeName</span><span class="w"> </span><span class="o">-&gt;</span>
+<span class="linenos"> 41</span><span class="w">                        </span><span class="n">branches</span><span class="o">[</span><span class="n">nodeName</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 42</span><span class="w">                            </span><span class="n">node</span><span class="o">(</span><span class="n">nodeName</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 43</span><span class="w">                                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;uname -a&#39;</span>
+<span class="linenos"> 44</span><span class="w">                            </span><span class="o">}</span>
+<span class="linenos"> 45</span><span class="w">                        </span><span class="o">}</span>
+<span class="linenos"> 46</span><span class="w">                    </span><span class="o">}</span>
+<span class="linenos"> 47</span><span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="o">(</span><span class="n">branches</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 48</span><span class="w">                        </span><span class="n">parallel</span><span class="w"> </span><span class="n">branches</span>
+<span class="linenos"> 49</span><span class="w">                    </span><span class="o">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 50</span><span class="w">                        </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;linux ラベルを持つエージェントが見つからなかったため、スキップしました。&#39;</span>
+<span class="linenos"> 51</span><span class="w">                    </span><span class="o">}</span>
+<span class="linenos"> 52</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos"> 53</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos"> 54</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos"> 55</span>
+<span class="linenos"> 56</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Build&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 57</span><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 58</span><span class="w">                </span><span class="n">script</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 59</span><span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="o">(</span><span class="n">isUnix</span><span class="o">())</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 60</span><span class="w">                        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;python -m venv .venv&#39;</span>
+<span class="linenos"> 61</span><span class="w">                        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;. .venv/bin/activate &amp;&amp; pip install -r requirements.txt&#39;</span>
+<span class="linenos"> 62</span><span class="w">                    </span><span class="o">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 63</span><span class="w">                        </span><span class="n">bat</span><span class="w"> </span><span class="s1">&#39;python -m venv .venv&#39;</span>
+<span class="linenos"> 64</span><span class="w">                        </span><span class="n">bat</span><span class="w"> </span><span class="s1">&#39;.venv\\Scripts\\activate &amp;&amp; pip install -r requirements.txt&#39;</span>
+<span class="linenos"> 65</span><span class="w">                    </span><span class="o">}</span>
+<span class="linenos"> 66</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos"> 67</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos"> 68</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos"> 69</span>
+<span class="linenos"> 70</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Lint &amp; Test&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 71</span><span class="w">            </span><span class="n">when</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 72</span><span class="w">                </span><span class="n">expression</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="o">!</span><span class="n">params</span><span class="o">.</span><span class="na">SKIP_TESTS</span><span class="w"> </span><span class="o">}</span>
+<span class="linenos"> 73</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos"> 74</span><span class="w">            </span><span class="n">parallel</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 75</span><span class="w">                </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Lint&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 76</span><span class="w">                    </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 77</span><span class="w">                        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;. .venv/bin/activate &amp;&amp; ruff check app tests&#39;</span>
+<span class="linenos"> 78</span><span class="w">                    </span><span class="o">}</span>
+<span class="linenos"> 79</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos"> 80</span><span class="w">                </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Unit tests&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 81</span><span class="w">                    </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 82</span><span class="w">                        </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;. .venv/bin/activate &amp;&amp; pytest --junitxml=reports/junit.xml&#39;</span>
+<span class="linenos"> 83</span><span class="w">                    </span><span class="o">}</span>
+<span class="linenos"> 84</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos"> 85</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos"> 86</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos"> 87</span>
+<span class="linenos"> 88</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Skip notice&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 89</span><span class="w">            </span><span class="n">when</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 90</span><span class="w">                </span><span class="n">expression</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">params</span><span class="o">.</span><span class="na">SKIP_TESTS</span><span class="w"> </span><span class="o">}</span>
+<span class="linenos"> 91</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos"> 92</span><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 93</span><span class="w">                </span><span class="n">unstable</span><span class="o">(</span><span class="s1">&#39;SKIP_TESTS が true のため、テストをスキップしてビルドしています。&#39;</span><span class="o">)</span>
+<span class="linenos"> 94</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos"> 95</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Package&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 98</span><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos"> 99</span><span class="w">                </span><span class="n">dir</span><span class="o">(</span><span class="s1">&#39;dist&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">100</span><span class="w">                    </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;tar czf app.tar.gz -C .. app requirements.txt&#39;</span>
+<span class="linenos">101</span><span class="w">                    </span><span class="n">writeFile</span><span class="w"> </span><span class="nl">file:</span><span class="w"> </span><span class="s1">&#39;BUILD_INFO.txt&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">text:</span><span class="w"> </span><span class="s2">&quot;build=${env.BUILD_NUMBER}\ntarget=${params.TARGET_ENV}\n&quot;</span>
+<span class="linenos">102</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos">103</span><span class="w">                </span><span class="n">archiveArtifacts</span><span class="w"> </span><span class="nl">artifacts:</span><span class="w"> </span><span class="s1">&#39;dist/*&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">fingerprint:</span><span class="w"> </span><span class="kc">true</span>
+<span class="linenos">104</span><span class="w">                </span><span class="n">stash</span><span class="w"> </span><span class="nl">name:</span><span class="w"> </span><span class="s1">&#39;dist&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">includes:</span><span class="w"> </span><span class="s1">&#39;dist/**&#39;</span>
+<span class="linenos">105</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos">106</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos">107</span>
+<span class="linenos">108</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy to staging&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">109</span><span class="w">            </span><span class="n">when</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">branch</span><span class="w"> </span><span class="s1">&#39;develop&#39;</span><span class="w"> </span><span class="o">}</span>
+<span class="linenos">110</span><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">111</span><span class="w">                </span><span class="n">unstash</span><span class="w"> </span><span class="s1">&#39;dist&#39;</span>
+<span class="linenos">112</span><span class="w">                </span><span class="n">script</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">113</span><span class="w">                    </span><span class="kt">def</span><span class="w"> </span><span class="n">info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">readFile</span><span class="o">(</span><span class="s1">&#39;dist/BUILD_INFO.txt&#39;</span><span class="o">)</span>
+<span class="linenos">114</span><span class="w">                    </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;デプロイするビルド情報:\n${info}&quot;</span>
+<span class="linenos">115</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos">116</span><span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./deploy.sh staging&#39;</span>
+<span class="linenos">117</span><span class="w">                </span><span class="n">sleep</span><span class="w"> </span><span class="nl">time:</span><span class="w"> </span><span class="mi">5</span><span class="o">,</span><span class="w"> </span><span class="nl">unit:</span><span class="w"> </span><span class="s1">&#39;SECONDS&#39;</span>
+<span class="linenos">118</span><span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;デプロイ後の安定待機が完了しました。&#39;</span>
+<span class="linenos">119</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos">120</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos">121</span>
+<span class="linenos">122</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Approval&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">123</span><span class="w">            </span><span class="n">when</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">branch</span><span class="w"> </span><span class="s1">&#39;main&#39;</span><span class="w"> </span><span class="o">}</span>
+<span class="linenos">124</span><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">125</span><span class="w">                </span><span class="n">timeout</span><span class="o">(</span><span class="nl">time:</span><span class="w"> </span><span class="mi">1</span><span class="o">,</span><span class="w"> </span><span class="nl">unit:</span><span class="w"> </span><span class="s1">&#39;HOURS&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">126</span><span class="w">                    </span><span class="n">input</span><span class="w"> </span><span class="nl">message:</span><span class="w"> </span><span class="s1">&#39;本番環境へデプロイしますか？&#39;</span><span class="o">,</span><span class="w"> </span><span class="nl">ok:</span><span class="w"> </span><span class="s1">&#39;Deploy&#39;</span>
+<span class="linenos">127</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos">128</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos">129</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos">130</span>
+<span class="linenos">131</span><span class="w">        </span><span class="n">stage</span><span class="o">(</span><span class="s1">&#39;Deploy to production&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">132</span><span class="w">            </span><span class="n">when</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="n">branch</span><span class="w"> </span><span class="s1">&#39;main&#39;</span><span class="w"> </span><span class="o">}</span>
+<span class="linenos">133</span><span class="w">            </span><span class="n">steps</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">134</span><span class="w">                </span><span class="n">unstash</span><span class="w"> </span><span class="s1">&#39;dist&#39;</span>
+<span class="linenos">135</span><span class="w">                </span><span class="n">script</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">136</span><span class="w">                    </span><span class="kt">def</span><span class="w"> </span><span class="n">info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">readFile</span><span class="o">(</span><span class="s1">&#39;dist/BUILD_INFO.txt&#39;</span><span class="o">)</span>
+<span class="linenos">137</span><span class="w">                    </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;デプロイするビルド情報:\n${info}&quot;</span>
+<span class="linenos">138</span><span class="w">                </span><span class="o">}</span>
+<span class="linenos">139</span><span class="w">                </span><span class="n">sh</span><span class="w"> </span><span class="s1">&#39;./deploy.sh production&#39;</span>
+<span class="linenos">140</span><span class="w">                </span><span class="n">sleep</span><span class="w"> </span><span class="nl">time:</span><span class="w"> </span><span class="mi">5</span><span class="o">,</span><span class="w"> </span><span class="nl">unit:</span><span class="w"> </span><span class="s1">&#39;SECONDS&#39;</span>
+<span class="linenos">141</span><span class="w">                </span><span class="n">echo</span><span class="w"> </span><span class="s1">&#39;デプロイ後の安定待機が完了しました。&#39;</span>
+<span class="linenos">142</span><span class="w">            </span><span class="o">}</span>
+<span class="linenos">143</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos">144</span><span class="w">    </span><span class="o">}</span>
+<span class="linenos">145</span>
+<span class="linenos">146</span><span class="w">    </span><span class="n">post</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">147</span><span class="w">        </span><span class="n">always</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">148</span><span class="w">            </span><span class="n">junit</span><span class="w"> </span><span class="nl">allowEmptyResults:</span><span class="w"> </span><span class="kc">true</span><span class="o">,</span><span class="w"> </span><span class="nl">testResults:</span><span class="w"> </span><span class="s1">&#39;reports/junit.xml&#39;</span>
+<span class="linenos">149</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos">150</span><span class="w">        </span><span class="n">failure</span><span class="w"> </span><span class="o">{</span>
+<span class="linenos">151</span><span class="w">            </span><span class="c1">// 実際の通知連携の例は shared-library-example/vars/notifySlack.groovy</span>
+<span class="linenos">152</span><span class="w">            </span><span class="c1">// と Jenkinsfile.with-shared-library を参照（第8・9章）。</span>
+<span class="linenos">153</span><span class="w">            </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;ビルド失敗: ${env.JOB_NAME} #${env.BUILD_NUMBER} (${env.BUILD_URL})&quot;</span>
+<span class="linenos">154</span><span class="w">        </span><span class="o">}</span>
+<span class="linenos">155</span><span class="w">    </span><span class="o">}</span>
+<span class="linenos">156</span><span class="o">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="04_pipeline_basics.html" class="btn btn-neutral float-left" title="4. Jenkins Pipeline の基礎" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="06_scripted_pipeline.html" class="btn btn-neutral float-right" title="6. Scripted Pipeline と Groovy の基礎" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

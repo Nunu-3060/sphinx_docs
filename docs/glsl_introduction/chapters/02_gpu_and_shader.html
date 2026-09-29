@@ -1,0 +1,559 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 2 章 シェーダーと GPU の基礎 &mdash; GLSL 入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=046075fa" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="第 3 章 開発環境の準備" href="03_setup.html" />
+    <link rel="prev" title="第 1 章 はじめに" href="01_introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            GLSL 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">導入</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">第 1 章 はじめに</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id2">本書の目的</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id3">対象読者と前提知識</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id4">動作環境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id5">本書の構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id6">表記規則</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#sample-list">サンプルコード</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 2 章 シェーダーと GPU の基礎</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">シェーダーとは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cpu-gpu">CPU と GPU の違い</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">レンダリングパイプライン</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">頂点シェーダーとフラグメントシェーダー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#glsl">GLSL のバージョン</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="03_setup.html">第 3 章 開発環境の準備</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="03_setup.html#id2">必要なもの</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_setup.html#id3">サンプルの構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_setup.html#webgl">WebGL で描画する手順</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_setup.html#id4">三角形を描く</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_setup.html#id5">頂点シェーダー</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_setup.html#id6">フラグメントシェーダー</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_setup.html#javascript">JavaScript の処理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_setup.html#id7">試してみよう</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_setup.html#id8">うまく動かない場合</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">GLSL の基礎</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="04_syntax.html">第 4 章 GLSL の基本文法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id1">シェーダーの基本構造</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id2">プリプロセッサ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id3">データ型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_syntax.html#id4">スカラー型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_syntax.html#id5">ベクトル型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_syntax.html#id6">行列型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_syntax.html#id7">サンプラー型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id8">リテラルと型変換</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id9">ベクトルと行列のコンストラクター</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id10">成分へのアクセスとスウィズル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id11">演算子</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id12">制御構文</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id13">関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id14">変数と修飾子</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id15">精度修飾子</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_syntax.html#id16">構造体と配列</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="05_builtin_functions.html">第 5 章 組み込み関数</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id2">三角関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id3">指数関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id4">数値の丸めと範囲の制限</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id5">補間と閾値</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_builtin_functions.html#mix">mix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_builtin_functions.html#step">step</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_builtin_functions.html#smoothstep">smoothstep</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id6">幾何関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id7">行列関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id8">ベクトルの比較</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id9">テクスチャ関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_builtin_functions.html#id10">試してみよう</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="06_data_flow.html">第 6 章 データの受け渡し</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="06_data_flow.html#id2">データの種類</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_data_flow.html#id3">頂点属性</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="06_data_flow.html#javascript">JavaScript での設定</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_data_flow.html#uniform">uniform 変数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_data_flow.html#id4">ステージ間の変数と補間</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_data_flow.html#id5">フラグメントシェーダーの出力</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">描画の基本</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="07_vertex_shader.html">第 7 章 頂点シェーダー</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#id2">頂点シェーダーの組み込み変数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#id3">座標系と変換の流れ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#id4">同次座標</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#id5">基本的な変換行列</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="07_vertex_shader.html#id6">平行移動</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_vertex_shader.html#id7">拡大縮小</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_vertex_shader.html#id8">回転</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_vertex_shader.html#id9">変換の組み合わせ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#id10">モデル・ビュー・射影行列</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="07_vertex_shader.html#id11">射影行列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#w">w による除算とビューポート変換</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#id12">列優先の行列</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#id13">サンプル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_vertex_shader.html#id14">試してみよう</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="08_fragment_shader.html">第 8 章 フラグメントシェーダー</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id2">フラグメントシェーダーの組み込み変数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id3">画面全体を覆う描画</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id4">座標の正規化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id5">グラデーション</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id6">円</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id7">繰り返し模様</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id8">図形の合成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#discard">discard</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id9">距離関数による図形</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="08_fragment_shader.html#id10">距離関数による合成</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="08_fragment_shader.html#id11">試してみよう</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="09_texture.html">第 9 章 テクスチャ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="09_texture.html#id2">テクスチャとテクスチャ座標</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_texture.html#id3">シェーダーでテクスチャを読む</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_texture.html#javascript">JavaScript での準備</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_texture.html#id4">フィルタリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_texture.html#id5">ミップマップ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_texture.html#id6">ラッピング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_texture.html#id7">サンプル</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="10_lighting.html">第 10 章 ライティング</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#id2">ライティングに使うベクトル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#id3">法線と法線行列</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#id4">環境光</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#lambert">拡散反射（Lambert の余弦則）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#id5">鏡面反射</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="10_lighting.html#phong">Phong の反射モデル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_lighting.html#blinn-phong">Blinn-Phong の反射モデル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#id6">ライティングの合成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#id7">頂点単位とフラグメント単位のライティング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#id8">ガンマ補正</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_lighting.html#id9">点光源</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">応用</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="11_animation.html">第 11 章 アニメーション</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="11_animation.html#id2">時間を渡す</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_animation.html#id3">周期的な動き</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_animation.html#id4">イージング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_animation.html#id5">頂点アニメーション</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_animation.html#cpu-gpu">アニメーションの計算を CPU と GPU のどちらで行うか</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_animation.html#id6">試してみよう</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="12_noise.html">第 12 章 ノイズ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#id2">シェーダーでの乱数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#sin">sin を使うハッシュ関数の問題</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#id3">整数演算によるハッシュ関数</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_noise.html#xorshift">Xorshift</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_noise.html#pcg">PCG ハッシュ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_noise.html#id4">ハッシュ関数の比較</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#id5">バリューノイズ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#id6">パーリンノイズ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_noise.html#id7">補間曲線</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_noise.html#id8">値の範囲</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#fbm">fBm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#id9">ノイズの応用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_noise.html#id10">大理石</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_noise.html#id11">雲（ドメインワーピング）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#id12">サンプルのフラグメントシェーダー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_noise.html#id13">試してみよう</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="13_post_effect.html">第 13 章 ポストエフェクト</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="13_post_effect.html#id2">オフスクリーンレンダリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_post_effect.html#id3">フレームバッファーオブジェクト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_post_effect.html#id4">色の変換</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="13_post_effect.html#id5">グレースケール</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_post_effect.html#id6">セピア</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_post_effect.html#id7">色の反転</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="13_post_effect.html#id8">周囲の画素を使う加工</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="13_post_effect.html#id9">ぼかし</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_post_effect.html#id10">輪郭検出</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_post_effect.html#id11">周辺減光</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="13_post_effect.html#id12">試してみよう</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="14_raymarching.html">第 14 章 レイマーチング</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id2">レイマーチングの考え方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id3">シーンの距離関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id4">カメラとレイの生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id5">レイの前進</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id6">法線の計算</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id7">影</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id8">仕上げ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id9">レイマーチングの性能</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_raymarching.html#id10">試してみよう</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">開発の実践</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="15_debug_performance.html">第 15 章 デバッグと性能</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="15_debug_performance.html#id2">コンパイルエラーとリンクエラー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="15_debug_performance.html#id3">よくあるエラー</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="15_debug_performance.html#id4">値を色で見る</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="15_debug_performance.html#nan">NaN と未定義の結果</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="15_debug_performance.html#id5">開発者ツールと拡張機能</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_debug_performance.html#id6">性能の考え方</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="15_debug_performance.html#id7">フラグメントの数を意識する</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_debug_performance.html#id8">分岐</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_debug_performance.html#id9">ループとテクスチャの読み込み</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_debug_performance.html#id10">精度</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_debug_performance.html#id11">性能の測り方</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/a_reference.html">付録 A 組み込み変数・関数の一覧</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/a_reference.html#id1">組み込み変数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/a_reference.html#id2">組み込み関数</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../appendix/a_reference.html#id3">角度と三角関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../appendix/a_reference.html#id4">指数関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../appendix/a_reference.html#id5">共通の関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../appendix/a_reference.html#id6">幾何関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../appendix/a_reference.html#id7">行列関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../appendix/a_reference.html#id8">ベクトルの比較</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../appendix/a_reference.html#id9">テクスチャ関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../appendix/a_reference.html#id10">フラグメントシェーダー専用の関数</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/b_versions.html">付録 B GLSL のバージョンによる違い</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/b_versions.html#id1">主な違い</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/b_versions.html#glsl-es-1-00-glsl-es-3-00">GLSL ES 1.00 から GLSL ES 3.00 への書き換え</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/b_versions.html#glsl">デスクトップ向けの GLSL への移植</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/b_versions.html#id2">新しいバージョンで追加された主な機能</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/c_glossary.html">付録 C 用語集</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/c_glossary.html#id1">用語</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/c_glossary.html#id2">表記の統一</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/d_bibliography.html">付録 D 参考資料</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/d_bibliography.html#id1">仕様書</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/d_bibliography.html#id2">論文</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/d_bibliography.html#web">Web 上の解説</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../appendix/d_bibliography.html#id4">ツール</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">GLSL 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 2 章 シェーダーと GPU の基礎</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gpu">
+<h1>第 2 章 シェーダーと GPU の基礎<a class="headerlink" href="#gpu" title="Link to this heading"></a></h1>
+<p>この章では、GLSL を書き始める前に知っておくべき、GPU が画像を描く仕組みと、その中でシェーダーが担う役割を説明します。</p>
+<section id="id1">
+<h2>シェーダーとは<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>シェーダーは、GPU（Graphics Processing Unit）上で実行される小さなプログラムです。3D の物体をどこに表示するか、画面の各点を何色にするか、といった描画の計算を行います。GLSL（OpenGL Shading Language）は、OpenGL、OpenGL ES、WebGL で使われるシェーダーの記述言語で、C 言語に似た文法を持っています。</p>
+</section>
+<section id="cpu-gpu">
+<h2>CPU と GPU の違い<a class="headerlink" href="#cpu-gpu" title="Link to this heading"></a></h2>
+<p>CPU と GPU は、得意な処理が異なります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>項目</p></th>
+<th class="head"><p>CPU</p></th>
+<th class="head"><p>GPU</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>演算器の数</p></td>
+<td><p>少ない（数個〜数十個のコア）</p></td>
+<td><p>非常に多い（数千個以上の演算器）</p></td>
+</tr>
+<tr class="row-odd"><td><p>得意な処理</p></td>
+<td><p>複雑な分岐を含む、順番に進める処理</p></td>
+<td><p>同じ計算を大量のデータに対して同時に行う処理</p></td>
+</tr>
+<tr class="row-even"><td><p>描画での役割</p></td>
+<td><p>描画の準備と指示（どの物体をどの設定で描くか）</p></td>
+<td><p>頂点や画面の各点についての計算</p></td>
+</tr>
+</tbody>
+</table>
+<p>画面の解像度が 1920 × 1080 の場合、画面の点は約 200 万個あります。それぞれの点の色を決める計算は互いに独立しているので、GPU はこれらを並列に処理できます。シェーダーは、この「1 つの頂点」や「1 つの点」についての計算を記述するプログラムです。GPU は同じシェーダーを多数の頂点や点に対して同時に実行します。</p>
+<p>この仕組みから、シェーダーには次の性質があります。</p>
+<ul class="simple">
+<li><p>シェーダーの 1 回の実行は、1 つの頂点または 1 つのフラグメント（後述）だけを担当します。</p></li>
+<li><p>同時に実行されている、ほかの頂点やフラグメントの計算結果を読むことはできません。</p></li>
+<li><p>前回の描画で計算した値を、変数に残しておくことはできません。値を残したい場合は、テクスチャなどに書き出す必要があります（第 13 章）。</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>レンダリングパイプライン<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>GPU が頂点データから画像を作るまでの一連の処理を、レンダリングパイプラインと呼びます。WebGL 2.0（OpenGL ES 3.0）のレンダリングパイプラインは、おおよそ次の図のような流れになっています。</p>
+<figure class="align-default" id="id4">
+<a class="reference internal image-reference" href="../_images/pipeline.svg"><img alt="レンダリングパイプラインの流れ" src="../_images/pipeline.svg" style="width: 100%;" />
+</a>
+<figcaption>
+<p><span class="caption-text">レンダリングパイプライン</span><a class="headerlink" href="#id4" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>段階</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>頂点データ</p></td>
+<td><p>描きたい形を表す頂点の情報です。位置のほか、色、法線、テクスチャ座標などを頂点ごとに持たせることができます。JavaScript から GPU のメモリに転送します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>頂点シェーダー</p></td>
+<td><p>頂点ごとに 1 回実行され、頂点の画面上の位置を計算します（第 7 章）。</p></td>
+</tr>
+<tr class="row-even"><td><p>プリミティブの組み立て</p></td>
+<td><p>頂点を 3 個ずつ組み合わせて三角形を作るなど、頂点を図形（プリミティブ）にまとめます。画面の外にはみ出した部分の切り取り（クリッピング）もここで行われます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ラスタライズ</p></td>
+<td><p>三角形が画面上のどの画素を覆うかを調べ、覆われた画素ごとにフラグメントを作ります。頂点シェーダーが出力した値は、三角形の内部で補間されてフラグメントに渡されます（第 6 章）。</p></td>
+</tr>
+<tr class="row-even"><td><p>フラグメントシェーダー</p></td>
+<td><p>フラグメントごとに 1 回実行され、その色を計算します（第 8 章）。</p></td>
+</tr>
+<tr class="row-odd"><td><p>フラグメント単位の処理</p></td>
+<td><p>深度テスト（手前の物体だけを残す処理）や、ブレンド（半透明の合成）などを行います。</p></td>
+</tr>
+<tr class="row-even"><td><p>フレームバッファー</p></td>
+<td><p>最終的な色が書き込まれる領域です。通常は画面（WebGL ではキャンバス）ですが、テクスチャに書き込むこともできます（第 13 章）。</p></td>
+</tr>
+</tbody>
+</table>
+<p>このうち、プログラムを書いて処理の内容を決められるのは、頂点シェーダーとフラグメントシェーダーの 2 つです。それ以外の段階は GPU が決まった処理を行い、プログラムからは設定（深度テストを行うかどうかなど）だけを変更できます。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>フラグメントは「画素の候補」です。フラグメントシェーダーが計算した色は、深度テストなどで捨てられることがあり、そのまま画面の画素の色になるとは限りません。そのため、画素とは区別してフラグメントと呼びます。</p>
+</div>
+</section>
+<section id="id3">
+<h2>頂点シェーダーとフラグメントシェーダー<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>2 つのシェーダーの役割をまとめると、次のようになります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>項目</p></th>
+<th class="head"><p>頂点シェーダー</p></th>
+<th class="head"><p>フラグメントシェーダー</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>実行される単位</p></td>
+<td><p>頂点ごと</p></td>
+<td><p>フラグメントごと</p></td>
+</tr>
+<tr class="row-odd"><td><p>主な入力</p></td>
+<td><p>頂点データ（位置、色、法線など）</p></td>
+<td><p>頂点シェーダーの出力を補間した値</p></td>
+</tr>
+<tr class="row-even"><td><p>主な出力</p></td>
+<td><p>頂点の位置（<code class="docutils literal notranslate"><span class="pre">gl_Position</span></code>）</p></td>
+<td><p>フラグメントの色</p></td>
+</tr>
+<tr class="row-odd"><td><p>主な用途</p></td>
+<td><p>座標変換、頂点の変形</p></td>
+<td><p>色の計算、テクスチャの貼り付け、ライティング</p></td>
+</tr>
+</tbody>
+</table>
+<p>三角形 1 枚を描く場合、頂点シェーダーは 3 回しか実行されませんが、フラグメントシェーダーは三角形が覆う画素の数だけ実行されます。画面いっぱいの三角形なら数十万回以上です。この実行回数の違いは、性能を考えるときに重要になります（第 15 章）。</p>
+</section>
+<section id="glsl">
+<h2>GLSL のバージョン<a class="headerlink" href="#glsl" title="Link to this heading"></a></h2>
+<p>GLSL には、使用するグラフィックス API に応じて複数のバージョンがあります。シェーダーの先頭には、どのバージョンで書いたかを <code class="docutils literal notranslate"><span class="pre">#version</span></code> で指定します。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 35.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>グラフィックス API</p></th>
+<th class="head"><p>GLSL のバージョン</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">#version</span></code> の指定</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>OpenGL 3.3</p></td>
+<td><p>GLSL 3.30</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">#version</span> <span class="pre">330</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>OpenGL 4.6</p></td>
+<td><p>GLSL 4.60</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">#version</span> <span class="pre">460</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>OpenGL ES 2.0、WebGL 1.0</p></td>
+<td><p>GLSL ES 1.00</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">#version</span> <span class="pre">100</span></code>（省略可）</p></td>
+</tr>
+<tr class="row-odd"><td><p>OpenGL ES 3.0、WebGL 2.0</p></td>
+<td><p>GLSL ES 3.00</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">#version</span> <span class="pre">300</span> <span class="pre">es</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>OpenGL ES 3.2</p></td>
+<td><p>GLSL ES 3.20</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">#version</span> <span class="pre">320</span> <span class="pre">es</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>GLSL ES（ES は Embedded Systems の略）は、スマートフォンなどの組み込み機器向けの OpenGL ES で使われる GLSL です。WebGL は OpenGL ES をもとに作られているため、WebGL でも GLSL ES を使います。</p>
+<p>本書では、WebGL 2.0 で使う GLSL ES 3.00 を扱います。デスクトップ向けの GLSL（OpenGL 3.3 以降）とは文法の大部分が共通しているので、本書の内容はデスクトップ向けの GLSL を学ぶ際にもそのまま役立ちます。主な違いは付録 B にまとめています。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>Vulkan でも GLSL でシェーダーを書くことができます。ただし、Vulkan では GLSL のソースコードを事前に SPIR-V という中間形式に変換してから使います。</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="01_introduction.html" class="btn btn-neutral float-left" title="第 1 章 はじめに" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="03_setup.html" class="btn btn-neutral float-right" title="第 3 章 開発環境の準備" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

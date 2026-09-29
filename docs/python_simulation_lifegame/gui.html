@@ -1,0 +1,221 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GUI アプリケーションの実装 &mdash; Python によるライフゲームの実装 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="実行方法" href="usage.html" />
+    <link rel="prev" title="可視化の実装（LifeGameImage.py）" href="visualization.html" />
+ 
+<style>
+  .wy-side-nav-search > a.icon-home {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+</style>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+<a href="index.html" class="icon icon-home">
+  Python による<br/>ライフゲームの実装
+</a>
+
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">セルオートマトンの理論</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">実装の全体構成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.html">コアロジックの実装（LifeGame.py）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">可視化の実装（LifeGameImage.py）</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">GUI アプリケーションの実装</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tkwidget-py">部品ウィジェット（TkWidget.py）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#framelifegame-py">表示フレームとアニメーション（FrameLifeGame.py）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#lifegamegui-pyw">アプリケーション統合（LifeGameGUI.pyw）</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">実行方法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summary.html">まとめと発展的な話題</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">スクリプト一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API リファレンス</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python によるライフゲームの実装</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">GUI アプリケーションの実装</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gui">
+<h1>GUI アプリケーションの実装<a class="headerlink" href="#gui" title="Link to this heading"></a></h1>
+<p>本章では、Tkinter を用いた GUI 部分の実装を解説する。GUI は、入力ウィジェット（<code class="file docutils literal notranslate"><span class="pre">TkWidget.py</span></code>）、シミュレーション表示ウィジェット（<code class="file docutils literal notranslate"><span class="pre">FrameLifeGame.py</span></code>）、それらを統合するアプリケーション本体（<code class="file docutils literal notranslate"><span class="pre">LifeGameGUI.pyw</span></code>）の 3 つのモジュールから構成される。</p>
+<section id="tkwidget-py">
+<h2>部品ウィジェット（TkWidget.py）<a class="headerlink" href="#tkwidget-py" title="Link to this heading"></a></h2>
+<p><a class="reference download internal" download="" href="_downloads/d28a96cc69f9443780ad011c7344c655/TkWidget.py"><code class="xref download docutils literal notranslate"><span class="pre">TkWidget.py</span></code></a> には、シミュレーションのパラメータを指定するための、いずれも <code class="docutils literal notranslate"><span class="pre">ttk.Frame</span></code> を継承した専用ウィジェットが定義されている。各ウィジェットは、現在の設定値を取得する <code class="docutils literal notranslate"><span class="pre">get</span></code> メソッドと、外部から値を設定する <code class="docutils literal notranslate"><span class="pre">set</span></code> メソッドを持つという共通のインターフェースになっており、後述する <a class="reference internal" href="api.html#LifeGameGUI.LifeGameGUI" title="LifeGameGUI.LifeGameGUI"><code class="xref py py-class docutils literal notranslate"><span class="pre">LifeGameGUI</span></code></a> から統一的に扱えるようになっている。</p>
+<ul class="simple">
+<li><p><strong>FrameHSV</strong>: 色相・彩度・明度をそれぞれスライダーで指定する。現在の色を 16 進コードのテキストとしてラベルに表示し、背景色にはその色そのものを、文字色には視認性を保つための反転色（1-h, 1-s, 1-v）を用いる。生存色・死滅色の指定に用いる。</p></li>
+<li><p><strong>FrameCheckbuttons</strong>: 0〜8 の近傍セル数に対応する 9 個のチェックボタンを持ち、誕生条件・生存条件（<a class="reference internal" href="core.html"><span class="doc">コアロジックの実装（LifeGame.py）</span></a> の <code class="docutils literal notranslate"><span class="pre">rule</span></code> 引数に相当）を指定する。</p></li>
+<li><p><strong>FrameLoop</strong>: 上下（<code class="docutils literal notranslate"><span class="pre">tb</span></code>）・左右（<code class="docutils literal notranslate"><span class="pre">lr</span></code>）それぞれの境界をトーラス境界にするかどうかを切り替えるチェックボタンを持つ。</p></li>
+<li><p><strong>FrameRadioButton</strong>: 盤面の一辺のサイズ（128 / 256 / 512）をラジオボタンで選択する。これらの選択肢は <a class="reference internal" href="api.html#TkWidget.DISPLAY_SIZE" title="TkWidget.DISPLAY_SIZE"><code class="xref py py-data docutils literal notranslate"><span class="pre">DISPLAY_SIZE</span></code></a> （既定 512）の 1/4, 1/2, 1 倍として導出されている。</p></li>
+<li><p><strong>FrameScale</strong>: セルの初期生存確率（0.0〜1.0）をスライダーで指定する。</p></li>
+</ul>
+<p>いずれも、コンストラクタ内でウィジェットを生成・配置したうえで、スライダーやチェックボタンの変更イベントに応じて表示を更新する、という共通の構造になっている。</p>
+</section>
+<section id="framelifegame-py">
+<h2>表示フレームとアニメーション（FrameLifeGame.py）<a class="headerlink" href="#framelifegame-py" title="Link to this heading"></a></h2>
+<p><a class="reference download internal" download="" href="_downloads/a8b0b45d96ddf05554623004374ae88b/FrameLifeGame.py"><code class="xref download docutils literal notranslate"><span class="pre">FrameLifeGame.py</span></code></a> の <a class="reference internal" href="api.html#FrameLifeGame.FrameLifeGame" title="FrameLifeGame.FrameLifeGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrameLifeGame</span></code></a> は、<a class="reference internal" href="api.html#LifeGameImage.LifeGameImage" title="LifeGameImage.LifeGameImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">LifeGameImage</span></code></a> が生成する画像を表示し、一定間隔ごとに次の世代へ自動更新する <code class="docutils literal notranslate"><span class="pre">ttk.Frame</span></code> である。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span> <span class="n">ImageTk</span><span class="o">.</span><span class="n">PhotoImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lifegameimage</span><span class="o">.</span><span class="n">image_tk</span><span class="p">()</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">interval</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Destroy&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_destroy</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">after</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>表示には <code class="docutils literal notranslate"><span class="pre">ttk.Label</span></code> の <code class="docutils literal notranslate"><span class="pre">image</span></code> オプションを用いる。アニメーションは、Tkinter の <code class="docutils literal notranslate"><span class="pre">after(ms,</span> <span class="pre">callback)</span></code> による定期実行で実現している。<code class="docutils literal notranslate"><span class="pre">next</span></code> メソッドの内部で <code class="docutils literal notranslate"><span class="pre">LifeGameImage.next()</span></code> を呼んで世代を進め、新しい画像でラベルを更新したあと、再び <code class="docutils literal notranslate"><span class="pre">self.after(self.interval,</span> <span class="pre">self.next)</span></code> を呼び出して自分自身を予約する。これにより、<code class="docutils literal notranslate"><span class="pre">next</span></code> が自身を <code class="docutils literal notranslate"><span class="pre">interval</span></code> ミリ秒後の実行として繰り返し予約し続ける、コールバックベースのループが構成される（スタックを積む一般的な再帰とは異なり、Tkinter のイベントループが都度呼び出しをスケジューリングする点に注意）。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">lifegameimage</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lifegameimage</span><span class="o">.</span><span class="n">image_tk</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">after</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>Tkinter の <code class="docutils literal notranslate"><span class="pre">after</span></code> によるループは、ウィジェットが破棄された後も予約されたコールバックが呼ばれ続けてしまう問題が起きやすい。本実装では、ウィジェット自身の <code class="docutils literal notranslate"><span class="pre">&lt;Destroy&gt;</span></code> イベントに <code class="docutils literal notranslate"><span class="pre">_on_destroy</span></code> をバインドし、破棄時に <code class="docutils literal notranslate"><span class="pre">after_cancel</span></code> で予約中のコールバックを解除することで、この問題を防いでいる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_on_destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">widget</span> <span class="ow">is</span> <span class="bp">self</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">after_cancel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_id</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</section>
+<section id="lifegamegui-pyw">
+<h2>アプリケーション統合（LifeGameGUI.pyw）<a class="headerlink" href="#lifegamegui-pyw" title="Link to this heading"></a></h2>
+<p><a class="reference download internal" download="" href="_downloads/3cdf592042573f985a75a4a2fd21428c/LifeGameGUI.pyw"><code class="xref download docutils literal notranslate"><span class="pre">LifeGameGUI.pyw</span></code></a> の <a class="reference internal" href="api.html#LifeGameGUI.LifeGameGUI" title="LifeGameGUI.LifeGameGUI"><code class="xref py py-class docutils literal notranslate"><span class="pre">LifeGameGUI</span></code></a> は、これまでのウィジェット群を組み合わせて 1 つのアプリケーションにまとめる。</p>
+<p>レイアウトは <code class="docutils literal notranslate"><span class="pre">frame</span></code> 辞書（<code class="docutils literal notranslate"><span class="pre">color</span></code>・<code class="docutils literal notranslate"><span class="pre">rule</span></code>・<code class="docutils literal notranslate"><span class="pre">loop</span></code>・<code class="docutils literal notranslate"><span class="pre">button</span></code>）で大きく 4 つの領域に分割され、各領域に対応するウィジェットが配置される。生存色・死滅色用に 2 つの <a class="reference internal" href="api.html#TkWidget.FrameHSV" title="TkWidget.FrameHSV"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrameHSV</span></code></a>、誕生条件・生存条件用に 2 つの <a class="reference internal" href="api.html#TkWidget.FrameCheckbuttons" title="TkWidget.FrameCheckbuttons"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrameCheckbuttons</span></code></a> を、それぞれ辞書で保持している。</p>
+<p>初期値の設定は <code class="docutils literal notranslate"><span class="pre">set_rule</span></code>・<code class="docutils literal notranslate"><span class="pre">set_color</span></code> の 2 つのメソッドが担う。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">set_rule</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">[</span><span class="s2">&quot;birth&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="mi">3</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">[</span><span class="s2">&quot;survive&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">tb</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">size_selector</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">DISPLAY_SIZE</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>これは、<code class="docutils literal notranslate"><span class="pre">LifeGame</span></code> の既定ルール <code class="docutils literal notranslate"><span class="pre">[[3],</span> <span class="pre">[2,</span> <span class="pre">3]]</span></code> （<a class="reference internal" href="core.html"><span class="doc">コアロジックの実装（LifeGame.py）</span></a> を参照）と対応する初期値であり、「reset」ボタンから呼び出すことで標準ルールに戻せるようになっている。</p>
+<p>シミュレーションの開始は <code class="docutils literal notranslate"><span class="pre">start</span></code> メソッドで行う。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="o">...</span>
+    <span class="n">lgi</span><span class="p">:</span> <span class="n">LifeGameImage</span> <span class="o">=</span> <span class="n">LifeGameImage</span><span class="p">(</span>
+        <span class="n">rule</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">[</span><span class="s2">&quot;birth&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">[</span><span class="s2">&quot;survive&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">()],</span>
+        <span class="n">tb</span><span class="o">=</span><span class="n">loop</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tb&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="n">lr</span><span class="o">=</span><span class="n">loop</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lr&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="n">c0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">[</span><span class="s2">&quot;dead&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+        <span class="n">c1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">[</span><span class="s2">&quot;live&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+        <span class="n">width</span><span class="o">=</span><span class="n">wh</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">wh</span><span class="p">,</span>
+        <span class="n">pixel</span><span class="o">=</span><span class="n">pixel</span><span class="p">,</span>
+        <span class="n">probability</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">top</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Toplevel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Conway&#39;s Game of Life&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Destroy&gt;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_top_destroy</span><span class="p">)</span>
+    <span class="n">flg</span><span class="p">:</span> <span class="n">FrameLifeGame</span> <span class="o">=</span> <span class="n">FrameLifeGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="n">lifegameimage</span><span class="o">=</span><span class="n">lgi</span><span class="p">)</span>
+    <span class="n">flg</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>各入力ウィジェットから <code class="docutils literal notranslate"><span class="pre">get()</span></code> で現在値を取得して <a class="reference internal" href="api.html#LifeGameImage.LifeGameImage" title="LifeGameImage.LifeGameImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">LifeGameImage</span></code></a> を構築し、新しい <code class="docutils literal notranslate"><span class="pre">Toplevel</span></code> ウィンドウを開いて、その中に <a class="reference internal" href="api.html#FrameLifeGame.FrameLifeGame" title="FrameLifeGame.FrameLifeGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">FrameLifeGame</span></code></a> を配置する。start/stop ボタンの有効・無効は、ウィンドウの生成・破棄に合わせて切り替えられる。</p>
+<p>また、盤面のサイズによらず表示ウィンドウの物理サイズを一定に保つため、<code class="docutils literal notranslate"><span class="pre">pixel</span> <span class="pre">=</span> <span class="pre">DISPLAY_SIZE</span> <span class="pre">//</span> <span class="pre">wh</span></code> として拡大率を算出している（<a class="reference internal" href="api.html#TkWidget.DISPLAY_SIZE" title="TkWidget.DISPLAY_SIZE"><code class="xref py py-data docutils literal notranslate"><span class="pre">DISPLAY_SIZE</span></code></a> を参照）。</p>
+<p>最後に、モジュール直接実行時のエントリポイントとして <code class="docutils literal notranslate"><span class="pre">main</span></code> 関数が定義されている。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">root</span><span class="p">:</span> <span class="n">tk</span><span class="o">.</span><span class="n">Tk</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Tk</span><span class="p">()</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Conway&#39;s Game of Life&quot;</span><span class="p">)</span>
+    <span class="n">LifeGameGUI</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>ルートウィンドウ上に <a class="reference internal" href="api.html#LifeGameGUI.LifeGameGUI" title="LifeGameGUI.LifeGameGUI"><code class="xref py py-class docutils literal notranslate"><span class="pre">LifeGameGUI</span></code></a> を配置し、<code class="docutils literal notranslate"><span class="pre">mainloop()</span></code> によってイベントループを開始することで、アプリケーション全体が起動する。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="visualization.html" class="btn btn-neutral float-left" title="可視化の実装（LifeGameImage.py）" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-right" title="実行方法" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

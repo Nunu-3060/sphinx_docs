@@ -1,0 +1,239 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>欠損値の処理と重複の除去 &mdash; numpy/pandas/matplotlib 入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="集計とグルーピング" href="groupby.html" />
+    <link rel="prev" title="条件によるフィルタリング" href="filtering.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            numpy/pandas/matplotlib 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../setup/index.html">環境構築</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../numpy/index.html">numpy</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pandas</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="intro.html">pandas とは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="series.html">Series の基本</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataframe.html">DataFrame の基本</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">データの読み込みと書き出し</a></li>
+<li class="toctree-l2"><a class="reference internal" href="selection.html">行・列の選択</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sorting_merging.html">ソートとデータの結合</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html">条件によるフィルタリング</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">欠損値の処理と重複の除去</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">欠損値の確認</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#any-all">any / all による判定</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">欠損値の除去</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">欠損値の穴埋め</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">重複行の除去</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="groupby.html">集計とグルーピング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iteration.html">行・列に対する反復処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datetime.html">日付・時刻データの扱い</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../matplotlib/index.html">matplotlib</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../practice/index.html">実務での活用例</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../closing.html">おわりに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">numpy/pandas/matplotlib 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pandas</a></li>
+      <li class="breadcrumb-item active">欠損値の処理と重複の除去</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>欠損値の処理と重複の除去<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>実際のデータには、値が存在しない「欠損値」が含まれていることがよくあります。pandas では欠損値を <code class="docutils literal notranslate"><span class="pre">NaN</span></code> として表現します。</p>
+<section id="id2">
+<h2>欠損値の確認<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="s2">&quot;Carol&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="mi">35</span><span class="p">],</span>
+<span class="p">})</span>
+
+<span class="n">df</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
+<span class="c1">#     name    age</span>
+<span class="c1"># 0  False  False</span>
+<span class="c1"># 1  False   True</span>
+<span class="c1"># 2  False  False</span>
+
+<span class="n">df</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="c1"># name    0</span>
+<span class="c1"># age     1</span>
+<span class="c1"># dtype: int64</span>
+<span class="c1"># 列ごとの欠損値の個数</span>
+</pre></div>
+</div>
+</section>
+<section id="any-all">
+<h2>any / all による判定<a class="headerlink" href="#any-all" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">any()</span></code> は「1 つでも <code class="docutils literal notranslate"><span class="pre">True</span></code> があるか」、<code class="docutils literal notranslate"><span class="pre">all()</span></code> は「すべて <code class="docutils literal notranslate"><span class="pre">True</span></code> か」を判定します。<code class="docutils literal notranslate"><span class="pre">notna()</span></code> は <code class="docutils literal notranslate"><span class="pre">isna()</span></code> とちょうど逆の結果を返すメソッドで、欠損値でない要素を <code class="docutils literal notranslate"><span class="pre">True</span></code> と判定します。これらを組み合わせると、欠損値の有無を列ごと・<code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> 全体のどちらでも手早く確認できます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+<span class="c1"># name    False</span>
+<span class="c1"># age      True</span>
+<span class="c1"># dtype: bool</span>
+<span class="c1"># 列ごとに、欠損値が 1 つでもあるかどうか</span>
+
+<span class="n">df</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+<span class="c1"># True</span>
+<span class="c1"># DataFrame 全体で欠損値が 1 つでもあるかどうか</span>
+
+<span class="n">df</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="c1"># name     True</span>
+<span class="c1"># age     False</span>
+<span class="c1"># dtype: bool</span>
+<span class="c1"># 列ごとに、欠損値が 1 つも無いかどうか（isna().any() の逆）</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p><code class="docutils literal notranslate"><span class="pre">any()</span></code> / <code class="docutils literal notranslate"><span class="pre">all()</span></code> は <code class="docutils literal notranslate"><span class="pre">Series</span></code> に対しては単一の真偽値を返しますが、<code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> に対しては既定で列ごとの結果（<code class="docutils literal notranslate"><span class="pre">Series</span></code>）を返します。<code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> 全体で 1 つの真偽値にまとめたい場合は、上の例のように <code class="docutils literal notranslate"><span class="pre">.any()</span></code> をもう一度呼び出します。</p>
+</div>
+</section>
+<section id="id3">
+<h2>欠損値の除去<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="c1"># 欠損値を含む行をすべて削除する</span>
+<span class="c1">#     name   age</span>
+<span class="c1"># 0  Alice  30.0</span>
+<span class="c1"># 2  Carol  35.0</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2>欠損値の穴埋め<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="c1"># 欠損値を 0 で穴埋めする</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+<span class="c1"># 欠損値をその列の平均値で穴埋めする</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p><code class="docutils literal notranslate"><span class="pre">dropna</span></code> や <code class="docutils literal notranslate"><span class="pre">fillna</span></code> も、「<a class="reference internal" href="dataframe.html"><span class="doc">DataFrame の基本</span></a>」で紹介した <code class="docutils literal notranslate"><span class="pre">drop</span></code> や <code class="docutils literal notranslate"><span class="pre">rename</span></code> と同様に、既定では元のデータを変更せず、結果を新しいオブジェクトとして返します。元のデータを直接書き換えたい場合は、戻り値を変数に代入し直すか、<code class="docutils literal notranslate"><span class="pre">inplace=True</span></code> を指定します。</p>
+</div>
+</section>
+<section id="id5">
+<h2>重複行の除去<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>欠損値の処理と並んで、重複行の除去もよく行うデータクレンジングです。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df2</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="s2">&quot;Alice&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span>
+<span class="p">})</span>
+
+<span class="n">df2</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span>
+<span class="c1"># 0    False</span>
+<span class="c1"># 1    False</span>
+<span class="c1"># 2     True</span>
+<span class="c1"># dtype: bool</span>
+<span class="c1"># 2 行目（Alice, 30）が、それより前の行と完全に一致している</span>
+
+<span class="n">df2</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+<span class="c1">#     name  age</span>
+<span class="c1"># 0  Alice   30</span>
+<span class="c1"># 1    Bob   25</span>
+</pre></div>
+</div>
+<p>既定ではすべての列が一致する行を重複とみなしますが、<code class="docutils literal notranslate"><span class="pre">subset</span></code> 引数で判定に使う列を絞ることもできます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df2</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+<span class="c1"># name 列だけで重複を判定する（先に出現した行が残る）</span>
+</pre></div>
+</div>
+<p>重複が複数見つかった場合にどちらを残すかは <code class="docutils literal notranslate"><span class="pre">keep</span></code> 引数（既定は <code class="docutils literal notranslate"><span class="pre">&quot;first&quot;</span></code>）で指定できます。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="filtering.html" class="btn btn-neutral float-left" title="条件によるフィルタリング" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="groupby.html" class="btn btn-neutral float-right" title="集計とグルーピング" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

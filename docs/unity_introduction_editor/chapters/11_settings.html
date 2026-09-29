@@ -1,0 +1,443 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11. 設定の保存 &mdash; Unity エディター拡張入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="12. 実践：一括リネームツールを作る" href="12_batch_rename.html" />
+    <link rel="prev" title="10. アセットの操作" href="10_assets.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity エディター拡張入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_basics.html">2. エディター拡張の基本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_menu_item.html">3. メニューの追加</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_attributes.html">4. 属性による Inspector 表示の調整</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_serialized_object.html">5. SerializedObject と Undo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_custom_editor.html">6. カスタムエディター</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_property_drawer.html">7. PropertyDrawer と DecoratorDrawer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_editor_window.html">8. EditorWindow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_scene_view.html">9. Scene ビューの拡張</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_assets.html">10. アセットの操作</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">11. 設定の保存</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#editorprefs">11.1. EditorPrefs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scriptablesingleton">11.2. ScriptableSingleton</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">11.2.1. 保存先</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#settingsprovider">11.3. SettingsProvider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">11.4. 参考資料</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="12_batch_rename.html">12. 実践：一括リネームツールを作る</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_appendix.html">13. 付録</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity エディター拡張入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">11. </span>設定の保存</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">11. </span>設定の保存<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>エディター拡張では、ツールのオン・オフや、入力欄の初期値などの設定を保存したい場面があります。第 2 章で説明したとおり、static フィールドの値はドメインリロードで失われるため、設定はファイルなどに保存する必要があります。</p>
+<p>この章では、設定を保存する 2 つの方法と、設定を編集する画面を Project Settings ウィンドウに追加する方法を説明します。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 40.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>方法</p></th>
+<th class="head"><p>保存先</p></th>
+<th class="head"><p>共有される範囲</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EditorPrefs</span></code></p></td>
+<td><p>Windows ではレジストリ、macOS では plist ファイル</p></td>
+<td><p>同じコンピューターのすべてのプロジェクト</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ScriptableSingleton</span></code></p></td>
+<td><p>指定したファイル</p></td>
+<td><p>保存先による（後述）</p></td>
+</tr>
+</tbody>
+</table>
+<section id="editorprefs">
+<h2><span class="section-number">11.1. </span>EditorPrefs<a class="headerlink" href="#editorprefs" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">EditorPrefs</span></code> は、キーと値の組を保存するクラスです。bool 型、int 型、float 型、string 型の値を保存できます。</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">Editor/EditorPrefsExample.cs</span><a class="headerlink" href="#id4" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro.EditorScripts</span>
+<span class="linenos"> 5</span><span class="p">{</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// 第 11 章のサンプルです。</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// EditorPrefs に値を保存し、メニュー項目のチェックマークで状態を表示します。</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">10</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">EditorPrefsExample</span>
+<span class="linenos">11</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">12</span><span class="w">        </span><span class="k">private</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">MenuPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Tools/Editor Intro/Verbose Log&quot;</span><span class="p">;</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="w">        </span><span class="c1">// EditorPrefs はすべてのプロジェクトで共有されるため、ほかのツールと重ならないキーにします。</span>
+<span class="linenos">15</span><span class="w">        </span><span class="k">private</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">PrefsKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EditorIntro.VerboseLog&quot;</span><span class="p">;</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">VerboseLog</span>
+<span class="linenos">18</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">19</span><span class="w">            </span><span class="k">get</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">EditorPrefs</span><span class="p">.</span><span class="n">GetBool</span><span class="p">(</span><span class="n">PrefsKey</span><span class="p">,</span><span class="w"> </span><span class="k">false</span><span class="p">);</span>
+<span class="linenos">20</span><span class="w">            </span><span class="k">set</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">EditorPrefs</span><span class="p">.</span><span class="n">SetBool</span><span class="p">(</span><span class="n">PrefsKey</span><span class="p">,</span><span class="w"> </span><span class="k">value</span><span class="p">);</span>
+<span class="linenos">21</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span><span class="w">        </span><span class="na">[MenuItem(MenuPath)]</span>
+<span class="linenos">24</span><span class="w">        </span><span class="k">private</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">ToggleVerboseLog</span><span class="p">()</span>
+<span class="linenos">25</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">26</span><span class="w">            </span><span class="n">VerboseLog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">!</span><span class="n">VerboseLog</span><span class="p">;</span>
+<span class="linenos">27</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VerboseLog</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s">&quot;有効&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s">&quot;無効&quot;</span><span class="p">;</span>
+<span class="linenos">28</span><span class="w">            </span><span class="n">Debug</span><span class="p">.</span><span class="n">Log</span><span class="p">(</span><span class="s">$&quot;詳細ログを{state}にしました。&quot;</span><span class="p">);</span>
+<span class="linenos">29</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="w">        </span><span class="c1">// 検証関数はメニューを開くたびに呼ばれるため、ここでチェックマークの状態を更新します。</span>
+<span class="linenos">32</span><span class="w">        </span><span class="na">[MenuItem(MenuPath, true)]</span>
+<span class="linenos">33</span><span class="w">        </span><span class="k">private</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">ValidateToggleVerboseLog</span><span class="p">()</span>
+<span class="linenos">34</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">35</span><span class="w">            </span><span class="n">Menu</span><span class="p">.</span><span class="n">SetChecked</span><span class="p">(</span><span class="n">MenuPath</span><span class="p">,</span><span class="w"> </span><span class="n">VerboseLog</span><span class="p">);</span>
+<span class="linenos">36</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="k">true</span><span class="p">;</span>
+<span class="linenos">37</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">38</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">39</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/98de40887e1919da64f6dea31da979a5/EditorPrefsExample.cs"><code class="xref download docutils literal notranslate"><span class="pre">EditorPrefsExample.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p><span class="menuselection">Tools ‣ Editor Intro ‣ Verbose Log</span> を選択するたびに設定が切り替わり、メニュー項目にチェックマークが付いたり外れたりします。Unity エディターを再起動しても、設定は保持されます。</p>
+<p>値の保存には <code class="docutils literal notranslate"><span class="pre">SetBool</span></code> などの Set で始まるメソッドを、読み込みには <code class="docutils literal notranslate"><span class="pre">GetBool</span></code> などの Get で始まるメソッドを使います。Get で始まるメソッドの第 2 引数には、キーが保存されていないときに返す既定値を指定します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">EditorPrefs</span></code> の値は、同じコンピューターで開くすべてのプロジェクトで共有されます。ほかのツールと同じキーを使うと値を上書きし合ってしまうため、サンプルコードの <code class="docutils literal notranslate"><span class="pre">&quot;EditorIntro.VerboseLog&quot;</span></code> のように、ツール名などを先頭に付けたキーにしてください。</p>
+<p>メニュー項目のチェックマークは、<code class="docutils literal notranslate"><span class="pre">Menu.SetChecked</span></code> で設定します。検証関数はメニューを開くたびに呼ばれるため、サンプルコードでは検証関数の中でチェックマークの状態を更新しています。</p>
+<p><code class="docutils literal notranslate"><span class="pre">EditorPrefs</span></code> は手軽ですが、プロジェクトごとに異なる設定や、チームで共有したい設定には向きません。そのような設定には、次の <code class="docutils literal notranslate"><span class="pre">ScriptableSingleton</span></code> を使います。</p>
+</section>
+<section id="scriptablesingleton">
+<h2><span class="section-number">11.2. </span>ScriptableSingleton<a class="headerlink" href="#scriptablesingleton" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ScriptableSingleton&lt;T&gt;</span></code> は、インスタンスが 1 つだけ存在する <code class="docutils literal notranslate"><span class="pre">ScriptableObject</span></code> を作成するためのクラスです。<code class="docutils literal notranslate"><span class="pre">FilePath</span></code> 属性で指定したファイルに、シリアライズされたフィールドの値を保存できます。</p>
+<p>第 12 章で作成する一括リネームツールの初期値を保存する設定クラスが、次のコードです。</p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">Editor/BatchRenameSettings.cs</span><a class="headerlink" href="#id5" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro.EditorScripts</span>
+<span class="linenos"> 5</span><span class="p">{</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="c1">/// 第 11 章のサンプルです。</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// 第 12 章の一括リネームツールで使う初期値を、プロジェクトの設定として保存します。</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">10</span><span class="w">    </span><span class="c1">// FilePath 属性で保存先を指定します。ProjectFolder はプロジェクトのルートフォルダーを基準にします。</span>
+<span class="linenos">11</span><span class="w">    </span><span class="na">[FilePath(&quot;ProjectSettings/EditorIntroBatchRenameSettings.asset&quot;, FilePathAttribute.Location.ProjectFolder)]</span>
+<span class="linenos">12</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BatchRenameSettings</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">ScriptableSingleton</span><span class="o">&lt;</span><span class="n">BatchRenameSettings</span><span class="o">&gt;</span>
+<span class="linenos">13</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">14</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">MinDigits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">15</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">MaxDigits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">6</span><span class="p">;</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="w">        </span><span class="na">[SerializeField]</span><span class="w"> </span><span class="k">private</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Item_&quot;</span><span class="p">;</span>
+<span class="linenos">18</span><span class="w">        </span><span class="na">[SerializeField]</span><span class="w"> </span><span class="k">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">startNumber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">19</span><span class="w">        </span><span class="na">[SerializeField]</span><span class="w"> </span><span class="k">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">digits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="w">        </span><span class="c1">/// &lt;summary&gt;名前の先頭に付ける文字列です。&lt;/summary&gt;</span>
+<span class="linenos">22</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">Prefix</span>
+<span class="linenos">23</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">24</span><span class="w">            </span><span class="k">get</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">prefix</span><span class="p">;</span>
+<span class="linenos">25</span><span class="w">            </span><span class="k">set</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">value</span><span class="p">;</span>
+<span class="linenos">26</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="w">        </span><span class="c1">/// &lt;summary&gt;連番の開始番号です（0 以上）。&lt;/summary&gt;</span>
+<span class="linenos">29</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">StartNumber</span>
+<span class="linenos">30</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">31</span><span class="w">            </span><span class="k">get</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">startNumber</span><span class="p">;</span>
+<span class="linenos">32</span><span class="w">            </span><span class="k">set</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">startNumber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Mathf</span><span class="p">.</span><span class="n">Max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">value</span><span class="p">);</span>
+<span class="linenos">33</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="w">        </span><span class="c1">/// &lt;summary&gt;連番の桁数です。足りない桁は 0 で埋めます。&lt;/summary&gt;</span>
+<span class="linenos">36</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Digits</span>
+<span class="linenos">37</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">38</span><span class="w">            </span><span class="k">get</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">digits</span><span class="p">;</span>
+<span class="linenos">39</span><span class="w">            </span><span class="k">set</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">digits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Mathf</span><span class="p">.</span><span class="n">Clamp</span><span class="p">(</span><span class="k">value</span><span class="p">,</span><span class="w"> </span><span class="n">MinDigits</span><span class="p">,</span><span class="w"> </span><span class="n">MaxDigits</span><span class="p">);</span>
+<span class="linenos">40</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span><span class="w">        </span><span class="c1">/// &lt;summary&gt;設定をファイルに保存します。&lt;/summary&gt;</span>
+<span class="linenos">43</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">SaveSettings</span><span class="p">()</span>
+<span class="linenos">44</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">45</span><span class="w">            </span><span class="c1">// Save は protected メソッドです。引数を true にすると、テキスト形式で保存します。</span>
+<span class="linenos">46</span><span class="w">            </span><span class="n">Save</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+<span class="linenos">47</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">48</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">49</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/d32b69f345e73f1155564e116befdf52/BatchRenameSettings.cs"><code class="xref download docutils literal notranslate"><span class="pre">BatchRenameSettings.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p>設定の読み書きは、<code class="docutils literal notranslate"><span class="pre">instance</span></code> プロパティで取得したインスタンスを通して行います。<code class="docutils literal notranslate"><span class="pre">instance</span></code> プロパティに初めてアクセスしたときに、保存されたファイルから値が読み込まれます。ファイルが無い場合は、フィールドの初期値が使われます。</p>
+<p>値を変更しただけではファイルに保存されません。保存するには <code class="docutils literal notranslate"><span class="pre">Save</span></code> メソッドを呼びます。<code class="docutils literal notranslate"><span class="pre">Save</span></code> メソッドは protected なので、サンプルコードでは public な <code class="docutils literal notranslate"><span class="pre">SaveSettings</span></code> メソッドを用意しています。</p>
+<section id="id2">
+<h3><span class="section-number">11.2.1. </span>保存先<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">FilePath</span></code> 属性の第 2 引数で、保存先の基準となるフォルダーを指定します。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>値</p></th>
+<th class="head"><p>基準となるフォルダー</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FilePathAttribute.Location.ProjectFolder</span></code></p></td>
+<td><p>プロジェクトのルートフォルダー（<code class="docutils literal notranslate"><span class="pre">Assets</span></code> フォルダーがあるフォルダー）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FilePathAttribute.Location.PreferencesFolder</span></code></p></td>
+<td><p>Unity エディターの設定フォルダー（すべてのプロジェクトで共有される）</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">ProjectFolder</span></code> を基準にする場合、保存先として一般的なフォルダーは次の 2 つです。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>フォルダー</p></th>
+<th class="head"><p>用途</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProjectSettings</span></code></p></td>
+<td><p>チーム全員で共有する設定。通常はバージョン管理の対象にする</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">UserSettings</span></code></p></td>
+<td><p>個人ごとの設定。通常はバージョン管理の対象外にする</p></td>
+</tr>
+</tbody>
+</table>
+<p>サンプルコードでは、リネームの初期値をチームで共有する想定で、<code class="docutils literal notranslate"><span class="pre">ProjectSettings</span></code> フォルダーに保存しています。</p>
+</section>
+</section>
+<section id="settingsprovider">
+<h2><span class="section-number">11.3. </span>SettingsProvider<a class="headerlink" href="#settingsprovider" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SettingsProvider</span></code> を使うと、Project Settings ウィンドウまたは Preferences ウィンドウに、独自の設定ページを追加できます。</p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">Editor/BatchRenameSettingsProvider.cs</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">using</span><span class="w"> </span><span class="nn">System.Collections.Generic</span><span class="p">;</span>
+<span class="linenos"> 2</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="linenos"> 3</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="linenos"> 4</span><span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine.UIElements</span><span class="p">;</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="k">namespace</span><span class="w"> </span><span class="nn">EditorIntro.EditorScripts</span>
+<span class="linenos"> 7</span><span class="p">{</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">/// &lt;summary&gt;</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="c1">/// 第 11 章のサンプルです。</span>
+<span class="linenos">10</span><span class="w">    </span><span class="c1">/// Project Settings ウィンドウに「Editor Intro &gt; Batch Rename」ページを追加します。</span>
+<span class="linenos">11</span><span class="w">    </span><span class="c1">/// &lt;/summary&gt;</span>
+<span class="linenos">12</span><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BatchRenameSettingsProvider</span>
+<span class="linenos">13</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">14</span><span class="w">        </span><span class="c1">// SettingsProvider 属性を付けた static メソッドが返すページが、設定ウィンドウに登録されます。</span>
+<span class="linenos">15</span><span class="w">        </span><span class="na">[SettingsProvider]</span>
+<span class="linenos">16</span><span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">SettingsProvider</span><span class="w"> </span><span class="nf">CreateProvider</span><span class="p">()</span>
+<span class="linenos">17</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">18</span><span class="w">            </span><span class="c1">// 第 1 引数はページのパス、第 2 引数は表示先（Project Settings か Preferences か）です。</span>
+<span class="linenos">19</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nf">SettingsProvider</span><span class="p">(</span><span class="s">&quot;Project/Editor Intro/Batch Rename&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">SettingsScope</span><span class="p">.</span><span class="n">Project</span><span class="p">)</span>
+<span class="linenos">20</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">21</span><span class="w">                </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Batch Rename&quot;</span><span class="p">,</span>
+<span class="linenos">22</span><span class="w">                </span><span class="n">activateHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">searchContext</span><span class="p">,</span><span class="w"> </span><span class="n">rootElement</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">CreateGUI</span><span class="p">(</span><span class="n">rootElement</span><span class="p">),</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="w">                </span><span class="c1">// 設定ウィンドウの検索欄に入力されたとき、このページを候補にするキーワードです。</span>
+<span class="linenos">25</span><span class="w">                </span><span class="n">keywords</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashSet</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;Rename&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Prefix&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Digits&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="linenos">26</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">27</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="w">        </span><span class="k">private</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">CreateGUI</span><span class="p">(</span><span class="n">VisualElement</span><span class="w"> </span><span class="n">rootElement</span><span class="p">)</span>
+<span class="linenos">30</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">31</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">settings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BatchRenameSettings</span><span class="p">.</span><span class="n">instance</span><span class="p">;</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">VisualElement</span><span class="p">();</span>
+<span class="linenos">34</span><span class="w">            </span><span class="n">container</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">paddingLeft</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+<span class="linenos">35</span><span class="w">            </span><span class="n">container</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">paddingTop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="linenos">36</span><span class="w">            </span><span class="n">rootElement</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">container</span><span class="p">);</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Label</span><span class="p">(</span><span class="s">&quot;Batch Rename&quot;</span><span class="p">);</span>
+<span class="linenos">39</span><span class="w">            </span><span class="n">title</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">19</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">            </span><span class="n">title</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">unityFontStyleAndWeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FontStyle</span><span class="p">.</span><span class="n">Bold</span><span class="p">;</span>
+<span class="linenos">41</span><span class="w">            </span><span class="n">title</span><span class="p">.</span><span class="n">style</span><span class="p">.</span><span class="n">marginBottom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+<span class="linenos">42</span><span class="w">            </span><span class="n">container</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">title</span><span class="p">);</span>
+<span class="linenos">43</span>
+<span class="linenos">44</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">prefixField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">TextField</span><span class="p">(</span><span class="s">&quot;接頭辞&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">settings</span><span class="p">.</span><span class="n">Prefix</span><span class="w"> </span><span class="p">};</span>
+<span class="linenos">45</span><span class="w">            </span><span class="n">prefixField</span><span class="p">.</span><span class="n">RegisterValueChangedCallback</span><span class="p">(</span><span class="n">evt</span><span class="w"> </span><span class="o">=&gt;</span>
+<span class="linenos">46</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">47</span><span class="w">                </span><span class="n">settings</span><span class="p">.</span><span class="n">Prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">evt</span><span class="p">.</span><span class="n">newValue</span><span class="p">;</span>
+<span class="linenos">48</span><span class="w">                </span><span class="n">settings</span><span class="p">.</span><span class="n">SaveSettings</span><span class="p">();</span>
+<span class="linenos">49</span><span class="w">            </span><span class="p">});</span>
+<span class="linenos">50</span><span class="w">            </span><span class="n">container</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">prefixField</span><span class="p">);</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">startNumberField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">IntegerField</span><span class="p">(</span><span class="s">&quot;開始番号&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">settings</span><span class="p">.</span><span class="n">StartNumber</span><span class="w"> </span><span class="p">};</span>
+<span class="linenos">53</span><span class="w">            </span><span class="n">startNumberField</span><span class="p">.</span><span class="n">RegisterValueChangedCallback</span><span class="p">(</span><span class="n">evt</span><span class="w"> </span><span class="o">=&gt;</span>
+<span class="linenos">54</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">55</span><span class="w">                </span><span class="n">settings</span><span class="p">.</span><span class="n">StartNumber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">evt</span><span class="p">.</span><span class="n">newValue</span><span class="p">;</span>
+<span class="linenos">56</span>
+<span class="linenos">57</span><span class="w">                </span><span class="c1">// 範囲外の値は設定側で補正されるため、補正後の値を表示し直します。</span>
+<span class="linenos">58</span><span class="w">                </span><span class="n">startNumberField</span><span class="p">.</span><span class="n">SetValueWithoutNotify</span><span class="p">(</span><span class="n">settings</span><span class="p">.</span><span class="n">StartNumber</span><span class="p">);</span>
+<span class="linenos">59</span><span class="w">                </span><span class="n">settings</span><span class="p">.</span><span class="n">SaveSettings</span><span class="p">();</span>
+<span class="linenos">60</span><span class="w">            </span><span class="p">});</span>
+<span class="linenos">61</span><span class="w">            </span><span class="n">container</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">startNumberField</span><span class="p">);</span>
+<span class="linenos">62</span>
+<span class="linenos">63</span><span class="w">            </span><span class="kt">var</span><span class="w"> </span><span class="n">digitsField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">SliderInt</span><span class="p">(</span><span class="s">&quot;桁数&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">BatchRenameSettings</span><span class="p">.</span><span class="n">MinDigits</span><span class="p">,</span><span class="w"> </span><span class="n">BatchRenameSettings</span><span class="p">.</span><span class="n">MaxDigits</span><span class="p">)</span>
+<span class="linenos">64</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">65</span><span class="w">                </span><span class="k">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">settings</span><span class="p">.</span><span class="n">Digits</span><span class="p">,</span>
+<span class="linenos">66</span><span class="w">                </span><span class="n">showInputField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
+<span class="linenos">67</span><span class="w">            </span><span class="p">};</span>
+<span class="linenos">68</span><span class="w">            </span><span class="n">digitsField</span><span class="p">.</span><span class="n">RegisterValueChangedCallback</span><span class="p">(</span><span class="n">evt</span><span class="w"> </span><span class="o">=&gt;</span>
+<span class="linenos">69</span><span class="w">            </span><span class="p">{</span>
+<span class="linenos">70</span><span class="w">                </span><span class="n">settings</span><span class="p">.</span><span class="n">Digits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">evt</span><span class="p">.</span><span class="n">newValue</span><span class="p">;</span>
+<span class="linenos">71</span><span class="w">                </span><span class="n">digitsField</span><span class="p">.</span><span class="n">SetValueWithoutNotify</span><span class="p">(</span><span class="n">settings</span><span class="p">.</span><span class="n">Digits</span><span class="p">);</span>
+<span class="linenos">72</span><span class="w">                </span><span class="n">settings</span><span class="p">.</span><span class="n">SaveSettings</span><span class="p">();</span>
+<span class="linenos">73</span><span class="w">            </span><span class="p">});</span>
+<span class="linenos">74</span><span class="w">            </span><span class="n">container</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">digitsField</span><span class="p">);</span>
+<span class="linenos">75</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">76</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">77</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="../_downloads/ffb2e3eabd1f7cac06ed4054c420540d/BatchRenameSettingsProvider.cs"><code class="xref download docutils literal notranslate"><span class="pre">BatchRenameSettingsProvider.cs</span> <span class="pre">をダウンロード</span></code></a></p>
+<p><span class="menuselection">Edit ‣ Project Settings</span> を選択して Project Settings ウィンドウを開くと、左側の一覧に「Editor Intro」が追加され、その下に「Batch Rename」ページが表示されます。</p>
+<p>設定ページは、<code class="docutils literal notranslate"><span class="pre">SettingsProvider</span></code> 属性を付けた static メソッドで <code class="docutils literal notranslate"><span class="pre">SettingsProvider</span></code> のインスタンスを返すことで登録します。コンストラクターの引数と、主なプロパティは次のとおりです。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>引数・プロパティ</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>第 1 引数（パス）</p></td>
+<td><p>ページの場所。<code class="docutils literal notranslate"><span class="pre">SettingsScope.Project</span></code> の場合は「Project/」、<code class="docutils literal notranslate"><span class="pre">SettingsScope.User</span></code> の場合は「Preferences/」で始める</p></td>
+</tr>
+<tr class="row-odd"><td><p>第 2 引数（<code class="docutils literal notranslate"><span class="pre">SettingsScope</span></code>）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Project</span></code> なら Project Settings ウィンドウ、<code class="docutils literal notranslate"><span class="pre">User</span></code> なら Preferences ウィンドウに表示する</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">label</span></code></p></td>
+<td><p>左側の一覧に表示する名前</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">activateHandler</span></code></p></td>
+<td><p>ページが表示されるときに呼ばれる処理。第 2 引数の要素に UI を追加する</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">keywords</span></code></p></td>
+<td><p>設定ウィンドウの検索欄で、このページを候補として表示するためのキーワード</p></td>
+</tr>
+</tbody>
+</table>
+<p>サンプルコードでは、各入力欄の <code class="docutils literal notranslate"><span class="pre">RegisterValueChangedCallback</span></code> で値の変更を受け取り、設定クラスに値を設定してから保存しています。開始番号と桁数は、設定クラスのプロパティで範囲内の値に補正されるため、補正後の値を <code class="docutils literal notranslate"><span class="pre">SetValueWithoutNotify</span></code> で入力欄に表示し直しています。<code class="docutils literal notranslate"><span class="pre">SetValueWithoutNotify</span></code> は、値の変更を通知せずに入力欄の値を変更するメソッドで、コールバックが繰り返し呼ばれるのを防げます。</p>
+</section>
+<section id="id3">
+<h2><span class="section-number">11.4. </span>参考資料<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/EditorPrefs.html">EditorPrefs</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Menu.SetChecked.html">Menu.SetChecked</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/ScriptableSingleton_1.html">ScriptableSingleton_1</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/FilePathAttribute.html">FilePathAttribute</a></p></li>
+<li><p><a class="extlink-unity-api reference external" href="https://docs.unity3d.com/6000.0/Documentation/ScriptReference/SettingsProvider.html">SettingsProvider</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="10_assets.html" class="btn btn-neutral float-left" title="10. アセットの操作" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="12_batch_rename.html" class="btn btn-neutral float-right" title="12. 実践：一括リネームツールを作る" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

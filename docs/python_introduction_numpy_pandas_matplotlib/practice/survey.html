@@ -1,0 +1,255 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アンケート結果の集計と可視化 &mdash; numpy/pandas/matplotlib 入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="2 系列の時系列データを比較する" href="timeseries.html" />
+    <link rel="prev" title="売上データの分析" href="sales.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            numpy/pandas/matplotlib 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../setup/index.html">環境構築</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../numpy/index.html">numpy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pandas/index.html">pandas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../matplotlib/index.html">matplotlib</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">実務での活用例</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sensor.html">センサーデータの統計処理と外れ値の除外</a></li>
+<li class="toctree-l2"><a class="reference internal" href="correlation.html">2 変数の相関と回帰直線</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sales.html">売上データの分析</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">アンケート結果の集計と可視化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">データの準備</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">年代 × 性別のクロス集計</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">回答者数と平均満足度を重ねて見る</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="timeseries.html">2 系列の時系列データを比較する</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../closing.html">おわりに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">numpy/pandas/matplotlib 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">実務での活用例</a></li>
+      <li class="breadcrumb-item active">アンケート結果の集計と可視化</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>アンケート結果の集計と可視化<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>年代・性別ごとの満足度アンケートを例に、欠損値の処理、<code class="docutils literal notranslate"><span class="pre">pivot_table</span></code> によるクロス集計、そして集計結果の可視化までを一通り行います。</p>
+<section id="id2">
+<h2>データの準備<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;age_group&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;40s&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;40s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;gender&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;satisfaction&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>未回答（<code class="docutils literal notranslate"><span class="pre">NaN</span></code>）の行は集計から除外しておきます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df_clean</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;satisfaction&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>年代 × 性別のクロス集計<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pivot_table</span></code> を使って、年代別・性別ごとの平均満足度を集計します。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pivot</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">df_clean</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span>
+    <span class="n">index</span><span class="o">=</span><span class="s2">&quot;age_group&quot;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;gender&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;satisfaction&quot;</span><span class="p">,</span> <span class="n">aggfunc</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pivot</span><span class="p">)</span>
+<span class="c1"># gender     Female  Male</span>
+<span class="c1"># age_group</span>
+<span class="c1"># 20s           4.5   4.5</span>
+<span class="c1"># 30s           4.0   3.0</span>
+<span class="c1"># 40s           4.5   NaN</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">40s</span></code> の <code class="docutils literal notranslate"><span class="pre">Male</span></code> のように、該当するデータが存在しない組み合わせは <code class="docutils literal notranslate"><span class="pre">NaN</span></code> になります。</p>
+<p><code class="docutils literal notranslate"><span class="pre">DataFrame.plot()</span></code> で棒グラフにすると、年代ごとに性別を並べて比較できます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+
+<span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;age_group&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;40s&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;40s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;gender&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;satisfaction&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+<span class="p">})</span>
+<span class="n">df_clean</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;satisfaction&quot;</span><span class="p">])</span>
+
+<span class="n">pivot</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">df_clean</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span>
+    <span class="n">index</span><span class="o">=</span><span class="s2">&quot;age_group&quot;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;gender&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;satisfaction&quot;</span><span class="p">,</span> <span class="n">aggfunc</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span>
+<span class="p">)</span>
+
+<span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span> <span class="o">=</span> <span class="n">pivot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;bar&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;average satisfaction by age group and gender&quot;</span>
+<span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;satisfaction&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference download internal" download="" href="../_downloads/f8c088569089773f8fd72841b0c12b13/survey-1.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../_downloads/35ff2ada612a07801f32869994dcec71/survey-1.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../_downloads/80d714813c7007d8657a7b032352294e/survey-1.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../_images/survey-1.png" class="plot-directive" src="../_images/survey-1.png" />
+</figure>
+</section>
+<section id="id4">
+<h2>回答者数と平均満足度を重ねて見る<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>年代ごとの「回答者数」と「平均満足度」は単位が異なるため、<code class="docutils literal notranslate"><span class="pre">twinx</span></code> を使って 1 つのグラフに重ねます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+
+<span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;age_group&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;40s&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span> <span class="s2">&quot;30s&quot;</span><span class="p">,</span> <span class="s2">&quot;40s&quot;</span><span class="p">,</span> <span class="s2">&quot;20s&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;gender&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span> <span class="s2">&quot;Female&quot;</span><span class="p">,</span> <span class="s2">&quot;Male&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;satisfaction&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+<span class="p">})</span>
+<span class="n">df_clean</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;satisfaction&quot;</span><span class="p">])</span>
+
+<span class="n">counts</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">=</span> <span class="n">df_clean</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;age_group&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+<span class="n">avg_satisfaction</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">=</span> <span class="n">df_clean</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;age_group&quot;</span><span class="p">)[</span>
+    <span class="s2">&quot;satisfaction&quot;</span>
+<span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">:</span> <span class="n">Figure</span>
+<span class="n">ax1</span><span class="p">:</span> <span class="n">Axes</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">counts</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:blue&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;count&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">)</span>
+
+<span class="n">ax2</span><span class="p">:</span> <span class="n">Axes</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">avg_satisfaction</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">avg_satisfaction</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;tab:orange&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;avg satisfaction&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;satisfaction&quot;</span><span class="p">)</span>
+
+<span class="n">handles1</span><span class="p">,</span> <span class="n">labels1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+<span class="n">handles2</span><span class="p">,</span> <span class="n">labels2</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+    <span class="n">handles1</span> <span class="o">+</span> <span class="n">handles2</span><span class="p">,</span> <span class="n">labels1</span> <span class="o">+</span> <span class="n">labels2</span><span class="p">,</span>
+    <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower center&quot;</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.02</span><span class="p">),</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference download internal" download="" href="../_downloads/29147acee590700604fa81972fac8d65/survey-2.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../_downloads/674b91284a23cb2532800077fa18386f/survey-2.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../_downloads/30b1d546a337d8aab0b33b08008a4090/survey-2.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../_images/survey-2.png" class="plot-directive" src="../_images/survey-2.png" />
+</figure>
+<p><code class="docutils literal notranslate"><span class="pre">twinx()</span></code> で作成した 2 つの <code class="docutils literal notranslate"><span class="pre">Axes</span></code>（<code class="docutils literal notranslate"><span class="pre">ax1</span></code> と <code class="docutils literal notranslate"><span class="pre">ax2</span></code>）は、それぞれ別々の凡例を持ちます。そのため、<code class="docutils literal notranslate"><span class="pre">get_legend_handles_labels()</span></code> で両方の凡例情報（ハンドルとラベル）を取得し、まとめて 1 つの凡例として表示しています。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sales.html" class="btn btn-neutral float-left" title="売上データの分析" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="timeseries.html" class="btn btn-neutral float-right" title="2 系列の時系列データを比較する" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

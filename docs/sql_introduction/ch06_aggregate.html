@@ -1,0 +1,652 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>6. 集計とグループ化 &mdash; SQL 入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=47d01576" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="7. テーブルの結合" href="ch07_join.html" />
+    <link rel="prev" title="5. NULL の扱い" href="ch05_null.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SQL 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_overview.html">2. データベースと SQL の概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_setup.html">3. 環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_select.html">4. データの取得</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_null.html">5. NULL の扱い</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">6. 集計とグループ化</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">6.1. 集約関数</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#null">6.1.1. 集約関数と NULL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">6.1.2. 重複を除いて数える</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">6.2. グループごとに集計する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#group-by">6.2.1. GROUP BY 句</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">6.2.2. NULL のグループ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#select">6.2.3. SELECT 句に書ける列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">6.3. グループを絞り込む</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#having">6.3.1. HAVING 句</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#where-having">6.3.2. WHERE 句と HAVING 句の違い</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">6.4. SELECT 文の評価順序</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pandas">6.5. pandas との対応</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exercises-ch06">6.6. 演習問題</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_join.html">7. テーブルの結合</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_subquery.html">8. サブクエリと共通テーブル式</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_window.html">9. ウィンドウ関数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_modify.html">10. データの追加・更新・削除</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_ddl.html">11. テーブルの設計と定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_transaction.html">12. トランザクション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_index.html">13. インデックスと性能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_python.html">14. Python から SQL を使う</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_answers.html">付録 A 演習問題の解答</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_dialects.html">付録 B SQL の方言比較</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_glossary.html">付録 C 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考資料</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_e_samples.html">付録 E サンプルファイル一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SQL 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">6. </span>集計とグループ化</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">6. </span>集計とグループ化<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本章では、複数の行をまとめて合計や平均などを求める方法を説明します。</p>
+<section id="id2">
+<h2><span class="section-number">6.1. </span>集約関数<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>複数の行の値から 1 つの値を求める関数を、集約関数と呼びます。主な集約関数は次のとおりです。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>関数</p></th>
+<th class="head"><p>説明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">COUNT(*)</span></code></p></td>
+<td><p>行数</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">COUNT(列)</span></code></p></td>
+<td><p>列の値が NULL でない行の数</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SUM(列)</span></code></p></td>
+<td><p>列の値の合計</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AVG(列)</span></code></p></td>
+<td><p>列の値の平均</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MIN(列)</span></code></p></td>
+<td><p>列の値の最小値</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MAX(列)</span></code></p></td>
+<td><p>列の値の最大値</p></td>
+</tr>
+</tbody>
+</table>
+<p>集約関数を使うと、テーブル全体が 1 行にまとめられます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">product_count</span><span class="p">,</span>
+<span class="linenos">2</span><span class="w">       </span><span class="k">SUM</span><span class="p">(</span><span class="n">stock</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">total_stock</span><span class="p">,</span>
+<span class="linenos">3</span><span class="w">       </span><span class="k">AVG</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">avg_price</span><span class="p">,</span>
+<span class="linenos">4</span><span class="w">       </span><span class="k">MIN</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">min_price</span><span class="p">,</span>
+<span class="linenos">5</span><span class="w">       </span><span class="k">MAX</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">max_price</span>
+<span class="linenos">6</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>product_count</p></th>
+<th class="head"><p>total_stock</p></th>
+<th class="head"><p>avg_price</p></th>
+<th class="head"><p>min_price</p></th>
+<th class="head"><p>max_price</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>12</p></td>
+<td><p>685</p></td>
+<td><p>554.1666666666666</p></td>
+<td><p>100</p></td>
+<td><p>3000</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句と組み合わせると、条件に合う行だけを集計できます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">order_count</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;発送済&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>order_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>8</p></td>
+</tr>
+</tbody>
+</table>
+<section id="null">
+<h3><span class="section-number">6.1.1. </span>集約関数と NULL<a class="headerlink" href="#null" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">COUNT(*)</span></code> 以外の集約関数は、NULL の値を無視して計算します。<code class="docutils literal notranslate"><span class="pre">COUNT(*)</span></code> と <code class="docutils literal notranslate"><span class="pre">COUNT(email)</span></code> の結果を比べると、違いがわかります。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">customer_count</span><span class="p">,</span>
+<span class="linenos">2</span><span class="w">       </span><span class="k">COUNT</span><span class="p">(</span><span class="n">email</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">email_count</span>
+<span class="linenos">3</span><span class="k">FROM</span><span class="w"> </span><span class="n">customers</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_count</p></th>
+<th class="head"><p>email_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>6</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">AVG()</span></code> も NULL の行を除いて平均を求めます。NULL を 0 とみなして平均を求めたい場合は、<code class="docutils literal notranslate"><span class="pre">AVG(COALESCE(列,</span> <span class="pre">0))</span></code> のように書きます。また、対象の行が 1 行もない場合、<code class="docutils literal notranslate"><span class="pre">COUNT()</span></code> は 0 を返しますが、<code class="docutils literal notranslate"><span class="pre">SUM()</span></code> や <code class="docutils literal notranslate"><span class="pre">AVG()</span></code> などは NULL を返します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">cnt</span><span class="p">,</span><span class="w"> </span><span class="k">SUM</span><span class="p">(</span><span class="n">price</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">total</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">price</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10000</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>cnt</p></th>
+<th class="head"><p>total</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>NULL</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id3">
+<h3><span class="section-number">6.1.2. </span>重複を除いて数える<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">COUNT(DISTINCT</span> <span class="pre">列)</span></code> と書くと、重複を除いた値の種類の数を数えます。次の例は、注文したことのある顧客の人数を求めます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">order_count</span><span class="p">,</span>
+<span class="linenos">2</span><span class="w">       </span><span class="k">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">customer_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">customer_count</span>
+<span class="linenos">3</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>order_count</p></th>
+<th class="head"><p>customer_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>12</p></td>
+<td><p>7</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="id4">
+<h2><span class="section-number">6.2. </span>グループごとに集計する<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<section id="group-by">
+<h3><span class="section-number">6.2.1. </span>GROUP BY 句<a class="headerlink" href="#group-by" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> 句を使うと、指定した列の値が等しい行をグループにまとめ、グループごとに集計できます。次の例は、注文の状態ごとに注文の件数を求めます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">status</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">order_count</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">3</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">status</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>status</p></th>
+<th class="head"><p>order_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>キャンセル</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>受付済</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>発送済</p></td>
+<td><p>8</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span> <span class="pre">status</span></code> によって、<code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルの行が <code class="docutils literal notranslate"><span class="pre">status</span></code> 列の値ごとにグループに分けられ、<code class="docutils literal notranslate"><span class="pre">COUNT(*)</span></code> はグループごとの行数を返します。</p>
+<p>次の例は、注文ごとの合計金額を求めます。合計金額は、注文明細の数量と単価を掛けた値の合計です。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span>
+<span class="linenos">2</span><span class="w">       </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">item_count</span><span class="p">,</span>
+<span class="linenos">3</span><span class="w">       </span><span class="k">SUM</span><span class="p">(</span><span class="n">quantity</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">unit_price</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">amount</span>
+<span class="linenos">4</span><span class="k">FROM</span><span class="w"> </span><span class="n">order_items</span>
+<span class="linenos">5</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">order_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>order_id</p></th>
+<th class="head"><p>item_count</p></th>
+<th class="head"><p>amount</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>2</p></td>
+<td><p>1200</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>2</p></td>
+<td><p>1900</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>2</p></td>
+<td><p>1170</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>2</p></td>
+<td><p>900</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>1</p></td>
+<td><p>3000</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>3</p></td>
+<td><p>1900</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>1</p></td>
+<td><p>1600</p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>1</p></td>
+<td><p>750</p></td>
+</tr>
+<tr class="row-even"><td><p>9</p></td>
+<td><p>2</p></td>
+<td><p>1500</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>1</p></td>
+<td><p>1440</p></td>
+</tr>
+<tr class="row-even"><td><p>11</p></td>
+<td><p>2</p></td>
+<td><p>610</p></td>
+</tr>
+<tr class="row-odd"><td><p>12</p></td>
+<td><p>2</p></td>
+<td><p>980</p></td>
+</tr>
+</tbody>
+</table>
+<p>複数の列を指定すると、それらの列の値の組ごとにグループを作ります。次の例は、注文日の年月と状態の組ごとに注文の件数を求めます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">ordered_on</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">month</span><span class="p">,</span>
+<span class="linenos">2</span><span class="w">       </span><span class="n">status</span><span class="p">,</span>
+<span class="linenos">3</span><span class="w">       </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">order_count</span>
+<span class="linenos">4</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">5</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">month</span><span class="p">,</span><span class="w"> </span><span class="n">status</span>
+<span class="linenos">6</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">month</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>month</p></th>
+<th class="head"><p>status</p></th>
+<th class="head"><p>order_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>2025-01</p></td>
+<td><p>発送済</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>2025-02</p></td>
+<td><p>発送済</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>2025-03</p></td>
+<td><p>キャンセル</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>2025-03</p></td>
+<td><p>発送済</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>2025-04</p></td>
+<td><p>発送済</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>2025-05</p></td>
+<td><p>受付済</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>2025-05</p></td>
+<td><p>発送済</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>2025-06</p></td>
+<td><p>受付済</p></td>
+<td><p>2</p></td>
+</tr>
+</tbody>
+</table>
+<p>この例のように、<code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> 句には列名だけでなく式や列の別名も指定できます。ただし、<code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> 句で <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 句の別名を使えない DBMS もあります。その場合は <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span> <span class="pre">strftime('%Y-%m',</span> <span class="pre">ordered_on),</span> <span class="pre">status</span></code> のように式をそのまま書きます。</p>
+</section>
+<section id="id5">
+<h3><span class="section-number">6.2.2. </span>NULL のグループ<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> 句では、NULL の値どうしは同じグループにまとめられます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">category_id</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">product_count</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="linenos">3</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">category_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>category_id</p></th>
+<th class="head"><p>product_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NULL</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>2</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="select">
+<h3><span class="section-number">6.2.3. </span>SELECT 句に書ける列<a class="headerlink" href="#select" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> 句を使う場合、<code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 句に書けるのは、原則として <code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code> 句に指定した列と集約関数だけです。たとえば、次の SQL 文の <code class="docutils literal notranslate"><span class="pre">name</span></code> 列は、グループ内に複数の値があるため、どの値を表示すればよいかが決まりません。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">-- 誤った例</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="n">category_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+<span class="linenos">3</span><span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="linenos">4</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">category_id</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>多くの DBMS では、この SQL 文はエラーになります。SQLite ではエラーにならず、グループ内のいずれかの行の値が表示されますが、どの行の値になるかは保証されません。このような書き方は避けてください。</p>
+</section>
+</section>
+<section id="id6">
+<h2><span class="section-number">6.3. </span>グループを絞り込む<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<section id="having">
+<h3><span class="section-number">6.3.1. </span>HAVING 句<a class="headerlink" href="#having" title="Link to this heading"></a></h3>
+<p>集計した結果に対して条件を指定するには、<code class="docutils literal notranslate"><span class="pre">HAVING</span></code> 句を使用します。次の例は、2 回以上注文した顧客を取り出します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">order_count</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">3</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">customer_id</span>
+<span class="linenos">4</span><span class="k">HAVING</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+<th class="head"><p>order_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>2</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="where-having">
+<h3><span class="section-number">6.3.2. </span>WHERE 句と HAVING 句の違い<a class="headerlink" href="#where-having" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句と <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> 句は、どちらも条件で絞り込みを行いますが、絞り込む対象が異なります。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句は、グループにまとめる前の個々の行を絞り込みます。そのため、集約関数は使えません。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HAVING</span></code> 句は、グループにまとめた後のグループを絞り込みます。</p></li>
+</ul>
+<p>次の例は、状態が「発送済」の注文だけを対象にしたうえで（<code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句）、2 回以上注文した顧客（<code class="docutils literal notranslate"><span class="pre">HAVING</span></code> 句）を取り出します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">order_count</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;発送済&#39;</span>
+<span class="linenos">4</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">customer_id</span>
+<span class="linenos">5</span><span class="k">HAVING</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>customer_id</p></th>
+<th class="head"><p>order_count</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>2</p></td>
+</tr>
+</tbody>
+</table>
+<p>個々の行に対する条件は <code class="docutils literal notranslate"><span class="pre">HAVING</span></code> 句にも書けますが、<code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句に書くほうが、集計の対象となる行が先に減るため効率的です。</p>
+</section>
+</section>
+<section id="id7">
+<h2><span class="section-number">6.4. </span>SELECT 文の評価順序<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文の各句は、書く順序とは異なる次の順序で評価されると考えることができます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 10.0%" />
+<col style="width: 30.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>順序</p></th>
+<th class="head"><p>句</p></th>
+<th class="head"><p>処理</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FROM</span></code></p></td>
+<td><p>対象のテーブルを決めます</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code></p></td>
+<td><p>行を絞り込みます</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GROUP</span> <span class="pre">BY</span></code></p></td>
+<td><p>行をグループにまとめます</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">HAVING</span></code></p></td>
+<td><p>グループを絞り込みます</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SELECT</span></code></p></td>
+<td><p>結果の列を計算します</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ORDER</span> <span class="pre">BY</span></code></p></td>
+<td><p>結果を並べ替えます</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">LIMIT</span></code></p></td>
+<td><p>結果の行数を制限します</p></td>
+</tr>
+</tbody>
+</table>
+<p>この順序は論理的なものであり、DBMS が実際にこの順序で処理するとは限りません。しかし、この順序を知っていると、次のような規則を理解しやすくなります。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句で集約関数を使えないのは、<code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句の評価がグループ化より前に行われるためです。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ORDER</span> <span class="pre">BY</span></code> 句で <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 句の別名を使えるのは、<code class="docutils literal notranslate"><span class="pre">ORDER</span> <span class="pre">BY</span></code> 句の評価が <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 句より後に行われるためです。</p></li>
+<li><p>標準 SQL では、<code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句で <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 句の別名を使えません。<code class="docutils literal notranslate"><span class="pre">WHERE</span></code> 句の評価が <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 句より前に行われるためです。SQLite では例外的に使えますが、他の DBMS との互換性のため避けることをお勧めします。</p></li>
+</ul>
+</section>
+<section id="pandas">
+<h2><span class="section-number">6.5. </span>pandas との対応<a class="headerlink" href="#pandas" title="Link to this heading"></a></h2>
+<p>本章で説明した操作は、pandas では次のように書けます。<code class="docutils literal notranslate"><span class="pre">orders</span></code> は <code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルの内容を格納した DataFrame とします。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SQL</p></th>
+<th class="head"><p>pandas</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">COUNT(*)</span> <span class="pre">FROM</span> <span class="pre">orders</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">len(orders)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">COUNT(DISTINCT</span> <span class="pre">customer_id)</span> <span class="pre">FROM</span> <span class="pre">orders</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">orders[&quot;customer_id&quot;].nunique()</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">status,</span> <span class="pre">COUNT(*)</span> <span class="pre">FROM</span> <span class="pre">orders</span> <span class="pre">GROUP</span> <span class="pre">BY</span> <span class="pre">status</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">orders.groupby(&quot;status&quot;).size()</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">...</span> <span class="pre">GROUP</span> <span class="pre">BY</span> <span class="pre">customer_id</span> <span class="pre">HAVING</span> <span class="pre">COUNT(*)</span> <span class="pre">&gt;=</span> <span class="pre">2</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">s</span> <span class="pre">=</span> <span class="pre">orders.groupby(&quot;customer_id&quot;).size()</span></code> の後に <code class="docutils literal notranslate"><span class="pre">s[s</span> <span class="pre">&gt;=</span> <span class="pre">2]</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>pandas の <code class="docutils literal notranslate"><span class="pre">groupby()</span></code> は、既定では NULL（欠損値）のグループを結果から除外します。SQL と同じように欠損値のグループを残すには、<code class="docutils literal notranslate"><span class="pre">groupby(&quot;category_id&quot;,</span> <span class="pre">dropna=False)</span></code> のように指定します。</p>
+</section>
+<section id="exercises-ch06">
+<span id="id8"></span><h2><span class="section-number">6.6. </span>演習問題<a class="headerlink" href="#exercises-ch06" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルから、在庫金額（価格と在庫数を掛けた値）の合計を求めてください。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">customers</span></code> テーブルから、都道府県ごとの顧客数を、顧客数の多い順に求めてください。顧客数が同じ場合は、都道府県名の順に並べてください。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">order_items</span></code> テーブルから、商品ごとの販売数量の合計を求め、合計が 5 個以上の商品の商品番号と販売数量の合計を取り出してください。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">orders</span></code> テーブルから、キャンセルされた注文を除き、月ごとの注文件数を求めてください。月は <code class="docutils literal notranslate"><span class="pre">2025-01</span></code> の形式で表示してください。</p></li>
+</ol>
+<p>解答は <a class="reference internal" href="appendix_a_answers.html#answers-ch06"><span class="std std-ref">6 章 集計とグループ化</span></a> にあります。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch05_null.html" class="btn btn-neutral float-left" title="5. NULL の扱い" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch07_join.html" class="btn btn-neutral float-right" title="7. テーブルの結合" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

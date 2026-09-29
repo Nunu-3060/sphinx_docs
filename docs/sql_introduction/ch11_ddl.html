@@ -1,0 +1,709 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11. テーブルの設計と定義 &mdash; SQL 入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=47d01576" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="12. トランザクション" href="ch12_transaction.html" />
+    <link rel="prev" title="10. データの追加・更新・削除" href="ch10_modify.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SQL 入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_overview.html">2. データベースと SQL の概要</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_setup.html">3. 環境の準備</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_select.html">4. データの取得</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_null.html">5. NULL の扱い</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_aggregate.html">6. 集計とグループ化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_join.html">7. テーブルの結合</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_subquery.html">8. サブクエリと共通テーブル式</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_window.html">9. ウィンドウ関数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_modify.html">10. データの追加・更新・削除</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">11. テーブルの設計と定義</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">11.1. テーブルを作成する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#create-table">11.1.1. CREATE TABLE 文</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">11.1.2. テーブルの定義を確認する</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">11.2. データ型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sqlite">11.2.1. SQLite のデータ型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">11.2.2. 型アフィニティ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#strict">11.2.3. STRICT テーブル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">11.3. 制約</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">11.3.1. 主キーの補足</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">11.3.2. 外部キーの補足</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">11.4. テーブルを変更・削除する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#alter-table">11.4.1. ALTER TABLE 文</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#drop-table">11.4.2. DROP TABLE 文</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">11.5. ビュー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">11.6. 正規化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id12">11.6.1. 正規化されていないテーブル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">11.6.2. 第 1 正規形</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">11.6.3. 第 2 正規形</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">11.6.4. 第 3 正規形</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">11.6.5. 正規化のトレードオフ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#exercises-ch11">11.7. 演習問題</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_transaction.html">12. トランザクション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_index.html">13. インデックスと性能</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_python.html">14. Python から SQL を使う</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_answers.html">付録 A 演習問題の解答</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_dialects.html">付録 B SQL の方言比較</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_glossary.html">付録 C 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考資料</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_e_samples.html">付録 E サンプルファイル一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SQL 入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">11. </span>テーブルの設計と定義</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">11. </span>テーブルの設計と定義<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本章では、テーブルを作成・変更・削除する方法と、テーブルに設定する制約を説明します。また、テーブルを設計する際の基本的な考え方である正規化を紹介します。</p>
+<p>本章の例は、サンプルデータベースの初期状態から始めて、前の例を実行した後のデータに対して順に実行していくものとします。</p>
+<section id="id2">
+<h2><span class="section-number">11.1. </span>テーブルを作成する<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="create-table">
+<h3><span class="section-number">11.1.1. </span>CREATE TABLE 文<a class="headerlink" href="#create-table" title="Link to this heading"></a></h3>
+<p>テーブルを作成するには、<code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">TABLE</span></code> 文を使用します。括弧内に、列名、データ型、制約をコンマで区切って並べます。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>CREATE TABLE テーブル名 (
+<span class="linenos">2</span>    列名1 データ型 制約,
+<span class="linenos">3</span>    列名2 データ型 制約,
+<span class="linenos">4</span>    ...
+<span class="linenos">5</span>);
+</pre></div>
+</div>
+<p>例として、商品のレビューを格納する <code class="docutils literal notranslate"><span class="pre">reviews</span></code> テーブルを作成します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">reviews</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">2</span><span class="w">    </span><span class="n">review_id</span><span class="w">   </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<span class="linenos">3</span><span class="w">    </span><span class="n">product_id</span><span class="w">  </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">products</span><span class="w"> </span><span class="p">(</span><span class="n">product_id</span><span class="p">),</span>
+<span class="linenos">4</span><span class="w">    </span><span class="n">customer_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">customers</span><span class="w"> </span><span class="p">(</span><span class="n">customer_id</span><span class="p">),</span>
+<span class="linenos">5</span><span class="w">    </span><span class="n">rating</span><span class="w">      </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">rating</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span>
+<span class="linenos">6</span><span class="w">    </span><span class="k">comment</span><span class="w">     </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos">7</span><span class="w">    </span><span class="n">status</span><span class="w">      </span><span class="nb">TEXT</span><span class="w">    </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;公開&#39;</span><span class="p">,</span>
+<span class="linenos">8</span><span class="w">    </span><span class="k">UNIQUE</span><span class="w"> </span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">)</span>
+<span class="linenos">9</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>各列の制約の意味は、この後の節で説明します。</p>
+<p>同じ名前のテーブルがすでにある場合、<code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">TABLE</span></code> 文はエラーになります。<code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">TABLE</span> <span class="pre">IF</span> <span class="pre">NOT</span> <span class="pre">EXISTS</span> <span class="pre">reviews</span> <span class="pre">(...)</span></code> のように書くと、テーブルがない場合だけ作成します。</p>
+</section>
+<section id="id3">
+<h3><span class="section-number">11.1.2. </span>テーブルの定義を確認する<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>SQLite では、<code class="docutils literal notranslate"><span class="pre">pragma_table_info()</span></code> 関数でテーブルの列の一覧を確認できます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">type</span><span class="p">,</span><span class="w"> </span><span class="ss">&quot;notnull&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">dflt_value</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">pragma_table_info</span><span class="p">(</span><span class="s1">&#39;reviews&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>type</p></th>
+<th class="head"><p>notnull</p></th>
+<th class="head"><p>dflt_value</p></th>
+<th class="head"><p>pk</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>review_id</p></td>
+<td><p>INTEGER</p></td>
+<td><p>0</p></td>
+<td><p>NULL</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>product_id</p></td>
+<td><p>INTEGER</p></td>
+<td><p>1</p></td>
+<td><p>NULL</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-even"><td><p>customer_id</p></td>
+<td><p>INTEGER</p></td>
+<td><p>1</p></td>
+<td><p>NULL</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>rating</p></td>
+<td><p>INTEGER</p></td>
+<td><p>1</p></td>
+<td><p>NULL</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-even"><td><p>comment</p></td>
+<td><p>TEXT</p></td>
+<td><p>0</p></td>
+<td><p>NULL</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>status</p></td>
+<td><p>TEXT</p></td>
+<td><p>1</p></td>
+<td><p>'公開'</p></td>
+<td><p>0</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">notnull</span></code> は NOT NULL 制約の有無、<code class="docutils literal notranslate"><span class="pre">dflt_value</span></code> は既定値、<code class="docutils literal notranslate"><span class="pre">pk</span></code> は主キーであるかどうかを表します。<code class="docutils literal notranslate"><span class="pre">notnull</span></code> はキーワード <code class="docutils literal notranslate"><span class="pre">NOTNULL</span></code> と同じ綴りのため、二重引用符で囲んで列名であることを示しています。テーブルの定義を確認する方法は DBMS によって異なります。</p>
+</section>
+</section>
+<section id="id4">
+<h2><span class="section-number">11.2. </span>データ型<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<section id="sqlite">
+<h3><span class="section-number">11.2.1. </span>SQLite のデータ型<a class="headerlink" href="#sqlite" title="Link to this heading"></a></h3>
+<p>SQLite では、値は次の 5 種類のいずれかの形式（ストレージクラス）で格納されます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ストレージクラス</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NULL</span></code></p></td>
+<td><p>NULL</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">INTEGER</span></code></p></td>
+<td><p>符号付き整数（最大 8 バイト）</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">REAL</span></code></p></td>
+<td><p>浮動小数点数（8 バイト）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TEXT</span></code></p></td>
+<td><p>文字列</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BLOB</span></code></p></td>
+<td><p>バイナリデータ（入力されたとおりに格納）</p></td>
+</tr>
+</tbody>
+</table>
+<p>日付や時刻、真偽値を表す専用の型はありません。日付や時刻は <code class="docutils literal notranslate"><span class="pre">'2025-01-10'</span></code> のような文字列（<code class="docutils literal notranslate"><span class="pre">TEXT</span></code>）で、真偽値は整数の 0 と 1（<code class="docutils literal notranslate"><span class="pre">INTEGER</span></code>）で表すのが一般的です。PostgreSQL や MySQL などには、<code class="docutils literal notranslate"><span class="pre">DATE</span></code>、<code class="docutils literal notranslate"><span class="pre">TIMESTAMP</span></code>、<code class="docutils literal notranslate"><span class="pre">BOOLEAN</span></code>、<code class="docutils literal notranslate"><span class="pre">VARCHAR(n)</span></code>、<code class="docutils literal notranslate"><span class="pre">DECIMAL(p,</span> <span class="pre">s)</span></code> など、より多くのデータ型があります。</p>
+</section>
+<section id="id5">
+<h3><span class="section-number">11.2.2. </span>型アフィニティ<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>多くの DBMS では、列に宣言したデータ型に変換できない値（<code class="docutils literal notranslate"><span class="pre">INTEGER</span></code> 列に対する <code class="docutils literal notranslate"><span class="pre">'abc'</span></code> など）を格納しようとするとエラーになります。一方、SQLite の列のデータ型は「その列に格納する値の推奨される型」（型アフィニティ）を表すだけで、宣言と異なる型の値も格納できます。値の型は <code class="docutils literal notranslate"><span class="pre">typeof()</span></code> 関数で確認できます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">type_demo</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">type_demo</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;123&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">456</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;abc&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">.</span><span class="mi">5</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">typeof</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">typeof</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">type_demo</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>i</p></th>
+<th class="head"><p>typeof(i)</p></th>
+<th class="head"><p>t</p></th>
+<th class="head"><p>typeof(t)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>123</p></td>
+<td><p>integer</p></td>
+<td><p>456</p></td>
+<td><p>text</p></td>
+</tr>
+<tr class="row-odd"><td><p>abc</p></td>
+<td><p>text</p></td>
+<td><p>7.5</p></td>
+<td><p>text</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">INTEGER</span></code> 列に格納した <code class="docutils literal notranslate"><span class="pre">'123'</span></code> は整数に変換されましたが、整数に変換できない <code class="docutils literal notranslate"><span class="pre">'abc'</span></code> は文字列のまま格納されています。<code class="docutils literal notranslate"><span class="pre">TEXT</span></code> 列に格納した数値は文字列に変換されています。</p>
+</section>
+<section id="strict">
+<h3><span class="section-number">11.2.3. </span>STRICT テーブル<a class="headerlink" href="#strict" title="Link to this heading"></a></h3>
+<p>テーブルの定義の末尾に <code class="docutils literal notranslate"><span class="pre">STRICT</span></code> を付けると、型の検査が厳密になり、列の型に変換できない値を格納しようとするとエラーになります。<code class="docutils literal notranslate"><span class="pre">STRICT</span></code> テーブルは SQLite 3.37 から使用できます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">strict_demo</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">)</span><span class="w"> </span><span class="k">STRICT</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">strict_demo</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;abc&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;text&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sqlite3.IntegrityError: cannot store TEXT value in INTEGER column strict_demo.i
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">STRICT</span></code> テーブルでは、列のデータ型に <code class="docutils literal notranslate"><span class="pre">INTEGER</span></code>、<code class="docutils literal notranslate"><span class="pre">REAL</span></code>、<code class="docutils literal notranslate"><span class="pre">TEXT</span></code>、<code class="docutils literal notranslate"><span class="pre">BLOB</span></code>、<code class="docutils literal notranslate"><span class="pre">ANY</span></code> のいずれかを指定します。</p>
+</section>
+</section>
+<section id="id6">
+<h2><span class="section-number">11.3. </span>制約<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>制約は、テーブルに格納できる値に対する規則です。制約に違反するデータを追加・更新しようとすると、エラーになり、その操作は行われません。制約によって、アプリケーションの不具合などによる不正なデータの混入を防げます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>制約</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PRIMARY</span> <span class="pre">KEY</span></code></p></td>
+<td><p>主キー。行を一意に識別します。値の重複を許しません</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NOT</span> <span class="pre">NULL</span></code></p></td>
+<td><p>NULL を許しません</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">UNIQUE</span></code></p></td>
+<td><p>値の重複を許しません（NULL は重複してもかまいません）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CHECK</span> <span class="pre">(条件)</span></code></p></td>
+<td><p>条件を満たさない値を許しません</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DEFAULT</span> <span class="pre">値</span></code></p></td>
+<td><p>値を指定せずに行を追加したときの既定値を設定します</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">REFERENCES</span> <span class="pre">テーブル</span> <span class="pre">(列)</span></code></p></td>
+<td><p>外部キー。参照先のテーブルに存在する値だけを許します</p></td>
+</tr>
+</tbody>
+</table>
+<p>制約は列の定義の後に書くほか、<code class="docutils literal notranslate"><span class="pre">reviews</span></code> テーブルの <code class="docutils literal notranslate"><span class="pre">UNIQUE</span> <span class="pre">(product_id,</span> <span class="pre">customer_id)</span></code> のように、列の定義とは別に書くこともできます。この書き方をすると、複数の列の組に対する制約を設定できます。<code class="docutils literal notranslate"><span class="pre">reviews</span></code> テーブルでは、同じ顧客が同じ商品に 2 件以上のレビューを登録できないようにしています。</p>
+<p>制約の動作を確認します。まず、正しいデータを追加します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">reviews</span><span class="w"> </span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">rating</span><span class="p">,</span><span class="w"> </span><span class="k">comment</span><span class="p">)</span>
+<span class="linenos">2</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;おいしかったです。&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">reviews</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>review_id</p></th>
+<th class="head"><p>product_id</p></th>
+<th class="head"><p>customer_id</p></th>
+<th class="head"><p>rating</p></th>
+<th class="head"><p>comment</p></th>
+<th class="head"><p>status</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>5</p></td>
+<td><p>おいしかったです。</p></td>
+<td><p>公開</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">review_id</span></code> は自動的に採番され、値を指定しなかった <code class="docutils literal notranslate"><span class="pre">status</span></code> には既定値の「公開」が設定されています。</p>
+<p>次に、制約に違反するデータを追加してみます。<code class="docutils literal notranslate"><span class="pre">rating</span></code> に 1 から 5 の範囲外の値を指定すると、<code class="docutils literal notranslate"><span class="pre">CHECK</span></code> 制約に違反します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">reviews</span><span class="w"> </span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">rating</span><span class="p">)</span>
+<span class="linenos">2</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sqlite3.IntegrityError: CHECK constraint failed: rating BETWEEN 1 AND 5
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">rating</span></code> を省略すると、<code class="docutils literal notranslate"><span class="pre">NOT</span> <span class="pre">NULL</span></code> 制約に違反します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">reviews</span><span class="w"> </span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">)</span>
+<span class="linenos">2</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sqlite3.IntegrityError: NOT NULL constraint failed: reviews.rating
+</pre></div>
+</div>
+<p>同じ顧客が同じ商品のレビューをもう一度登録すると、<code class="docutils literal notranslate"><span class="pre">UNIQUE</span></code> 制約に違反します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">reviews</span><span class="w"> </span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">rating</span><span class="p">)</span>
+<span class="linenos">2</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sqlite3.IntegrityError: UNIQUE constraint failed: reviews.product_id, reviews.customer_id
+</pre></div>
+</div>
+<p>存在しない商品のレビューを登録すると、外部キーの制約に違反します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">reviews</span><span class="w"> </span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">rating</span><span class="p">)</span>
+<span class="linenos">2</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">99</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sqlite3.IntegrityError: FOREIGN KEY constraint failed
+</pre></div>
+</div>
+<section id="id7">
+<h3><span class="section-number">11.3.1. </span>主キーの補足<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>SQLite では、<code class="docutils literal notranslate"><span class="pre">INTEGER</span> <span class="pre">PRIMARY</span> <span class="pre">KEY</span></code> と定義した列は、各行に内部的に割り当てられる番号（rowid）の別名になります。値を省略して行を追加すると、通常は既存の最大値に 1 を加えた値が設定されます。削除された行の番号が再利用されないようにしたい場合は <code class="docutils literal notranslate"><span class="pre">INTEGER</span> <span class="pre">PRIMARY</span> <span class="pre">KEY</span> <span class="pre">AUTOINCREMENT</span></code> と定義しますが、処理がわずかに遅くなるため、必要な場合だけ使用します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">order_items</span></code> テーブルのように、複数の列の組を主キーにする場合は、<code class="docutils literal notranslate"><span class="pre">PRIMARY</span> <span class="pre">KEY</span> <span class="pre">(order_id,</span> <span class="pre">product_id)</span></code> のように列の定義とは別に書きます。</p>
+</section>
+<section id="id8">
+<h3><span class="section-number">11.3.2. </span>外部キーの補足<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>10 章で説明したとおり、SQLite では外部キーの制約は既定で無効になっており、接続ごとに <code class="docutils literal notranslate"><span class="pre">PRAGMA</span> <span class="pre">foreign_keys</span> <span class="pre">=</span> <span class="pre">ON;</span></code> を実行して有効にします。</p>
+<p>外部キーには、参照先の行が削除・更新されたときの動作を指定できます。たとえば、<code class="docutils literal notranslate"><span class="pre">REFERENCES</span> <span class="pre">orders</span> <span class="pre">(order_id)</span> <span class="pre">ON</span> <span class="pre">DELETE</span> <span class="pre">CASCADE</span></code> と定義すると、注文を削除したときに、その注文を参照する明細も自動的に削除されます。指定しない場合は、参照されている行の削除はエラーになります。</p>
+</section>
+</section>
+<section id="id9">
+<h2><span class="section-number">11.4. </span>テーブルを変更・削除する<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<section id="alter-table">
+<h3><span class="section-number">11.4.1. </span>ALTER TABLE 文<a class="headerlink" href="#alter-table" title="Link to this heading"></a></h3>
+<p>作成済みのテーブルの構造を変更するには、<code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span></code> 文を使用します。SQLite では、次の変更ができます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 55.0%" />
+<col style="width: 45.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>文</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span> <span class="pre">テーブル名</span> <span class="pre">RENAME</span> <span class="pre">TO</span> <span class="pre">新しい名前</span></code></p></td>
+<td><p>テーブル名を変更します</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span> <span class="pre">テーブル名</span> <span class="pre">RENAME</span> <span class="pre">COLUMN</span> <span class="pre">列名</span> <span class="pre">TO</span> <span class="pre">新しい名前</span></code></p></td>
+<td><p>列名を変更します</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span> <span class="pre">テーブル名</span> <span class="pre">ADD</span> <span class="pre">COLUMN</span> <span class="pre">列の定義</span></code></p></td>
+<td><p>列を追加します</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span> <span class="pre">テーブル名</span> <span class="pre">DROP</span> <span class="pre">COLUMN</span> <span class="pre">列名</span></code></p></td>
+<td><p>列を削除します</p></td>
+</tr>
+</tbody>
+</table>
+<p>次の例は、<code class="docutils literal notranslate"><span class="pre">reviews</span></code> テーブルに投稿日の列を追加します。既存の行の新しい列には NULL（既定値を指定した場合は既定値）が設定されます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">reviews</span><span class="w"> </span><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">posted_on</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">reviews</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>review_id</p></th>
+<th class="head"><p>product_id</p></th>
+<th class="head"><p>customer_id</p></th>
+<th class="head"><p>rating</p></th>
+<th class="head"><p>comment</p></th>
+<th class="head"><p>status</p></th>
+<th class="head"><p>posted_on</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>5</p></td>
+<td><p>おいしかったです。</p></td>
+<td><p>公開</p></td>
+<td><p>NULL</p></td>
+</tr>
+</tbody>
+</table>
+<p>列のデータ型や制約の変更は、SQLite の <code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span></code> 文ではできません。その場合は、新しい定義のテーブルを作成し、データを移してから古いテーブルを削除します。PostgreSQL や MySQL では、<code class="docutils literal notranslate"><span class="pre">ALTER</span> <span class="pre">TABLE</span></code> 文でより多くの変更ができます。</p>
+</section>
+<section id="drop-table">
+<h3><span class="section-number">11.4.2. </span>DROP TABLE 文<a class="headerlink" href="#drop-table" title="Link to this heading"></a></h3>
+<p>テーブルを削除するには、<code class="docutils literal notranslate"><span class="pre">DROP</span> <span class="pre">TABLE</span></code> 文を使用します。テーブルの定義とすべてのデータが削除されます。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">DROP</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">type_demo</span><span class="p">;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">DROP</span> <span class="pre">TABLE</span> <span class="pre">IF</span> <span class="pre">EXISTS</span> <span class="pre">テーブル名;</span></code> と書くと、テーブルがない場合にエラーになりません。</p>
+</section>
+</section>
+<section id="id10">
+<h2><span class="section-number">11.5. </span>ビュー<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>よく使う <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文に名前を付けて保存したものをビューと呼びます。ビューは、テーブルと同じように <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文の <code class="docutils literal notranslate"><span class="pre">FROM</span></code> 句に指定できます。ビューを作成するには <code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">VIEW</span></code> 文を使用します。</p>
+<p>次の例は、注文ごとの合計金額を求めるビューを作成します。</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">order_totals</span><span class="w"> </span><span class="k">AS</span>
+<span class="linenos">2</span><span class="k">SELECT</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">,</span>
+<span class="linenos">3</span><span class="w">       </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span><span class="p">,</span>
+<span class="linenos">4</span><span class="w">       </span><span class="n">o</span><span class="p">.</span><span class="n">ordered_on</span><span class="p">,</span>
+<span class="linenos">5</span><span class="w">       </span><span class="n">o</span><span class="p">.</span><span class="n">status</span><span class="p">,</span>
+<span class="linenos">6</span><span class="w">       </span><span class="k">SUM</span><span class="p">(</span><span class="n">oi</span><span class="p">.</span><span class="n">quantity</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">oi</span><span class="p">.</span><span class="n">unit_price</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">amount</span>
+<span class="linenos">7</span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span>
+<span class="linenos">8</span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">order_items</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">oi</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">oi</span><span class="p">.</span><span class="n">order_id</span>
+<span class="linenos">9</span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">ordered_on</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">status</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">ordered_on</span><span class="p">,</span><span class="w"> </span><span class="n">amount</span>
+<span class="linenos">2</span><span class="k">FROM</span><span class="w"> </span><span class="n">order_totals</span>
+<span class="linenos">3</span><span class="k">WHERE</span><span class="w"> </span><span class="n">amount</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">1000</span>
+<span class="linenos">4</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">amount</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</pre></div>
+</div>
+<table class="sql-result docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>order_id</p></th>
+<th class="head"><p>ordered_on</p></th>
+<th class="head"><p>amount</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>2025-03-05</p></td>
+<td><p>3000</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>2025-01-15</p></td>
+<td><p>1900</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>2025-03-18</p></td>
+<td><p>1900</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>2025-04-01</p></td>
+<td><p>1600</p></td>
+</tr>
+<tr class="row-even"><td><p>9</p></td>
+<td><p>2025-05-09</p></td>
+<td><p>1500</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>2025-05-30</p></td>
+<td><p>1440</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>2025-01-10</p></td>
+<td><p>1200</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>2025-02-02</p></td>
+<td><p>1170</p></td>
+</tr>
+</tbody>
+</table>
+<p>ビューはデータそのものを保存するのではなく、<code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文を保存します。ビューを参照するたびに <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> 文が実行されるため、元のテーブルのデータが変わると、ビューの結果も変わります。複雑なクエリをビューにしておくと、利用する側の SQL 文を簡潔にできます。ビューを削除するには <code class="docutils literal notranslate"><span class="pre">DROP</span> <span class="pre">VIEW</span></code> 文を使用します。</p>
+</section>
+<section id="id11">
+<h2><span class="section-number">11.6. </span>正規化<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>テーブルの設計では、同じ情報を複数の場所に格納しないようにすることが重要です。同じ情報が複数の場所にあると、一部だけを更新した場合に矛盾が生じます。このような問題を防ぐためにテーブルを分割することを正規化と呼びます。正規化には段階があり、よく使われるのは第 1 正規形から第 3 正規形です。</p>
+<section id="id12">
+<h3><span class="section-number">11.6.1. </span>正規化されていないテーブル<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>注文の情報を、次のような 1 つのテーブルで管理する場合を考えます。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>注文番号</p></th>
+<th class="head"><p>注文日</p></th>
+<th class="head"><p>顧客番号</p></th>
+<th class="head"><p>顧客名</p></th>
+<th class="head"><p>商品</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>2025-01-10</p></td>
+<td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>ミルクチョコレート 200 円 × 2、ドリップコーヒー 800 円 × 1</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>2025-02-02</p></td>
+<td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>ポテトチップス 150 円 × 3、缶コーヒー 120 円 × 6</p></td>
+</tr>
+</tbody>
+</table>
+<p>このテーブルには、次のような問題があります。</p>
+<ul class="simple">
+<li><p>「商品」列に複数の商品がまとめて書かれているため、「ポテトチップスの販売数量の合計」のような集計が難しくなります。</p></li>
+<li><p>顧客名が注文ごとに書かれているため、顧客が名前を変更したときに、すべての注文の行を修正する必要があります。</p></li>
+</ul>
+</section>
+<section id="id13">
+<h3><span class="section-number">11.6.2. </span>第 1 正規形<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>第 1 正規形は、すべての列の値が、それ以上分割できない単一の値である状態です。上の表の「商品」列を、1 行に 1 つの商品が入るように分割すると、次のようになります。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>注文番号</p></th>
+<th class="head"><p>商品番号</p></th>
+<th class="head"><p>注文日</p></th>
+<th class="head"><p>顧客番号</p></th>
+<th class="head"><p>顧客名</p></th>
+<th class="head"><p>商品名</p></th>
+<th class="head"><p>単価</p></th>
+<th class="head"><p>数量</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>2025-01-10</p></td>
+<td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>ミルクチョコレート</p></td>
+<td><p>200</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>6</p></td>
+<td><p>2025-01-10</p></td>
+<td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>ドリップコーヒー</p></td>
+<td><p>800</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>3</p></td>
+<td><p>2025-02-02</p></td>
+<td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>ポテトチップス</p></td>
+<td><p>150</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>7</p></td>
+<td><p>2025-02-02</p></td>
+<td><p>1</p></td>
+<td><p>佐藤花子</p></td>
+<td><p>缶コーヒー</p></td>
+<td><p>120</p></td>
+<td><p>6</p></td>
+</tr>
+</tbody>
+</table>
+<p>このテーブルの主キーは、注文番号と商品番号の組です。</p>
+</section>
+<section id="id14">
+<h3><span class="section-number">11.6.3. </span>第 2 正規形<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p>第 2 正規形は、第 1 正規形であり、さらに主キーの一部だけで決まる列がない状態です。</p>
+<p>上の表では、注文日、顧客番号、顧客名は注文番号だけで決まり、商品名は商品番号だけで決まります。そのため、注文日や商品名が何行にもわたって繰り返し格納されています。主キーの一部だけで決まる列を別のテーブルに分けると、次の 3 つのテーブルになります。</p>
+<ul class="simple">
+<li><p>注文（注文番号、注文日、顧客番号、顧客名）</p></li>
+<li><p>商品（商品番号、商品名）</p></li>
+<li><p>注文明細（注文番号、商品番号、単価、数量）</p></li>
+</ul>
+<p>単価は、注文した時点の単価を記録するため、注文明細に残しています。商品の現在の価格とは別の情報であり、重複ではありません。</p>
+</section>
+<section id="id15">
+<h3><span class="section-number">11.6.4. </span>第 3 正規形<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<p>第 3 正規形は、第 2 正規形であり、さらに主キー以外の列によって決まる列がない状態です。</p>
+<p>上の「注文」テーブルでは、顧客名は顧客番号によって決まります。つまり、顧客名は主キー（注文番号）から顧客番号を経由して間接的に決まっています。顧客名を別のテーブルに分けると、次のようになります。</p>
+<ul class="simple">
+<li><p>注文（注文番号、注文日、顧客番号）</p></li>
+<li><p>顧客（顧客番号、顧客名）</p></li>
+</ul>
+<p>こうして得られた構成は、サンプルデータベースの <code class="docutils literal notranslate"><span class="pre">orders</span></code>、<code class="docutils literal notranslate"><span class="pre">customers</span></code>、<code class="docutils literal notranslate"><span class="pre">products</span></code>、<code class="docutils literal notranslate"><span class="pre">order_items</span></code> テーブルの構成と同じです。</p>
+</section>
+<section id="id16">
+<h3><span class="section-number">11.6.5. </span>正規化のトレードオフ<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>正規化するとデータの矛盾が起こりにくくなる一方で、データを取り出すときに結合が必要になります。集計や分析を高速に行うため、あえて正規化を崩した（非正規化した）テーブルを用意する場合もあります。まずは第 3 正規形を目安に設計し、性能上の問題がある場合に非正規化を検討するのが一般的です。</p>
+</section>
+</section>
+<section id="exercises-ch11">
+<span id="id17"></span><h2><span class="section-number">11.7. </span>演習問題<a class="headerlink" href="#exercises-ch11" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>顧客のお気に入り商品を管理する <code class="docutils literal notranslate"><span class="pre">favorites</span></code> テーブルを作成してください。列は <code class="docutils literal notranslate"><span class="pre">customer_id</span></code>（顧客番号、<code class="docutils literal notranslate"><span class="pre">customers</span></code> テーブルを参照）、<code class="docutils literal notranslate"><span class="pre">product_id</span></code>（商品番号、<code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルを参照）、<code class="docutils literal notranslate"><span class="pre">added_on</span></code>（追加日、文字列）とし、<code class="docutils literal notranslate"><span class="pre">customer_id</span></code> と <code class="docutils literal notranslate"><span class="pre">product_id</span></code> の組を主キーとします。いずれの列も NULL を許さないものとします。</p></li>
+<li><p>1 で作成した <code class="docutils literal notranslate"><span class="pre">favorites</span></code> テーブルに、顧客番号 1 が商品番号 6 を 2025-06-01 に追加したデータを登録してください。その後、同じデータをもう一度登録しようとするとどうなるか確かめてください。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">products</span></code> テーブルに、商品の説明を格納する <code class="docutils literal notranslate"><span class="pre">description</span></code> 列（文字列）を追加してください。</p></li>
+<li><p>顧客ごとの注文件数と購入金額の合計（キャンセルされた注文を除く）を求めるビュー <code class="docutils literal notranslate"><span class="pre">customer_summary</span></code> を作成してください。注文のない顧客も、注文件数 0、購入金額 0 として含めてください。</p></li>
+</ol>
+<p>解答は <a class="reference internal" href="appendix_a_answers.html#answers-ch11"><span class="std std-ref">11 章 テーブルの設計と定義</span></a> にあります。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch10_modify.html" class="btn btn-neutral float-left" title="10. データの追加・更新・削除" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch12_transaction.html" class="btn btn-neutral float-right" title="12. トランザクション" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

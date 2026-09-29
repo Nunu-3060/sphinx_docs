@@ -1,0 +1,392 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 4 章 GPU とレンダリングパイプライン &mdash; Unity シェーダー・グラフィック入門</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=01157622" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=19757887"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/translations.js?v=4755f45a"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="検索" href="../search.html" />
+    <link rel="next" title="第 5 章 Unity の描画のしくみ" href="ch05_unity_rendering.html" />
+    <link rel="prev" title="第 3 章 座標変換" href="ch03_coordinate_transform.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Unity シェーダー・グラフィックス入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 1 部 導入と理論</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">第 1 章 はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_cg_math.html">第 2 章 コンピューターグラフィックスの数学</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_coordinate_transform.html">第 3 章 座標変換</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 4 章 GPU とレンダリングパイプライン</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cpu-gpu">CPU と GPU の役割</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">パイプラインの流れ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">頂点シェーダー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">ラスタライズと補間</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">フラグメントシェーダー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">深度テスト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">ブレンド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">テッセレーションとジオメトリシェーダー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">コンピュートシェーダー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">コンピュートシェーダーの基本</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">対応する環境</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">本資料で扱う範囲</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_unity_rendering.html">第 5 章 Unity の描画のしくみ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 2 部 シェーダーの基本</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch06_shaderlab_hlsl.html">第 6 章 ShaderLab と HLSL の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_first_shader.html">第 7 章 最初のシェーダー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_texture_uv.html">第 8 章 テクスチャーと UV</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 3 部 ライティング</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch09_lighting.html">第 9 章 ライティング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_normal_map.html">第 10 章 法線マップ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_shadow.html">第 11 章 影</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 4 部 表現の幅を広げる</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch12_transparency.html">第 12 章 透明と描画順</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_vertex_animation.html">第 13 章 頂点アニメーション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_effects.html">第 14 章 表現テクニック</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch15_post_effect.html">第 15 章 ポストエフェクト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch16_shader_graph.html">第 16 章 Shader Graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17_debug_optimize.html">第 17 章 デバッグと最適化</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/formulas.html">付録 B 数式のまとめ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix/references.html">付録 C 参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Unity シェーダー・グラフィックス入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 4 章 GPU とレンダリングパイプライン</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch03_coordinate_transform.html" class="btn btn-neutral float-left" title="第 3 章 座標変換" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch05_unity_rendering.html" class="btn btn-neutral float-right" title="第 5 章 Unity の描画のしくみ" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gpu">
+<h1>第 4 章 GPU とレンダリングパイプライン<a class="headerlink" href="#gpu" title="Link to this heading"></a></h1>
+<p>GPU は、メッシュのデータを受け取ってから画面のピクセルに色を書き込むまでを、決まった段階の流れで処理する。この流れをレンダリングパイプラインという。この章では、各段階の役割と、シェーダーがどの段階で実行されるかを説明する。最後に、レンダリングパイプラインの外で GPU に計算をさせるコンピュートシェーダーも紹介する。</p>
+<section id="cpu-gpu">
+<h2>CPU と GPU の役割<a class="headerlink" href="#cpu-gpu" title="Link to this heading"></a></h2>
+<p>CPU は、何をどの順番で描画するかを決め、GPU に描画の命令を送る。この命令をドローコールという。GPU は、ドローコールを受け取ると、メッシュの頂点やピクセルを大量に並列で処理する。</p>
+<p>GPU は、同じ処理を多数のデータに同時に適用するのが得意である。頂点シェーダーは頂点の数だけ、フラグメントシェーダーはピクセルの数だけ実行されるが、GPU はこれらを数千単位で並列に実行する。一方で、1 つの処理の中で条件によって異なる処理を行う（分岐する）と、並列処理の効率が下がることがある。この点は第 17 章で詳しく説明する。</p>
+</section>
+<section id="id1">
+<h2>パイプラインの流れ<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>レンダリングパイプラインの主な段階を、処理の順に示す。「プログラム可能」の列が「はい」の段階は、シェーダーで処理の内容を書ける。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 15.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>段階</p></th>
+<th class="head"><p>プログラム可能</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>入力アセンブラー</p></td>
+<td><p>いいえ</p></td>
+<td><p>メッシュの頂点データ（位置、法線、UV 座標など）とインデックスを読み込む。</p></td>
+</tr>
+<tr class="row-odd"><td><p>頂点シェーダー</p></td>
+<td><p>はい</p></td>
+<td><p>頂点ごとに実行され、頂点の位置をクリップ空間に変換する。法線や UV 座標など、あとの段階で使うデータも出力する。</p></td>
+</tr>
+<tr class="row-even"><td><p>クリッピング</p></td>
+<td><p>いいえ</p></td>
+<td><p>視錐台の外にある三角形を取り除き、境界をまたぐ三角形を切り取る。</p></td>
+</tr>
+<tr class="row-odd"><td><p>透視除算とビューポート変換</p></td>
+<td><p>いいえ</p></td>
+<td><p>クリップ空間の座標を NDC に、さらにスクリーン空間の座標に変換する（第 3 章を参照）。</p></td>
+</tr>
+<tr class="row-even"><td><p>カリング</p></td>
+<td><p>いいえ</p></td>
+<td><p>カメラから見て裏を向いている三角形を取り除く（設定で変更できる）。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ラスタライズ</p></td>
+<td><p>いいえ</p></td>
+<td><p>三角形が覆うピクセルを求め、ピクセルごとのフラグメントを生成する。頂点シェーダーの出力は、三角形の内部で補間される。</p></td>
+</tr>
+<tr class="row-even"><td><p>フラグメントシェーダー</p></td>
+<td><p>はい</p></td>
+<td><p>フラグメントごとに実行され、その色を計算する。ピクセルシェーダーとも呼ぶ。</p></td>
+</tr>
+<tr class="row-odd"><td><p>深度テストとステンシルテスト</p></td>
+<td><p>いいえ</p></td>
+<td><p>すでに描画されているものより奥にあるフラグメントなどを破棄する（設定で変更できる）。</p></td>
+</tr>
+<tr class="row-even"><td><p>ブレンド</p></td>
+<td><p>いいえ</p></td>
+<td><p>フラグメントの色と、画面にすでに描かれている色を合成して書き込む（設定で変更できる）。</p></td>
+</tr>
+</tbody>
+</table>
+<p>「設定で変更できる」と書いた段階は、処理の内容をシェーダーのコードとしては書けないが、ShaderLab のコマンド（第 6 章を参照）で動作を選べる段階である。</p>
+<p>この表のほかに、頂点シェーダーとクリッピングの間には、テッセレーションとジオメトリシェーダーという省略できる段階がある。これらは本資料では扱わない。理由は、この章の最後で説明する。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>フラグメントは、最終的にピクセルの色になる候補のデータである。1 つのピクセルに複数の三角形が重なっている場合、そのピクセルには複数のフラグメントが生成され、深度テストやブレンドを経て最終的な色が決まる。本資料では、フラグメントシェーダーの処理の単位を説明するときに、分かりやすさのため「ピクセルごと」と表現することがある。</p>
+</div>
+</section>
+<section id="id2">
+<h2>頂点シェーダー<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>頂点シェーダーは、メッシュの頂点ごとに 1 回実行される。入力は 1 つの頂点のデータで、出力はその頂点のクリップ空間の位置と、フラグメントシェーダーに渡すデータである。頂点シェーダーからは、ほかの頂点のデータを参照できない。</p>
+<p>頂点シェーダーで頂点の位置を変えると、メッシュの形を変えられる。第 13 章では、この性質を使って波打つ表面を作る。</p>
+</section>
+<section id="id3">
+<h2>ラスタライズと補間<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>ラスタライズでは、三角形が覆うピクセルを求める。このとき、頂点シェーダーが出力した値（法線や UV 座標など）は、三角形の 3 つの頂点の値から、ピクセルの位置に応じて補間される。例えば、3 つの頂点の色が赤、緑、青の三角形では、内部のピクセルの色はそれらが混ざった色になる。</p>
+<p>透視投影では、画面上で単純に線形補間すると、奥行きのある面でテクスチャーが歪んでしまう。GPU は、透視投影を考慮した補間（パースペクティブ補正）を自動的に行う。</p>
+<p>補間された方向ベクトルは、長さが 1 でなくなる。例えば、長さ 1 の 2 つの法線の中間を線形補間すると、長さは 1 より短くなる。そのため、フラグメントシェーダーでは、補間された法線を <code class="docutils literal notranslate"><span class="pre">normalize</span></code> 関数で正規化し直してから使う。</p>
+</section>
+<section id="id4">
+<h2>フラグメントシェーダー<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>フラグメントシェーダーは、フラグメントごとに 1 回実行され、そのフラグメントの色を出力する。入力は、頂点シェーダーの出力を補間した値である。テクスチャーの読み取り（サンプリング）やライティングの計算は、主にフラグメントシェーダーで行う。</p>
+<p>フラグメントシェーダーは、画面の解像度が高いほど多く実行される。例えば、1920×1080 の画面全体を覆うオブジェクトでは、1 回の描画で約 200 万回実行される。そのため、フラグメントシェーダーの処理の重さは、描画の速度に大きく影響する。</p>
+</section>
+<section id="id5">
+<h2>深度テスト<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>深度テストは、手前のものが奥のものを正しく隠すようにする処理である。GPU は、画面のピクセルごとの深度（カメラからの奥行き）を、深度バッファーと呼ばれる領域に記録している。新しいフラグメントの深度を深度バッファーの値と比べ、奥にあれば破棄し、手前にあれば色を書き込んで深度バッファーを更新する。</p>
+<p>深度テストを行えば、描画の順序に関係なく、手前のものが奥のものを隠すようになる。ただし、半透明のものは奥のものを隠さずに透かして見せる必要があるため、深度テストだけでは正しく描画できない。この問題は第 12 章で扱う。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>多くの GPU は、フラグメントシェーダーを実行する前に深度テストを行い、隠れることが分かっているフラグメントのシェーダーの実行を省く（Early-Z）。ただし、フラグメントシェーダーで <code class="docutils literal notranslate"><span class="pre">clip</span></code> 関数（第 12 章を参照）を使うなど、実行してみないと描画されるかどうかが決まらない場合は、この最適化が働かないことがある。</p>
+</div>
+</section>
+<section id="id6">
+<h2>ブレンド<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>ブレンドは、フラグメントシェーダーが出力した色と、画面にすでに描かれている色を合成する処理である。不透明なオブジェクトでは、ブレンドを行わずに色をそのまま上書きする。半透明のオブジェクトでは、アルファ（不透明度）に応じて 2 つの色を混ぜる。ブレンドの方法は、ShaderLab の <code class="docutils literal notranslate"><span class="pre">Blend</span></code> コマンドで指定する（第 12 章を参照）。</p>
+</section>
+<section id="id7">
+<h2>テッセレーションとジオメトリシェーダー<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>レンダリングパイプラインには、頂点シェーダーのあとに、次の 2 つの省略できる段階がある。どちらも、三角形を増やしたり作り変えたりするための段階である。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>段階</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>テッセレーション</p></td>
+<td><p>三角形を細かく分割して、頂点を増やす。分割の細かさを決めるハルシェーダー、実際に分割する固定機能のテッセレーター、分割で増えた頂点の位置を決めるドメインシェーダーの 3 つの段階からなる。カメラに近い部分だけを細かくする、高さのテクスチャーで表面を凹凸に変形する（ディスプレースメント）などに使われる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ジオメトリシェーダー</p></td>
+<td><p>三角形などの図形（プリミティブ）ごとに実行され、図形を増やしたり、消したり、別の形の図形に作り変えたりする。1 つの点から板ポリゴンを作る、ワイヤーフレームを描く、草の葉を生やすなどに使われる。</p></td>
+</tr>
+</tbody>
+</table>
+<p>Unity でも、<code class="docutils literal notranslate"><span class="pre">#pragma</span> <span class="pre">hull</span></code>、<code class="docutils literal notranslate"><span class="pre">#pragma</span> <span class="pre">domain</span></code>、<code class="docutils literal notranslate"><span class="pre">#pragma</span> <span class="pre">geometry</span></code> でこれらの段階を使うシェーダーを書ける。しかし、本資料では次の理由から扱わない。</p>
+<ul class="simple">
+<li><p>動作する環境が限られる。Metal（iOS、macOS）はジオメトリシェーダーに対応していない。WebGL は、テッセレーションとジオメトリシェーダーのどちらにも対応していない。URP は幅広い環境で動かすためのレンダーパイプラインであり（第 5 章を参照）、この制限と相性が悪い。</p></li>
+<li><p>URP の標準のシェーダーは、どちらの段階も使っていない。URP 用の Shader Graph でも、これらの段階は使えない。</p></li>
+<li><p>ジオメトリシェーダーは、GPU によっては処理が遅く、特にスマートフォンで性能が大きく落ちることがある。</p></li>
+<li><p>多くの場合、ほかの方法で同じ表現ができる。</p></li>
+</ul>
+<p>代わりに使われる主な方法を、次の表に示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>目的</p></th>
+<th class="head"><p>代わりの方法</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>頂点を増やして細かく変形する</p></td>
+<td><p>頂点の多いメッシュを用意し、頂点シェーダーで変形する（第 13 章を参照）。距離に応じて細かさを変えたい場合は、LOD Group で距離ごとにメッシュを切り替える。</p></td>
+</tr>
+<tr class="row-odd"><td><p>1 つの点から板ポリゴンを作る</p></td>
+<td><p>板ポリゴンのメッシュを用意し、頂点シェーダーでカメラの方に向ける（第 13 章のビルボードを参照）。大量に描画する場合は、GPU インスタンシングや、Particle System、VFX Graph を使う。</p></td>
+</tr>
+<tr class="row-even"><td><p>草など、大量の図形を GPU で生成する</p></td>
+<td><p>コンピュートシェーダーで図形のデータを作り、C# の <code class="docutils literal notranslate"><span class="pre">Graphics.RenderPrimitives</span></code> などの関数で描画する。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>HDRP には、標準の Lit シェーダーや Shader Graph でテッセレーションを使う機能がある。高性能な PC や家庭用ゲーム機向けに、テッセレーションによる細かい凹凸を使いたい場合は、HDRP を検討するとよい。</p>
+</div>
+</section>
+<section id="id8">
+<h2>コンピュートシェーダー<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p>これまでに説明したシェーダーは、すべてレンダリングパイプラインの段階の 1 つとして実行され、頂点やフラグメントを処理する。一方、コンピュートシェーダーは、レンダリングパイプラインの外で、GPU に汎用の計算をさせるためのシェーダーである。三角形やピクセルとは関係なく、指定した数のスレッドを並列に実行する。</p>
+<p>主な用途を、次の表に示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>用途</p></th>
+<th class="head"><p>例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>シミュレーション</p></td>
+<td><p>大量のパーティクル、群衆、流体、布などの動きの計算。Unity の VFX Graph も、内部でコンピュートシェーダーを使っている。</p></td>
+</tr>
+<tr class="row-odd"><td><p>図形の生成</p></td>
+<td><p>草や岩などの大量の図形の位置や形のデータの生成（この章の「テッセレーションとジオメトリシェーダー」の表を参照）。</p></td>
+</tr>
+<tr class="row-even"><td><p>画像処理</p></td>
+<td><p>テクスチャーのぼかし、縮小、ヒストグラムの集計など。</p></td>
+</tr>
+<tr class="row-odd"><td><p>描画の準備</p></td>
+<td><p>見えないオブジェクトを GPU で描画の対象から外す処理（GPU カリング）など。</p></td>
+</tr>
+</tbody>
+</table>
+<section id="id9">
+<h3>コンピュートシェーダーの基本<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>Unity では、コンピュートシェーダーを <code class="docutils literal notranslate"><span class="pre">.compute</span></code> という拡張子のファイルに書く。Project ウィンドウで右クリックし、<span class="menuselection">Create ‣ Shader ‣ Compute Shader</span> で作成できる。ShaderLab は使わず、HLSL だけで書く。</p>
+<p>次のコードは、テクスチャーの各ピクセルに、位置に応じたグラデーションの色を書き込む例である。</p>
+<div class="highlight-hlsl notranslate"><div class="highlight"><pre><span></span><span class="c1">// コンピュートシェーダーの入り口の関数（カーネル）を指定する</span>
+<span class="cp">#pragma kernel FillGradient</span>
+
+<span class="c1">// 書き込み先のテクスチャー（RW は読み書きできることを表す）</span>
+<span class="kt">RWTexture2D</span><span class="o">&lt;</span><span class="kt">float4</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Result</span><span class="p">;</span>
+
+<span class="c1">// 1 つのスレッドグループに含まれるスレッドの数（8 × 8 × 1 = 64）</span>
+<span class="p">[</span><span class="nd">numthreads</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)]</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">FillGradient</span><span class="p">(</span><span class="kt">uint3</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nd">SV_DispatchThreadID</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="c1">// id.xy は、このスレッドが担当するピクセルの位置</span>
+<span class="w">    </span><span class="n">Result</span><span class="p">[</span><span class="n">id</span><span class="p">.</span><span class="n">xy</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">float4</span><span class="p">(</span><span class="n">id</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">255.0</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">255.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>コンピュートシェーダーは、C# のスクリプトから実行する。次のコードは、256×256 ピクセルのテクスチャーに対して、上のカーネルを実行する例である。</p>
+<div class="highlight-csharp notranslate"><div class="highlight"><pre><span></span><span class="c1">// _computeShader には、Inspector ウィンドウで .compute のアセットを設定しておく</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">kernel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_computeShader</span><span class="p">.</span><span class="n">FindKernel</span><span class="p">(</span><span class="s">&quot;FillGradient&quot;</span><span class="p">);</span>
+
+<span class="n">RenderTexture</span><span class="w"> </span><span class="n">texture</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RenderTexture</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">256</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="c1">// コンピュートシェーダーから書き込めるようにする</span>
+<span class="n">texture</span><span class="p">.</span><span class="n">enableRandomWrite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="p">;</span>
+<span class="n">texture</span><span class="p">.</span><span class="n">Create</span><span class="p">();</span>
+
+<span class="n">_computeShader</span><span class="p">.</span><span class="n">SetTexture</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Result&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">texture</span><span class="p">);</span>
+<span class="c1">// 8 × 8 スレッドのグループを、縦横に 256 / 8 = 32 個ずつ実行する</span>
+<span class="n">_computeShader</span><span class="p">.</span><span class="n">Dispatch</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span><span class="w"> </span><span class="mi">256</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">256</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>コードのポイントは、次のとおりである。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">#pragma</span> <span class="pre">kernel</span></code> で、C# から呼び出す関数（カーネル）を指定する。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[numthreads(8,</span> <span class="pre">8,</span> <span class="pre">1)]</span></code> で、1 つのスレッドグループのスレッドの数を指定する。C# の <code class="docutils literal notranslate"><span class="pre">Dispatch</span></code> 関数では、スレッドの数ではなく、スレッドグループの数を指定する。この例では 32 × 32 個のグループが実行され、合計で 256 × 256 個のスレッドが 1 ピクセルずつ担当する。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SV_DispatchThreadID</span></code> セマンティクスの引数には、全体の中でのスレッドの番号が入る。</p></li>
+<li><p>結果は GPU のメモリ（テクスチャーやバッファー）に残る。結果のテクスチャーをマテリアルに設定すれば、そのまま描画に使える。結果を CPU に読み戻す処理は時間がかかるため、必要な場合は <code class="docutils literal notranslate"><span class="pre">AsyncGPUReadback</span></code> による非同期の読み戻しを使う。</p></li>
+</ul>
+</section>
+<section id="id10">
+<h3>対応する環境<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>コンピュートシェーダーは、Direct3D 11 以降（シェーダーモデル 5.0）、Metal、Vulkan、OpenGL 4.3 以降、OpenGL ES 3.1 以降で使える。WebGL では使えない。実行時に使えるかどうかは、C# の <code class="docutils literal notranslate"><span class="pre">SystemInfo.supportsComputeShaders</span></code> で確認できる。</p>
+</section>
+<section id="id11">
+<h3>本資料で扱う範囲<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>コンピュートシェーダーを効果的に使うには、スレッドグループの大きさの決め方や、スレッド間でのデータの共有と同期など、並列処理のアルゴリズムの知識が必要になる。これは、本資料の主題である「オブジェクトを描画するシェーダー」とは別の分野である。そのため、本資料ではこの節の紹介にとどめる。詳しくは、付録 C の Unity マニュアルを参照してほしい。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch03_coordinate_transform.html" class="btn btn-neutral float-left" title="第 3 章 座標変換" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch05_unity_rendering.html" class="btn btn-neutral float-right" title="第 5 章 Unity の描画のしくみ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

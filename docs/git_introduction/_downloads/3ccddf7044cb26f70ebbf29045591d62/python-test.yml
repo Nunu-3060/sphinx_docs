@@ -1,0 +1,34 @@
+# ============================================================
+# GitHub Actions のワークフローの例（Python のテストを自動で実行する）
+#   使うときは、リポジトリの .github/workflows/ ディレクトリに
+#   test.yml などの名前で置いてコミットし、GitHub にプッシュします。
+#   main ブランチへのプッシュと、プルリクエストの作成・更新のたびに
+#   pytest でテストを実行します。
+#   actions/checkout と actions/setup-python のバージョン（@v4、@v5）は、
+#   各アクションの最新のメジャーバージョンに置き換えてください。
+# ============================================================
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]   # 複数のバージョンでテストする
+    steps:
+      - uses: actions/checkout@v4          # リポジトリの内容を取得する
+      - uses: actions/setup-python@v5      # Python をインストールする
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Run tests
+        run: pytest

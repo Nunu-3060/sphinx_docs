@@ -1,0 +1,635 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>フラクタル &mdash; Python で作る
+ジェネラティブアート 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=64886222" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="セルオートマトンと反応拡散系" href="automata.html" />
+    <link rel="prev" title="距離関数による形状表現" href="shapes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python で作る
+ジェネラティブアート
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basics.html">基礎編：ジェネラティブアート特有の設計方針</a></li>
+<li class="toctree-l1"><a class="reference internal" href="color.html">色彩設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tiling.html">タイリングパターン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spirals.html">螺旋と曲線</a></li>
+<li class="toctree-l1"><a class="reference internal" href="noise.html">ノイズを使った表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shapes.html">距離関数による形状表現</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">フラクタル</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">再帰による図形生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#l-system">L-system でペンローズタイルを描く</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">マンデルブロ集合・ジュリア集合</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ifs">反復関数系（IFS）とカオスゲーム</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">ストレンジアトラクター</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="automata.html">セルオートマトンと反応拡散系</a></li>
+<li class="toctree-l1"><a class="reference internal" href="particles.html">パーティクルシステム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evolution.html">進化的アルゴリズム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_effects.html">画像を素材にした生成技法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gallery/index.html">ギャラリー</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考資料</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python で作る
+ジェネラティブアート</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">フラクタル</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>フラクタル<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="id2">
+<h2>再帰による図形生成<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p><strong>L-system</strong>（Lindenmayer system）は、文字列の書き換え規則を繰り返し適用して得られる文字列を、タートルグラフィックスとして解釈することで図形を描く手法である。もともとは植物の成長パターンをモデル化するために考案されたが、コッホ曲線のような古典的フラクタル図形も同じ枠組みで表現できる。</p>
+<p>手順は次の通り。</p>
+<ol class="arabic simple">
+<li><p>開始となる文字列（axiom）を決める。</p></li>
+<li><p>各文字を、書き換え規則（production rule）に従って別の文字列に置き換える。これを全文字に対して同時に行い、1 回分の書き換えとする。</p></li>
+<li><p>書き換えを指定回数繰り返し、最終的な文字列を得る。</p></li>
+<li><p>できあがった文字列を先頭から 1 文字ずつ読み、タートルグラフィックス（現在位置と向きを持ったペンを動かす描画方式）として解釈する。</p></li>
+</ol>
+<p>タートルグラフィックスの解釈規則は自由に決められるが、本実装では次の記号を使う一般的な流儀に従う。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">F</span></code>: 現在の向きに一定距離だけ前進しながら線を引く</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">+</span></code> / <code class="docutils literal notranslate"><span class="pre">-</span></code>: 向きを一定角度だけ左/右に回転する</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[</span></code> / <code class="docutils literal notranslate"><span class="pre">]</span></code>: 現在の位置と向きをスタックに退避/復帰する。分岐を表現するときに使い、<code class="docutils literal notranslate"><span class="pre">]</span></code> で退避しておいた分岐の付け根に戻ってから続きを描く</p></li>
+<li><p>それ以外の文字（<code class="docutils literal notranslate"><span class="pre">X</span></code> など）: 描画には影響しない。書き換え規則を複雑にするためだけに使うダミー記号</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">F</span></code> を前進、<code class="docutils literal notranslate"><span class="pre">X</span></code> をダミーとして使う植物風の規則 <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">-&gt;</span> <span class="pre">F+[[X]-X]-F[-FX]+X</span></code>, <code class="docutils literal notranslate"><span class="pre">F</span> <span class="pre">-&gt;</span> <span class="pre">FF</span></code> を角度 25 度で適用すると、反復のたびに枝分かれが増えていく樹木状の構造が得られる。</p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">examples/l_system.py の generate 関数</span><a class="headerlink" href="#id5" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="n">axiom</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rules</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;axiom に production rules を iterations 回適用した文字列を返す。</span>
+
+<span class="sd">    各文字を ``rules`` に従って並列に置換する処理を ``iterations`` 回</span>
+<span class="sd">    繰り返す。``rules`` に登録のない文字はそのまま残る。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">current</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">axiom</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
+        <span class="n">rewritten</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">rules</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">ch</span><span class="p">)</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">current</span><span class="p">]</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rewritten</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">current</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">examples/l_system.py の draw_l_system 関数</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">draw_l_system</span><span class="p">(</span>
+    <span class="n">instructions</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">angle_deg</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">start_pos</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">start_angle_deg</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">image_size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">line_color</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span>
+    <span class="n">background</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>
+    <span class="n">draw_chars</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;FG&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;L-systemの文字列をタートルグラフィックスとして解釈し描画する。</span>
+
+<span class="sd">    ``draw_chars`` に含まれる文字が現れるたびに、現在の向きへ</span>
+<span class="sd">    ``step`` だけ前進しながら線を引く。既定の ``&quot;FG&quot;`` は専用の</span>
+<span class="sd">    終端記号を使う流儀向けで、非終端記号自体を前進の合図として</span>
+<span class="sd">    使う規則（例えばペンローズタイル）では、その記号を渡す。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">,</span> <span class="n">image_size</span><span class="p">,</span> <span class="n">background</span><span class="p">)</span>
+    <span class="n">draw</span><span class="p">:</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">ImageDraw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">start_pos</span>
+    <span class="n">angle</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">start_angle_deg</span>
+    <span class="n">stack</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">instructions</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">draw_chars</span><span class="p">:</span>
+            <span class="n">rad</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+            <span class="n">next_x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">step</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">rad</span><span class="p">)</span>
+            <span class="n">next_y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">step</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">rad</span><span class="p">)</span>
+            <span class="n">draw</span><span class="o">.</span><span class="n">line</span><span class="p">([(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="p">(</span><span class="n">next_x</span><span class="p">,</span> <span class="n">next_y</span><span class="p">)],</span> <span class="n">fill</span><span class="o">=</span><span class="n">line_color</span><span class="p">)</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">next_x</span><span class="p">,</span> <span class="n">next_y</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;+&quot;</span><span class="p">:</span>
+            <span class="n">angle</span> <span class="o">+=</span> <span class="n">angle_deg</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
+            <span class="n">angle</span> <span class="o">-=</span> <span class="n">angle_deg</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;[&quot;</span><span class="p">:</span>
+            <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">angle</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;]&quot;</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">angle</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">image</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/l_system_tree.png"><img alt="L-system による樹木状の分岐フラクタル" src="_images/l_system_tree.png" style="width: 400px;" />
+</a>
+<p>同じ <code class="docutils literal notranslate"><span class="pre">generate</span></code> / <code class="docutils literal notranslate"><span class="pre">draw_l_system</span></code> の組み合わせで、axiom と規則を変えるだけでまったく違う図形になる。正三角形を初期形 <code class="docutils literal notranslate"><span class="pre">F--F--F</span></code> とし、各辺を <code class="docutils literal notranslate"><span class="pre">F</span> <span class="pre">-&gt;</span> <span class="pre">F+F--F+F</span></code>（角度 60 度）で置き換えると、おなじみのコッホ雪片になる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">l_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_l_system</span><span class="p">,</span> <span class="n">generate</span>
+
+<span class="n">koch_str</span> <span class="o">=</span> <span class="n">generate</span><span class="p">(</span><span class="s2">&quot;F--F--F&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;F&quot;</span><span class="p">:</span> <span class="s2">&quot;F+F--F+F&quot;</span><span class="p">},</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">koch_image</span> <span class="o">=</span> <span class="n">draw_l_system</span><span class="p">(</span>
+    <span class="n">koch_str</span><span class="p">,</span>
+    <span class="n">angle_deg</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>
+    <span class="n">step</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span>
+    <span class="n">start_pos</span><span class="o">=</span><span class="p">(</span><span class="mf">60.0</span><span class="p">,</span> <span class="mf">450.0</span><span class="p">),</span>
+    <span class="n">start_angle_deg</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">image_size</span><span class="o">=</span><span class="p">(</span><span class="mi">600</span><span class="p">,</span> <span class="mi">620</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/koch_snowflake.png"><img alt="L-system の規則から生成したコッホ雪片" src="_images/koch_snowflake.png" style="width: 400px;" />
+</a>
+<p>反復回数（<code class="docutils literal notranslate"><span class="pre">iterations</span></code>）を増やすほど、樹木は枝の階層が深くなり、コッホ雪片は輪郭のギザギザがより細かくなる。文字列の長さは反復ごとにおおよそ 4 倍前後に増えるため（コッホ雪片の規則 <code class="docutils literal notranslate"><span class="pre">F</span> <span class="pre">-&gt;</span> <span class="pre">F+F--F+F</span></code> では文字数がちょうど 4 倍、樹木の規則でも反復を重ねるほど 4 倍に近づく）、反復回数を上げすぎると描画に時間がかかる点には注意する。</p>
+</section>
+<section id="l-system">
+<h2>L-system でペンローズタイルを描く<a class="headerlink" href="#l-system" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="tiling.html"><span class="doc">タイリングパターン</span></a>では、ペンローズタイルを Robinson 三角形の細分割によって構成したが、実は L-system でも同じ模様を描ける。ただし、ここまでの <code class="docutils literal notranslate"><span class="pre">F</span></code> を前進記号として使う流儀とは少し違う書き方をする。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>axiom: [N]++[N]++[N]++[N]++[N]
+M -&gt; OA++PA----NA[-OA----MA]++
+N -&gt; +OA--PA[---MA--NA]+
+O -&gt; -MA++NA[+++OA++PA]-
+P -&gt; --OA++++MA[+PA++++NA]--NA
+A -&gt; (空文字列)
+角度: 36度
+</pre></div>
+</div>
+<p>専用の終端記号 <code class="docutils literal notranslate"><span class="pre">F</span></code> を用意する代わりに、非終端記号 <code class="docutils literal notranslate"><span class="pre">M</span></code> / <code class="docutils literal notranslate"><span class="pre">N</span></code> / <code class="docutils literal notranslate"><span class="pre">O</span></code> / <code class="docutils literal notranslate"><span class="pre">P</span></code> 自体を「前進しながら線を引く」合図として使う。<code class="docutils literal notranslate"><span class="pre">A</span></code> は使い切りの前進命令で、次の世代では空文字列に置き換わって消えるため、古い世代の線分が新しい世代に残ってしまうことがない。角度 36 度は、公理の <code class="docutils literal notranslate"><span class="pre">++</span></code>（72 度の回転）5 個ぶんで一周する、5 回対称の構成に対応する。</p>
+<p>この規則は <code class="docutils literal notranslate"><span class="pre">generate</span></code> をそのまま使って展開できる（<code class="docutils literal notranslate"><span class="pre">A</span></code> の置き換え先が空文字列というだけで、特別な処理は必要ない）。描画側だけ、前進の合図とする文字集合を、先ほど示した <code class="docutils literal notranslate"><span class="pre">draw_l_system</span></code> の <code class="docutils literal notranslate"><span class="pre">draw_chars</span></code> 引数で切り替える。</p>
+<a class="reference internal image-reference" href="_images/penrose_lsystem.png"><img alt="L-system の文字列書き換えから生成したペンローズタイル。細分割による実装と同じ模様になる" src="_images/penrose_lsystem.png" style="width: 600px;" />
+</a>
+<p><a class="reference internal" href="tiling.html"><span class="doc">タイリングパターン</span></a>の三角形細分割による実装が「1 枚の三角形を 2〜3 枚に分割する」という幾何学的な操作を直接プログラムしていたのに対し、こちらは文字列の書き換えという、コッホ雪片や樹木と全く同じ枠組みでペンローズタイルを表現している。同じ図形でも複数のアルゴリズムで到達できるという、フラクタルらしい対応関係の一例と言える。</p>
+</section>
+<section id="id3">
+<h2>マンデルブロ集合・ジュリア集合<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>マンデルブロ集合・ジュリア集合は、複素数平面上での単純な漸化式を反復するだけで無限に複雑な境界を持つ図形が現れる、フラクタルの代表例である。どちらも同じ漸化式を使う。</p>
+<div class="math notranslate nohighlight">
+\[z_{n+1} = z_n^2 + c\]</div>
+<p>この式を初期値 <span class="math notranslate nohighlight">\(z_0\)</span> から反復したとき、<span class="math notranslate nohighlight">\(|z_n|\)</span> が発散せずに有界にとどまるか、それとも無限大に発散するかで、平面上の各点を 2 種類に分類できる。実用上は「何回反復した時点で <span class="math notranslate nohighlight">\(|z_n| &gt; 2\)</span> を超えたか」という<strong>脱出時間</strong>（escape time）を数え、有界（発散しなかった）点は集合の内部として、発散した点は脱出時間の大小をカラーマップの濃淡や色相に対応させて描く。（<span class="math notranslate nohighlight">\(|z_n|\)</span> が一度でも 2 を超えると、その後は必ず無限大に発散することが示せるため、2 が閾値として使われる。）</p>
+<p>マンデルブロ集合とジュリア集合の違いは、この漸化式のどちらを画素座標に対応させるかだけである。</p>
+<ul class="simple">
+<li><p><strong>マンデルブロ集合</strong>: <span class="math notranslate nohighlight">\(z_0 = 0\)</span> に固定し、複素平面上の画素座標を <span class="math notranslate nohighlight">\(c\)</span> として反復する。</p></li>
+<li><p><strong>ジュリア集合</strong>: <span class="math notranslate nohighlight">\(c\)</span> を 1 つの定数に固定し、複素平面上の画素座標を <span class="math notranslate nohighlight">\(z_0\)</span> として反復する。</p></li>
+</ul>
+<p>実装上のポイントは、画素ごとに Python のループを回すのではなく、「まだ発散していない画素」を表すブールマスクを使い、NumPy 配列全体に対する演算として反復することである。反復回数（<code class="docutils literal notranslate"><span class="pre">max_iter</span></code>）分だけ Python のループを回す必要はあるが、その内側は画素配列全体へのベクトル演算になっており、画像の解像度が上がってもループ本体の実行回数は増えない。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">examples/mandelbrot.py の _escape_time 関数</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_escape_time</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">z0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">bailout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;漸化式 z_{n+1} = z_n^2 + c を反復し、各画素の脱出時間を返す。</span>
+
+<span class="sd">    発散しなかった画素（集合の内部）には ``max_iter`` を割り当てる。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">z0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">iterations</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">active</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+        <span class="n">z</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">c</span><span class="p">[</span><span class="n">active</span><span class="p">]</span>
+        <span class="n">escaped</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">active</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">bailout</span><span class="p">)</span>
+        <span class="n">iterations</span><span class="p">[</span><span class="n">escaped</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">active</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">escaped</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">active</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">break</span>
+
+    <span class="n">iterations</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_iter</span>
+    <span class="k">return</span> <span class="n">iterations</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">examples/mandelbrot.py の mandelbrot_escape 関数</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">mandelbrot_escape</span><span class="p">(</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">re_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">),</span>
+    <span class="n">im_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">),</span>
+    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;マンデルブロ集合の脱出時間配列 (height, width) を返す。</span>
+
+<span class="sd">    画素座標を ``c`` として使い、``z0 = 0`` から反復する。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_complex_grid</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">re_range</span><span class="p">,</span> <span class="n">im_range</span><span class="p">)</span>
+    <span class="n">z0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_escape_time</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>脱出時間の配列は、そのままではグレースケール画像にしかならないので、matplotlib のカラーマップで着色して見やすくする。反復回数の分布は外周ほど密になるため、平方根を取ってから正規化すると階調のメリハリが出やすい。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">examples/mandelbrot.py の render_image 関数</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">render_image</span><span class="p">(</span>
+    <span class="n">iterations</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">cmap_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;inferno&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;脱出時間配列をカラーマップで着色し、PNGとして保存する。</span>
+
+<span class="sd">    反復回数をそのまま使うと外周の色変化が急なので、平方根を取って</span>
+<span class="sd">    階調を引き伸ばす。集合の内部（発散しなかった画素）は黒で塗る。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">normalized</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">iterations</span> <span class="o">/</span> <span class="n">max_iter</span><span class="p">)</span>
+    <span class="n">cmap</span> <span class="o">=</span> <span class="n">colormaps</span><span class="p">[</span><span class="n">cmap_name</span><span class="p">]</span>
+    <span class="n">rgba</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">cmap</span><span class="p">(</span><span class="n">normalized</span><span class="p">)</span>
+    <span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span><span class="n">rgba</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+
+    <span class="n">interior</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">iterations</span> <span class="o">&gt;=</span> <span class="n">max_iter</span>
+    <span class="n">rgb</span><span class="p">[</span><span class="n">interior</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">rgb</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/mandelbrot.png"><img alt="脱出時間アルゴリズムで描画したマンデルブロ集合" src="_images/mandelbrot.png" style="width: 400px;" />
+</a>
+<p>ジュリア集合は、<code class="docutils literal notranslate"><span class="pre">c</span></code> を固定した上で <code class="docutils literal notranslate"><span class="pre">z0</span></code> 側を画素座標にして同じ <code class="docutils literal notranslate"><span class="pre">_escape_time</span></code> を呼ぶだけで得られる。<code class="docutils literal notranslate"><span class="pre">c</span></code> の値によって形が大きく変わるのが特徴で、境界付近の値（例えば <code class="docutils literal notranslate"><span class="pre">c</span> <span class="pre">=</span> <span class="pre">-0.7</span> <span class="pre">+</span> <span class="pre">0.27015j</span></code>）を選ぶと、渦を巻いたような複雑な模様になる。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">examples/mandelbrot.py の julia_escape 関数</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">julia_escape</span><span class="p">(</span>
+    <span class="n">c_value</span><span class="p">:</span> <span class="nb">complex</span><span class="p">,</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">re_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span>
+    <span class="n">im_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span>
+    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ジュリア集合の脱出時間配列 (height, width) を返す。</span>
+
+<span class="sd">    マンデルブロ集合とは役割が逆になり、``c`` は定数 ``c_value`` に</span>
+<span class="sd">    固定し、画素座標を初期値 ``z0`` として反復する。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">z0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_complex_grid</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">re_range</span><span class="p">,</span> <span class="n">im_range</span><span class="p">)</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">z0</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">c_value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_escape_time</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/julia.png"><img alt="c = -0.7 + 0.27015j に対するジュリア集合" src="_images/julia.png" style="width: 400px;" />
+</a>
+<p>マンデルブロ集合上のある点 <span class="math notranslate nohighlight">\(c\)</span> が集合の境界に近いほど、その <span class="math notranslate nohighlight">\(c\)</span> を使ったジュリア集合は複雑な形状になる傾向がある。マンデルブロ集合を「どのジュリア集合が興味深い形になるかを示す地図」として眺めることもできる。</p>
+</section>
+<section id="ifs">
+<h2>反復関数系（IFS）とカオスゲーム<a class="headerlink" href="#ifs" title="Link to this heading"></a></h2>
+<p>L-system が文字列の書き換え、マンデルブロ/ジュリア集合が複素数の反復だったのに対し、<strong>反復関数系</strong>（IFS: Iterated Function System）は、平面上の点にアフィン変換（拡大縮小・回転・平行移動の組み合わせ）を繰り返し適用することでフラクタルを生み出す、第 3 の手法である。</p>
+<p>具体的な手続きは<strong>カオスゲーム</strong>と呼ばれ、次のように進める。</p>
+<ol class="arabic simple">
+<li><p>あらかじめ複数のアフィン変換と、それぞれを選ぶ確率を用意する。</p></li>
+<li><p>適当な点から出発し、毎ステップ、用意した変換の中から確率に従って 1 つをランダムに選び、現在の点に適用する。</p></li>
+<li><p>最初の数ステップ（原点付近をさまよう過渡的な部分）を捨て、それ以降の点を全て描画する。</p></li>
+</ol>
+<p>驚くべきことに、変換とその確率さえ正しく選べば、点がどのような順序で変換を選んでも、十分な数の点を打てば同じ図形（アトラクター）が浮かび上がってくる。1 本の軌跡は「直前の点」に依存する逐次処理だが、独立した軌跡を多数同時に走らせれば、ステップごとの更新は NumPy でベクトル化できる。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">examples/ifs.py の chaos_game 関数</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">chaos_game</span><span class="p">(</span>
+    <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;カオスゲームにより num_points 本の軌跡を num_steps ステップ進める。</span>
+
+<span class="sd">    ``coeffs`` は形状 ``(変換数, 6)`` の配列で、各行が</span>
+<span class="sd">    ``(a, b, c, d, e, f)`` というアフィン変換</span>
+<span class="sd">    ``(x, y) -&gt; (a*x + b*y + e, c*x + d*y + f)`` を表す。``weights``</span>
+<span class="sd">    は各変換を選ぶ確率。戻り値は形状 ``(num_steps, num_points, 2)``。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_points</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">num_transforms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
+        <span class="n">choice</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="n">num_transforms</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_points</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">weights</span>
+        <span class="p">)</span>
+        <span class="n">selected</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">coeffs</span><span class="p">[</span><span class="n">choice</span><span class="p">]</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">new_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">selected</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">selected</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span>
+        <span class="n">new_x</span> <span class="o">+=</span> <span class="n">selected</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span>
+        <span class="n">new_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">selected</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">selected</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span>
+        <span class="n">new_y</span> <span class="o">+=</span> <span class="n">selected</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">new_x</span><span class="p">,</span> <span class="n">new_y</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">=</span> <span class="n">points</span>
+
+    <span class="k">return</span> <span class="n">trail</span>
+</pre></div>
+</div>
+</div>
+<p>有名な例が<strong>バーンズリーのシダ</strong>で、4 つのアフィン変換（茎、小葉、左右の葉）を、偏った確率（茎はごくまれにしか選ばれない）で適用すると、本物のシダによく似た葉序が現れる。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">examples/ifs.py の barnsley_fern_ifs 関数</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">barnsley_fern_ifs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;バーンズリーのシダを描く4つのアフィン変換と、その選択確率。&quot;&quot;&quot;</span>
+    <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">[</span><span class="mf">0.00</span><span class="p">,</span> <span class="mf">0.00</span><span class="p">,</span> <span class="mf">0.00</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.00</span><span class="p">,</span> <span class="mf">0.00</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.04</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.00</span><span class="p">,</span> <span class="mf">1.60</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">0.20</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.26</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">,</span> <span class="mf">0.22</span><span class="p">,</span> <span class="mf">0.00</span><span class="p">,</span> <span class="mf">1.60</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.28</span><span class="p">,</span> <span class="mf">0.26</span><span class="p">,</span> <span class="mf">0.24</span><span class="p">,</span> <span class="mf">0.00</span><span class="p">,</span> <span class="mf">0.44</span><span class="p">],</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">weights</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/ifs_fern.png"><img alt="バーンズリーのシダ（カオスゲームによる IFS フラクタル）" src="_images/ifs_fern.png" style="width: 300px;" />
+</a>
+<p>もう 1 つの定番が<strong>シェルピンスキーの三角形</strong>である。正三角形の 3 頂点それぞれに対して「現在の点とその頂点の中点に移動する」という変換を用意し、等確率で選ぶだけで、無限に自己相似な三角形の抜け模様が現れる。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">examples/ifs.py の sierpinski_triangle_ifs 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">sierpinski_triangle_ifs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;正三角形の3頂点それぞれへ向けて縮小する3つのアフィン変換。</span>
+
+<span class="sd">    どの変換も「現在の点と頂点の中点に移動する」という</span>
+<span class="sd">    ``p -&gt; (p + v_i) / 2`` の形をしており、これを繰り返すだけで</span>
+<span class="sd">    シェルピンスキーの三角形が現れる。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vertices</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.8660254</span><span class="p">]]</span>
+    <span class="p">)</span>
+    <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">vx</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">vy</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">vx</span><span class="p">,</span> <span class="n">vy</span> <span class="ow">in</span> <span class="n">vertices</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">weights</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/ifs_sierpinski.png"><img alt="シェルピンスキーの三角形（カオスゲームによる IFS フラクタル）" src="_images/ifs_sierpinski.png" style="width: 350px;" />
+</a>
+<p>打った点は密度にかなりの偏りがあるため、そのまま 2 次元ヒストグラムにすると濃い部分だけが目立ってしまう。対数を取ってから正規化することで、点数の少ない領域（シダで言えば葉の先端など）も見えるようにしている。</p>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">examples/ifs.py の render_density 関数</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">render_density</span><span class="p">(</span>
+    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span>
+    <span class="n">warmup</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;IFSの軌跡を2次元ヒストグラムとして描画し、対数スケールで濃淡をつける。</span>
+
+<span class="sd">    描画範囲は点群の実際の分布から自動的に決め、画像の縦横比もその</span>
+<span class="sd">    範囲に合わせて決定する(``height`` だけを指定すればよい)。最初の</span>
+<span class="sd">    ``warmup`` ステップは、原点付近から離れて実際のアトラクターに</span>
+<span class="sd">    乗るまでの過渡的な部分なので描画から除く。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">trail</span><span class="p">[</span><span class="n">warmup</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">x_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="n">x_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">y_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="n">y_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">x_span</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">x_max</span> <span class="o">-</span> <span class="n">x_min</span>
+    <span class="n">y_span</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">y_max</span> <span class="o">-</span> <span class="n">y_min</span>
+    <span class="n">x_pad</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">x_span</span> <span class="o">*</span> <span class="n">margin</span>
+    <span class="n">y_pad</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">y_span</span> <span class="o">*</span> <span class="n">margin</span>
+    <span class="n">x_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_min</span> <span class="o">-</span> <span class="n">x_pad</span><span class="p">,</span> <span class="n">x_max</span> <span class="o">+</span> <span class="n">x_pad</span><span class="p">)</span>
+    <span class="n">y_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_min</span> <span class="o">-</span> <span class="n">y_pad</span><span class="p">,</span> <span class="n">y_max</span> <span class="o">+</span> <span class="n">y_pad</span><span class="p">)</span>
+
+    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="mi">1</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="p">(</span><span class="n">x_span</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x_pad</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">y_span</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">y_pad</span><span class="p">))</span>
+    <span class="p">)</span>
+
+    <span class="n">hist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">hist</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span>
+        <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="n">bins</span><span class="o">=</span><span class="p">[</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">],</span>
+        <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">y_range</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">x_range</span><span class="p">)],</span>
+    <span class="p">)</span>
+    <span class="n">hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span>
+    <span class="n">density</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span>
+    <span class="n">max_density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">density</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">normalized</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">density</span> <span class="o">/</span> <span class="n">max_density</span> <span class="k">if</span> <span class="n">max_density</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">density</span>
+    <span class="p">)</span>
+
+    <span class="n">background</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="mf">255.0</span><span class="p">)</span>
+    <span class="n">fg</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">pixels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">background</span> <span class="o">+</span> <span class="p">(</span><span class="n">fg</span> <span class="o">-</span> <span class="n">background</span><span class="p">)</span> <span class="o">*</span> <span class="n">normalized</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">pixels</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<p>L-system が「規則を厳密に適用した結果としての 1 つの図形」を作るのに対し、IFS のカオスゲームは点を打つたびに乱数が絡む確率的な手法である点が対照的である。ただしどちらも、ごく単純な規則の反復から複雑な自己相似図形が生まれるという、フラクタルに共通する性質を体現している。</p>
+</section>
+<section id="id4">
+<h2>ストレンジアトラクター<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>IFS のカオスゲームは「複数の変換をランダムに選んで反復する」手法だったが、ここではさらに単純に、<strong>ただ 1 つの非線形な写像を、ランダム選択なしにひたすら反復する</strong>ことで複雑な図形を得る方法を扱う。それにもかかわらず、初期値のごくわずかな違いが反復のたびに指数的に拡大していく性質（<strong>初期値鋭敏性</strong>、いわゆるカオス）を持つ系では、軌跡がどこにも収束せず無限に複雑な模様を描き続ける。この極限の模様を<strong>ストレンジアトラクター</strong>と呼ぶ。</p>
+<p>この現象自体は、1963 年に気象学者 Edward Lorenz が対流モデルを単純化した 3 本の常微分方程式（<strong>ローレンツ方程式</strong>）を数値計算した際、初期値のごくわずかな丸め誤差が計算結果を全く違う天気予報に導いてしまうことを発見した、いわゆる「バタフライ効果」として広く知られている。一方「ストレンジアトラクター」という言葉自体は、それから 8 年後の 1971 年に数理物理学者 David Ruelle と Floris Takens が乱流の発生を説明する論文の中で提唱したもので、Lorenz が見出した軌跡の形（ローレンツアトラクター）は、後にこの言葉が指す代表例の 1 つとして位置づけられることになった。ローレンツアトラクターは 3 次元の連続時間力学系であり、本資料のような 2 次元の静止画中心の作例とは相性が良くないため実装は割愛するが、「決定論的な式なのに、初期値のわずかな違いで予測不能なほど軌道が発散する」というカオスの本質は、これから扱う 2 次元の離散写像でも共通している。</p>
+<p>2 次元平面上の点 <span class="math notranslate nohighlight">\((x, y)\)</span> を、非線形な三角関数を含む式で次の点に写す離散写像であれば、同様の性質を持つものが数多く知られている。実装上は IFS と同様、多数の点をわずかにばらけた初期位置から出発させて並行に反復し、密度を可視化する。レンダリングには、先ほどの IFS の節で使った <code class="docutils literal notranslate"><span class="pre">render_density</span></code> をそのまま使い回せる。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">examples/attractors.py の clifford_attractor 関数</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">clifford_attractor</span><span class="p">(</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">d</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Clifford attractor。</span>
+
+<span class="sd">    x&#39; = sin(a*y) + c*cos(a*x), y&#39; = sin(b*x) + d*cos(b*y) を反復する。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_points</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_points</span><span class="p">)</span>
+    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
+        <span class="n">next_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">next_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">next_x</span><span class="p">,</span> <span class="n">next_y</span>
+        <span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+
+    <span class="k">return</span> <span class="n">trail</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/attractor_clifford.png"><img alt="Clifford attractor の密度可視化。羽のように流れる有機的な模様" src="_images/attractor_clifford.png" style="width: 350px;" />
+</a>
+<p><strong>De Jong attractor</strong> も同様の形の写像で、パラメータが変わるだけで全く異なる印象の模様になる。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">examples/attractors.py の de_jong_attractor 関数</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">de_jong_attractor</span><span class="p">(</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">d</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;De Jong attractor。</span>
+
+<span class="sd">    x&#39; = sin(a*y) - cos(b*x), y&#39; = sin(c*x) - cos(d*y) を反復する。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_points</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_points</span><span class="p">)</span>
+    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
+        <span class="n">next_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">next_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">d</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">next_x</span><span class="p">,</span> <span class="n">next_y</span>
+        <span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+
+    <span class="k">return</span> <span class="n">trail</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/attractor_de_jong.png"><img alt="De Jong attractor の密度可視化。ハート型に流れる有機的な模様" src="_images/attractor_de_jong.png" style="width: 350px;" />
+</a>
+<p><strong>Gumowski-Mira map</strong> は、次の補助関数 <span class="math notranslate nohighlight">\(g(x)\)</span> を介した、やや込み入った写像である。パラメータ次第で、花びらや渦が幾重にも重なったような、装飾的な模様が現れる。</p>
+<div class="math notranslate nohighlight">
+\[g(x) = \mu x + \frac{2(1-\mu)x^2}{1+x^2}\]</div>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">examples/attractors.py の gumowski_mira_attractor 関数</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">gumowski_mira_attractor</span><span class="p">(</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">mu</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gumowski-Mira map。</span>
+
+<span class="sd">    補助関数 ``g(x) = mu*x + 2*(1-mu)*x^2/(1+x^2)`` を使い、</span>
+<span class="sd">    ``x&#39; = y + a*(1 - b*y^2)*y + g(x)``、``y&#39; = -x + g(x&#39;)``</span>
+<span class="sd">    という写像を反復する（``x&#39;`` は上式で求めた新しい x）。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_points</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">num_points</span><span class="p">)</span>
+    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
+        <span class="n">next_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">b</span> <span class="o">*</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">y</span> <span class="o">+</span> <span class="n">_gumowski_mira_g</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">mu</span>
+        <span class="p">)</span>
+        <span class="n">next_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="o">-</span><span class="n">x</span> <span class="o">+</span> <span class="n">_gumowski_mira_g</span><span class="p">(</span><span class="n">next_x</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">next_x</span><span class="p">,</span> <span class="n">next_y</span>
+        <span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+
+    <span class="k">return</span> <span class="n">trail</span>
+</pre></div>
+</div>
+</div>
+<a class="reference internal image-reference" href="_images/attractor_gumowski_mira.png"><img alt="Gumowski-Mira map の密度可視化。花びら状に広がる装飾的な模様" src="_images/attractor_gumowski_mira.png" style="width: 350px;" />
+</a>
+<p>同じ「点を反復して打つ」手法でも、IFS のカオスゲームは角ばった自己相似図形に、ストレンジアトラクターはなめらかに流れる有機的な模様になる。前者は複数の縮小写像をランダムに選ぶことで図形に収束させ、後者はただ 1 つの写像を反復するだけで、初期値鋭敏性そのものが軌跡を面状に広げる。パラメータ（式中の <span class="math notranslate nohighlight">\(a, b, c, d\)</span> など）を少し変えるだけで模様が大きく変わるため、値を振ってみるだけでも新しい発見がある。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="shapes.html" class="btn btn-neutral float-left" title="距離関数による形状表現" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="automata.html" class="btn btn-neutral float-right" title="セルオートマトンと反応拡散系" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

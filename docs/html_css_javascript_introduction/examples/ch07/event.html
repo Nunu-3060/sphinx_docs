@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>イベントの例</title>
+  <style>
+    #outer {
+      padding: 24px;
+      background-color: #eef4fb;
+    }
+
+    #inner {
+      padding: 16px;
+      background-color: steelblue;
+      color: white;
+    }
+
+    .error {
+      color: crimson;
+    }
+  </style>
+</head>
+<body>
+  <h1>イベントの例</h1>
+
+  <h2>イベントオブジェクトとバブリング</h2>
+  <div id="outer">
+    outer
+    <div id="inner">inner (クリックしてみる)</div>
+  </div>
+  <pre id="log"></pre>
+
+  <h2>フォーム入力の取得と検証</h2>
+  <form id="signup-form" novalidate>
+    <label for="username">ユーザー名 (3 文字以上)</label>
+    <input type="text" id="username" name="username">
+    <button type="submit">登録</button>
+    <p id="form-message"></p>
+  </form>
+
+  <h2>innerHTML と textContent の違い</h2>
+  <input type="text" id="comment" value="&lt;img src=x onerror=&quot;alert('XSS')&quot;&gt;" size="50">
+  <button id="safe-button" type="button">textContent で表示 (安全)</button>
+  <button id="unsafe-button" type="button">innerHTML で表示 (危険)</button>
+  <div id="preview"></div>
+
+  <script>
+    // ===== バブリング =====
+    const log = document.querySelector("#log");
+
+    function writeLog(text) {
+      log.textContent += `${text}\n`;
+    }
+
+    document.querySelector("#inner").addEventListener("click", (event) => {
+      // event.target: 実際にクリックされた要素
+      // event.currentTarget: このリスナーを登録した要素
+      writeLog(`inner のリスナー: target=${event.target.id}`);
+    });
+
+    document.querySelector("#outer").addEventListener("click", (event) => {
+      // inner をクリックしても、イベントが親に伝わってここも実行される
+      writeLog(`outer のリスナー: target=${event.target.id}, currentTarget=${event.currentTarget.id}`);
+    });
+
+    // ===== フォームの検証 =====
+    const form = document.querySelector("#signup-form");
+    const formMessage = document.querySelector("#form-message");
+
+    form.addEventListener("submit", (event) => {
+      // 既定の動作 (ページ遷移を伴う送信) を止める
+      event.preventDefault();
+
+      const username = form.elements.username.value.trim();
+      if (username.length < 3) {
+        formMessage.className = "error";
+        formMessage.textContent = "ユーザー名は 3 文字以上で入力してください。";
+        return;
+      }
+      formMessage.className = "";
+      formMessage.textContent = `${username} さんを登録しました (実際には送信していません)。`;
+    });
+
+    // ===== innerHTML の危険性 =====
+    const comment = document.querySelector("#comment");
+    const preview = document.querySelector("#preview");
+
+    document.querySelector("#safe-button").addEventListener("click", () => {
+      // 文字列はそのまま文字として表示される
+      preview.textContent = comment.value;
+    });
+
+    document.querySelector("#unsafe-button").addEventListener("click", () => {
+      // 文字列が HTML として解釈され、埋め込まれたスクリプトが実行されてしまう
+      preview.innerHTML = comment.value;
+    });
+  </script>
+</body>
+</html>
