@@ -1,0 +1,43 @@
+// 第8章「共有ライブラリ」の @Library 利用例。
+//
+// このファイルを動かすには、shared-library-example/README.md の手順に従い、
+// shared-library-example/ を単独リポジトリとして Jenkins に
+// 「sample-shared-library」という名前で登録しておく必要がある。
+// 登録していない場合はエラーになるため、通常の動作確認には
+// Jenkinsfile（Declarative 版）を使うこと。
+@Library('sample-shared-library@main') _
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'python -m venv .venv'
+                sh '. .venv/bin/activate && pip install -r requirements.txt'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh '. .venv/bin/activate && pytest --junitxml=reports/junit.xml'
+            }
+        }
+
+        stage('Deploy') {
+            when { branch 'main' }
+            steps {
+                deployApp('production')
+            }
+        }
+    }
+
+    post {
+        always {
+            junit allowEmptyResults: true, testResults: 'reports/junit.xml'
+        }
+        failure {
+            notifySlack(channel: '#ci-alerts', status: 'FAILURE')
+        }
+    }
+}

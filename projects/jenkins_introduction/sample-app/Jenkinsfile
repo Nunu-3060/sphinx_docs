@@ -1,0 +1,156 @@
+// 「Jenkins & Jenkins Pipeline 入門」第4・5・7・9・10章に対応するサンプル。
+// Multibranch Pipeline ジョブとして読み込むことを想定している
+// （develop ブランチはステージング、main ブランチは本番承認付きデプロイ）。
+// 第5章「よく使う Steps 一覧」で紹介したステップ
+// （checkout / stash・unstash / archiveArtifacts / junit / isUnix / dir /
+//   deleteDir / readFile・writeFile / sleep / unstable / nodesByLabel）を
+// できるだけ実際に使う形で構成している。
+pipeline {
+    agent any
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '5'))
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        choice(name: 'TARGET_ENV', choices: ['staging', 'production'], description: '手動実行時のデプロイ先')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'テストをスキップする')
+    }
+
+    stages {
+        stage('Clean workspace') {
+            steps {
+                script {
+                    echo "linux ラベルを持つノード: ${nodesByLabel('linux')}"
+                }
+                deleteDir()
+                checkout scm
+            }
+        }
+
+        stage('Check linux agents') {
+            // nodesByLabel と parallel を組み合わせ、ラベルに一致する
+            // エージェントの数だけ動的に並列ステージを生成する例。
+            // 一致するエージェントが無い場合は 0 件のまま何もせず完了する。
+            steps {
+                script {
+                    def branches = [:]
+                    nodesByLabel('linux').each { nodeName ->
+                        branches[nodeName] = {
+                            node(nodeName) {
+                                sh 'uname -a'
+                            }
+                        }
+                    }
+                    if (branches) {
+                        parallel branches
+                    } else {
+                        echo 'linux ラベルを持つエージェントが見つからなかったため、スキップしました。'
+                    }
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh 'python -m venv .venv'
+                        sh '. .venv/bin/activate && pip install -r requirements.txt'
+                    } else {
+                        bat 'python -m venv .venv'
+                        bat '.venv\\Scripts\\activate && pip install -r requirements.txt'
+                    }
+                }
+            }
+        }
+
+        stage('Lint & Test') {
+            when {
+                expression { !params.SKIP_TESTS }
+            }
+            parallel {
+                stage('Lint') {
+                    steps {
+                        sh '. .venv/bin/activate && ruff check app tests'
+                    }
+                }
+                stage('Unit tests') {
+                    steps {
+                        sh '. .venv/bin/activate && pytest --junitxml=reports/junit.xml'
+                    }
+                }
+            }
+        }
+
+        stage('Skip notice') {
+            when {
+                expression { params.SKIP_TESTS }
+            }
+            steps {
+                unstable('SKIP_TESTS が true のため、テストをスキップしてビルドしています。')
+            }
+        }
+
+        stage('Package') {
+            steps {
+                dir('dist') {
+                    sh 'tar czf app.tar.gz -C .. app requirements.txt'
+                    writeFile file: 'BUILD_INFO.txt', text: "build=${env.BUILD_NUMBER}\ntarget=${params.TARGET_ENV}\n"
+                }
+                archiveArtifacts artifacts: 'dist/*', fingerprint: true
+                stash name: 'dist', includes: 'dist/**'
+            }
+        }
+
+        stage('Deploy to staging') {
+            when { branch 'develop' }
+            steps {
+                unstash 'dist'
+                script {
+                    def info = readFile('dist/BUILD_INFO.txt')
+                    echo "デプロイするビルド情報:\n${info}"
+                }
+                sh './deploy.sh staging'
+                sleep time: 5, unit: 'SECONDS'
+                echo 'デプロイ後の安定待機が完了しました。'
+            }
+        }
+
+        stage('Approval') {
+            when { branch 'main' }
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    input message: '本番環境へデプロイしますか？', ok: 'Deploy'
+                }
+            }
+        }
+
+        stage('Deploy to production') {
+            when { branch 'main' }
+            steps {
+                unstash 'dist'
+                script {
+                    def info = readFile('dist/BUILD_INFO.txt')
+                    echo "デプロイするビルド情報:\n${info}"
+                }
+                sh './deploy.sh production'
+                sleep time: 5, unit: 'SECONDS'
+                echo 'デプロイ後の安定待機が完了しました。'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit allowEmptyResults: true, testResults: 'reports/junit.xml'
+        }
+        failure {
+            // 実際の通知連携の例は shared-library-example/vars/notifySlack.groovy
+            // と Jenkinsfile.with-shared-library を参照（第8・9章）。
+            echo "ビルド失敗: ${env.JOB_NAME} #${env.BUILD_NUMBER} (${env.BUILD_URL})"
+        }
+    }
+}
