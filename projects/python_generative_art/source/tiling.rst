@@ -9,6 +9,7 @@
 古典的なトルシェ・タイルは、正方形の対角線上にある 2 つの角を中心とした、半径がタイルの半分の四分円弧 2 本から成る。弧の両端は必ず辺の中点に来るため、どちらの対角線に弧を配置するか（2 通りの向き）をタイルごとに選ぶだけで、隣り合うタイルの弧がつながり、途切れない曲線の連なりになる。
 
 .. literalinclude:: ../examples/truchet.py
+   :linenos:
    :language: python
    :pyobject: draw_arc_tile
    :caption: examples/truchet.py の draw_arc_tile 関数
@@ -16,6 +17,7 @@
 各タイルの向きを一様乱数でランダムに選ぶと、迷路のような、あるいは配管が入り組んだような模様になる。
 
 .. literalinclude:: ../examples/truchet.py
+   :linenos:
    :language: python
    :pyobject: render_random_tiling
    :caption: examples/truchet.py の render_random_tiling 関数
@@ -30,6 +32,7 @@
 タイルの模様そのものを差し替えるだけで、生成される模様の印象はまったく違うものになる。四分円弧の代わりに対角線 1 本だけを引くタイルにすると、弧のようにはなめらかにつながらず、山型・谷型が入り組んだジグザグ模様（ヘリンボーンに近い見た目）になる。
 
 .. literalinclude:: ../examples/truchet.py
+   :linenos:
    :language: python
    :pyobject: draw_diagonal_tile
    :caption: examples/truchet.py の draw_diagonal_tile 関数
@@ -44,6 +47,7 @@
 向きの選び方を一様乱数からパーリンノイズに変えると、模様の印象が大きく変わる。:doc:`noise`\ の ``fbm2d`` の値の符号（正か負か）でタイルの向きを決めると、ノイズが近傍でなめらかに変化する性質がそのままタイルの向きの空間的なまとまりに反映され、ランダム配置のような無秩序さではなく、渦を巻いて流れるような有機的な模様になる。
 
 .. literalinclude:: ../examples/truchet.py
+   :linenos:
    :language: python
    :pyobject: render_noise_tiling
    :caption: examples/truchet.py の render_noise_tiling 関数
@@ -62,6 +66,7 @@
 そこで、タイルごとに縦横どちらを上にするかを、``(row + col) % 2`` という市松模様の規則で決め打ちにする。ランダムに選んでしまうと、同じ帯が 2 マス連続で「上」になってしまい、編み込みが破綻する。
 
 .. literalinclude:: ../examples/truchet.py
+   :linenos:
    :language: python
    :pyobject: draw_weave_tile
    :caption: examples/truchet.py の draw_weave_tile 関数
@@ -78,6 +83,7 @@
 正三角形格子は、上向き・下向きの三角形を交互に並べることで作れる。1 行に ``cols * 2`` 枚の三角形を並べ、それを ``rows`` 行分積み重ねる。
 
 .. literalinclude:: ../examples/polygon_tiling.py
+   :linenos:
    :language: python
    :pyobject: triangular_mesh
    :caption: examples/polygon_tiling.py の triangular_mesh 関数
@@ -89,6 +95,7 @@
 正六角形格子は、1 行おきに半セル分ずらして六角形を並べることで作れる（ハニカム構造と同じ配置）。
 
 .. literalinclude:: ../examples/polygon_tiling.py
+   :linenos:
    :language: python
    :pyobject: hex_centers
    :caption: examples/polygon_tiling.py の hex_centers 関数
@@ -107,11 +114,13 @@
 本来のワン・タイルは、あらかじめ用意したタイル集合の中から、周囲の制約を満たすタイルを探索して 1 枚ずつ配置していく。ここでは探索を行わない簡単な方法として、格子の内部にある縦線・横線それぞれに先にラベル（色）をランダムに割り当ててしまう。各タイルは、上下左右の境界線のラベルに従って 4 枚の三角形に塗り分けられるため、隣接するタイルの境界では、共有する線のラベルを通じて自動的に色が一致する。
 
 .. literalinclude:: ../examples/wang_tiles.py
+   :linenos:
    :language: python
    :pyobject: wang_edge_labels
    :caption: examples/wang_tiles.py の wang_edge_labels 関数
 
 .. literalinclude:: ../examples/wang_tiles.py
+   :linenos:
    :language: python
    :pyobject: render_wang_tiling
    :caption: examples/wang_tiles.py の render_wang_tiling 関数
@@ -144,11 +153,13 @@ WFC では、格子の各セルに、まだ置ける可能性のあるタイル�
    :width: 570px
 
 .. literalinclude:: ../examples/wfc.py
+   :linenos:
    :language: python
    :pyobject: pipe_tiles
    :caption: examples/wfc.py の pipe_tiles 関数
 
 .. literalinclude:: ../examples/wfc.py
+   :linenos:
    :language: python
    :pyobject: compatibility
    :caption: examples/wfc.py の compatibility 関数
@@ -156,6 +167,7 @@ WFC では、格子の各セルに、まだ置ける可能性のあるタイル�
 伝播では、確定したセル（または候補が減ったセル）に残っている候補のどれか 1 つとでもつながるタイルだけを、隣のセルの候補に残す。候補が減ったセルはスタックに積み、スタックが空になるまで同じ処理を続ける。
 
 .. literalinclude:: ../examples/wfc.py
+   :linenos:
    :language: python
    :pyobject: _propagate
    :caption: examples/wfc.py の _propagate 関数
@@ -163,6 +175,7 @@ WFC では、格子の各セルに、まだ置ける可能性のあるタイル�
 格子の外周のセルは、外側へ向かう辺に管がつながらないタイルだけを候補として始める。そのため、管は全て画面の中で閉じる。途中で候補が 1 つも残らないセルが出る（矛盾する）と、それ以上は進められないため、本実装では最初からやり直している。この配管タイルの組では、作例と同じ条件で 50 回試しても矛盾は起きなかったが、タイルの組によっては矛盾が起きやすくなる。
 
 .. literalinclude:: ../examples/wfc.py
+   :linenos:
    :language: python
    :pyobject: wave_function_collapse
    :caption: examples/wfc.py の wave_function_collapse 関数
@@ -192,6 +205,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 深さ優先探索でスタックに退避と復帰を繰り返しながら穴を掘り進めるこの手順は、スタックに「後で戻ってくる場所」を記録しながら木構造をたどる探索に共通する骨格を持つ（同じ考え方は、後の\ :doc:`fractals`\ で扱う L-system が ``[`` ``]`` でタートルの位置を退避・復帰させながら枝分かれを描く場面にも登場する）。実際、この手順は必ず「閉路を持たない、行き止まりのない 1 本道が張り巡らされた木構造の迷路」を作る。
 
 .. literalinclude:: ../examples/maze.py
+   :linenos:
    :language: python
    :pyobject: generate_maze
    :caption: examples/maze.py の generate_maze 関数
@@ -203,6 +217,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 迷路が閉路を持たない木構造であることから、2 点を結ぶ経路はそもそも 1 本しかない。したがって、幅優先探索でその唯一の経路を見つけるだけで最短経路（かつ唯一の経路）が求まる。
 
 .. literalinclude:: ../examples/maze.py
+   :linenos:
    :language: python
    :pyobject: solve_maze
    :caption: examples/maze.py の solve_maze 関数
@@ -223,6 +238,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 もっとも単純な例は、矩形を 2 つに分け続ける方法である。本実装では、矩形の長いほうの辺を、その 30〜70% の位置で分割する。分割が深くなるほど分割を止める確率を上げ（ただし最初の 2 段は必ず分割する）、辺が短くなりすぎる場合にも分割を止める。こうすると、大きな矩形と小さな矩形が混ざった構成になる。
 
 .. literalinclude:: ../examples/subdivision.py
+   :linenos:
    :language: python
    :pyobject: split_rect
    :caption: examples/subdivision.py の split_rect 関数
@@ -230,6 +246,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 分割した矩形を、白を主体に赤・青・黄・黒で塗り分け、太い黒線で区切ると、Piet Mondrian のコンポジションを思わせる画面になる。
 
 .. literalinclude:: ../examples/subdivision.py
+   :linenos:
    :language: python
    :pyobject: render_mondrian
    :caption: examples/subdivision.py の render_mondrian 関数
@@ -241,6 +258,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 分割を止める規則は、乱数ではなく画像の内容から決めることもできる。正方形を 4 つの小さな正方形に分け続ける\ **四分木**\ （quadtree）で、領域内の値のばらつき（標準偏差）がしきい値を超える間だけ分割を続けると、細部の多い場所ほど細かく、平坦な場所ほど粗く分割される。
 
 .. literalinclude:: ../examples/subdivision.py
+   :linenos:
    :language: python
    :pyobject: quadtree
    :caption: examples/subdivision.py の quadtree 関数
@@ -265,6 +283,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
    \varphi = \frac{1 + \sqrt{5}}{2}
 
 .. literalinclude:: ../examples/penrose.py
+   :linenos:
    :language: python
    :pyobject: subdivide_penrose
    :caption: examples/penrose.py の subdivide_penrose 関数
@@ -272,6 +291,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 原点を囲むように細い三角形 10 枚を並べた「太陽」型の初期状態から出発し、この細分割を数回（作例では 6 回）繰り返すと、細分割のたびに三角形の数が増えながら、全体としては非周期的なペンローズ・タイリングに収束していく。
 
 .. literalinclude:: ../examples/penrose.py
+   :linenos:
    :language: python
    :pyobject: initial_sun
    :caption: examples/penrose.py の initial_sun 関数
@@ -296,6 +316,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
    r = \sqrt{(x - c_x)^2 + (y - c_y)^2}
 
 .. literalinclude:: ../examples/polar_remap.py
+   :linenos:
    :language: python
    :pyobject: polar_remap
    :caption: examples/polar_remap.py の polar_remap 関数
@@ -320,6 +341,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 ``polar_remap`` は、角度をソース画像の横方向にそのまま対応させることで、模様を中心の周りに 1 周分引き伸ばしていた。角度を ``2*pi/segments`` で割った余りに読み替えるだけで、ソース画像の同じ範囲が周囲に ``segments`` 回繰り返される回転対称模様になる。これは万華鏡の「筒を回すと同じ模様が繰り返し現れる」効果に対応する。
 
 .. literalinclude:: ../examples/symmetry.py
+   :linenos:
    :language: python
    :pyobject: kaleidoscope_remap
    :caption: examples/symmetry.py の kaleidoscope_remap 関数
@@ -354,6 +376,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
    r = \sqrt{\frac{\cos(\pi/p + \pi/q)}{\cos(\pi/p - \pi/q)}}
 
 .. literalinclude:: ../examples/hyperbolic_tiling.py
+   :linenos:
    :language: python
    :pyobject: polygon_circumradius
    :caption: examples/hyperbolic_tiling.py の polygon_circumradius 関数
@@ -361,6 +384,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 :math:`1/p + 1/q` が :math:`1/2` ちょうどなら平面（正方形や正六角形のタイリング）、:math:`1/2` を超えれば球面、:math:`1/2` 未満なら双曲平面になることが知られている。上の式は :math:`1/p+1/q < 1/2` のとき :math:`r` が実数かつ 1 未満になり、単位円板の内側に正しく収まる。
 
 .. literalinclude:: ../examples/hyperbolic_tiling.py
+   :linenos:
    :language: python
    :pyobject: fundamental_polygon
    :caption: examples/hyperbolic_tiling.py の fundamental_polygon 関数
@@ -368,6 +392,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 最初の正多角形ができたら、あとは先ほどのペンローズ・タイルが細分割によって内側から模様を増やしたのとは対照的に、この多角形を各辺に関して鏡映することでタイリングを中心から外側へ広げていく。円板境界に直交する円弧（または原点を通る直線に退化した特別な場合）に関する鏡映は、その円に関する反転として実装できる。測地線は単位円板に関する反転で不変という性質を使うと、2 頂点だけから鏡映に使う円を決定できる。
 
 .. literalinclude:: ../examples/hyperbolic_tiling.py
+   :linenos:
    :language: python
    :pyobject: geodesic_reflection
    :caption: examples/hyperbolic_tiling.py の geodesic_reflection 関数
@@ -375,6 +400,7 @@ Gumin の WFC には、本節で扱ったタイルの辺だけで隣接関係を
 生成した多角形の重心座標を使って既出の多角形を除きながら、幅優先探索（本章で扱った迷路の経路探索と同じ考え方）で鏡映を繰り返し適用すると、中心から外側へ層状にタイリングが広がっていく。
 
 .. literalinclude:: ../examples/hyperbolic_tiling.py
+   :linenos:
    :language: python
    :pyobject: generate_tiling
    :caption: examples/hyperbolic_tiling.py の generate_tiling 関数

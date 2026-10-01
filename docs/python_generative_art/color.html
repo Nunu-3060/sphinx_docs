@@ -11,7 +11,7 @@
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=64886222" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=9d2f6d3b" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -189,49 +189,49 @@
 <p>実装では、区間ごとの場合分けを <code class="docutils literal notranslate"><span class="pre">if</span></code> 文で書くと配列全体を一度に処理できなくなる。区間番号を NumPy 配列として求めた上で、<code class="docutils literal notranslate"><span class="pre">np.select</span></code> で 6 つの区間それぞれの候補値から実際の値を選び出すことで、色 1 つでも配列（例えば画像全体の色相配列）でも同じコードで扱えるようにしている。</p>
 <div class="literal-block-wrapper docutils container" id="id6">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の hsv_to_rgb 関数</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">hsv_to_rgb</span><span class="p">(</span>
-    <span class="n">hue</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">saturation</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;HSV(色相・彩度・明度)を六角錐モデルに基づきRGBへ変換する。</span>
-
-<span class="sd">    hue・saturation・value はいずれもスカラーか、互いにブロード</span>
-<span class="sd">    キャスト可能なNumPy配列で、すべて 0.0-1.0 の範囲（色相は1周=1.0の</span>
-<span class="sd">    環状の値）として扱う。戻り値は入力の形状の末尾にRGB用の軸</span>
-<span class="sd">    (長さ3、値は0.0-1.0)を追加した形状の配列になる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">h</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hue</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">saturation</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
-    <span class="p">)</span>
-
-    <span class="n">chroma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="n">s</span>
-    <span class="n">h_prime</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="mf">6.0</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">chroma</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h_prime</span> <span class="o">%</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))</span>
-    <span class="n">m</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">v</span> <span class="o">-</span> <span class="n">chroma</span>
-    <span class="n">zero</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">chroma</span><span class="p">)</span>
-
-    <span class="c1"># h_prime の整数部が 0-5 のどの区間(60度ごとの6区間)に</span>
-    <span class="c1"># 入るかで、(chroma, x, 0) をどの成分に割り当てるかが変わる。</span>
-    <span class="n">sector</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">h_prime</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">%</span> <span class="mi">6</span>
-    <span class="n">conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sector</span> <span class="o">==</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)]</span>
-
-    <span class="n">r</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
-        <span class="n">conditions</span><span class="p">,</span> <span class="p">[</span><span class="n">chroma</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">chroma</span><span class="p">]</span>
-    <span class="p">)</span>
-    <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
-        <span class="n">conditions</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">chroma</span><span class="p">,</span> <span class="n">chroma</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">zero</span><span class="p">]</span>
-    <span class="p">)</span>
-    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
-        <span class="n">conditions</span><span class="p">,</span> <span class="p">[</span><span class="n">zero</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">chroma</span><span class="p">,</span> <span class="n">chroma</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">m</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">hsv_to_rgb</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">hue</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">saturation</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 4</span>    <span class="n">value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;HSV(色相・彩度・明度)を六角錐モデルに基づきRGBへ変換する。</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="sd">    hue・saturation・value はいずれもスカラーか、互いにブロード</span>
+<span class="linenos"> 9</span><span class="sd">    キャスト可能なNumPy配列で、すべて 0.0-1.0 の範囲（色相は1周=1.0の</span>
+<span class="linenos">10</span><span class="sd">    環状の値）として扱う。戻り値は入力の形状の末尾にRGB用の軸</span>
+<span class="linenos">11</span><span class="sd">    (長さ3、値は0.0-1.0)を追加した形状の配列になる。</span>
+<span class="linenos">12</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">13</span>    <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos">14</span>    <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos">15</span>    <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos">16</span>    <span class="n">h</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span>
+<span class="linenos">17</span>        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hue</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos">18</span>        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">saturation</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+<span class="linenos">19</span>        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+<span class="linenos">20</span>    <span class="p">)</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span>    <span class="n">chroma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="n">s</span>
+<span class="linenos">23</span>    <span class="n">h_prime</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="mf">6.0</span>
+<span class="linenos">24</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">chroma</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h_prime</span> <span class="o">%</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))</span>
+<span class="linenos">25</span>    <span class="n">m</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">v</span> <span class="o">-</span> <span class="n">chroma</span>
+<span class="linenos">26</span>    <span class="n">zero</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">chroma</span><span class="p">)</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span>    <span class="c1"># h_prime の整数部が 0-5 のどの区間(60度ごとの6区間)に</span>
+<span class="linenos">29</span>    <span class="c1"># 入るかで、(chroma, x, 0) をどの成分に割り当てるかが変わる。</span>
+<span class="linenos">30</span>    <span class="n">sector</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">h_prime</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">%</span> <span class="mi">6</span>
+<span class="linenos">31</span>    <span class="n">conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sector</span> <span class="o">==</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)]</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span>    <span class="n">r</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+<span class="linenos">34</span>        <span class="n">conditions</span><span class="p">,</span> <span class="p">[</span><span class="n">chroma</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">chroma</span><span class="p">]</span>
+<span class="linenos">35</span>    <span class="p">)</span>
+<span class="linenos">36</span>    <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+<span class="linenos">37</span>        <span class="n">conditions</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">chroma</span><span class="p">,</span> <span class="n">chroma</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">zero</span><span class="p">]</span>
+<span class="linenos">38</span>    <span class="p">)</span>
+<span class="linenos">39</span>    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+<span class="linenos">40</span>        <span class="n">conditions</span><span class="p">,</span> <span class="p">[</span><span class="n">zero</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">chroma</span><span class="p">,</span> <span class="n">chroma</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span>
+<span class="linenos">41</span>    <span class="p">)</span>
+<span class="linenos">42</span>
+<span class="linenos">43</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">m</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -241,79 +241,79 @@
 <p>上記の配色パターンを実際にコードで生成し、画像として確認する。先ほどの自前実装の <code class="docutils literal notranslate"><span class="pre">hsv_to_rgb</span></code> で HSV→RGB 変換を行い、基準色相とオフセットのリストから、PIL でスウォッチ（色見本）画像を描画する。</p>
 <div class="literal-block-wrapper docutils container" id="id7">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の hue_scheme 関数</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">hue_scheme</span><span class="p">(</span>
-    <span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">offsets</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-    <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
-    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;基準色相 base_hue に offsets を加えた色相群をRGBパレットとして返す。</span>
-
-<span class="sd">    base_hue と offsets はすべて 0.0-1.0 (1周=1.0) で表す。offsets の</span>
-<span class="sd">    与え方を変えるだけで、類似色・補色・トライアドなど任意の配色</span>
-<span class="sd">    パターンを表現できる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">_hsv_to_rgb255</span><span class="p">(</span><span class="n">base_hue</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">saturation</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">offset</span> <span class="ow">in</span> <span class="n">offsets</span>
-    <span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">hue_scheme</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">offsets</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+<span class="linenos"> 4</span>    <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
+<span class="linenos"> 5</span>    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+<span class="linenos"> 6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;基準色相 base_hue に offsets を加えた色相群をRGBパレットとして返す。</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">    base_hue と offsets はすべて 0.0-1.0 (1周=1.0) で表す。offsets の</span>
+<span class="linenos">10</span><span class="sd">    与え方を変えるだけで、類似色・補色・トライアドなど任意の配色</span>
+<span class="linenos">11</span><span class="sd">    パターンを表現できる。</span>
+<span class="linenos">12</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">13</span>    <span class="k">return</span> <span class="p">[</span>
+<span class="linenos">14</span>        <span class="n">_hsv_to_rgb255</span><span class="p">(</span><span class="n">base_hue</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">saturation</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+<span class="linenos">15</span>        <span class="k">for</span> <span class="n">offset</span> <span class="ow">in</span> <span class="n">offsets</span>
+<span class="linenos">16</span>    <span class="p">]</span>
 </pre></div>
 </div>
 </div>
 <p>この <code class="docutils literal notranslate"><span class="pre">hue_scheme</span></code> を土台に、代表的な配色パターンをオフセットの違いとして定義できる。</p>
 <div class="literal-block-wrapper docutils container" id="id8">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の analogous_palette 関数</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">analogous_palette</span><span class="p">(</span>
-    <span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">spread</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.12</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;base_hue を中心に ±spread の範囲へ均等割りした類似色パレット。&quot;&quot;&quot;</span>
-    <span class="n">offsets</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">spread</span><span class="p">,</span> <span class="n">spread</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">hue_scheme</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="n">offsets</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">analogous_palette</span><span class="p">(</span>
+<span class="linenos">2</span>    <span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">spread</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.12</span>
+<span class="linenos">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos">4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;base_hue を中心に ±spread の範囲へ均等割りした類似色パレット。&quot;&quot;&quot;</span>
+<span class="linenos">5</span>    <span class="n">offsets</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">spread</span><span class="p">,</span> <span class="n">spread</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+<span class="linenos">6</span>    <span class="k">return</span> <span class="n">hue_scheme</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="n">offsets</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id9">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の complementary_palette 関数</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">complementary_palette</span><span class="p">(</span><span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;base_hue とその補色(色相環上で180度反対)の2色パレット。&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">hue_scheme</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">complementary_palette</span><span class="p">(</span><span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;base_hue とその補色(色相環上で180度反対)の2色パレット。&quot;&quot;&quot;</span>
+<span class="linenos">3</span>    <span class="k">return</span> <span class="n">hue_scheme</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id10">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の split_complementary_palette 関数</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">split_complementary_palette</span><span class="p">(</span>
-    <span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">12</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;base_hue と、その補色の両隣2色から成る3色パレット。</span>
-
-<span class="sd">    補色そのものを使うより穏やかな対比になる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">hue_scheme</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">split</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="n">split</span><span class="p">])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">split_complementary_palette</span><span class="p">(</span>
+<span class="linenos">2</span>    <span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">12</span>
+<span class="linenos">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos">4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;base_hue と、その補色の両隣2色から成る3色パレット。</span>
+<span class="linenos">5</span>
+<span class="linenos">6</span><span class="sd">    補色そのものを使うより穏やかな対比になる。</span>
+<span class="linenos">7</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">8</span>    <span class="k">return</span> <span class="n">hue_scheme</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">split</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="n">split</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id11">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の triadic_palette 関数</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">triadic_palette</span><span class="p">(</span><span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;色相環を三等分した3色パレット(トライアド配色)。&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">hue_scheme</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">triadic_palette</span><span class="p">(</span><span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;色相環を三等分した3色パレット(トライアド配色)。&quot;&quot;&quot;</span>
+<span class="linenos">3</span>    <span class="k">return</span> <span class="n">hue_scheme</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id12">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の render_swatches 関数</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">render_swatches</span><span class="p">(</span>
-    <span class="n">palette</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">swatch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SWATCH_SIZE</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;パレットを横並びの正方形として描画したスウォッチ画像を返す。&quot;&quot;&quot;</span>
-    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">swatch_size</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">palette</span><span class="p">)</span>
-    <span class="n">pixels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">swatch_size</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">palette</span><span class="p">):</span>
-        <span class="n">left</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">swatch_size</span>
-        <span class="n">right</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="n">swatch_size</span>
-        <span class="n">pixels</span><span class="p">[:,</span> <span class="n">left</span><span class="p">:</span><span class="n">right</span><span class="p">]</span> <span class="o">=</span> <span class="n">color</span>
-    <span class="k">return</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">pixels</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">render_swatches</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">palette</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">swatch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SWATCH_SIZE</span>
+<span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;パレットを横並びの正方形として描画したスウォッチ画像を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 5</span>    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">swatch_size</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">palette</span><span class="p">)</span>
+<span class="linenos"> 6</span>    <span class="n">pixels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">swatch_size</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="linenos"> 7</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">palette</span><span class="p">):</span>
+<span class="linenos"> 8</span>        <span class="n">left</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">swatch_size</span>
+<span class="linenos"> 9</span>        <span class="n">right</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="n">swatch_size</span>
+<span class="linenos">10</span>        <span class="n">pixels</span><span class="p">[:,</span> <span class="n">left</span><span class="p">:</span><span class="n">right</span><span class="p">]</span> <span class="o">=</span> <span class="n">color</span>
+<span class="linenos">11</span>    <span class="k">return</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">pixels</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -323,57 +323,57 @@
 <p>トーンオントーン・トーンイントーンも、同じ <code class="docutils literal notranslate"><span class="pre">hsv_to_rgb</span></code> を使い、彩度・明度の組み合わせ（トーン）をあらかじめ 12 種類定義しておくことで実装できる。</p>
 <div class="literal-block-wrapper docutils container" id="id13">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の PCCS_TONES</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># PCCS(日本色彩研究所の実用配色体系)が定義する12のトーン。</span>
-<span class="c1"># それぞれ「鮮やかさ・明るさの印象」を彩度・明度の組み合わせとして</span>
-<span class="c1"># 代表させたもので、PCCSの図版と同じく4列3行のグリッドで</span>
-<span class="c1"># 並べられる順に定義している(vivid〜deepが上段、light〜darkが</span>
-<span class="c1"># 中段、pale〜dark_grayishが下段)。</span>
-<span class="n">PCCS_TONES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;vivid&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.00</span><span class="p">,</span> <span class="mf">0.90</span><span class="p">),</span>
-    <span class="s2">&quot;bright&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span>
-    <span class="s2">&quot;strong&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>
-    <span class="s2">&quot;deep&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.90</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">),</span>
-    <span class="s2">&quot;light&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.55</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span>
-    <span class="s2">&quot;soft&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>
-    <span class="s2">&quot;dull&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.60</span><span class="p">),</span>
-    <span class="s2">&quot;dark&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.60</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">),</span>
-    <span class="s2">&quot;pale&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span>
-    <span class="s2">&quot;light_grayish&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.80</span><span class="p">),</span>
-    <span class="s2">&quot;grayish&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">),</span>
-    <span class="s2">&quot;dark_grayish&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">),</span>
-<span class="p">}</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1"># PCCS(日本色彩研究所の実用配色体系)が定義する12のトーン。</span>
+<span class="linenos"> 2</span><span class="c1"># それぞれ「鮮やかさ・明るさの印象」を彩度・明度の組み合わせとして</span>
+<span class="linenos"> 3</span><span class="c1"># 代表させたもので、PCCSの図版と同じく4列3行のグリッドで</span>
+<span class="linenos"> 4</span><span class="c1"># 並べられる順に定義している(vivid〜deepが上段、light〜darkが</span>
+<span class="linenos"> 5</span><span class="c1"># 中段、pale〜dark_grayishが下段)。</span>
+<span class="linenos"> 6</span><span class="n">PCCS_TONES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos"> 7</span>    <span class="s2">&quot;vivid&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.00</span><span class="p">,</span> <span class="mf">0.90</span><span class="p">),</span>
+<span class="linenos"> 8</span>    <span class="s2">&quot;bright&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span>
+<span class="linenos"> 9</span>    <span class="s2">&quot;strong&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>
+<span class="linenos">10</span>    <span class="s2">&quot;deep&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.90</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">),</span>
+<span class="linenos">11</span>    <span class="s2">&quot;light&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.55</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span>
+<span class="linenos">12</span>    <span class="s2">&quot;soft&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>
+<span class="linenos">13</span>    <span class="s2">&quot;dull&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.60</span><span class="p">),</span>
+<span class="linenos">14</span>    <span class="s2">&quot;dark&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.60</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">),</span>
+<span class="linenos">15</span>    <span class="s2">&quot;pale&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span>
+<span class="linenos">16</span>    <span class="s2">&quot;light_grayish&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.80</span><span class="p">),</span>
+<span class="linenos">17</span>    <span class="s2">&quot;grayish&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">),</span>
+<span class="linenos">18</span>    <span class="s2">&quot;dark_grayish&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">),</span>
+<span class="linenos">19</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id14">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の tone_on_tone_palette 関数</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">tone_on_tone_palette</span><span class="p">(</span>
-    <span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tones</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">PCCS_TONES</span><span class="p">)</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;base_hue を固定し、PCCSのトーンを変えた配色パレット(トーンオントーン)。</span>
-
-<span class="sd">    色相をそろえたまま彩度・明度だけを変化させるため、統一感の</span>
-<span class="sd">    ある濃淡・調子のバリエーションになる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">_hsv_to_rgb255</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="o">*</span><span class="n">PCCS_TONES</span><span class="p">[</span><span class="n">tone</span><span class="p">])</span> <span class="k">for</span> <span class="n">tone</span> <span class="ow">in</span> <span class="n">tones</span>
-    <span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">tone_on_tone_palette</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">base_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tones</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">PCCS_TONES</span><span class="p">)</span>
+<span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;base_hue を固定し、PCCSのトーンを変えた配色パレット(トーンオントーン)。</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="sd">    色相をそろえたまま彩度・明度だけを変化させるため、統一感の</span>
+<span class="linenos"> 7</span><span class="sd">    ある濃淡・調子のバリエーションになる。</span>
+<span class="linenos"> 8</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 9</span>    <span class="k">return</span> <span class="p">[</span>
+<span class="linenos">10</span>        <span class="n">_hsv_to_rgb255</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span> <span class="o">*</span><span class="n">PCCS_TONES</span><span class="p">[</span><span class="n">tone</span><span class="p">])</span> <span class="k">for</span> <span class="n">tone</span> <span class="ow">in</span> <span class="n">tones</span>
+<span class="linenos">11</span>    <span class="p">]</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id15">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の tone_in_tone_palette 関数</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">tone_in_tone_palette</span><span class="p">(</span>
-    <span class="n">tone</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hues</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;PCCSのトーン(彩度・明度)を固定し、色相を変えた配色パレット</span>
-<span class="sd">    (トーンイントーン)。</span>
-
-<span class="sd">    色相はばらばらでも、彩度・明度の組み合わせ(トーン)がそろって</span>
-<span class="sd">    いるため、「淡い」「くすんだ」といった印象は統一される。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">saturation</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">PCCS_TONES</span><span class="p">[</span><span class="n">tone</span><span class="p">]</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">_hsv_to_rgb255</span><span class="p">(</span><span class="n">hue</span><span class="p">,</span> <span class="n">saturation</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">hue</span> <span class="ow">in</span> <span class="n">hues</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">tone_in_tone_palette</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">tone</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">hues</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+<span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;PCCSのトーン(彩度・明度)を固定し、色相を変えた配色パレット</span>
+<span class="linenos"> 5</span><span class="sd">    (トーンイントーン)。</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="sd">    色相はばらばらでも、彩度・明度の組み合わせ(トーン)がそろって</span>
+<span class="linenos"> 8</span><span class="sd">    いるため、「淡い」「くすんだ」といった印象は統一される。</span>
+<span class="linenos"> 9</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">10</span>    <span class="n">saturation</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">PCCS_TONES</span><span class="p">[</span><span class="n">tone</span><span class="p">]</span>
+<span class="linenos">11</span>    <span class="k">return</span> <span class="p">[</span><span class="n">_hsv_to_rgb255</span><span class="p">(</span><span class="n">hue</span><span class="p">,</span> <span class="n">saturation</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">hue</span> <span class="ow">in</span> <span class="n">hues</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -386,34 +386,34 @@
 <p>配色パターンは離散的な色の集合だが、2 色の間をなめらかに補間したグラデーションが欲しい場合もある。ここで注意が必要なのは、色相が環状の値だという点である。色相をそのまま線形補間すると、例えば赤 (0.98) から橙 (0.08) へは、本来はすぐ隣り合う色なのに、色相環をほぼ一周する遠回りの補間になってしまう。差分を <code class="docutils literal notranslate"><span class="pre">[-0.5,</span> <span class="pre">0.5)</span></code> の範囲に正規化してから補間すれば、常に短い方の弧を通るようにできる。</p>
 <div class="literal-block-wrapper docutils container" id="id16">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の hsb_gradient 関数</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">hsb_gradient</span><span class="p">(</span>
-    <span class="n">start_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">end_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
-    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
-    <span class="n">steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
-    <span class="n">shortest_path</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;start_hue から end_hue へ色相を補間したグラデーションを返す。</span>
-
-<span class="sd">    ``shortest_path=True`` (既定) では、色相環上で近い側(短い弧)を</span>
-<span class="sd">    通るように差分を [-0.5, 0.5) に正規化してから補間する。False に</span>
-<span class="sd">    すると 0.0-1.0 の数値としてそのまま線形補間するため、例えば</span>
-<span class="sd">    赤(0.98)から橙(0.05)へは、本来はすぐ隣の色なのに色相環を</span>
-<span class="sd">    ほぼ一周する遠回りのグラデーションになってしまう。</span>
-
-<span class="sd">    戻り値は形状 (steps, 3) の uint8 配列。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
-    <span class="n">hues</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="k">if</span> <span class="n">shortest_path</span><span class="p">:</span>
-        <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_hue</span> <span class="o">-</span> <span class="n">start_hue</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">0.5</span>
-        <span class="n">hues</span> <span class="o">=</span> <span class="p">(</span><span class="n">start_hue</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">hues</span> <span class="o">=</span> <span class="n">start_hue</span> <span class="o">+</span> <span class="p">(</span><span class="n">end_hue</span> <span class="o">-</span> <span class="n">start_hue</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span>
-
-    <span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">hsv_to_rgb</span><span class="p">(</span><span class="n">hues</span><span class="p">,</span> <span class="n">saturation</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">rgb</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">hsb_gradient</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">start_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">end_hue</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 4</span>    <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
+<span class="linenos"> 5</span>    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+<span class="linenos"> 6</span>    <span class="n">steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+<span class="linenos"> 7</span>    <span class="n">shortest_path</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="linenos"> 8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;start_hue から end_hue へ色相を補間したグラデーションを返す。</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="sd">    ``shortest_path=True`` (既定) では、色相環上で近い側(短い弧)を</span>
+<span class="linenos">12</span><span class="sd">    通るように差分を [-0.5, 0.5) に正規化してから補間する。False に</span>
+<span class="linenos">13</span><span class="sd">    すると 0.0-1.0 の数値としてそのまま線形補間するため、例えば</span>
+<span class="linenos">14</span><span class="sd">    赤(0.98)から橙(0.05)へは、本来はすぐ隣の色なのに色相環を</span>
+<span class="linenos">15</span><span class="sd">    ほぼ一周する遠回りのグラデーションになってしまう。</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="sd">    戻り値は形状 (steps, 3) の uint8 配列。</span>
+<span class="linenos">18</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">19</span>    <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+<span class="linenos">20</span>    <span class="n">hues</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos">21</span>    <span class="k">if</span> <span class="n">shortest_path</span><span class="p">:</span>
+<span class="linenos">22</span>        <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_hue</span> <span class="o">-</span> <span class="n">start_hue</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">0.5</span>
+<span class="linenos">23</span>        <span class="n">hues</span> <span class="o">=</span> <span class="p">(</span><span class="n">start_hue</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span>
+<span class="linenos">24</span>    <span class="k">else</span><span class="p">:</span>
+<span class="linenos">25</span>        <span class="n">hues</span> <span class="o">=</span> <span class="n">start_hue</span> <span class="o">+</span> <span class="p">(</span><span class="n">end_hue</span> <span class="o">-</span> <span class="n">start_hue</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span>    <span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">hsv_to_rgb</span><span class="p">(</span><span class="n">hues</span><span class="p">,</span> <span class="n">saturation</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+<span class="linenos">28</span>    <span class="k">return</span> <span class="p">(</span><span class="n">rgb</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -423,36 +423,36 @@
 <p>逆に、既存の画像から配色を抽出したい場合もある。手描きで配色を決めるのではなく、写真やこれまで生成した画像から「使われている色」を取り出し、別の作品のパレットとして転用するという使い方である。PIL の <code class="docutils literal notranslate"><span class="pre">Image.quantize</span></code> はメディアンカット法によるパレット量子化を実装しており、画像全体を指定した色数に減色できる。減色後のパレットと、量子化画像上での各色の出現画素数を突き合わせれば、使用頻度の高い色から順にパレットとして取り出せる。</p>
 <div class="literal-block-wrapper docutils container" id="id17">
 <div class="code-block-caption"><span class="caption-text">examples/palette.py の extract_palette 関数</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">extract_palette</span><span class="p">(</span>
-    <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;画像を count 色に量子化し、支配的な色を出現頻度順に返す。</span>
-
-<span class="sd">    PIL の適応パレット量子化 (median cut) で画像全体を count 色に</span>
-<span class="sd">    減色し、実際に使われているピクセル数が多い色から順に並べる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">source</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span>
-    <span class="n">quantized</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span>
-        <span class="n">colors</span><span class="o">=</span><span class="n">count</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">Quantize</span><span class="o">.</span><span class="n">MEDIANCUT</span>
-    <span class="p">)</span>
-
-    <span class="c1"># パレットモード(&quot;P&quot;)の画像は必ず自身のパレットと出現数を持ち、</span>
-    <span class="c1"># 色ごとの識別子は常にパレット内の整数インデックスになる。</span>
-    <span class="n">palette_raw</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">quantized</span><span class="o">.</span><span class="n">getpalette</span><span class="p">()</span>
-    <span class="n">counts_raw</span> <span class="o">=</span> <span class="n">quantized</span><span class="o">.</span><span class="n">getcolors</span><span class="p">(</span><span class="n">maxcolors</span><span class="o">=</span><span class="n">count</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">palette_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="k">assert</span> <span class="n">counts_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="n">palette</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">palette_raw</span>
-    <span class="n">counts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-        <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">counts_raw</span>
-    <span class="p">)</span>
-    <span class="n">counts</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">colors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
-        <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">palette</span><span class="p">[</span><span class="n">index</span> <span class="o">*</span> <span class="mi">3</span><span class="p">:</span><span class="n">index</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span>
-        <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">colors</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">extract_palette</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;画像を count 色に量子化し、支配的な色を出現頻度順に返す。</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="sd">    PIL の適応パレット量子化 (median cut) で画像全体を count 色に</span>
+<span class="linenos"> 7</span><span class="sd">    減色し、実際に使われているピクセル数が多い色から順に並べる。</span>
+<span class="linenos"> 8</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 9</span>    <span class="n">source</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span>
+<span class="linenos">10</span>    <span class="n">quantized</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span>
+<span class="linenos">11</span>        <span class="n">colors</span><span class="o">=</span><span class="n">count</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">Quantize</span><span class="o">.</span><span class="n">MEDIANCUT</span>
+<span class="linenos">12</span>    <span class="p">)</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span>    <span class="c1"># パレットモード(&quot;P&quot;)の画像は必ず自身のパレットと出現数を持ち、</span>
+<span class="linenos">15</span>    <span class="c1"># 色ごとの識別子は常にパレット内の整数インデックスになる。</span>
+<span class="linenos">16</span>    <span class="n">palette_raw</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">quantized</span><span class="o">.</span><span class="n">getpalette</span><span class="p">()</span>
+<span class="linenos">17</span>    <span class="n">counts_raw</span> <span class="o">=</span> <span class="n">quantized</span><span class="o">.</span><span class="n">getcolors</span><span class="p">(</span><span class="n">maxcolors</span><span class="o">=</span><span class="n">count</span><span class="p">)</span>
+<span class="linenos">18</span>    <span class="k">assert</span> <span class="n">palette_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<span class="linenos">19</span>    <span class="k">assert</span> <span class="n">counts_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<span class="linenos">20</span>    <span class="n">palette</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">palette_raw</span>
+<span class="linenos">21</span>    <span class="n">counts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+<span class="linenos">22</span>        <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">counts_raw</span>
+<span class="linenos">23</span>    <span class="p">)</span>
+<span class="linenos">24</span>    <span class="n">counts</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span>    <span class="n">colors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">27</span>    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
+<span class="linenos">28</span>        <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">palette</span><span class="p">[</span><span class="n">index</span> <span class="o">*</span> <span class="mi">3</span><span class="p">:</span><span class="n">index</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span>
+<span class="linenos">29</span>        <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+<span class="linenos">30</span>    <span class="k">return</span> <span class="n">colors</span>
 </pre></div>
 </div>
 </div>
@@ -480,78 +480,78 @@ c / 12.92 &amp; (c \le 0.04045) \\
 <p>OKLab から sRGB への逆変換は、各段階を逆にたどればよい。行列は逆行列に、立方根は 3 乗に置き換える。</p>
 <div class="literal-block-wrapper docutils container" id="id18">
 <div class="code-block-caption"><span class="caption-text">examples/oklab.py の変換行列</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 線形 sRGB -&gt; LMS(錐体応答に近い3成分)への変換行列。</span>
-<span class="n">_RGB_TO_LMS</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
-    <span class="p">[</span><span class="mf">0.4122214708</span><span class="p">,</span> <span class="mf">0.5363325363</span><span class="p">,</span> <span class="mf">0.0514459929</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">0.2119034982</span><span class="p">,</span> <span class="mf">0.6806995451</span><span class="p">,</span> <span class="mf">0.1073969566</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">0.0883024619</span><span class="p">,</span> <span class="mf">0.2817188376</span><span class="p">,</span> <span class="mf">0.6299787005</span><span class="p">]])</span>
-
-<span class="c1"># 立方根を取った LMS -&gt; OKLab (L, a, b) への変換行列。</span>
-<span class="n">_LMS_TO_LAB</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
-    <span class="p">[</span><span class="mf">0.2104542553</span><span class="p">,</span> <span class="mf">0.7936177850</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0040720468</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">1.9779984951</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.4285922050</span><span class="p">,</span> <span class="mf">0.4505937099</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">0.0259040371</span><span class="p">,</span> <span class="mf">0.7827717662</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.8086757660</span><span class="p">]])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1"># 線形 sRGB -&gt; LMS(錐体応答に近い3成分)への変換行列。</span>
+<span class="linenos"> 2</span><span class="n">_RGB_TO_LMS</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+<span class="linenos"> 3</span>    <span class="p">[</span><span class="mf">0.4122214708</span><span class="p">,</span> <span class="mf">0.5363325363</span><span class="p">,</span> <span class="mf">0.0514459929</span><span class="p">],</span>
+<span class="linenos"> 4</span>    <span class="p">[</span><span class="mf">0.2119034982</span><span class="p">,</span> <span class="mf">0.6806995451</span><span class="p">,</span> <span class="mf">0.1073969566</span><span class="p">],</span>
+<span class="linenos"> 5</span>    <span class="p">[</span><span class="mf">0.0883024619</span><span class="p">,</span> <span class="mf">0.2817188376</span><span class="p">,</span> <span class="mf">0.6299787005</span><span class="p">]])</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="c1"># 立方根を取った LMS -&gt; OKLab (L, a, b) への変換行列。</span>
+<span class="linenos"> 8</span><span class="n">_LMS_TO_LAB</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+<span class="linenos"> 9</span>    <span class="p">[</span><span class="mf">0.2104542553</span><span class="p">,</span> <span class="mf">0.7936177850</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0040720468</span><span class="p">],</span>
+<span class="linenos">10</span>    <span class="p">[</span><span class="mf">1.9779984951</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.4285922050</span><span class="p">,</span> <span class="mf">0.4505937099</span><span class="p">],</span>
+<span class="linenos">11</span>    <span class="p">[</span><span class="mf">0.0259040371</span><span class="p">,</span> <span class="mf">0.7827717662</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.8086757660</span><span class="p">]])</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id19">
 <div class="code-block-caption"><span class="caption-text">examples/oklab.py の srgb_to_linear 関数</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">srgb_to_linear</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;ガンマ補正された sRGB 値(0.0-1.0)を、光の強さに比例する線形値に戻す。&quot;&quot;&quot;</span>
-    <span class="n">rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rgb</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-        <span class="n">rgb</span> <span class="o">&lt;=</span> <span class="mf">0.04045</span><span class="p">,</span> <span class="n">rgb</span> <span class="o">/</span> <span class="mf">12.92</span><span class="p">,</span> <span class="p">((</span><span class="n">rgb</span> <span class="o">+</span> <span class="mf">0.055</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1.055</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.4</span>
-    <span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">srgb_to_linear</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ガンマ補正された sRGB 値(0.0-1.0)を、光の強さに比例する線形値に戻す。&quot;&quot;&quot;</span>
+<span class="linenos">3</span>    <span class="n">rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rgb</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="linenos">4</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+<span class="linenos">5</span>        <span class="n">rgb</span> <span class="o">&lt;=</span> <span class="mf">0.04045</span><span class="p">,</span> <span class="n">rgb</span> <span class="o">/</span> <span class="mf">12.92</span><span class="p">,</span> <span class="p">((</span><span class="n">rgb</span> <span class="o">+</span> <span class="mf">0.055</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1.055</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.4</span>
+<span class="linenos">6</span>    <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id20">
 <div class="code-block-caption"><span class="caption-text">examples/oklab.py の srgb_to_oklab 関数</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">srgb_to_oklab</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;sRGB 値(末尾の軸が RGB、0.0-1.0)を OKLab (L, a, b) に変換する。&quot;&quot;&quot;</span>
-    <span class="n">lms</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">srgb_to_linear</span><span class="p">(</span><span class="n">rgb</span><span class="p">)</span> <span class="o">@</span> <span class="n">_RGB_TO_LMS</span><span class="o">.</span><span class="n">T</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">cbrt</span><span class="p">(</span><span class="n">lms</span><span class="p">)</span> <span class="o">@</span> <span class="n">_LMS_TO_LAB</span><span class="o">.</span><span class="n">T</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">srgb_to_oklab</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;sRGB 値(末尾の軸が RGB、0.0-1.0)を OKLab (L, a, b) に変換する。&quot;&quot;&quot;</span>
+<span class="linenos">3</span>    <span class="n">lms</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">srgb_to_linear</span><span class="p">(</span><span class="n">rgb</span><span class="p">)</span> <span class="o">@</span> <span class="n">_RGB_TO_LMS</span><span class="o">.</span><span class="n">T</span>
+<span class="linenos">4</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">cbrt</span><span class="p">(</span><span class="n">lms</span><span class="p">)</span> <span class="o">@</span> <span class="n">_LMS_TO_LAB</span><span class="o">.</span><span class="n">T</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id21">
 <div class="code-block-caption"><span class="caption-text">examples/oklab.py の oklab_to_srgb 関数</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">oklab_to_srgb</span><span class="p">(</span><span class="n">lab</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OKLab (L, a, b) を sRGB 値(0.0-1.0)に戻す。</span>
-
-<span class="sd">    sRGB で表せない色(色域外)は、各成分を 0.0-1.0 に切り詰める。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">lms_cbrt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span>
-        <span class="n">_LMS_TO_LAB</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">T</span>
-    <span class="n">linear</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">lms_cbrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">_RGB_TO_LMS</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-    <span class="k">return</span> <span class="n">linear_to_srgb</span><span class="p">(</span><span class="n">linear</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">oklab_to_srgb</span><span class="p">(</span><span class="n">lab</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;OKLab (L, a, b) を sRGB 値(0.0-1.0)に戻す。</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="sd">    sRGB で表せない色(色域外)は、各成分を 0.0-1.0 に切り詰める。</span>
+<span class="linenos"> 5</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 6</span>    <span class="n">lms_cbrt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span>
+<span class="linenos"> 7</span>        <span class="n">_LMS_TO_LAB</span>
+<span class="linenos"> 8</span>    <span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="linenos"> 9</span>    <span class="n">linear</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">lms_cbrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">_RGB_TO_LMS</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="linenos">10</span>    <span class="k">return</span> <span class="n">linear_to_srgb</span><span class="p">(</span><span class="n">linear</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <p>HSB のように色相を角度として扱いたい場合は、<span class="math notranslate nohighlight">\((a, b)\)</span> 平面を極座標で表した <strong>OKLCH</strong> を使う。彩度 <span class="math notranslate nohighlight">\(C = \sqrt{a^2 + b^2}\)</span> は色の鮮やかさを、色相 <span class="math notranslate nohighlight">\(h = \operatorname{atan2}(b, a)\)</span> は色合いを表す。HSB と同じく色相環の上で角度を操作できるうえに、<span class="math notranslate nohighlight">\(L\)</span> がそのまま見た目の明るさになる点が異なる。ただし、<span class="math notranslate nohighlight">\(L\)</span> と <span class="math notranslate nohighlight">\(C\)</span> の組み合わせによっては、sRGB では表せない色（色域外の色）になる。本資料の実装では、範囲外の成分を 0〜1 に切り詰めている。</p>
 <div class="literal-block-wrapper docutils container" id="id22">
 <div class="code-block-caption"><span class="caption-text">examples/oklab.py の oklch_to_srgb 関数</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">oklch_to_srgb</span><span class="p">(</span>
-    <span class="n">lightness</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">chroma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">hue</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OKLCH (明るさ L、彩度 C、色相 h) を sRGB 値(0.0-1.0)に変換する。</span>
-
-<span class="sd">    OKLCH は OKLab の (a, b) 平面を極座標で表したもので、色相 ``hue``</span>
-<span class="sd">    は HSV と同じく 1 周 = 1.0 の環状の値として扱う。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">angle</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hue</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">lab</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lightness</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
-            <span class="n">chroma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span>
-            <span class="n">chroma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span>
-        <span class="p">),</span>
-        <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">oklab_to_srgb</span><span class="p">(</span><span class="n">lab</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">oklch_to_srgb</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">lightness</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">chroma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 4</span>    <span class="n">hue</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;OKLCH (明るさ L、彩度 C、色相 h) を sRGB 値(0.0-1.0)に変換する。</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="sd">    OKLCH は OKLab の (a, b) 平面を極座標で表したもので、色相 ``hue``</span>
+<span class="linenos"> 9</span><span class="sd">    は HSV と同じく 1 周 = 1.0 の環状の値として扱う。</span>
+<span class="linenos">10</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">11</span>    <span class="n">angle</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hue</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="linenos">12</span>    <span class="n">lab</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+<span class="linenos">13</span>        <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span>
+<span class="linenos">14</span>            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lightness</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+<span class="linenos">15</span>            <span class="n">chroma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span>
+<span class="linenos">16</span>            <span class="n">chroma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span>
+<span class="linenos">17</span>        <span class="p">),</span>
+<span class="linenos">18</span>        <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="linenos">19</span>    <span class="p">)</span>
+<span class="linenos">20</span>    <span class="k">return</span> <span class="n">oklab_to_srgb</span><span class="p">(</span><span class="n">lab</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -561,23 +561,23 @@ c / 12.92 &amp; (c \le 0.04045) \\
 <p>2 色の間のグラデーションも、どの色空間で補間するかによって見え方が変わる。sRGB の値のまま線形補間すると、中間の色が両端より暗く沈んだり、くすんだりしやすい。OKLab で補間すると、明るさ <span class="math notranslate nohighlight">\(L\)</span> は両端の値の間を一定の割合で変化する。</p>
 <div class="literal-block-wrapper docutils container" id="id23">
 <div class="code-block-caption"><span class="caption-text">examples/oklab.py の mix_srgb 関数</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">mix_srgb</span><span class="p">(</span>
-    <span class="n">start</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;2色を sRGB の値のまま線形補間する。t は形状 (steps,) の配列。&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">start</span> <span class="o">+</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">mix_srgb</span><span class="p">(</span>
+<span class="linenos">2</span>    <span class="n">start</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;2色を sRGB の値のまま線形補間する。t は形状 (steps,) の配列。&quot;&quot;&quot;</span>
+<span class="linenos">5</span>    <span class="k">return</span> <span class="n">start</span> <span class="o">+</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id24">
 <div class="code-block-caption"><span class="caption-text">examples/oklab.py の mix_oklab 関数</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">mix_oklab</span><span class="p">(</span>
-    <span class="n">start</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;2色を OKLab 空間で線形補間し、sRGB 値に戻す。&quot;&quot;&quot;</span>
-    <span class="n">lab_start</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">srgb_to_oklab</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-    <span class="n">lab_end</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">srgb_to_oklab</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">oklab_to_srgb</span><span class="p">(</span><span class="n">lab_start</span> <span class="o">+</span> <span class="p">(</span><span class="n">lab_end</span> <span class="o">-</span> <span class="n">lab_start</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">mix_oklab</span><span class="p">(</span>
+<span class="linenos">2</span>    <span class="n">start</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;2色を OKLab 空間で線形補間し、sRGB 値に戻す。&quot;&quot;&quot;</span>
+<span class="linenos">5</span>    <span class="n">lab_start</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">srgb_to_oklab</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+<span class="linenos">6</span>    <span class="n">lab_end</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">srgb_to_oklab</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+<span class="linenos">7</span>    <span class="k">return</span> <span class="n">oklab_to_srgb</span><span class="p">(</span><span class="n">lab_start</span> <span class="o">+</span> <span class="p">(</span><span class="n">lab_end</span> <span class="o">-</span> <span class="n">lab_start</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -591,58 +591,58 @@ c / 12.92 &amp; (c \le 0.04045) \\
 <p>ここまでに作ったパレットは、色見本として眺めるだけでなく、模様に色を割り当てるときに使ってこそ意味がある。その効果を確かめるために、格子の各マスに背景色と、円・四分円・半円のどれか 1 つの図形を描くだけの単純な模様を使う。図形の種類と向き、各マスでどの色を選ぶかを決める乱数は 1 度だけ作っておき、色を取り出すパレットだけを差し替えて描く。こうすると、描いた画像どうしの違いは、配色だけによるものになる。</p>
 <div class="literal-block-wrapper docutils container" id="id25">
 <div class="code-block-caption"><span class="caption-text">examples/color_pattern.py の make_layout 関数</span><a class="headerlink" href="#id25" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">make_layout</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Layout</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;模様の配置を乱数で決める。&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Layout</span><span class="p">(</span>
-        <span class="n">shape</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
-        <span class="n">turn</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
-        <span class="n">u_back</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
-        <span class="n">u_front</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
-    <span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">make_layout</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Layout</span><span class="p">:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;模様の配置を乱数で決める。&quot;&quot;&quot;</span>
+<span class="linenos">3</span>    <span class="k">return</span> <span class="n">Layout</span><span class="p">(</span>
+<span class="linenos">4</span>        <span class="n">shape</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
+<span class="linenos">5</span>        <span class="n">turn</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
+<span class="linenos">6</span>        <span class="n">u_back</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
+<span class="linenos">7</span>        <span class="n">u_front</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span>
+<span class="linenos">8</span>    <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id26">
 <div class="code-block-caption"><span class="caption-text">examples/color_pattern.py の render_pattern 関数</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">render_pattern</span><span class="p">(</span>
-    <span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span>
-    <span class="n">palette</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Color</span><span class="p">],</span>
-    <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">cell</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;配置 ``layout`` に従い、``palette`` から色を選んで模様を描く。</span>
-
-<span class="sd">    ``weights`` を与えると、パレットの色ごとに選ばれやすさを変えられる。</span>
-<span class="sd">    図形の色が背景色と同じになった場合は、パレットの次の色に替える。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">rows</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">cols</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">shape</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">palette</span><span class="p">))</span> <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">weights</span>
-    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">cols</span> <span class="o">*</span> <span class="n">cell</span><span class="p">,</span> <span class="n">rows</span> <span class="o">*</span> <span class="n">cell</span><span class="p">))</span>
-    <span class="n">draw</span><span class="p">:</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">ImageDraw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
-            <span class="n">back</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pick_index</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">u_back</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]),</span> <span class="n">w</span><span class="p">)</span>
-            <span class="n">front</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pick_index</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">u_front</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]),</span> <span class="n">w</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">front</span> <span class="o">==</span> <span class="n">back</span><span class="p">:</span>
-                <span class="n">front</span> <span class="o">=</span> <span class="p">(</span><span class="n">front</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">palette</span><span class="p">)</span>
-            <span class="n">draw_tile</span><span class="p">(</span>
-                <span class="n">draw</span><span class="p">,</span> <span class="n">c</span> <span class="o">*</span> <span class="n">cell</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span> <span class="n">cell</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span>
-                <span class="nb">int</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">turn</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]),</span>
-                <span class="n">palette</span><span class="p">[</span><span class="n">back</span><span class="p">],</span> <span class="n">palette</span><span class="p">[</span><span class="n">front</span><span class="p">],</span>
-            <span class="p">)</span>
-    <span class="k">return</span> <span class="n">image</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">render_pattern</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">palette</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Color</span><span class="p">],</span>
+<span class="linenos"> 4</span>    <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="linenos"> 5</span>    <span class="n">cell</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+<span class="linenos"> 6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;配置 ``layout`` に従い、``palette`` から色を選んで模様を描く。</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">    ``weights`` を与えると、パレットの色ごとに選ばれやすさを変えられる。</span>
+<span class="linenos">10</span><span class="sd">    図形の色が背景色と同じになった場合は、パレットの次の色に替える。</span>
+<span class="linenos">11</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">12</span>    <span class="n">rows</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">13</span>    <span class="n">cols</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">14</span>    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">shape</span>
+<span class="linenos">15</span>    <span class="n">w</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">palette</span><span class="p">))</span> <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">weights</span>
+<span class="linenos">16</span>    <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">cols</span> <span class="o">*</span> <span class="n">cell</span><span class="p">,</span> <span class="n">rows</span> <span class="o">*</span> <span class="n">cell</span><span class="p">))</span>
+<span class="linenos">17</span>    <span class="n">draw</span><span class="p">:</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">ImageDraw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+<span class="linenos">18</span>    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+<span class="linenos">19</span>        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
+<span class="linenos">20</span>            <span class="n">back</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pick_index</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">u_back</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]),</span> <span class="n">w</span><span class="p">)</span>
+<span class="linenos">21</span>            <span class="n">front</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pick_index</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">u_front</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]),</span> <span class="n">w</span><span class="p">)</span>
+<span class="linenos">22</span>            <span class="k">if</span> <span class="n">front</span> <span class="o">==</span> <span class="n">back</span><span class="p">:</span>
+<span class="linenos">23</span>                <span class="n">front</span> <span class="o">=</span> <span class="p">(</span><span class="n">front</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">palette</span><span class="p">)</span>
+<span class="linenos">24</span>            <span class="n">draw_tile</span><span class="p">(</span>
+<span class="linenos">25</span>                <span class="n">draw</span><span class="p">,</span> <span class="n">c</span> <span class="o">*</span> <span class="n">cell</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span> <span class="n">cell</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span>
+<span class="linenos">26</span>                <span class="nb">int</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">turn</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]),</span>
+<span class="linenos">27</span>                <span class="n">palette</span><span class="p">[</span><span class="n">back</span><span class="p">],</span> <span class="n">palette</span><span class="p">[</span><span class="n">front</span><span class="p">],</span>
+<span class="linenos">28</span>            <span class="p">)</span>
+<span class="linenos">29</span>    <span class="k">return</span> <span class="n">image</span>
 </pre></div>
 </div>
 </div>
 <p>パレットの中の色を均等に使うのではなく、特定の色を少しだけ使いたい場合もある。そこで、色ごとに重みを与え、重みに比例した確率で色を選べるようにしている。</p>
 <div class="literal-block-wrapper docutils container" id="id27">
 <div class="code-block-caption"><span class="caption-text">examples/color_pattern.py の pick_index 関数</span><a class="headerlink" href="#id27" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">pick_index</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;0.0-1.0 の乱数 u から、重み weights に比例した確率で番号を選ぶ。&quot;&quot;&quot;</span>
-    <span class="n">cumulative</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">/</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">cumulative</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">pick_index</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;0.0-1.0 の乱数 u から、重み weights に比例した確率で番号を選ぶ。&quot;&quot;&quot;</span>
+<span class="linenos">3</span>    <span class="n">cumulative</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">/</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="linenos">4</span>    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">cumulative</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>

@@ -1,0 +1,306 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 11 章 反射と屈折 &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 12 章 物理ベースの材質" href="12_materials.html" />
+    <link rel="prev" title="第 10 章 ハッシュとノイズ" href="10_noise.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 11 章 反射と屈折</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">反射</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">屈折</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">スネルの法則</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">全反射</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">フレネル反射</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">ループによる経路の追跡</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">物体の内部のレイマーチング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">近似と限界</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 11 章 反射と屈折</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 11 章 反射と屈折<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本編では、レイが最初に当たった表面の色を、光源と環境光から直接計算していた。この章では、鏡のように周囲を映す反射と、ガラスのように光を曲げて透過させる屈折を扱う。どちらも、表面に当たったレイから新しいレイを作って追跡を続けることで実現する。</p>
+<figure class="align-center" id="id10">
+<img alt="左の鏡面の球に周囲の景色が映り、右のガラスの球を通して奥の物体がゆがんで見える" src="_images/11_reflection_refraction.png" />
+<figcaption>
+<p><span class="caption-text">11_reflection_refraction.frag の実行結果。左の球は鏡面、右の球はガラスである。</span><a class="headerlink" href="#id10" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/e82bdfe2d5273d2da0d3e4f11ae7dea7/11_reflection_refraction.frag"><code class="xref download docutils literal notranslate"><span class="pre">11_reflection_refraction.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/11_reflection_refraction.html">ブラウザーで実行</a></p>
+<section id="id2">
+<h2>反射<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>入射方向 <span class="math notranslate nohighlight">\(\hat{\mathbf{i}}\)</span> のレイが法線 <span class="math notranslate nohighlight">\(\hat{\mathbf{n}}\)</span> の表面で鏡面反射すると、反射方向 <span class="math notranslate nohighlight">\(\hat{\mathbf{r}}\)</span> は次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[\hat{\mathbf{r}} = \hat{\mathbf{i}} - 2 (\hat{\mathbf{n}} \cdot \hat{\mathbf{i}})\, \hat{\mathbf{n}}\]</div>
+<p>入射方向の法線成分の符号を反転させる式である。GLSL では組み込み関数 <code class="docutils literal notranslate"><span class="pre">reflect(i,</span> <span class="pre">n)</span></code> がこの計算を行う。</p>
+</section>
+<section id="id3">
+<h2>屈折<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<section id="id4">
+<h3>スネルの法則<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>屈折率 <span class="math notranslate nohighlight">\(\eta_1\)</span> の媒質から屈折率 <span class="math notranslate nohighlight">\(\eta_2\)</span> の媒質に光が入るとき、入射角 <span class="math notranslate nohighlight">\(\theta_1\)</span> と屈折角 <span class="math notranslate nohighlight">\(\theta_2\)</span> の間にはスネルの法則が成り立つ。</p>
+<div class="math notranslate nohighlight">
+\[\eta_1 \sin\theta_1 = \eta_2 \sin\theta_2\]</div>
+<p><span class="math notranslate nohighlight">\(\eta = \eta_1 / \eta_2\)</span> とすると、屈折方向 <span class="math notranslate nohighlight">\(\hat{\mathbf{t}}\)</span> は次の式で求められる。</p>
+<div class="math notranslate nohighlight">
+\[c = -\hat{\mathbf{n}} \cdot \hat{\mathbf{i}}, \qquad
+k = 1 - \eta^2 (1 - c^2), \qquad
+\hat{\mathbf{t}} = \eta\, \hat{\mathbf{i}} + (\eta c - \sqrt{k})\, \hat{\mathbf{n}}\]</div>
+<p>GLSL では組み込み関数 <code class="docutils literal notranslate"><span class="pre">refract(i,</span> <span class="pre">n,</span> <span class="pre">eta)</span></code> がこの計算を行う。このとき、法線 <span class="math notranslate nohighlight">\(\hat{\mathbf{n}}\)</span> は入射方向と逆の側（<span class="math notranslate nohighlight">\(\hat{\mathbf{n}} \cdot \hat{\mathbf{i}} &lt; 0\)</span>）を向いている必要がある。ガラスの内部から外部に出るときは、外向きの法線の符号を反転させて渡す。</p>
+</section>
+<section id="id5">
+<h3>全反射<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>屈折率の大きい媒質から小さい媒質に光が進むとき（<span class="math notranslate nohighlight">\(\eta &gt; 1\)</span>）、入射角が大きいと <span class="math notranslate nohighlight">\(k &lt; 0\)</span> となり、屈折光が存在しなくなる。このとき光はすべて反射される。この現象を全反射と呼ぶ。<code class="docutils literal notranslate"><span class="pre">refract</span></code> は全反射のときに零ベクトルを返すので、戻り値の長さで判定できる。</p>
+</section>
+<section id="id6">
+<h3>フレネル反射<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>ガラスや水の表面では、光の一部が反射し、残りが屈折する。反射する割合は入射角によって変わり、表面を斜めから見るほど大きくなる。水面を真上から見ると水中が透けて見え、遠くの水面には空が映って見えるのはこのためである。</p>
+<p>反射率を正確に求めるフレネルの式は複雑なので、次の Schlick の近似がよく使われる。</p>
+<div class="math notranslate nohighlight">
+\[F(\theta) = F_0 + (1 - F_0)(1 - \cos\theta)^5, \qquad
+F_0 = \left(\frac{\eta_1 - \eta_2}{\eta_1 + \eta_2}\right)^2\]</div>
+<p><span class="math notranslate nohighlight">\(F_0\)</span> は光が垂直に入射するときの反射率で、空気（<span class="math notranslate nohighlight">\(\eta = 1\)</span>）とガラス（<span class="math notranslate nohighlight">\(\eta = 1.5\)</span>）の境界では <span class="math notranslate nohighlight">\(F_0 = 0.04\)</span> になる。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">11_reflection_refraction.frag（抜粋）</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">163</span><span class="c1">// Schlick の近似によるフレネル反射率。cosTheta は入射角の余弦</span>
+<span class="linenos">164</span><span class="kt">float</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">cosTheta</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">f0</span><span class="p">)</span>
+<span class="linenos">165</span><span class="p">{</span>
+<span class="linenos">166</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">f0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cosTheta</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p">);</span>
+<span class="linenos">167</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="id7">
+<h2>ループによる経路の追跡<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>鏡に映った物体がまた鏡であれば、反射をさらに追跡する必要がある。CPU のレイトレーサーでは関数の再帰呼び出しで実装することが多いが、GLSL では再帰呼び出しができない。そこで、ループの中でレイを更新しながら追跡する。</p>
+<p>このとき、それまでの経路で光がどれだけ減衰したかを表す値（スループット）を保持しておく。反射や屈折のたびにスループットに反射率や透過率を掛け、最後に拡散反射面や空に到達したら、その色にスループットを掛けて結果に加える。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">11_reflection_refraction.frag（抜粋）</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">169</span><span class="c1">// 反射・屈折を追跡してレイの色を求める</span>
+<span class="linenos">170</span><span class="kt">vec3</span><span class="w"> </span><span class="n">render</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos">171</span><span class="p">{</span>
+<span class="linenos">172</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">173</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">);</span><span class="w">  </span><span class="c1">// ここまでの経路で光が減衰する割合</span>
+<span class="linenos">174</span>
+<span class="linenos">175</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">bounce</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">bounce</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_BOUNCES</span><span class="p">;</span><span class="w"> </span><span class="n">bounce</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">176</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">hit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">raymarch</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">177</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">178</span><span class="w">            </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">skyColor</span><span class="p">(</span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">179</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">180</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">181</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">182</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calcNormal</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">183</span>
+<span class="linenos">184</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_MIRROR</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">185</span><span class="w">            </span><span class="c1">// 鏡面: 反射方向へ進み直す</span>
+<span class="linenos">186</span><span class="w">            </span><span class="n">throughput</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="mf">0.95</span><span class="p">);</span>
+<span class="linenos">187</span><span class="w">            </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">;</span>
+<span class="linenos">188</span><span class="w">            </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">189</span><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_GLASS</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">190</span><span class="w">            </span><span class="c1">// 入射面で反射する割合 (フレネル項)</span>
+<span class="linenos">191</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">f0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">((</span><span class="n">IOR</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">IOR</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="p">),</span><span class="w"> </span><span class="mf">2.0</span><span class="p">);</span>
+<span class="linenos">192</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="o">-</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">f0</span><span class="p">);</span>
+<span class="linenos">193</span><span class="w">            </span><span class="c1">// 反射成分は空の色で近似して加え、残りの (1 - f) で屈折を追跡する</span>
+<span class="linenos">194</span><span class="w">            </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">skyColor</span><span class="p">(</span><span class="n">reflect</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">));</span>
+<span class="linenos">195</span><span class="w">            </span><span class="n">throughput</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f</span><span class="p">;</span>
+<span class="linenos">196</span>
+<span class="linenos">197</span><span class="w">            </span><span class="c1">// 空気からガラスへ屈折して内部を進む</span>
+<span class="linenos">198</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rdIn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">refract</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">IOR</span><span class="p">);</span>
+<span class="linenos">199</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">pIn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">;</span>
+<span class="linenos">200</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">pOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pIn</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">marchInside</span><span class="p">(</span><span class="n">pIn</span><span class="p">,</span><span class="w"> </span><span class="n">rdIn</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rdIn</span><span class="p">;</span>
+<span class="linenos">201</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">nOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calcNormal</span><span class="p">(</span><span class="n">pOut</span><span class="p">);</span>
+<span class="linenos">202</span>
+<span class="linenos">203</span><span class="w">            </span><span class="c1">// ガラスから空気へ屈折して外に出る。全反射になる場合は反射方向で近似する</span>
+<span class="linenos">204</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rdOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">refract</span><span class="p">(</span><span class="n">rdIn</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">nOut</span><span class="p">,</span><span class="w"> </span><span class="n">IOR</span><span class="p">);</span>
+<span class="linenos">205</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">rdOut</span><span class="p">,</span><span class="w"> </span><span class="n">rdOut</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">206</span><span class="w">                </span><span class="n">rdOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">rdIn</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">nOut</span><span class="p">);</span>
+<span class="linenos">207</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">208</span><span class="w">            </span><span class="n">throughput</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.95</span><span class="p">,</span><span class="w"> </span><span class="mf">0.98</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span><span class="w">  </span><span class="c1">// わずかに青みを付ける</span>
+<span class="linenos">209</span><span class="w">            </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pOut</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">nOut</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">;</span>
+<span class="linenos">210</span><span class="w">            </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rdOut</span><span class="p">;</span>
+<span class="linenos">211</span><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">212</span><span class="w">            </span><span class="c1">// 拡散反射面: 直接光で色を決めて終了する</span>
+<span class="linenos">213</span><span class="w">            </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">shadeDiffuse</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">214</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">215</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">216</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">217</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">218</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>ガラスの球に当たったときは、次の順に処理する。</p>
+<ol class="arabic simple">
+<li><p>フレネル項 <span class="math notranslate nohighlight">\(F\)</span> を求め、反射成分として空の色に <span class="math notranslate nohighlight">\(F\)</span> を掛けて加える。スループットには <span class="math notranslate nohighlight">\(1 - F\)</span> を掛ける。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">refract</span></code> で屈折方向を求め、ガラスの内部に入る。</p></li>
+<li><p>ガラスの内部をレイマーチングし、出口の点を求める（後述）。</p></li>
+<li><p>出口で再び屈折させ、外に出たレイで追跡を続ける。</p></li>
+</ol>
+<p>ループ 1 回につき 1 本のレイしか追跡できないため、ガラスの表面での反射と屈折の両方を正確に追跡することはできない。サンプルでは、屈折の経路だけを追跡し、反射成分は空の色で近似している。反射と屈折を確率的に選ぶ方法は、第 17 章のパストレーシングの考え方につながる。</p>
+</section>
+<section id="id8">
+<h2>物体の内部のレイマーチング<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p>SDF は物体の内部で負の値をとり、その絶対値は表面までの距離である。したがって、SDF の符号を反転させた <span class="math notranslate nohighlight">\(-f\)</span> を使えば、物体の内部からでも通常と同じようにスフィアトレーシングで表面を探せる。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">11_reflection_refraction.frag（抜粋）</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 87</span><span class="c1">// ガラスの内部をレイマーチングし、出口までの距離を返す。</span>
+<span class="linenos"> 88</span><span class="c1">// 内部では -sdGlass(p) が表面までの距離になる</span>
+<span class="linenos"> 89</span><span class="kt">float</span><span class="w"> </span><span class="n">marchInside</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos"> 90</span><span class="p">{</span>
+<span class="linenos"> 91</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 92</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 93</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">sdGlass</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos"> 94</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">h</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 95</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos"> 96</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 97</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">h</span><span class="p">;</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 99</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos">100</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>ここでは、シーン全体の <code class="docutils literal notranslate"><span class="pre">map</span></code> ではなく、ガラスの物体だけの SDF <code class="docutils literal notranslate"><span class="pre">sdGlass</span></code> を使っている。シーン全体の SDF の符号を反転させると、ガラスの外にある物体の内部も「内側」とみなされてしまうためである。</p>
+</section>
+<section id="id9">
+<h2>近似と限界<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>このサンプルは、反射と屈折の基本的な仕組みを示すために、次の近似をしている。</p>
+<ul class="simple">
+<li><p>ガラスの表面での反射は、空の色だけで近似している。反射に映る周囲の物体は描かれない。</p></li>
+<li><p>ガラスの内部での反射（全反射を含む）は追跡していない。全反射が起こる場合は、反射方向で外に出るものとして近似している。</p></li>
+<li><p>ガラスや鏡の物体も影を落とすときは不透明な物体として扱う。実際のガラスは光を集めて明るい模様（コースティクス）を作るが、この手法では表現できない。</p></li>
+</ul>
+<p>これらを正確に扱うには、第 17 章で説明するパストレーシングが必要になる。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="10_noise.html" class="btn btn-neutral float-left" title="第 10 章 ハッシュとノイズ" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="12_materials.html" class="btn btn-neutral float-right" title="第 12 章 物理ベースの材質" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

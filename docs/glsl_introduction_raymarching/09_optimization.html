@@ -1,0 +1,406 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 9 章 最適化とデバッグ &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 10 章 ハッシュとノイズ" href="10_noise.html" />
+    <link rel="prev" title="第 8 章 実践：シーンを組み立てる" href="08_practice.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 9 章 最適化とデバッグ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">レイマーチングのパラメーター</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">距離に応じた閾値</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">よくある不具合と対策</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">表面の穴とすり抜け</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">シャドウアクネと自己交差</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">浮動小数点数の精度</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">高速化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">バウンディングボリューム</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">過緩和</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">コーンマーチング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">その他の工夫</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">可視化によるデバッグ</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 9 章 最適化とデバッグ</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 9 章 最適化とデバッグ<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>レイマーチングのシェーダーは、1 ピクセルごとに SDF を数十〜数百回評価するため、計算量が大きくなりやすい。また、SDF の性質が崩れると、表面に穴が空く、縞模様が出るといった不具合が起こる。この章では、パラメーターの調整方法、よくある不具合とその対策、高速化の方法、不具合の原因を調べるための可視化の方法を説明する。</p>
+<section id="id2">
+<h2>レイマーチングのパラメーター<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>スフィアトレーシングの品質と速度は、主に次の 3 つのパラメーターで決まる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>パラメーター</p></th>
+<th class="head"><p>小さくすると</p></th>
+<th class="head"><p>大きくすると</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MAX_STEPS</span></code></p></td>
+<td><p>速くなるが、表面に届く前に打ち切られるレイが増える。</p></td>
+<td><p>遅くなるが、表面とほぼ平行に進むレイも表面に届きやすくなる。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SURF_DIST</span></code></p></td>
+<td><p>表面の位置が正確になるが、反復回数が増える。</p></td>
+<td><p>速くなるが、細かい形状がつぶれ、表面の位置がずれる。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MAX_DIST</span></code></p></td>
+<td><p>速くなるが、遠くの物体が描かれない。</p></td>
+<td><p>遠くまで描かれるが、何にも当たらないレイの反復回数が増える。</p></td>
+</tr>
+</tbody>
+</table>
+<p>第 4 章の図で画面の上部が円弧状に途切れているのは、<code class="docutils literal notranslate"><span class="pre">MAX_DIST</span></code> や <code class="docutils literal notranslate"><span class="pre">MAX_STEPS</span></code> に達して打ち切られたレイが背景色で塗られたためである。第 7 章のフォグは、この境目を目立たなくする効果もある。</p>
+<section id="id3">
+<h3>距離に応じた閾値<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>遠くの物体ほど画面上では小さく見えるので、同じ閾値 <code class="docutils literal notranslate"><span class="pre">SURF_DIST</span></code> を使うと、遠くでは必要以上に精密な計算をしていることになる。そこで、閾値を距離 <span class="math notranslate nohighlight">\(t\)</span> に比例させる方法がよく使われる。</p>
+<div class="math notranslate nohighlight">
+\[f(\mathbf{p}(t)) &lt; \varepsilon\, t\]</div>
+<p><span class="math notranslate nohighlight">\(\varepsilon\)</span> を 1 ピクセルが見込む角度程度にすると、1 ピクセルより細かい精度の計算を省ける。例えば画面の高さが 1000 ピクセル、焦点距離が 2 の場合、1 ピクセルが見込む角度は約 <span class="math notranslate nohighlight">\(2 / (1000 \times 2) = 0.001\)</span> である。第 13 章のフラクタルのサンプルは、この方法を <span class="math notranslate nohighlight">\(\varepsilon = 0.0005\)</span> で使っている。</p>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">13_menger.frag（抜粋）</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">47</span><span class="c1">// 戻り値は (t, 階層, 反復回数)。当たらなければ t は -1.0</span>
+<span class="linenos">48</span><span class="kt">vec3</span><span class="w"> </span><span class="n">raymarch</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos">49</span><span class="p">{</span>
+<span class="linenos">50</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">51</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">52</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">53</span><span class="w">        </span><span class="c1">// 遠いほど閾値を大きくする (1 ピクセルより細かい構造は見えない)</span>
+<span class="linenos">54</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">55</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+<span class="linenos">56</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">57</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">h</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">58</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">59</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">60</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">61</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">62</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">MAX_STEPS</span><span class="p">));</span>
+<span class="linenos">63</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="id4">
+<h2>よくある不具合と対策<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<section id="id5">
+<h3>表面の穴とすり抜け<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>第 4 章の変位やねじり、軸ごとに倍率の異なる拡大縮小を使うと、SDF のリプシッツ定数が 1 を超え、真の距離より大きな値を返す場所ができる。スフィアトレーシングがこの値だけ進むと、表面を通り過ぎてしまう。その結果、表面に穴が空いたり、物体の縁が欠けたりする。</p>
+<p>リプシッツ定数の上限 <span class="math notranslate nohighlight">\(L\)</span> がわかっている場合は、SDF の値を <span class="math notranslate nohighlight">\(L\)</span> で割った距離だけ進めば安全である。上限がわからない場合は、0.5〜0.8 程度の係数を掛けて歩幅を小さくし、不具合が消えるまで調整する。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">STEP_SCALE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.6</span><span class="p">;</span><span class="w">  </span><span class="c1">// 歩幅の係数 (1 / L の目安)</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 4</span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">STEP_SCALE</span><span class="p">;</span>
+<span class="linenos">10</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>歩幅を小さくすると反復回数が増えるので、<code class="docutils literal notranslate"><span class="pre">MAX_STEPS</span></code> も合わせて大きくする必要がある。</p>
+</section>
+<section id="id6">
+<h3>シャドウアクネと自己交差<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>第 6 章で説明したとおり、表面上の点から新しいレイ（シャドウレイ、反射レイなど）を飛ばすときは、始点を法線方向に少し離す。離す距離が小さすぎると自分自身の表面に当たってまだら模様が現れ、大きすぎると物体同士が接する部分で影が途切れる。サンプルでは、シーンの大きさ 1 程度に対して 0.01 としている。</p>
+</section>
+<section id="id7">
+<h3>浮動小数点数の精度<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>GLSL の <code class="docutils literal notranslate"><span class="pre">float</span></code> は 32 ビットで、有効数字は 10 進数で約 7 桁である。座標の値が大きくなるほど、表せる最小の差が大きくなる。原点から遠く離れた場所に物体を置くと、表面の位置や法線の計算が粗くなり、縞模様やちらつきが現れる。物体はなるべく原点の近くに置き、カメラを遠くに置く必要がある場合は、カメラを原点に置いてシーン全体を移動させるとよい。</p>
+<p><code class="docutils literal notranslate"><span class="pre">iTime</span></code> も同様で、長時間実行して値が大きくなると、<code class="docutils literal notranslate"><span class="pre">sin(iTime</span> <span class="pre">*</span> <span class="pre">100.0)</span></code> のような速い変化の精度が落ちる。</p>
+</section>
+</section>
+<section id="id8">
+<h2>高速化<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<section id="id9">
+<h3>バウンディングボリューム<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>複雑な形状の SDF は評価に時間がかかる。形状を囲む単純な形状（球や箱）を用意し、点がその外側にあるときは、囲む形状までの距離を返すようにすると、評価を省ける。囲む形状までの距離は、中の形状までの距離の下界になっているので、スフィアトレーシングは正しく動作する。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">13_mandelbulb.frag（抜粋）</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">36</span><span class="kt">float</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">trap</span><span class="p">)</span>
+<span class="linenos">37</span><span class="p">{</span>
+<span class="linenos">38</span><span class="w">    </span><span class="c1">// 外接球の外では球までの距離を返して反復を省く</span>
+<span class="linenos">39</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">bound</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.25</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bound</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">41</span><span class="w">        </span><span class="n">trap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">42</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">bound</span><span class="p">;</span>
+<span class="linenos">43</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">44</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sdMandelbulb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">trap</span><span class="p">);</span>
+<span class="linenos">45</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>外接球の外側でも、表面から 0.1 以内に近づいたら本来の SDF を評価するようにしている。外接球の表面で <code class="docutils literal notranslate"><span class="pre">bound</span></code> を返すと、そこで閾値未満になり、外接球の表面に当たったと判定されるためである。</p>
+</section>
+<section id="id10">
+<h3>過緩和<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>スフィアトレーシングは、SDF の値 <span class="math notranslate nohighlight">\(d\)</span> だけ進む。しかし SDF が表す安全な球は、レイの進行方向だけでなく全方向に同じ半径を持つため、平面に斜めに近づく場合などは、実際にはもっと先まで進んでも表面に当たらないことが多い。そこで、係数 <span class="math notranslate nohighlight">\(\omega \ (1 \le \omega &lt; 2)\)</span> を掛けて、<span class="math notranslate nohighlight">\(\omega d\)</span> だけ進む方法がある。これを <a class="reference internal" href="glossary.html#term-5"><span class="xref std std-term">過緩和</span></a> （over-relaxation）と呼ぶ（Keinert et al., 2014）。</p>
+<p>大きく進むと表面を通り越すおそれがあるため、各点で次の条件を確かめる。前の点 <span class="math notranslate nohighlight">\(\mathbf{p}_{i-1}\)</span> の安全な球（半径 <span class="math notranslate nohighlight">\(d_{i-1}\)</span>）と、今の点 <span class="math notranslate nohighlight">\(\mathbf{p}_i\)</span> の安全な球（半径 <span class="math notranslate nohighlight">\(d_i\)</span>）が重なっていれば、2 点の間の区間はすべて安全な球に覆われているので、表面は無い。</p>
+<div class="math notranslate nohighlight">
+\[\omega\, d_{i-1} \le d_{i-1} + d_i\]</div>
+<p>この条件が成り立たないとき、つまり 2 つの球の間に隙間があるときは、その隙間で表面を通り越した可能性がある。その場合は、通常の歩幅 <span class="math notranslate nohighlight">\(d_{i-1}\)</span> で進んだ位置まで戻り、以降は <span class="math notranslate nohighlight">\(\omega = 1\)</span> として通常のスフィアトレーシングを続ける。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">09_relaxation.frag（抜粋）</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">44</span><span class="c1">// 過緩和を使うスフィアトレーシング (Keinert et al., 2014)。反復回数を返す</span>
+<span class="linenos">45</span><span class="kt">int</span><span class="w"> </span><span class="n">relaxedRaymarchSteps</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos">46</span><span class="p">{</span>
+<span class="linenos">47</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">omega</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OMEGA</span><span class="p">;</span>
+<span class="linenos">48</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">49</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">previousD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w">    </span><span class="c1">// 前の点での SDF の値</span>
+<span class="linenos">50</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">stepLength</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w">   </span><span class="c1">// 前の点から進んだ距離</span>
+<span class="linenos">51</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">52</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">53</span><span class="w">        </span><span class="c1">// 前の点と今の点を中心とする 2 つの安全な球が重ならなければ、</span>
+<span class="linenos">54</span><span class="w">        </span><span class="c1">// その隙間で表面を通り越した可能性がある</span>
+<span class="linenos">55</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">omega</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">stepLength</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">previousD</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">56</span><span class="w">            </span><span class="n">t</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">stepLength</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">previousD</span><span class="p">;</span><span class="w">   </span><span class="c1">// 通常の歩幅で進んだ位置まで戻る</span>
+<span class="linenos">57</span><span class="w">            </span><span class="n">stepLength</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">58</span><span class="w">            </span><span class="n">omega</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w">                   </span><span class="c1">// 以降は通常の方法で進む</span>
+<span class="linenos">59</span><span class="w">            </span><span class="k">continue</span><span class="p">;</span>
+<span class="linenos">60</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">61</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">62</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="linenos">63</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">64</span><span class="w">        </span><span class="n">stepLength</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">omega</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">65</span><span class="w">        </span><span class="n">previousD</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">66</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">stepLength</span><span class="p">;</span>
+<span class="linenos">67</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">68</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">MAX_STEPS</span><span class="p">;</span>
+<span class="linenos">69</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/c0bcb88ea605aa2b4f8a5b04b816050f/09_relaxation.frag"><code class="xref download docutils literal notranslate"><span class="pre">09_relaxation.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/09_relaxation.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id17">
+<img alt="反復回数のヒートマップが左右に並んでいる。右は全体に青く、球の周りだけが赤い" src="_images/09_relaxation.png" />
+<figcaption>
+<p><span class="caption-text">09_relaxation.frag の実行結果。左が通常の方法、右が過緩和（<span class="math notranslate nohighlight">\(\omega = 1.2\)</span>）である。</span><a class="headerlink" href="#id17" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>右の図では、地面や遠くを見るレイの反復回数が全体に減っている。一方、球の周りでは反復回数が増えている。レイが球の近くを通ると、SDF の値が急に小さくなって条件が成り立たなくなり、戻る処理と通常の方法への切り替えが起こるためである。<span class="math notranslate nohighlight">\(\omega\)</span> を大きくするほど、うまくいく場所ではより速くなるが、失敗して戻る場所も増える。このサンプルでも <span class="math notranslate nohighlight">\(\omega = 1.6\)</span> にすると、失敗して反復回数が増える範囲が、球の周りから画面の上半分に大きく広がる。最適な値はシーンによるので、反復回数を可視化しながら調整するとよい。</p>
+</section>
+<section id="id11">
+<h3>コーンマーチング<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>画面の 1 ピクセルは、遠くに行くほど広い範囲を覆う。そこで、1 本のレイの代わりにピクセルが覆う円錐を考え、その円錐の中で表面が見つかるまでの距離を低い解像度で先に求めてから、その距離を各ピクセルのレイの開始位置として使う方法がある。これをコーンマーチングと呼ぶ。低い解像度の結果を使うため、1 回目の描画結果をテクスチャに保存する必要があり、第 17 章で説明する複数パスの描画で実装できる。</p>
+</section>
+<section id="id12">
+<h3>その他の工夫<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">map</span></code> の中の処理を減らす。レイマーチング、法線、影、AO のすべてで <code class="docutils literal notranslate"><span class="pre">map</span></code> が呼ばれるため、<code class="docutils literal notranslate"><span class="pre">map</span></code> の高速化が最も効果的である。</p></li>
+<li><p>影や AO の反復回数を必要最小限にする。影の最大距離 <code class="docutils literal notranslate"><span class="pre">tmax</span></code> を短くするだけでも効果がある。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">if</span></code> による分岐は、隣接するピクセルで条件が異なると GPU の並列実行の効率が下がる。ただし、分岐によって重い計算を省けるなら、分岐した方が速いことが多い。実際に計測して判断する。</p></li>
+<li><p>画面の解像度を下げる。フラグメントシェーダーの計算量はピクセル数に比例する。</p></li>
+</ul>
+</section>
+</section>
+<section id="id13">
+<h2>可視化によるデバッグ<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<p>シェーダーには、<code class="docutils literal notranslate"><span class="pre">printf</span></code> のように途中の値を出力する手段が無い。その代わりに、調べたい値を色に変換して画面に表示する。本資料で扱ったレイマーチングでは、特に次の値を表示すると不具合の原因を探しやすい。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>表示する値</p></th>
+<th class="head"><p>変換の方法</p></th>
+<th class="head"><p>わかること</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>法線</p></td>
+<td><p><span class="math notranslate nohighlight">\(0.5 + 0.5\,\hat{\mathbf{n}}\)</span> を RGB にする。</p></td>
+<td><p>法線が乱れている場所。面の向きによって色が決まるので、不連続な色の変化は SDF の不具合を示す。</p></td>
+</tr>
+<tr class="row-odd"><td><p>反復回数</p></td>
+<td><p>回数を上限で割り、ヒートマップにする。</p></td>
+<td><p>計算が重い場所。上限に達した場所は、表面に届く前に打ち切られている。</p></td>
+</tr>
+<tr class="row-even"><td><p>距離（深度）</p></td>
+<td><p><span class="math notranslate nohighlight">\(t\)</span> を一定の値で割り、白黒にする。</p></td>
+<td><p>物体の前後関係と、交点の位置が正しいか。</p></td>
+</tr>
+<tr class="row-odd"><td><p>AO、影</p></td>
+<td><p>値をそのまま白黒にする。</p></td>
+<td><p>遮蔽の計算が意図どおりか。</p></td>
+</tr>
+</tbody>
+</table>
+<p>次のサンプルは、<code class="docutils literal notranslate"><span class="pre">DEBUG_MODE</span></code> の値によって表示を切り替える。既定値の <span class="math notranslate nohighlight">\(-1\)</span> では、画面を 4 分割して、通常の描画、法線、反復回数、距離を同時に表示する。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">09_debug.frag（抜粋）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">176</span><span class="c1">// mode に応じた色を返す。戻り値はガンマ補正前の値なので、表示したい値は</span>
+<span class="linenos">177</span><span class="c1">// あらかじめ 2.2 乗しておく</span>
+<span class="linenos">178</span><span class="kt">vec3</span><span class="w"> </span><span class="n">debugColor</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">mode</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos">179</span><span class="p">{</span>
+<span class="linenos">180</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">hit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">raymarch</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">181</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">182</span><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">isHit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">183</span>
+<span class="linenos">184</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">185</span><span class="w">        </span><span class="c1">// 法線 [-1, 1] を色 [0, 1] に変換する</span>
+<span class="linenos">186</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">isHit</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">calcNormal</span><span class="p">(</span><span class="n">p</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">2.2</span><span class="p">))</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">187</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">188</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">189</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">heatmap</span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">MAX_STEPS</span><span class="p">)),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">2.2</span><span class="p">));</span>
+<span class="linenos">190</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">191</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">192</span><span class="w">        </span><span class="c1">// 近いほど白、遠いほど黒 (距離 20 で 0)</span>
+<span class="linenos">193</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">isHit</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">20.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">194</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">pow</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span><span class="w"> </span><span class="mf">2.2</span><span class="p">));</span>
+<span class="linenos">195</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">196</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">isHit</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">shade</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">SKY_COLOR</span><span class="p">;</span>
+<span class="linenos">197</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/73cf2cf0e6fa3de2fddf4d8b4bee4bd9/09_debug.frag"><code class="xref download docutils literal notranslate"><span class="pre">09_debug.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/09_debug.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id19">
+<img alt="画面が 4 分割され、通常の描画、法線、距離、反復回数のヒートマップが表示されている" src="_images/09_debug.png" />
+<figcaption>
+<p><span class="caption-text">09_debug.frag の実行結果。左上が通常の描画、右上が法線、右下が反復回数、左下が距離である。</span><a class="headerlink" href="#id19" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>表示する値は、ガンマ補正の影響を受けないようにしている。<code class="docutils literal notranslate"><span class="pre">debugColor</span></code> は線形な値を返し、<code class="docutils literal notranslate"><span class="pre">mainImage</span></code> の最後でガンマ補正を施すので、表示したい値にあらかじめ 2.2 乗を施しておき、補正後に元の値が表示されるようにしている。</p>
+<p>右下の反復回数の表示では、地平線付近が赤くなっている。第 2 章で見たように、地面とほぼ平行に進むレイは反復回数が多くなる。物体の輪郭の周りがわずかに明るくなっているのも同じ理由である。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="08_practice.html" class="btn btn-neutral float-left" title="第 8 章 実践：シーンを組み立てる" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="10_noise.html" class="btn btn-neutral float-right" title="第 10 章 ハッシュとノイズ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

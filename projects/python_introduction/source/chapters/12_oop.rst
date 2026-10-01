@@ -12,6 +12,7 @@
 Python では、``class`` キーワードを使ってクラスを定義します。インスタンスが作成される際に自動的に呼び出される特別なメソッドを ``__init__`` メソッドと呼び、属性の初期化に使用します。クラスの定義の直後や、``__init__`` メソッドをはじめとする各メソッドの定義の直後には、第 7 章で説明した docstring を書けます。
 
 .. code-block:: python
+   :linenos:
 
    class BankAccount:
        """銀行口座を表すクラスです。"""
@@ -37,6 +38,7 @@ Python では、``class`` キーワードを使ってクラスを定義します
 Python のクラスには、``__str__`` のように前後にアンダースコアを 2 つ付けた特殊メソッドを定義できます。``__str__`` メソッドを定義すると、``print`` 関数でインスタンスを表示したときに、その戻り値が表示されるようになります。
 
 .. code-block:: python
+   :linenos:
 
    class BankAccount:
        def __init__(self, owner: str, balance: int = 0) -> None:
@@ -73,6 +75,7 @@ Python のクラスには、``__str__`` のように前後にアンダースコ�
 継承とは、既存のクラスの属性やメソッドを引き継いで、新しいクラスを定義する仕組みです。継承元のクラスを親クラス（基底クラス）、継承先のクラスを子クラス（派生クラス）と呼びます。子クラスでは、``super()`` を使って親クラスの ``__init__`` メソッドを呼び出せます。
 
 .. code-block:: python
+   :linenos:
 
    class SavingsAccount(BankAccount):
        def __init__(self, owner: str, balance: int = 0, interest_rate: float = 0.01) -> None:

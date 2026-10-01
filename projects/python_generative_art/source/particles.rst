@@ -23,6 +23,7 @@
 力を加える ``apply_force`` と、1 ステップ進める ``update`` を分けておくと、重力・反発力・風など複数の力を独立に足し合わせてからまとめて積分できる。``update`` の最後で加速度を 0 に戻しているのは、力は毎ステップ加え直す前提（次のステップに持ち越さない）にするためである。
 
 .. literalinclude:: ../examples/particle.py
+   :linenos:
    :language: python
    :pyobject: Particle
    :caption: examples/particle.py の Particle クラス
@@ -66,6 +67,7 @@ Craig Reynolds が 1987 年に提案した **Boids** モデルは、各個体が
 各個体の近傍を求めるとき、全ての個体の組を調べる素朴な方法では、個体数 :math:`N` に対して計算量が :math:`O(N^2)` になる。さらに、個体ごとに Python のループを回すと :math:`N` が増えたときに極端に遅くなるため、以下の実装では位置・速度をまとめて ``(N, 2)`` の NumPy 配列として扱い、全個体間の差分・距離を ``(N, N, 2)`` のブロードキャスト演算で一括計算している（``perlin_noise.py`` で座標配列をまとめて評価したのと同じ発想）。この方法でも計算量は :math:`O(N^2)` のままだが、作例の 60 個体程度であれば十分に速い。個体数が数千を超える場合の高速化は、:ref:`neighbor-search`\ で扱う。境界は画面端でループするトーラス状にしており、群れが画面外に出ていかないようにするための別途の「壁を避ける」ルールを用意する必要がない。
 
 .. literalinclude:: ../examples/boids.py
+   :linenos:
    :language: python
    :caption: examples/boids.py
 
@@ -91,6 +93,7 @@ Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で�
 比較のため、まず全ての組を調べる総当たりの方法を示す。
 
 .. literalinclude:: ../examples/neighbor_search.py
+   :linenos:
    :language: python
    :pyobject: brute_force_pairs
    :caption: examples/neighbor_search.py の brute_force_pairs 関数
@@ -98,6 +101,7 @@ Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で�
 格子を使う方法では、まず各点をマスに振り分ける。点をマスの番号で並べ替え、番号が変わる位置で区切ることで、Python のループを使わずに振り分けている。
 
 .. literalinclude:: ../examples/neighbor_search.py
+   :linenos:
    :language: python
    :pyobject: build_grid
    :caption: examples/neighbor_search.py の build_grid 関数
@@ -105,12 +109,14 @@ Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で�
 次に、マスごとに、自分のマスと隣接するマスの点どうしの距離を総当たりで調べる。隣接する 8 マスを全て調べると、同じ組をマス A から見たときとマス B から見たときの 2 回数えてしまう。そのため、自分のマスと、右・左下・下・右下の 4 マスだけを調べている。
 
 .. literalinclude:: ../examples/neighbor_search.py
+   :linenos:
    :start-at: # 自分のマスと
    :end-at: (1, 1)]
    :language: python
    :caption: examples/neighbor_search.py の _FORWARD_OFFSETS
 
 .. literalinclude:: ../examples/neighbor_search.py
+   :linenos:
    :language: python
    :pyobject: grid_pairs
    :caption: examples/neighbor_search.py の grid_pairs 関数
@@ -141,6 +147,7 @@ Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で�
 格子による近傍探索を使うと、多数の点を扱う表現も現実的な時間で作れる。次の作例は、パーリンノイズの値が大きい場所ほど密になるように 12000 個の点を散らし、距離が 16 未満の点どうしを、近いほど濃い線で結んだものである。総当たりでは 12000 × 12000 の組を調べる必要があるが、格子を使えば、各点の周りのマスにある点だけを調べれば済む。結ばれた組は約 16 万組である。
 
 .. literalinclude:: ../examples/neighbor_search.py
+   :linenos:
    :language: python
    :pyobject: render_links
    :caption: examples/neighbor_search.py の render_links 関数
@@ -171,6 +178,7 @@ Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で�
    {\max(\lVert \vec{p}_i - \vec{p}_j \rVert, d_{\min})^3}
 
 .. literalinclude:: ../examples/particle.py
+   :linenos:
    :language: python
    :pyobject: repulsion_forces
    :caption: examples/particle.py の repulsion_forces 関数
@@ -183,6 +191,7 @@ Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で�
    (y \le y_{\mathrm{floor}} \ \text{かつ} \ v_y < 0)
 
 .. literalinclude:: ../examples/particle.py
+   :linenos:
    :language: python
    :pyobject: simulate_gravity_bounce
    :caption: examples/particle.py の simulate_gravity_bounce 関数
@@ -207,6 +216,7 @@ Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で�
    p_{t+1} = p_t + (p_t - p_{t-1}) \cdot \mathrm{damping} + a_t \, dt^2
 
 .. literalinclude:: ../examples/particle.py
+   :linenos:
    :language: python
    :pyobject: verlet_step
    :caption: examples/particle.py の verlet_step 関数
@@ -214,6 +224,7 @@ Boids の知覚範囲、粒子どうしの衝突、近い点どうしを線で�
 速度を持たないこの方式は、拘束を位置に対して直接押し引きするだけで安定して解けるという利点がある。2 点間の距離を一定に保つ拘束は、目標距離との差の半分ずつを互いに押し戻すだけで実装できる。1 回の修正では別の拘束とのつじつまが合わなくなるため、これを何度も繰り返すことで全体を緩やかに収束させる（Thomas Jakobsen の "Advanced Character Physics", 2001）。
 
 .. literalinclude:: ../examples/particle.py
+   :linenos:
    :language: python
    :pyobject: satisfy_distance_constraints
    :caption: examples/particle.py の satisfy_distance_constraints 関数

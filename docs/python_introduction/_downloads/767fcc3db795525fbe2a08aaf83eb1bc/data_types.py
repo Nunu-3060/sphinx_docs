@@ -20,6 +20,12 @@ def main() -> None:
     print("a % b =", a % b)
     print("a ** b =", a ** b)
 
+    total: int = 10
+    total += 5
+    print("10 に 5 を加えた結果:", total)
+    total *= 2
+    print("さらに 2 倍した結果:", total)
+
     area: float = calculate_circle_area(2.0)
     print("半径 2.0 の円の面積:", area)
 

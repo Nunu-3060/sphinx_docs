@@ -12,6 +12,7 @@
 Python には、あらかじめ多くのモジュールが標準ライブラリとして用意されています。標準ライブラリのモジュールを利用するには、``import`` 文を使用します。
 
 .. code-block:: python
+   :linenos:
 
    import math
 
@@ -21,6 +22,7 @@ Python には、あらかじめ多くのモジュールが標準ライブラリ�
 モジュールの中から特定の関数だけを取り出してインポートしたい場合は、``from`` を使用します。
 
 .. code-block:: python
+   :linenos:
 
    from math import sqrt
 
@@ -32,6 +34,7 @@ Python には、あらかじめ多くのモジュールが標準ライブラリ�
 自分で作成した Python ファイルも、モジュールとしてインポートできます。次のような ``rectangle.py`` というファイルがあるとします。
 
 .. code-block:: python
+   :linenos:
 
    # rectangle.py
    def calculate_area(width: float, height: float) -> float:
@@ -40,6 +43,7 @@ Python には、あらかじめ多くのモジュールが標準ライブラリ�
 同じフォルダにある別のファイルからは、次のようにインポートして利用できます。
 
 .. code-block:: python
+   :linenos:
 
    from rectangle import calculate_area
 
@@ -53,6 +57,7 @@ Python には、あらかじめ多くのモジュールが標準ライブラリ�
 ``__init__.py`` の中から、同じパッケージ内にある別のモジュールをインポートする場合は、次のようにモジュール名の前に ``.`` を付けます。
 
 .. code-block:: python
+   :linenos:
 
    # shapes/__init__.py
    from .rectangle import calculate_area
@@ -62,6 +67,7 @@ Python には、あらかじめ多くのモジュールが標準ライブラリ�
 ``__init__.py`` では、次のように ``__all__`` という変数を定義することもあります。
 
 .. code-block:: python
+   :linenos:
 
    # shapes/__init__.py
    from .rectangle import calculate_area

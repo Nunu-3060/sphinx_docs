@@ -1,0 +1,496 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 7 章 カメラと演出 &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 8 章 実践：シーンを組み立てる" href="08_practice.html" />
+    <link rel="prev" title="第 6 章 影と AO" href="06_shadow_ao.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 7 章 カメラと演出</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">カメラの操作</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">平行投影</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">空の描画</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">フォグ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">トーンマッピング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">色の設計</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hsv">HSV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">余弦関数によるパレット</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">色の補間</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">カラーグレーディング</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">アンチエイリアス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">レンダリング関数の整理</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 7 章 カメラと演出</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 7 章 カメラと演出<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>ここまでのサンプルは、固定したカメラから物体を眺めるだけであった。この章では、カメラを動かす方法と平行投影、画像の見た目を整える処理として、空の描画、フォグ、トーンマッピング、色の設計、アンチエイリアスを説明する。</p>
+<figure class="align-center" id="id13">
+<img alt="地平線まで続く市松模様の地面が遠くで空の色に溶け込み、物体が置かれている" src="_images/07_camera.png" />
+<figcaption>
+<p><span class="caption-text">07_camera.frag の実行結果</span><a class="headerlink" href="#id13" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/427e41d176f0539b1941131a6672e132/07_camera.frag"><code class="xref download docutils literal notranslate"><span class="pre">07_camera.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/07_camera.html">ブラウザーで実行</a></p>
+<section id="id2">
+<h2>カメラの操作<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>第 2 章のルックアットカメラでは、カメラの位置 <span class="math notranslate nohighlight">\(\mathbf{o}\)</span> と注視点 <span class="math notranslate nohighlight">\(\mathbf{a}\)</span> を与えればカメラの向きが決まる。そこで、<span class="math notranslate nohighlight">\(\mathbf{o}\)</span> を時間やマウスの位置の関数にすれば、カメラを動かせる。</p>
+<p>次のサンプルでは、注視点を中心とする半径 <span class="math notranslate nohighlight">\(R\)</span> の円周上にカメラを置き、時間とともに周回させる。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{o} = \mathbf{a} + (R \sin\phi,\ h,\ R \cos\phi), \qquad \phi = 0.3\, t\]</div>
+<p>マウスでドラッグしている間は、<code class="docutils literal notranslate"><span class="pre">iMouse</span></code> の値で角度 <span class="math notranslate nohighlight">\(\phi\)</span> と高さ <span class="math notranslate nohighlight">\(h\)</span> を決める。ドラッグ中は <code class="docutils literal notranslate"><span class="pre">iMouse.z</span></code> が正になることを利用して判定している。</p>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">07_camera.frag（抜粋）</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">220</span><span class="kt">void</span><span class="w"> </span><span class="n">mainImage</span><span class="p">(</span><span class="k">out</span><span class="w"> </span><span class="kt">vec4</span><span class="w"> </span><span class="n">fragColor</span><span class="p">,</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">fragCoord</span><span class="p">)</span>
+<span class="linenos">221</span><span class="p">{</span>
+<span class="linenos">222</span><span class="w">    </span><span class="c1">// カメラは注視点のまわりを周回する。マウスでドラッグすると視点を操作できる</span>
+<span class="linenos">223</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">angle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iTime</span><span class="p">;</span>
+<span class="linenos">224</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.5</span><span class="p">;</span>
+<span class="linenos">225</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">iMouse</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">226</span><span class="w">        </span><span class="n">angle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">6.2832</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iMouse</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">iResolution</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">227</span><span class="w">        </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">6.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iMouse</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">iResolution</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">228</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">229</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">230</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ta</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">6.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span><span class="w"> </span><span class="n">height</span><span class="p">,</span><span class="w"> </span><span class="mf">6.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">));</span>
+<span class="linenos">231</span><span class="w">    </span><span class="kt">mat3</span><span class="w"> </span><span class="n">cam</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setCamera</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">ta</span><span class="p">);</span>
+<span class="linenos">232</span>
+<span class="linenos">233</span><span class="w">    </span><span class="c1">// AA x AA 個のサブピクセルで色を求めて平均する (スーパーサンプリング)</span>
+<span class="linenos">234</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">235</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">AA</span><span class="p">;</span><span class="w"> </span><span class="n">m</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">236</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">AA</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">237</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">vec2</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">AA</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">238</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">fragCoord</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">offset</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">iResolution</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span><span class="w"> </span><span class="o">/</span>
+<span class="linenos">239</span><span class="w">                     </span><span class="n">iResolution</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">240</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cam</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">));</span>
+<span class="linenos">241</span><span class="w">            </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">toneMapACES</span><span class="p">(</span><span class="n">render</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">));</span>
+<span class="linenos">242</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">243</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">244</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">/=</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">AA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">AA</span><span class="p">);</span>
+<span class="linenos">245</span>
+<span class="linenos">246</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">2.2</span><span class="p">));</span>
+<span class="linenos">247</span><span class="w">    </span><span class="n">fragColor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec4</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">248</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>ズームは焦点距離を変えれば実現できる（第 2 章）。このサンプルでは焦点距離を 2.0 に固定している。</p>
+</section>
+<section id="id3">
+<h2>平行投影<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>ここまでのカメラは、すべてのレイが 1 点（視点）から出るピンホールカメラで、遠くの物体ほど小さく写る。これを透視投影と呼ぶ。一方、すべてのレイを同じ方向に平行に飛ばすと、物体は距離によらず同じ大きさで写る。これを <a class="reference internal" href="glossary.html#term-39"><span class="xref std std-term">平行投影</span></a> （正射影）と呼ぶ。平行投影は、設計図のような技術的な図や、ゲームの見下ろし型の画面などに使われる。</p>
+<p>2 つの投影方法の違いは、レイの始点と方向の決め方だけである。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>投影方法</p></th>
+<th class="head"><p>レイの始点</p></th>
+<th class="head"><p>レイの方向</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>透視投影</p></td>
+<td><p>すべてのピクセルで同じ（視点）</p></td>
+<td><p>ピクセルごとに異なる：<span class="math notranslate nohighlight">\(M\,\widehat{(p_x, p_y, f)}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>平行投影</p></td>
+<td><p>ピクセルごとに異なる：<span class="math notranslate nohighlight">\(\mathbf{c} + \frac{H}{2}(p_x \hat{\mathbf{u}} + p_y \hat{\mathbf{v}})\)</span></p></td>
+<td><p>すべてのピクセルで同じ：<span class="math notranslate nohighlight">\(\hat{\mathbf{w}}\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p><span class="math notranslate nohighlight">\(\hat{\mathbf{u}}, \hat{\mathbf{v}}, \hat{\mathbf{w}}\)</span> は第 2 章のカメラの座標軸、<span class="math notranslate nohighlight">\(\mathbf{c}\)</span> は画面の中心に写る点、<span class="math notranslate nohighlight">\(H\)</span> は画面の高さに写るワールドの長さである。平行投影では焦点距離の代わりに <span class="math notranslate nohighlight">\(H\)</span> で写る範囲を決める。</p>
+<p>レイの始点は、画面の中心に写る点から視線と逆の方向に十分下げておく。始点が物体の内部にあると、SDF が負になり、正しく描画できないためである。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">07_orthographic.frag（抜粋）</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">162</span><span class="c1">// アイソメトリック表示の視線の方向: 3 つの軸が画面上で 120° ずつ離れて見える</span>
+<span class="linenos">163</span><span class="k">const</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">VIEW_DIR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">normalize</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos">164</span>
+<span class="linenos">165</span><span class="c1">// カメラの座標軸 (右、上、前) を求める</span>
+<span class="linenos">166</span><span class="kt">mat3</span><span class="w"> </span><span class="n">cameraBasis</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">forward</span><span class="p">)</span>
+<span class="linenos">167</span><span class="p">{</span>
+<span class="linenos">168</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">right</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">cross</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)));</span>
+<span class="linenos">169</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cross</span><span class="p">(</span><span class="n">right</span><span class="p">,</span><span class="w"> </span><span class="n">forward</span><span class="p">);</span>
+<span class="linenos">170</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">mat3</span><span class="p">(</span><span class="n">right</span><span class="p">,</span><span class="w"> </span><span class="n">up</span><span class="p">,</span><span class="w"> </span><span class="n">forward</span><span class="p">);</span>
+<span class="linenos">171</span><span class="p">}</span>
+<span class="linenos">172</span>
+<span class="linenos">173</span><span class="kt">void</span><span class="w"> </span><span class="n">mainImage</span><span class="p">(</span><span class="k">out</span><span class="w"> </span><span class="kt">vec4</span><span class="w"> </span><span class="n">fragColor</span><span class="p">,</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">fragCoord</span><span class="p">)</span>
+<span class="linenos">174</span><span class="p">{</span>
+<span class="linenos">175</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fragCoord</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">iResolution</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">iResolution</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">176</span>
+<span class="linenos">177</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span><span class="w">     </span><span class="c1">// 画面の中心に来る点</span>
+<span class="linenos">178</span><span class="w">    </span><span class="kt">mat3</span><span class="w"> </span><span class="n">cam</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cameraBasis</span><span class="p">(</span><span class="n">VIEW_DIR</span><span class="p">);</span>
+<span class="linenos">179</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">;</span>
+<span class="linenos">180</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">181</span><span class="cp">#if ORTHOGRAPHIC</span>
+<span class="linenos">182</span><span class="w">    </span><span class="c1">// 平行投影: 方向はすべてのピクセルで同じで、始点をピクセルごとにずらす。</span>
+<span class="linenos">183</span><span class="w">    </span><span class="c1">// viewHeight は画面の高さに写るワールドの長さ</span>
+<span class="linenos">184</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">viewHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">7.0</span><span class="p">;</span>
+<span class="linenos">185</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">backOff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">50.0</span><span class="p">;</span><span class="w">            </span><span class="c1">// 物体の手前まで始点を下げる距離</span>
+<span class="linenos">186</span><span class="w">    </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">backOff</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">VIEW_DIR</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cam</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">viewHeight</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">187</span><span class="w">    </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VIEW_DIR</span><span class="p">;</span>
+<span class="linenos">188</span><span class="cp">#else</span>
+<span class="linenos">189</span><span class="w">    </span><span class="c1">// 透視投影: 始点は 1 点で、方向をピクセルごとに変える</span>
+<span class="linenos">190</span><span class="w">    </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">9.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">VIEW_DIR</span><span class="p">;</span>
+<span class="linenos">191</span><span class="w">    </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cam</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">));</span>
+<span class="linenos">192</span><span class="cp">#endif</span>
+<span class="linenos">193</span>
+<span class="linenos">194</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SKY_COLOR</span><span class="p">;</span>
+<span class="linenos">195</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">hit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">raymarch</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">196</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">197</span><span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shade</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">198</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">199</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">2.2</span><span class="p">));</span>
+<span class="linenos">200</span><span class="w">    </span><span class="n">fragColor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec4</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">201</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/3dc54e99776fa38c98a28fd3bc56f3aa/07_orthographic.frag"><code class="xref download docutils literal notranslate"><span class="pre">07_orthographic.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/07_orthographic.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id16">
+<img alt="市松模様の地面と、球、箱、トーラスを斜め上から見下ろしたアイソメトリック表示" src="_images/07_orthographic.png" />
+<figcaption>
+<p><span class="caption-text">07_orthographic.frag の実行結果。地面の市松模様が、奥でも手前でも同じ大きさで写っている。</span><a class="headerlink" href="#id16" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>視線の方向を <span class="math notranslate nohighlight">\(-(1, 1, 1)/\sqrt{3}\)</span> にすると、<span class="math notranslate nohighlight">\(x, y, z\)</span> の 3 つの軸が画面上で互いに 120° ずつ離れて見える。これをアイソメトリック表示と呼ぶ。このとき視線は水平面から <span class="math notranslate nohighlight">\(\arcsin(1/\sqrt{3}) \approx 35.26°\)</span> だけ見下ろしている。</p>
+<p>平行投影には遠近感が無いため、奥行きの手がかりは陰影と重なり順だけになる。距離に応じたフォグ（後述）も、透視投影ほどは効果がない。サンプルの先頭の <code class="docutils literal notranslate"><span class="pre">ORTHOGRAPHIC</span></code> を 0 にすると、同じ向きの透視投影に切り替わるので、見え方を比べるとよい。</p>
+</section>
+<section id="id4">
+<h2>空の描画<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>レイが何にも当たらなかったピクセルには、レイの方向に応じた空の色を描く。サンプルでは、地平線から天頂に向かって色を変化させ、さらに太陽の方向を明るくしている。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">07_camera.frag（抜粋）</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">148</span><span class="c1">// レイの方向に応じた空の色。地平線は明るく、天頂は濃い青にし、太陽を描く</span>
+<span class="linenos">149</span><span class="kt">vec3</span><span class="w"> </span><span class="n">skyColor</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos">150</span><span class="p">{</span>
+<span class="linenos">151</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">horizon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.65</span><span class="p">,</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span><span class="w"> </span><span class="mf">0.85</span><span class="p">);</span>
+<span class="linenos">152</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">zenith</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.35</span><span class="p">,</span><span class="w"> </span><span class="mf">0.65</span><span class="p">);</span>
+<span class="linenos">153</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span><span class="w"> </span><span class="n">zenith</span><span class="p">,</span><span class="w"> </span><span class="n">sqrt</span><span class="p">(</span><span class="n">clamp</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)));</span>
+<span class="linenos">154</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sun</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">155</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">pow</span><span class="p">(</span><span class="n">sun</span><span class="p">,</span><span class="w"> </span><span class="mf">512.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">4.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">sun</span><span class="p">,</span><span class="w"> </span><span class="mf">16.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.15</span><span class="p">);</span>
+<span class="linenos">156</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">157</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>太陽は、レイの方向と光源の方向の余弦 <code class="docutils literal notranslate"><span class="pre">sun</span></code> のべき乗で表している。指数の大きい項（512 乗）は太陽の円盤、指数の小さい項（16 乗）は太陽のまわりの光のにじみを表す。</p>
+</section>
+<section id="id5">
+<h2>フォグ<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>実際の屋外では、大気中の微粒子が光を散乱・吸収するため、遠くの物体ほど色が薄くなり、空の色に近づく。この効果を <a class="reference internal" href="glossary.html#term-35"><span class="xref std std-term">フォグ</span></a> で表す。</p>
+<p>一様な媒質の中を距離 <span class="math notranslate nohighlight">\(t\)</span> だけ進んだ光は、ランベルト・ベールの法則により <span class="math notranslate nohighlight">\(e^{-\sigma t}\)</span> の割合だけが残る。<span class="math notranslate nohighlight">\(\sigma\)</span> は媒質の濃さを表す係数である。残りの <span class="math notranslate nohighlight">\(1 - e^{-\sigma t}\)</span> の割合は、大気で散乱された光（フォグの色）に置き換わるとみなす。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{C}' = \mathbf{C}\, e^{-\sigma t} + \mathbf{C}_{\text{fog}} \bigl(1 - e^{-\sigma t}\bigr)\]</div>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">07_camera.frag（抜粋）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">159</span><span class="c1">// 距離 t に応じて色 col を空の色に近づける (指数フォグ)</span>
+<span class="linenos">160</span><span class="kt">vec3</span><span class="w"> </span><span class="n">applyFog</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">)</span>
+<span class="linenos">161</span><span class="p">{</span>
+<span class="linenos">162</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">density</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.015</span><span class="p">;</span>
+<span class="linenos">163</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">fog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">density</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="p">);</span>
+<span class="linenos">164</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="n">skyColor</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">.</span><span class="n">z</span><span class="p">)),</span><span class="w"> </span><span class="n">fog</span><span class="p">);</span>
+<span class="linenos">165</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>フォグの色には、レイの方向を水平にしたときの空の色（地平線の色）を使っている。これにより、遠くの地面が地平線の空の色に溶け込み、<code class="docutils literal notranslate"><span class="pre">MAX_DIST</span></code> でレイマーチングを打ち切った境目も目立たなくなる。媒質が一様でない場合の扱いは、第 16 章のボリュームレンダリングで説明する。</p>
+</section>
+<section id="id6">
+<h2>トーンマッピング<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>第 5 章で述べたとおり、照明の計算は線形な値で行う。明るい光源に照らされた表面や太陽の円盤では、この値が 1 を大きく超えることがある。ディスプレイに表示できるのは 0〜1 の範囲なので、そのまま出力すると 1 を超えた部分がすべて同じ白になり、色の変化が失われる。</p>
+<p>そこで、0 以上の任意の値を 0〜1 に滑らかに収める変換を施す。この変換を <a class="reference internal" href="glossary.html#term-28"><span class="xref std std-term">トーンマッピング</span></a> と呼ぶ。最も簡単なものは Reinhard の式である。</p>
+<div class="math notranslate nohighlight">
+\[L' = \frac{L}{1 + L}\]</div>
+<p>このサンプルでは、映画制作で使われる ACES の特性を近似した Narkowicz の式を使う。Reinhard の式に比べて暗部と明部のコントラストが高く、明るい部分がわずかに彩度を失いながら白に近づく。</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">07_camera.frag（抜粋）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">169</span><span class="c1">// ACES Filmic の近似式 (Narkowicz, 2015)。0〜∞ の値を 0〜1 に収める</span>
+<span class="linenos">170</span><span class="kt">vec3</span><span class="w"> </span><span class="n">toneMapACES</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">x</span><span class="p">)</span>
+<span class="linenos">171</span><span class="p">{</span>
+<span class="linenos">172</span><span class="w">    </span><span class="n">x</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.6</span><span class="p">;</span><span class="w">  </span><span class="c1">// 露出の調整 (元の近似式の係数)</span>
+<span class="linenos">173</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">clamp</span><span class="p">((</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">2.51</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.03</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">2.43</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.59</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.14</span><span class="p">),</span>
+<span class="linenos">174</span><span class="w">                 </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">175</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>最初の <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">*=</span> <span class="pre">0.6</span></code> は露出の調整で、Narkowicz が示した元の近似式に含まれている係数である。この値を変えると、画像全体の明るさを調整できる。トーンマッピングは線形な値に対して行い、その後でガンマ補正を施す。</p>
+</section>
+<section id="id7">
+<h2>色の設計<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>レイマーチングでは、マテリアル ID、反復回数、角度、ノイズの値などから、計算で色を作ることが多い。ここでは、数値から色を作る代表的な方法と、色を扱うときの注意点を説明する。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/c492720f9e6eec16b674e2d5309fed6f/07_color.frag"><code class="xref download docutils literal notranslate"><span class="pre">07_color.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/07_color.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id20">
+<img alt="6 本の色の帯。虹色の帯が 2 本、暗い色を経由する帯が 1 本、黄から青への帯が 3 本" src="_images/07_color.png" />
+<figcaption>
+<p><span class="caption-text">07_color.frag の実行結果。上から、HSV の色相、余弦関数によるパレット 2 種類、黄から青への補間（sRGB の値、線形な RGB、Oklab）である。</span><a class="headerlink" href="#id20" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<section id="hsv">
+<h3>HSV<a class="headerlink" href="#hsv" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-HSV"><span class="xref std std-term">HSV</span></a> は、色を色相（hue）、彩度（saturation）、明度（value）の 3 つの値で表す方法である。色相を 0〜1 の範囲で変化させると、赤、黄、緑、シアン、青、マゼンタを経て赤に戻る。そのため、角度や反復回数のように、周期的に変化する値や連続的に変化する値を色で区別するのに便利である。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">07_color.frag（抜粋）</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">13</span><span class="c1">// HSV (色相、彩度、明度。すべて 0〜1) を RGB に変換する</span>
+<span class="linenos">14</span><span class="kt">vec3</span><span class="w"> </span><span class="n">hsv2rgb</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">c</span><span class="p">)</span>
+<span class="linenos">15</span><span class="p">{</span>
+<span class="linenos">16</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rgb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">mod</span><span class="p">(</span><span class="mf">6.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">),</span><span class="w"> </span><span class="mf">6.0</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">3.0</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos">17</span><span class="w">                     </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">18</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">),</span><span class="w"> </span><span class="n">rgb</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">19</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>ただし、HSV は人間の知覚に基づく色空間ではない。明度が同じでも、黄は明るく、青は暗く見える（図の 1 本目）。明るさを揃えたい場合は、後述の Oklab を使う。</p>
+</section>
+<section id="id8">
+<h3>余弦関数によるパレット<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>Quilez は、次の式で滑らかな配色（パレット）を作る方法を示している。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{c}(t) = \mathbf{a} + \mathbf{b} \cos\bigl(2\pi(\mathbf{c}\, t + \mathbf{d})\bigr)\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbf{a}, \mathbf{b}, \mathbf{c}, \mathbf{d}\)</span> はいずれも RGB の 3 成分を持つベクトルで、式は成分ごとに計算する。<span class="math notranslate nohighlight">\(\mathbf{a}\)</span> は色の平均、<span class="math notranslate nohighlight">\(\mathbf{b}\)</span> は振れ幅、<span class="math notranslate nohighlight">\(\mathbf{c}\)</span> は周波数、<span class="math notranslate nohighlight">\(\mathbf{d}\)</span> は位相（成分ごとのずれ）を表す。4 つのパラメーターを変えるだけで、多様な配色を作れる。第 13 章のメンガーのスポンジ、第 14 章のステレオ投影のサンプルは、この方法で色を付けている。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">07_color.frag（抜粋）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">23</span><span class="c1">// t (0〜1) に対して a + b cos(2π (c t + d)) を RGB ごとに計算する</span>
+<span class="linenos">24</span><span class="kt">vec3</span><span class="w"> </span><span class="n">cosinePalette</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">d</span><span class="p">)</span>
+<span class="linenos">25</span><span class="p">{</span>
+<span class="linenos">26</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="mf">6.2831853</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">d</span><span class="p">));</span>
+<span class="linenos">27</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id9">
+<h3>色の補間<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>2 つの色の間を補間するときは、どの色空間で補間するかによって結果が変わる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>色空間</p></th>
+<th class="head"><p>補間の結果</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>sRGB の値</p></td>
+<td><p>表示用の値をそのまま補間する。計算は簡単だが、中間の色が暗く、くすんだ色になる（図の 4 本目）。</p></td>
+</tr>
+<tr class="row-odd"><td><p>線形な RGB</p></td>
+<td><p>光の強さとして正しく混ぜる。光を混ぜた結果としては物理的に正しいが、中間の色は明るく白っぽく見える（図の 5 本目）。</p></td>
+</tr>
+<tr class="row-even"><td><p>Oklab</p></td>
+<td><p>知覚的に均等になるように設計された色空間（Ottosson, 2020）。明るさと色合いが均等に変化して見える（図の 6 本目）。</p></td>
+</tr>
+</tbody>
+</table>
+<p>照明の計算は、第 5 章で述べたとおり必ず線形な RGB で行う。一方、グラデーションやパレットのように「見た目として均等に変化させたい」配色を作るときは、Oklab で補間するとよい。Oklab と線形な RGB の変換は、3 行 3 列の行列、成分ごとの立方根、もう一度 3 行 3 列の行列という計算だけでできる。</p>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text">07_color.frag（抜粋）</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">41</span><span class="c1">// 線形な sRGB を Oklab (L: 明度、a: 緑〜赤、b: 青〜黄) に変換する (Ottosson, 2020)</span>
+<span class="linenos">42</span><span class="kt">vec3</span><span class="w"> </span><span class="n">linearToOklab</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">c</span><span class="p">)</span>
+<span class="linenos">43</span><span class="p">{</span>
+<span class="linenos">44</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">lms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.4122214708</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5363325363</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0514459929</span><span class="p">)),</span>
+<span class="linenos">45</span><span class="w">                    </span><span class="n">dot</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.2119034982</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6806995451</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1073969566</span><span class="p">)),</span>
+<span class="linenos">46</span><span class="w">                    </span><span class="n">dot</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0883024619</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2817188376</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6299787005</span><span class="p">)));</span>
+<span class="linenos">47</span><span class="w">    </span><span class="n">lms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">3.0</span><span class="p">));</span>
+<span class="linenos">48</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.2104542553</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7936177850</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.0040720468</span><span class="p">)),</span>
+<span class="linenos">49</span><span class="w">                </span><span class="n">dot</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.9779984951</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">2.4285922050</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4505937099</span><span class="p">)),</span>
+<span class="linenos">50</span><span class="w">                </span><span class="n">dot</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0259040371</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7827717662</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.8086757660</span><span class="p">)));</span>
+<span class="linenos">51</span><span class="p">}</span>
+<span class="linenos">52</span>
+<span class="linenos">53</span><span class="c1">// Oklab を線形な sRGB に戻す</span>
+<span class="linenos">54</span><span class="kt">vec3</span><span class="w"> </span><span class="n">oklabToLinear</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">lab</span><span class="p">)</span>
+<span class="linenos">55</span><span class="p">{</span>
+<span class="linenos">56</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">lms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3963377774</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2158037573</span><span class="p">)),</span>
+<span class="linenos">57</span><span class="w">                    </span><span class="n">dot</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.1055613458</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.0638541728</span><span class="p">)),</span>
+<span class="linenos">58</span><span class="w">                    </span><span class="n">dot</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.0894841775</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1.2914855480</span><span class="p">)));</span>
+<span class="linenos">59</span><span class="w">    </span><span class="n">lms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lms</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">lms</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">lms</span><span class="p">;</span>
+<span class="linenos">60</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">4.0767416621</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">3.3077115913</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2309699292</span><span class="p">)),</span>
+<span class="linenos">61</span><span class="w">                </span><span class="n">dot</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="mf">1.2684380046</span><span class="p">,</span><span class="w"> </span><span class="mf">2.6097574011</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.3413193965</span><span class="p">)),</span>
+<span class="linenos">62</span><span class="w">                </span><span class="n">dot</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="mf">0.0041960863</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.7034186147</span><span class="p">,</span><span class="w"> </span><span class="mf">1.7076147010</span><span class="p">)));</span>
+<span class="linenos">63</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id10">
+<h3>カラーグレーディング<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>トーンマッピングの後に、画像全体の色味を整える処理をカラーグレーディングと呼ぶ。代表的なものは、彩度の調整、コントラストの調整、画面の周辺を暗くするビネットである。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">// 0〜1 の表示用の値 col を調整する。uv は画面の座標 (0〜1)</span>
+<span class="linenos">2</span><span class="kt">vec3</span><span class="w"> </span><span class="n">colorGrade</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">uv</span><span class="p">)</span>
+<span class="linenos">3</span><span class="p">{</span>
+<span class="linenos">4</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">luma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.2126</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7152</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0722</span><span class="p">));</span><span class="w">  </span><span class="c1">// 輝度</span>
+<span class="linenos">5</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="n">luma</span><span class="p">),</span><span class="w"> </span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="mf">1.2</span><span class="p">);</span><span class="w">                      </span><span class="c1">// 彩度を 1.2 倍にする</span>
+<span class="linenos">6</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">col</span><span class="p">);</span><span class="w">                      </span><span class="c1">// コントラストを上げる</span>
+<span class="linenos">7</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">16.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">uv</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">uv</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">uv</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">uv</span><span class="p">.</span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mf">0.2</span><span class="p">);</span><span class="w">  </span><span class="c1">// ビネット</span>
+<span class="linenos">8</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">9</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>輝度の係数 <span class="math notranslate nohighlight">\((0.2126, 0.7152, 0.0722)\)</span> は、線形な sRGB の値から輝度を求めるための係数である。表示用の値に対して使うと近似になるが、彩度の調整のように見た目を整える用途では問題ない。</p>
+</section>
+</section>
+<section id="id11">
+<h2>アンチエイリアス<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>ここまでのサンプルでは、1 ピクセルにつき 1 本のレイしか飛ばしていない。そのため、物体の輪郭や遠くの市松模様にギザギザや、ちらつく模様（エイリアシング）が現れる。</p>
+<p>これを減らす最も簡単な方法は、1 ピクセルの中の複数の位置からレイを飛ばし、得られた色を平均することである。この方法を <a class="reference internal" href="glossary.html#term-19"><span class="xref std std-term">スーパーサンプリング</span></a> と呼ぶ。サンプルでは、ピクセルを <span class="math notranslate nohighlight">\(\mathrm{AA} \times \mathrm{AA}\)</span> の格子に分け、各格子の中心を通るレイを飛ばしている（<code class="docutils literal notranslate"><span class="pre">mainImage</span></code> の二重ループ）。<code class="docutils literal notranslate"><span class="pre">AA</span></code> は次のようにマクロで定義している。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">5</span><span class="cp">#define AA 2  // 1 ピクセルあたり AA x AA 本のレイを飛ばす (1 で無効)</span>
+</pre></div>
+</div>
+<p>各サンプルの色は、トーンマッピングを施してから平均している。トーンマッピングの前に平均すると、非常に明るいサンプルが 1 つあるだけで平均値が大きくなり、明るい物体の輪郭でエイリアシングが残るためである。</p>
+<p>スーパーサンプリングの計算量は、<span class="math notranslate nohighlight">\(\mathrm{AA}^2\)</span> 倍になる。<code class="docutils literal notranslate"><span class="pre">AA</span></code> を 2 にすると 4 倍、3 にすると 9 倍の時間がかかる。描画が重い場合は <code class="docutils literal notranslate"><span class="pre">AA</span></code> を 1 にして無効にするとよい。</p>
+</section>
+<section id="id12">
+<h2>レンダリング関数の整理<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<p>この章から、1 本のレイの色を求める処理を関数 <code class="docutils literal notranslate"><span class="pre">render</span></code> にまとめている。スーパーサンプリングのように、1 ピクセルで複数のレイを扱う場合に便利である。</p>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">07_camera.frag（抜粋）</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">209</span><span class="c1">// 1 本のレイの色を求める (トーンマッピング前の線形な値)</span>
+<span class="linenos">210</span><span class="kt">vec3</span><span class="w"> </span><span class="n">render</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos">211</span><span class="p">{</span>
+<span class="linenos">212</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">hit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">raymarch</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">213</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">214</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">skyColor</span><span class="p">(</span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">215</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">216</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shade</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">217</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">applyFog</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">218</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="06_shadow_ao.html" class="btn btn-neutral float-left" title="第 6 章 影と AO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="08_practice.html" class="btn btn-neutral float-right" title="第 8 章 実践：シーンを組み立てる" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,331 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>14. カバレッジの計測 &mdash; ソフトウェアテスト入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=6ac444d3" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="15. テスト駆動開発" href="ch15_tdd.html" />
+    <link rel="prev" title="13. 静的テスト" href="ch13_static_analysis.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ソフトウェアテスト入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 I 部 テストの基礎</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_what_is_testing.html">2. テストとは何か</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_classification.html">3. テストの分類</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_blackbox_design.html">4. ブラックボックステストの設計技法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_whitebox_design.html">5. ホワイトボックステストとカバレッジ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 II 部 Python によるテストの実践</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch06_unittest.html">6. unittest 入門</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_pytest_basics.html">7. pytest 入門</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_pytest_advanced.html">8. pytest の活用</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_test_double.html">9. テストダブル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_testable_design.html">10. テストしやすい設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_integration.html">11. 結合テスト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_advanced_techniques.html">12. さまざまなテスト手法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_static_analysis.html">13. 静的テスト</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">14. カバレッジの計測</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#coverage-py">14.1 coverage.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">14.2 計測の手順</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#html">14.3 HTML のレポート</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">14.4 不足したテストを補う</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">14.5 サンプルコード全体の計測</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">14.6 カバレッジの目標値</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">14.7 まとめ</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 III 部 テストの進め方</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch15_tdd.html">15. テスト駆動開発</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch16_good_tests.html">16. よいテストの書き方</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17_automation.html">17. テストの自動化と継続的インテグレーション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch18_test_management.html">18. テストの計画と管理</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_cheatsheet.html">付録 B 早見表</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_examples.html">付録 C サンプルコードの一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ソフトウェアテスト入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">14. カバレッジの計測</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>14. カバレッジの計測<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>5 章では、テストがコードをどれだけ実行したかを表すカバレッジの考え方を学んだ。この章では、coverage.py を使って Python のコードのカバレッジを計測し、その結果をテストの改善に活かす方法を学ぶ。</p>
+<section id="coverage-py">
+<h2>14.1 coverage.py<a class="headerlink" href="#coverage-py" title="Link to this heading"></a></h2>
+<p>coverage.py は、Python のプログラムの実行中に、どの行とどの分岐が実行されたかを記録するツールである。pytest と組み合わせて、テストのカバレッジを計測できる。</p>
+<p>計測の設定は、<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> に書ける。本書のサンプルコードでは、次の設定を使っている。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">pyproject.toml（coverage.py の設定の部分）</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="linenos">32</span><span class="k">[tool.coverage.run]</span>
+<span class="linenos">33</span><span class="n">branch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="linenos">34</span><span class="n">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;shop&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">branch</span> <span class="pre">=</span> <span class="pre">true</span></code>（33 行目）は、命令網羅だけでなく分岐網羅も計測することを表す。<code class="docutils literal notranslate"><span class="pre">source</span></code>（34 行目）は、計測の対象とするパッケージである。テストコードそのものは計測の対象から外し、題材の <code class="docutils literal notranslate"><span class="pre">shop</span></code> パッケージだけを計測する。</p>
+</section>
+<section id="id2">
+<h2>14.2 計測の手順<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>5 章の <code class="docutils literal notranslate"><span class="pre">member_rank</span></code> を、次の不十分なテストで計測してみる。</p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">ch14_coverage/test_member_rank_partial.py</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;member_rank の不十分なテスト（カバレッジを計測して不足を見つける）.&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">shop.member</span><span class="w"> </span><span class="kn">import</span> <span class="n">member_rank</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="k">def</span><span class="w"> </span><span class="nf">test_gold</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 7</span>    <span class="k">assert</span> <span class="n">member_rank</span><span class="p">(</span><span class="mi">150_000</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;gold&quot;</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="k">def</span><span class="w"> </span><span class="nf">test_bronze</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">11</span>    <span class="k">assert</span> <span class="n">member_rank</span><span class="p">(</span><span class="mi">1_000</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;bronze&quot;</span>
+</pre></div>
+</div>
+</div>
+<p>計測は、<code class="docutils literal notranslate"><span class="pre">coverage</span> <span class="pre">run</span></code> で pytest を実行し、<code class="docutils literal notranslate"><span class="pre">coverage</span> <span class="pre">report</span></code> で結果を表示するという 2 段階で行う。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>coverage<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>ch14_coverage/test_member_rank_partial.py
+<span class="linenos">2</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>coverage<span class="w"> </span>report<span class="w"> </span>-m<span class="w"> </span>--include<span class="o">=</span>shop/member.py
+</pre></div>
+</div>
+<p>1 行目では、<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pytest</span></code> の代わりに <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">coverage</span> <span class="pre">run</span> <span class="pre">-m</span> <span class="pre">pytest</span></code> と書くことで、coverage.py の計測の下で pytest を実行する。計測結果は、<code class="docutils literal notranslate"><span class="pre">.coverage</span></code> という名前のファイルに保存される。2 行目の <code class="docutils literal notranslate"><span class="pre">-m</span></code> オプションは、実行されなかった行の番号を表示することを、<code class="docutils literal notranslate"><span class="pre">--include</span></code> オプションは、表示する対象のファイルを絞ることを表す。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Name             Stmts   Miss Branch BrPart  Cover   Missing
+------------------------------------------------------------
+shop\member.py       6      1      4      1    80%   17
+------------------------------------------------------------
+TOTAL                6      1      4      1    80%
+</pre></div>
+</div>
+<p>各列の意味は次のとおりである。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>列</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Stmts</p></td>
+<td><p>実行できる文の数</p></td>
+</tr>
+<tr class="row-odd"><td><p>Miss</p></td>
+<td><p>実行されなかった文の数</p></td>
+</tr>
+<tr class="row-even"><td><p>Branch</p></td>
+<td><p>分岐の数（判定ごとの真と偽の行き先の数）</p></td>
+</tr>
+<tr class="row-odd"><td><p>BrPart</p></td>
+<td><p>真と偽の一方しか実行されなかった判定の数</p></td>
+</tr>
+<tr class="row-even"><td><p>Cover</p></td>
+<td><p>カバレッジ（文と分岐を合わせて計算した割合）</p></td>
+</tr>
+<tr class="row-odd"><td><p>Missing</p></td>
+<td><p>実行されなかった行の番号と、実行されなかった分岐</p></td>
+</tr>
+</tbody>
+</table>
+<p>Cover の値は、次の式で計算される。</p>
+<div class="math notranslate nohighlight">
+\[\text{Cover} = \frac{(\text{Stmts} - \text{Miss}) + (\text{実行された分岐の数})}{\text{Stmts} + \text{Branch}} \times 100\ [\%]\]</div>
+<p>この例では、6 つの文のうち 5 つ、4 つの分岐のうち 3 つが実行されたため、<span class="math notranslate nohighlight">\((5 + 3) / (6 + 4) = 80\ \%\)</span> となる。Missing の 17 は、<code class="docutils literal notranslate"><span class="pre">member.py</span></code> の 17 行目（<code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">&quot;silver&quot;</span></code>）が実行されなかったことを示す。gold と bronze のテストしかないため、silver の場合が抜けていることが分かる。</p>
+</section>
+<section id="html">
+<h2>14.3 HTML のレポート<a class="headerlink" href="#html" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">coverage</span> <span class="pre">html</span></code> を実行すると、ソースコードに実行の有無を色で重ねて表示する HTML のレポートを作る。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>coverage<span class="w"> </span>html
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">htmlcov</span></code> フォルダーの <code class="docutils literal notranslate"><span class="pre">index.html</span></code> をブラウザーで開くと、ファイルごとのカバレッジの一覧が表示される。ファイル名を選ぶと、実行された行が緑、実行されなかった行が赤、一方の分岐しか実行されなかった判定の行が黄色で表示される。どこにテストが足りないかを、コードを見ながら確かめられる。</p>
+</section>
+<section id="id3">
+<h2>14.4 不足したテストを補う<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>5.6 節で設計した MC/DC を満たすテストケースを実装し、計測し直す。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">ch14_coverage/test_member_rank_mcdc.py</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;5 章で設計した MC/DC を満たすテストケースで member_rank をテストする.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">条件 A: total_purchase &gt;= 100_000、条件 B: years &gt;= 3</span>
+<span class="linenos"> 4</span><span class="sd">条件 C: total_purchase &gt;= 50_000、条件 D: years &gt;= 5</span>
+<span class="linenos"> 5</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="kn">from</span><span class="w"> </span><span class="nn">shop.member</span><span class="w"> </span><span class="kn">import</span> <span class="n">member_rank</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span>
+<span class="linenos">13</span>    <span class="p">(</span><span class="s2">&quot;total_purchase&quot;</span><span class="p">,</span> <span class="s2">&quot;years&quot;</span><span class="p">,</span> <span class="s2">&quot;expected&quot;</span><span class="p">),</span>
+<span class="linenos">14</span>    <span class="p">[</span>
+<span class="linenos">15</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="mi">120_000</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;gold&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;1: A=T B=T&quot;</span><span class="p">),</span>
+<span class="linenos">16</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="mi">80_000</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;silver&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;2: A=F B=T C=T D=F&quot;</span><span class="p">),</span>
+<span class="linenos">17</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="mi">120_000</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;silver&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;3: A=T B=F C=T D=F&quot;</span><span class="p">),</span>
+<span class="linenos">18</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="mi">10_000</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;silver&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;4: A=F B=T C=F D=T&quot;</span><span class="p">),</span>
+<span class="linenos">19</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="mi">10_000</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;bronze&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;5: A=F B=F C=F D=F&quot;</span><span class="p">),</span>
+<span class="linenos">20</span>    <span class="p">],</span>
+<span class="linenos">21</span><span class="p">)</span>
+<span class="linenos">22</span><span class="k">def</span><span class="w"> </span><span class="nf">test_member_rank_mcdc</span><span class="p">(</span><span class="n">total_purchase</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">years</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos">23</span>                          <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">24</span>    <span class="k">assert</span> <span class="n">member_rank</span><span class="p">(</span><span class="n">total_purchase</span><span class="p">,</span> <span class="n">years</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>coverage<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>ch14_coverage/test_member_rank_mcdc.py
+<span class="linenos">2</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>coverage<span class="w"> </span>report<span class="w"> </span>-m<span class="w"> </span>--include<span class="o">=</span>shop/member.py
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Name             Stmts   Miss Branch BrPart  Cover   Missing
+------------------------------------------------------------
+shop\member.py       6      0      4      0   100%
+------------------------------------------------------------
+TOTAL                6      0      4      0   100%
+</pre></div>
+</div>
+<p>すべての文と分岐が実行され、カバレッジは 100 % になった。</p>
+<p>ただし、coverage.py が計測するのは命令網羅と分岐網羅であり、条件網羅や MC/DC は計測できない。たとえば、gold（150,000 円、5 年）、silver（80,000 円、1 年）、bronze（1,000 円、1 年）の 3 つのテストケースでも、カバレッジは 100 % になる。しかし、この 3 つでは、判定 2 の条件 D（会員歴が 5 年以上）が真になる場合が試されておらず、MC/DC は満たされない。カバレッジが 100 % になった後も、5 章の網羅基準や 4 章の技法に照らして、テストケースが十分かを考える必要がある。</p>
+</section>
+<section id="id4">
+<h2>14.5 サンプルコード全体の計測<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>引数を指定せずに pytest を実行すると、<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> の <code class="docutils literal notranslate"><span class="pre">testpaths</span></code> のすべてのテストが実行され、<code class="docutils literal notranslate"><span class="pre">shop</span></code> パッケージ全体のカバレッジが計測される。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>coverage<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>pytest
+<span class="linenos">2</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>coverage<span class="w"> </span>report<span class="w"> </span>-m
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Name               Stmts   Miss Branch BrPart  Cover   Missing
+--------------------------------------------------------------
+shop\__init__.py       0      0      0      0   100%
+shop\cart.py          18      0      2      0   100%
+shop\member.py         6      0      4      0   100%
+shop\order.py         25      0      2      0   100%
+shop\shipping.py      16      0      4      0   100%
+--------------------------------------------------------------
+TOTAL                 65      0     12      0   100%
+</pre></div>
+</div>
+<p>pytest のプラグインである pytest-cov をインストールすると、<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pytest</span> <span class="pre">--cov=shop</span> <span class="pre">--cov-branch</span> <span class="pre">--cov-report=term-missing</span></code> のように、pytest のオプションとして計測することもできる。</p>
+</section>
+<section id="id5">
+<h2>14.6 カバレッジの目標値<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>カバレッジの目標値を決めるときは、次の点に注意する。</p>
+<ul class="simple">
+<li><p><strong>目標値を目的にしない</strong>：カバレッジの数値だけを目標にすると、<code class="docutils literal notranslate"><span class="pre">assert</span></code> のないテストや、意味の薄いテストで数値を上げることが起きる。5.8 節で述べたとおり、カバレッジはテストの不足を見つけるための道具である。</p></li>
+<li><p><strong>一律の値にこだわらない</strong>：業務の計算のように重要で複雑なコードは高い値を目指し、単純な設定の読み込みなどは低くてもよい。全体で 80 % 前後を一つの目安とするプロジェクトが多いが、値そのものより、実行されていない箇所がなぜ実行されていないかを確かめることが重要である。</p></li>
+<li><p><strong>下がったことに気付けるようにする</strong>：17 章の継続的インテグレーションで、カバレッジが一定の値を下回ったらテストを失敗させると、テストのない変更が紛れ込むのを防げる。coverage.py では、<code class="docutils literal notranslate"><span class="pre">coverage</span> <span class="pre">report</span> <span class="pre">--fail-under=90</span></code> のように指定する。</p></li>
+</ul>
+<p>テストする価値がないと判断したコード（デバッグ用の処理など）は、行の末尾に <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">pragma:</span> <span class="pre">no</span> <span class="pre">cover</span></code> というコメントを付けると、計測の対象から外せる。ただし、多用するとカバレッジの数値が実態を表さなくなるため、理由がはっきりしている場合に限って使う。</p>
+</section>
+<section id="id6">
+<h2>14.7 まとめ<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>coverage.py は、<code class="docutils literal notranslate"><span class="pre">coverage</span> <span class="pre">run</span> <span class="pre">-m</span> <span class="pre">pytest</span></code> で計測し、<code class="docutils literal notranslate"><span class="pre">coverage</span> <span class="pre">report</span> <span class="pre">-m</span></code> で結果を表示する。<code class="docutils literal notranslate"><span class="pre">branch</span> <span class="pre">=</span> <span class="pre">true</span></code> で分岐網羅も計測する。</p></li>
+<li><p>Missing の列や HTML のレポートで、実行されなかった行と分岐を確かめ、不足したテストを補う。</p></li>
+<li><p>coverage.py は条件網羅や MC/DC を計測できない。カバレッジが 100 % でも、テストケースが十分とは限らない。</p></li>
+<li><p>カバレッジの目標値は目的ではなく、テストの不足に気付くための目安として使う。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch13_static_analysis.html" class="btn btn-neutral float-left" title="13. 静的テスト" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch15_tdd.html" class="btn btn-neutral float-right" title="15. テスト駆動開発" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

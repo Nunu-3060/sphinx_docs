@@ -1,0 +1,889 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 10 章 ハッシュとノイズ &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 11 章 反射と屈折" href="11_reflection_refraction.html" />
+    <link rel="prev" title="第 9 章 最適化とデバッグ" href="09_optimization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 10 章 ハッシュとノイズ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">ハッシュ関数</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gpu">GPU での乱数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sin">sin を使うハッシュの問題点</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">整数ハッシュ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">ハッシュとノイズの違い</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">値ノイズ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">勾配ノイズ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">セルラーノイズ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">ボロノイ図とセルラーノイズ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">実装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">境界までの距離</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">ミンコフスキー距離</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">3 次元への応用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fbm">fBm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">fBm の応用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id14">ドメインワーピング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">リッジノイズ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">カールノイズ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id17">ノイズによる地形</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id18">高さの関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id19">歩幅の調整</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id20">オクターブ数の使い分け</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id21">手続き的なテクスチャ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id22">トライプラナーマッピング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id23">バンプマッピング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id24">四分木による模様</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sdf">ノイズと SDF の組み合わせ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 10 章 ハッシュとノイズ</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 10 章 ハッシュとノイズ<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本編で扱った形状は、いずれも数式で表せる規則的な形状であった。岩肌、地形、雲のような自然物を表すには、不規則でありながら滑らかに変化する値が必要になる。この章では、その基礎となるハッシュ関数とノイズ関数を説明し、ノイズを使って地形をレイマーチングで描く。ここで作るハッシュとノイズは、第 16 章のボリュームレンダリングと第 17 章のパストレーシングでも使う。</p>
+<figure class="align-center" id="id25">
+<img alt="6 つの領域に、格子状の乱数、ぼやけた格子模様、なめらかな模様、雲のような模様、渦を巻いた模様、網目状の模様が並んでいる" src="_images/10_noise2d.png" />
+<figcaption>
+<p><span class="caption-text">10_noise2d.frag の実行結果。上段は左からハッシュ、値ノイズ、勾配ノイズ、下段は左から fBm、ドメインワーピング、リッジノイズである。</span><a class="headerlink" href="#id25" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/3ae452e8eb959acda4cce38eb74a4a87/10_noise2d.frag"><code class="xref download docutils literal notranslate"><span class="pre">10_noise2d.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/10_noise2d.html">ブラウザで実行</a></p>
+<section id="id2">
+<h2>ハッシュ関数<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="gpu">
+<h3>GPU での乱数<a class="headerlink" href="#gpu" title="Link to this heading"></a></h3>
+<p>CPU のプログラムでは、乱数生成器が内部の状態を更新しながら乱数の列を作る。フラグメントシェーダーでは、各ピクセルが独立に並列実行され、ピクセル間で状態を共有できないため、この方法をそのまま使えない。そこで、座標などの入力から乱数のように見える値を計算する関数を使う。この関数を <a class="reference internal" href="glossary.html#term-32"><span class="xref std std-term">ハッシュ関数</span></a> と呼ぶ。</p>
+<p>ハッシュ関数は、同じ入力に対して常に同じ値を返し、入力がわずかに違うだけで出力が大きく変わる。例えば整数の格子点を入力とすれば、格子ごとに無関係な値を割り当てられる。上の図の左上は、各格子に割り当てた値をそのまま明るさとして表示したものである。</p>
+</section>
+<section id="sin">
+<h3>sin を使うハッシュの問題点<a class="headerlink" href="#sin" title="Link to this heading"></a></h3>
+<p>シェーダーのサンプルでは、次のような 1 行のハッシュ関数がよく使われている。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">// よく見かけるが、推奨しないハッシュ関数</span>
+<span class="linenos">2</span><span class="kt">float</span><span class="w"> </span><span class="n">hashSin</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">3</span><span class="p">{</span>
+<span class="linenos">4</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">12.9898</span><span class="p">,</span><span class="w"> </span><span class="mf">78.233</span><span class="p">)))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">43758.5453</span><span class="p">);</span>
+<span class="linenos">5</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>この関数は、<code class="docutils literal notranslate"><span class="pre">sin</span></code> の値を大きな数で拡大し、小数部だけを取り出すことで、入力の小さな変化を大きな変化に変えている。短く書けるが、次の問題がある。</p>
+<ul class="simple">
+<li><p>GLSL の仕様では、<code class="docutils literal notranslate"><span class="pre">sin</span></code> の精度が規定されていない。引数が大きくなると GPU ごとに結果が異なり、特定の GPU で縞模様や規則的なパターンが現れることがある。</p></li>
+<li><p>小数部を取り出す前の値が 32 ビット浮動小数点数の精度を使い切っているため、入力の範囲によっては値の分布が偏る。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>整数ハッシュ<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>GLSL ES 3.00 では、32 ビットの符号なし整数 <code class="docutils literal notranslate"><span class="pre">uint</span></code> を使える。<code class="docutils literal notranslate"><span class="pre">uint</span></code> の演算は <span class="math notranslate nohighlight">\(2^{32}\)</span> を法とする剰余演算として仕様で定められているため、どの GPU でも同じ結果になる。本資料では、GPU 向けに設計された PCG ハッシュ（Jarzynski and Olano, 2020）を使う。</p>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-text">10_noise2d.frag（抜粋）</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">10</span><span class="c1">// PCG ハッシュ (Jarzynski and Olano, 2020)。32 ビット整数を攪拌する</span>
+<span class="linenos">11</span><span class="kt">uint</span><span class="w"> </span><span class="n">pcgHash</span><span class="p">(</span><span class="kt">uint</span><span class="w"> </span><span class="n">v</span><span class="p">)</span>
+<span class="linenos">12</span><span class="p">{</span>
+<span class="linenos">13</span><span class="w">    </span><span class="kt">uint</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">747796405</span><span class="n">u</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2891336453</span><span class="n">u</span><span class="p">;</span>
+<span class="linenos">14</span><span class="w">    </span><span class="kt">uint</span><span class="w"> </span><span class="n">word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">((</span><span class="n">state</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">((</span><span class="n">state</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="mi">28</span><span class="n">u</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="n">u</span><span class="p">))</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">277803737</span><span class="n">u</span><span class="p">;</span>
+<span class="linenos">15</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">word</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="mi">22</span><span class="n">u</span><span class="p">)</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="n">word</span><span class="p">;</span>
+<span class="linenos">16</span><span class="p">}</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="c1">// 整数の格子点 p に 0 以上 1 未満の乱数を割り当てる</span>
+<span class="linenos">19</span><span class="kt">float</span><span class="w"> </span><span class="n">hash21</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">20</span><span class="p">{</span>
+<span class="linenos">21</span><span class="w">    </span><span class="kt">uvec2</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">uvec2</span><span class="p">(</span><span class="kt">ivec2</span><span class="p">(</span><span class="n">p</span><span class="p">));</span><span class="w">  </span><span class="c1">// 負の座標も 32 ビットの整数として扱う</span>
+<span class="linenos">22</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">pcgHash</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pcgHash</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">y</span><span class="p">)))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">4294967296.0</span><span class="p">;</span>
+<span class="linenos">23</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">pcgHash</span></code> は、線形合同法で 1 回状態を進めてから、ビットシフトと排他的論理和で上位と下位のビットを混ぜ合わせる。2 次元の格子点に対しては、一方の座標のハッシュ値にもう一方の座標を加えて、もう一度ハッシュ関数に通す。最後に <span class="math notranslate nohighlight">\(2^{32}\)</span> で割り、0 以上 1 未満の浮動小数点数にする。負の座標は <code class="docutils literal notranslate"><span class="pre">ivec2</span></code> から <code class="docutils literal notranslate"><span class="pre">uvec2</span></code> に変換すると 2 の補数表現のまま符号なし整数として扱われるので、原点をまたいでも問題なく使える。</p>
+</section>
+<section id="id4">
+<h3>ハッシュとノイズの違い<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>ハッシュ関数の値は、隣り合う格子点の間でも無関係に変化する。このような値の並びを白色ノイズと呼ぶ。白色ノイズは、ピクセルごとの乱数（第 16 章のジッター、第 17 章のサンプリング）には適しているが、自然物の形状には使えない。自然物の表面は、近い点ほど似た値をとり、離れるにつれて無関係になる。この性質を持つ関数を作るのが、次に説明するノイズ関数である。</p>
+</section>
+</section>
+<section id="id5">
+<h2>値ノイズ<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>最も簡単なノイズ関数は、格子点にハッシュ関数で値を割り当て、その間を補間するものである。これを値ノイズと呼ぶ。点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> を含む格子の左下の点を <span class="math notranslate nohighlight">\(\mathbf{i} = \lfloor \mathbf{p} \rfloor\)</span>、格子内の位置を <span class="math notranslate nohighlight">\(\mathbf{f} = \mathbf{p} - \mathbf{i}\)</span> とすると、2 次元の値ノイズは 4 つの格子点の値 <span class="math notranslate nohighlight">\(a, b, c, d\)</span> の双線形補間で表される。</p>
+<div class="math notranslate nohighlight">
+\[n(\mathbf{p}) = \operatorname{mix}\bigl(\operatorname{mix}(a, b, u_x),\ \operatorname{mix}(c, d, u_x),\ u_y\bigr)\]</div>
+<p>補間の係数 <span class="math notranslate nohighlight">\(\mathbf{u}\)</span> に <span class="math notranslate nohighlight">\(\mathbf{f}\)</span> をそのまま使うと、格子の境界で傾きが不連続になり、格子の形が目立つ。そこで、<span class="math notranslate nohighlight">\(\mathbf{f}\)</span> を次の多項式で変換してから使う。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 35.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>補間</p></th>
+<th class="head"><p>式</p></th>
+<th class="head"><p>格子の境界での連続性</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3 次のエルミート補間</p></td>
+<td><p><span class="math notranslate nohighlight">\(u = 3f^2 - 2f^3\)</span></p></td>
+<td><p>1 階微分まで連続。<code class="docutils literal notranslate"><span class="pre">smoothstep</span></code> と同じ式である。</p></td>
+</tr>
+<tr class="row-odd"><td><p>5 次の補間</p></td>
+<td><p><span class="math notranslate nohighlight">\(u = 6f^5 - 15f^4 + 10f^3\)</span></p></td>
+<td><p>2 階微分まで連続</p></td>
+</tr>
+</tbody>
+</table>
+<p>ノイズで形状を変形させると、ノイズの 1 階微分が法線に、2 階微分が法線の変化（陰影の変化）に現れる。3 次の補間では 2 階微分が格子の境界で不連続になり、陰影に格子の線が見えることがある。陰影を付ける用途では 5 次の補間を使うとよい。</p>
+<div class="literal-block-wrapper docutils container" id="id27">
+<div class="code-block-caption"><span class="caption-text">10_noise2d.frag（抜粋）</span><a class="headerlink" href="#id27" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">27</span><span class="c1">// 格子点の乱数を 3 次のエルミート補間でつなぐ。値の範囲は 0〜1</span>
+<span class="linenos">28</span><span class="kt">float</span><span class="w"> </span><span class="n">valueNoise</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">29</span><span class="p">{</span>
+<span class="linenos">30</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">31</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">32</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">3.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="p">);</span>
+<span class="linenos">33</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hash21</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+<span class="linenos">34</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hash21</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">35</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hash21</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos">36</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hash21</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos">37</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">mix</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">38</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>値ノイズは計算が軽いが、値の山と谷が格子点に揃うため、格子の構造が見えやすい（図の上段中央）。</p>
+</section>
+<section id="id6">
+<h2>勾配ノイズ<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>Perlin（1985）は、格子点に値ではなく、ランダムな向きの単位ベクトルである勾配 <span class="math notranslate nohighlight">\(\mathbf{g}\)</span> を割り当てる方法を考案した。これを勾配ノイズ、または Perlin ノイズと呼ぶ。各格子点 <span class="math notranslate nohighlight">\(\mathbf{i}_k\)</span> の寄与は、勾配と「格子点から <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> へのベクトル」の内積で与える。</p>
+<div class="math notranslate nohighlight">
+\[w_k = \mathbf{g}(\mathbf{i}_k) \cdot (\mathbf{p} - \mathbf{i}_k)\]</div>
+<p>これらを値ノイズと同じく補間したものが勾配ノイズである。各格子点では寄与が 0 になり、勾配の向きに値が増加する。そのため値の山と谷が格子点からずれ、値ノイズより格子の構造が目立たない（図の上段右）。2 次元の勾配ノイズの値は、およそ <span class="math notranslate nohighlight">\(-0.7\)</span> 〜 <span class="math notranslate nohighlight">\(0.7\)</span> （<span class="math notranslate nohighlight">\(\pm\sqrt{2}/2\)</span>）の範囲をとる。</p>
+<div class="literal-block-wrapper docutils container" id="id28">
+<div class="code-block-caption"><span class="caption-text">10_noise2d.frag（抜粋）</span><a class="headerlink" href="#id28" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">42</span><span class="c1">// 格子点 i に割り当てる単位ベクトル (勾配)</span>
+<span class="linenos">43</span><span class="kt">vec2</span><span class="w"> </span><span class="n">gradientAt</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">i</span><span class="p">)</span>
+<span class="linenos">44</span><span class="p">{</span>
+<span class="linenos">45</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">angle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">hash21</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+<span class="linenos">46</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">));</span>
+<span class="linenos">47</span><span class="p">}</span>
+<span class="linenos">48</span>
+<span class="linenos">49</span><span class="c1">// 格子点の勾配と、格子点から p へのベクトルの内積を 5 次の補間でつなぐ。</span>
+<span class="linenos">50</span><span class="c1">// 格子点での値は 0 で、値の範囲はおよそ -0.7〜0.7</span>
+<span class="linenos">51</span><span class="kt">float</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">52</span><span class="p">{</span>
+<span class="linenos">53</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">54</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">55</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">6.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">15.0</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">10.0</span><span class="p">);</span>
+<span class="linenos">56</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">gradientAt</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="n">f</span><span class="p">);</span>
+<span class="linenos">57</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">gradientAt</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)),</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">58</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">gradientAt</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)),</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos">59</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">gradientAt</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)),</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos">60</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">mix</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">61</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>Perlin は後に、補間を 5 次の多項式に変えるなどの改良を発表した（Perlin, 2002）。サンプルの補間もこれに従っている。勾配を格子点ごとに角度で決めているのは簡単のためで、Perlin の実装では、あらかじめ用意した少数の方向から選ぶことで計算を軽くしている。</p>
+<p>勾配ノイズの改良として、<a class="reference internal" href="glossary.html#term-17"><span class="xref std std-term">シンプレックスノイズ</span></a> もよく使われる（Perlin, 2001）。正方形（3 次元では立方体）の格子の代わりに、三角形（3 次元では四面体）を敷き詰めた格子を使い、各点で寄与を計算する格子点の数を、<span class="math notranslate nohighlight">\(n\)</span> 次元で <span class="math notranslate nohighlight">\(2^n\)</span> 個から <span class="math notranslate nohighlight">\(n + 1\)</span> 個に減らしたものである。高い次元ほど計算量の差が大きく、軸の方向に沿った模様の偏りも少ない。実装は勾配ノイズより複雑になるが、考え方（格子点の勾配と、格子点からのベクトルの内積を足し合わせる）は同じである。Gustavson による解説が詳しい。</p>
+</section>
+<section id="id7">
+<h2>セルラーノイズ<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>値ノイズと勾配ノイズは、どちらも滑らかにうねる模様を作る。これに対して、空間をいくつかの区画に分けたような模様（石畳、鱗、細胞、ひび割れ、泡など）を作るのが <a class="reference internal" href="glossary.html#term-23"><span class="xref std std-term">セルラーノイズ</span></a> である。</p>
+<figure class="align-center" id="id29">
+<img alt="6 つの領域に、黒い点を中心とした丸い模様、網目状の模様、白い区画と黒い境界、等間隔の縞と黄色い境界線、菱形に近い色分けのセル、四角に近い色分けのセルが並んでいる" src="_images/10_cellular.png" />
+<figcaption>
+<p><span class="caption-text">10_cellular.frag の実行結果。上段は左から <span class="math notranslate nohighlight">\(F_1\)</span>、<span class="math notranslate nohighlight">\(F_2\)</span>、<span class="math notranslate nohighlight">\(F_2 - F_1\)</span>、下段は左から境界までの距離、マンハッタン距離のセル、チェビシェフ距離のセルである。</span><a class="headerlink" href="#id29" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/c3d2d99362198ae1e108c990d780f150/10_cellular.frag"><code class="xref download docutils literal notranslate"><span class="pre">10_cellular.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/10_cellular.html">ブラウザーで実行</a></p>
+<section id="id8">
+<h3>ボロノイ図とセルラーノイズ<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>空間にいくつかの点（母点）を散らばらせ、空間の各位置を、最も近い母点ごとの領域に分割したものを <a class="reference internal" href="glossary.html#term-43"><span class="xref std std-term">ボロノイ図</span></a> と呼ぶ。Worley（1996）は、母点までの距離そのものをノイズの値として使う方法を考案した。これをセルラーノイズ、または Worley ノイズと呼ぶ。位置 <span class="math notranslate nohighlight">\(\mathbf{x}\)</span> から最も近い母点までの距離を <span class="math notranslate nohighlight">\(F_1\)</span>、2 番目に近い母点までの距離を <span class="math notranslate nohighlight">\(F_2\)</span> とすると、次のような模様が得られる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>値</p></th>
+<th class="head"><p>模様</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(F_1\)</span></p></td>
+<td><p>母点を中心に明るくなる丸い模様（図の上段左）。泡や斑点に使う。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(F_2\)</span></p></td>
+<td><p>母点から離れた位置で明るくなる網目の模様（上段中央）</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(F_2 - F_1\)</span></p></td>
+<td><p>ボロノイの境界で 0 になり、区画の内部で大きくなる（上段右）。区画とひび割れに使う。</p></td>
+</tr>
+</tbody>
+</table>
+<p><span class="math notranslate nohighlight">\(F_1\)</span> は「最も近い母点までの距離」なので、母点の集合の SDF そのものである。また、<span class="math notranslate nohighlight">\(F_2 - F_1\)</span> が 0 になる場所は、2 つの母点から等距離の位置、すなわちボロノイ図の境界である。</p>
+</section>
+<section id="id9">
+<h3>実装<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>母点を空間に無作為に置くと、最も近い母点を探すのに時間がかかる。そこで、1 辺 1 の格子の各セルに母点を 1 つずつ置き、その位置をセルの番号のハッシュ値で決める。母点は自分のセルの中にあるので、最も近い母点は、自分のセルと周囲の 8 つのセル（3 × 3）の中にある。これは、第 4 章の空間の繰り返しで述べた「隣接するセルの形状も評価して最小値をとる」対策と同じ考え方である。</p>
+<div class="literal-block-wrapper docutils container" id="id30">
+<div class="code-block-caption"><span class="caption-text">10_cellular.frag（抜粋）</span><a class="headerlink" href="#id30" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">44</span><span class="c1">// 格子のセル cell に置く点の位置 (セル内の座標 0〜1)。時間とともに動かす</span>
+<span class="linenos">45</span><span class="kt">vec2</span><span class="w"> </span><span class="n">featurePoint</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">cell</span><span class="p">)</span>
+<span class="linenos">46</span><span class="p">{</span>
+<span class="linenos">47</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hash22</span><span class="p">(</span><span class="n">cell</span><span class="p">);</span>
+<span class="linenos">48</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iTime</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">6.2831853</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">h</span><span class="p">);</span>
+<span class="linenos">49</span><span class="p">}</span>
+<span class="linenos">50</span>
+<span class="linenos">51</span><span class="c1">// 点 x のまわり 3 × 3 のセルの点を調べ、(F1, F2, 最も近い点のセルの乱数) を返す</span>
+<span class="linenos">52</span><span class="kt">vec3</span><span class="w"> </span><span class="n">cellular</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">metric</span><span class="p">)</span>
+<span class="linenos">53</span><span class="p">{</span>
+<span class="linenos">54</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">55</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">56</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">f1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8.0</span><span class="p">;</span>
+<span class="linenos">57</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">f2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8.0</span><span class="p">;</span>
+<span class="linenos">58</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">59</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">60</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">61</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">j</span><span class="p">));</span>
+<span class="linenos">62</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">featurePoint</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f</span><span class="p">;</span><span class="w">   </span><span class="c1">// x から点へのベクトル</span>
+<span class="linenos">63</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">distanceOf</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">metric</span><span class="p">);</span>
+<span class="linenos">64</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">f1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">65</span><span class="w">                </span><span class="n">f2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f1</span><span class="p">;</span>
+<span class="linenos">66</span><span class="w">                </span><span class="n">f1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">67</span><span class="w">                </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hash22</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">31.0</span><span class="p">).</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">68</span><span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">f2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">69</span><span class="w">                </span><span class="n">f2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">70</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">71</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">72</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">73</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span><span class="w"> </span><span class="n">f2</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">);</span>
+<span class="linenos">74</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><span class="math notranslate nohighlight">\(F_1\)</span> は 3 × 3 のセルの探索で必ず正しく求まる。<span class="math notranslate nohighlight">\(F_2\)</span> は、母点の配置によってはまれに 3 × 3 の外の母点になることがあるが、見た目の上ではほとんど問題にならない。厳密に求めるには、より広い範囲を探索する。</p>
+</section>
+<section id="id10">
+<h3>境界までの距離<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p><span class="math notranslate nohighlight">\(F_2 - F_1\)</span> は境界で 0 になるが、境界までの距離そのものではない。境界付近の値の増え方は場所によって異なるため、<span class="math notranslate nohighlight">\(F_2 - F_1\)</span> に閾値を設けて境界線を描くと、線の太さが不均一になる。</p>
+<p>境界までの正確な距離は、次の 2 段階の探索で求められる（Quilez の方法）。まず 1 回目の探索で、最も近い母点 <span class="math notranslate nohighlight">\(\mathbf{a}\)</span> を求める。次に 2 回目の探索で、<span class="math notranslate nohighlight">\(\mathbf{a}\)</span> と他の各母点 <span class="math notranslate nohighlight">\(\mathbf{b}\)</span> の間の境界（2 点の垂直二等分線）までの距離を計算し、その最小値をとる。位置 <span class="math notranslate nohighlight">\(\mathbf{x}\)</span> から見た 2 点へのベクトルを <span class="math notranslate nohighlight">\(\mathbf{r}_a, \mathbf{r}_b\)</span> とすると、垂直二等分線までの距離は次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[d = \frac{\mathbf{r}_a + \mathbf{r}_b}{2} \cdot \frac{\mathbf{r}_b - \mathbf{r}_a}{|\mathbf{r}_b - \mathbf{r}_a|}\]</div>
+<div class="literal-block-wrapper docutils container" id="id31">
+<div class="code-block-caption"><span class="caption-text">10_cellular.frag（抜粋）</span><a class="headerlink" href="#id31" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 76</span><span class="c1">// ボロノイの境界までのユークリッド距離 (Quilez の方法)。</span>
+<span class="linenos"> 77</span><span class="c1">// 1 回目の探索で最も近い点を求め、2 回目の探索でその点と他の点の垂直二等分線までの距離の最小値をとる</span>
+<span class="linenos"> 78</span><span class="kt">float</span><span class="w"> </span><span class="n">voronoiBorder</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">x</span><span class="p">)</span>
+<span class="linenos"> 79</span><span class="p">{</span>
+<span class="linenos"> 80</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos"> 81</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos"> 82</span>
+<span class="linenos"> 83</span><span class="w">    </span><span class="c1">// 1 回目: 最も近い点</span>
+<span class="linenos"> 84</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">nearestCell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos"> 85</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">nearest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span><span class="w">   </span><span class="c1">// x から最も近い点へのベクトル</span>
+<span class="linenos"> 86</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">best</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8.0</span><span class="p">;</span>
+<span class="linenos"> 87</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 88</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 89</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">j</span><span class="p">));</span>
+<span class="linenos"> 90</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">featurePoint</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f</span><span class="p">;</span>
+<span class="linenos"> 91</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">);</span>
+<span class="linenos"> 92</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">best</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 93</span><span class="w">                </span><span class="n">best</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos"> 94</span><span class="w">                </span><span class="n">nearest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<span class="linenos"> 95</span><span class="w">                </span><span class="n">nearestCell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">g</span><span class="p">;</span>
+<span class="linenos"> 96</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos"> 97</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 99</span>
+<span class="linenos">100</span><span class="w">    </span><span class="c1">// 2 回目: 最も近い点と、その周囲 5 × 5 の点との境界までの距離</span>
+<span class="linenos">101</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">border</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8.0</span><span class="p">;</span>
+<span class="linenos">102</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">103</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">104</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nearestCell</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">j</span><span class="p">));</span>
+<span class="linenos">105</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">featurePoint</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f</span><span class="p">;</span>
+<span class="linenos">106</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">diff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">nearest</span><span class="p">;</span>
+<span class="linenos">107</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span><span class="w"> </span><span class="n">diff</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">108</span><span class="w">                </span><span class="c1">// 2 点の中点から、2 点を結ぶ方向に測った距離</span>
+<span class="linenos">109</span><span class="w">                </span><span class="n">border</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">border</span><span class="p">,</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">nearest</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">r</span><span class="p">),</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">diff</span><span class="p">)));</span>
+<span class="linenos">110</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">111</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">112</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">113</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">border</span><span class="p">;</span>
+<span class="linenos">114</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>図の下段左では、境界までの距離に応じた縞と、一定の太さの境界線を描いている。縞の間隔が一定であることから、正確な距離が得られていることがわかる。2 回目の探索は、最も近い母点のセルを中心に 5 × 5 の範囲で行っている。</p>
+</section>
+<section id="id11">
+<h3>ミンコフスキー距離<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>ここまでは、距離としてユークリッド距離を使ってきた。距離の測り方を変えると、セルの形が変わる。代表的なものに、次の <a class="reference internal" href="glossary.html#term-47"><span class="xref std std-term">ミンコフスキー距離</span></a> （<span class="math notranslate nohighlight">\(L^p\)</span> 距離）の一族がある。</p>
+<div class="math notranslate nohighlight">
+\[\|\mathbf{x}\|_p = \Bigl(\sum_i |x_i|^p\Bigr)^{1/p}\]</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 35.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><span class="math notranslate nohighlight">\(p\)</span></p></th>
+<th class="head"><p>名前と式（2 次元）</p></th>
+<th class="head"><p>距離が一定の点の集合</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>マンハッタン距離 <span class="math notranslate nohighlight">\(|x| + |y|\)</span></p></td>
+<td><p>菱形</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>ユークリッド距離 <span class="math notranslate nohighlight">\(\sqrt{x^2 + y^2}\)</span></p></td>
+<td><p>円</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\infty\)</span></p></td>
+<td><p>チェビシェフ距離 <span class="math notranslate nohighlight">\(\max(|x|, |y|)\)</span></p></td>
+<td><p>正方形</p></td>
+</tr>
+</tbody>
+</table>
+<p>セルラーノイズの距離をマンハッタン距離にすると、境界が軸に対して 45° や 0°、90° の方向に揃い、菱形に近いセルになる（図の下段中央）。チェビシェフ距離にすると、四角に近いセルになる（下段右）。ユークリッド距離以外では、2 つの母点から等距離の点の集合が線にならず、面積を持つ領域になることがある。図で黒く塗られた小さな領域がそれにあたる。</p>
+<div class="literal-block-wrapper docutils container" id="id32">
+<div class="code-block-caption"><span class="caption-text">10_cellular.frag（抜粋）</span><a class="headerlink" href="#id32" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">30</span><span class="c1">// ミンコフスキー距離の代表的な 3 つ</span>
+<span class="linenos">31</span><span class="kt">float</span><span class="w"> </span><span class="n">distanceOf</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">metric</span><span class="p">)</span>
+<span class="linenos">32</span><span class="p">{</span>
+<span class="linenos">33</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">metric</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">METRIC_MANHATTAN</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">34</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">35</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">36</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">metric</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">METRIC_CHEBYSHEV</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">37</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">y</span><span class="p">));</span>
+<span class="linenos">38</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">39</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">d</span><span class="p">);</span>
+<span class="linenos">40</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>ミンコフスキー距離は、SDF とも深く関わる。第 3 章の箱の SDF の内側の項 <span class="math notranslate nohighlight">\(\max(q_x, q_y, q_z)\)</span> はチェビシェフ距離である。また、<span class="math notranslate nohighlight">\(\|\mathbf{p}\|_p - r\)</span> は、<span class="math notranslate nohighlight">\(p = 2\)</span> で球、<span class="math notranslate nohighlight">\(p\)</span> を大きくすると角の丸い立方体に近づく形状（超楕円体）になる。</p>
+<p>ただし、<span class="math notranslate nohighlight">\(p \ne 2\)</span> のミンコフスキー距離は、ユークリッド距離とは一致しない。そのため、SDF として使うときは注意が必要である。3 次元では次の関係が成り立つ。</p>
+<div class="math notranslate nohighlight">
+\[\|\mathbf{x}\|_\infty \le \|\mathbf{x}\|_2 \le \|\mathbf{x}\|_1 \le \sqrt{3}\, \|\mathbf{x}\|_2\]</div>
+<p><span class="math notranslate nohighlight">\(p &gt; 2\)</span> のノルムで作った SDF は、ユークリッド距離を過小評価するので、そのままスフィアトレーシングに使える。一方、<span class="math notranslate nohighlight">\(p &lt; 2\)</span> のノルムで作った SDF は、ユークリッド距離を過大評価することがあるので、第 9 章で説明したように歩幅を小さくする。例えば <span class="math notranslate nohighlight">\(p = 1\)</span> の場合は、<span class="math notranslate nohighlight">\(1/\sqrt{3}\)</span> を掛ければ安全である。</p>
+</section>
+<section id="id12">
+<h3>3 次元への応用<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>セルラーノイズは 3 次元にも拡張できる。探索の範囲は 3 × 3 × 3 = 27 個のセルになる。次のサンプルでは、2 次元のボロノイで地面を区切って石畳にし、3 次元のセルラーノイズで岩の表面をひび割れさせている。</p>
+<div class="literal-block-wrapper docutils container" id="id33">
+<div class="code-block-caption"><span class="caption-text">10_cracks.frag（抜粋）</span><a class="headerlink" href="#id33" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">109</span><span class="c1">// 石畳: セルごとに高さの異なる石を並べ、境界 (目地) を低くする</span>
+<span class="linenos">110</span><span class="kt">vec2</span><span class="w"> </span><span class="n">sdPaving</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">111</span><span class="p">{</span>
+<span class="linenos">112</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cellId</span><span class="p">;</span>
+<span class="linenos">113</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">border</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">voronoiBorder</span><span class="p">(</span><span class="mf">1.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">cellId</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1.5</span><span class="p">;</span>
+<span class="linenos">114</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.06</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.03</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">hash22</span><span class="p">(</span><span class="n">cellId</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">7.0</span><span class="p">).</span><span class="n">x</span><span class="p">;</span><span class="w">       </span><span class="c1">// 石の高さ</span>
+<span class="linenos">115</span><span class="w">    </span><span class="c1">// 目地から離れるにつれて、角を丸めながら石の高さまで上げる</span>
+<span class="linenos">116</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">0.015</span><span class="p">,</span><span class="w"> </span><span class="mf">0.06</span><span class="p">,</span><span class="w"> </span><span class="n">border</span><span class="p">);</span>
+<span class="linenos">117</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">mat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">border</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.03</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">MAT_JOINT</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">MAT_STONE</span><span class="p">;</span>
+<span class="linenos">118</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">height</span><span class="p">,</span><span class="w"> </span><span class="n">mat</span><span class="p">);</span>
+<span class="linenos">119</span><span class="p">}</span>
+<span class="linenos">120</span>
+<span class="linenos">121</span><span class="c1">// 岩: 球の表面を、3 次元のセルラーノイズの境界に沿ってくぼませる</span>
+<span class="linenos">122</span><span class="kt">vec2</span><span class="w"> </span><span class="n">sdRock</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">123</span><span class="p">{</span>
+<span class="linenos">124</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">125</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.9</span><span class="p">;</span>
+<span class="linenos">126</span><span class="w">    </span><span class="c1">// 岩の近くだけでノイズを評価する (第 9 章のバウンディングボリューム)</span>
+<span class="linenos">127</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">128</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">edge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellularEdge3</span><span class="p">(</span><span class="mf">3.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">q</span><span class="p">);</span>
+<span class="linenos">129</span><span class="w">        </span><span class="n">d</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mf">0.04</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.12</span><span class="p">,</span><span class="w"> </span><span class="n">edge</span><span class="p">));</span>
+<span class="linenos">130</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">131</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">MAT_ROCK</span><span class="p">);</span>
+<span class="linenos">132</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/280977e7ea3ed702dbaf9dfdf8d09b47/10_cracks.frag"><code class="xref download docutils literal notranslate"><span class="pre">10_cracks.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/10_cracks.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id34">
+<img alt="不揃いな多角形の石を敷き詰めた地面の上に、網目状にひび割れた岩が置かれている" src="_images/10_cracks.png" />
+<figcaption>
+<p><span class="caption-text">10_cracks.frag の実行結果</span><a class="headerlink" href="#id34" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>石畳は、境界までの距離に応じて石の高さを決めた高さの関数（後述の「ノイズによる地形」と同じ考え方）である。境界の近くでは高さを 0 にして目地にし、少し離れた位置で角を丸めながら石の高さまで上げている。石の高さと色は、セルの番号のハッシュ値で少しずつ変えている。岩は、球の SDF に、<span class="math notranslate nohighlight">\(F_2 - F_1\)</span> が 0 に近い場所だけをくぼませる項を加えている。どちらも SDF の性質を崩す変形なので、歩幅を 0.6 倍にしている。また、セルラーノイズの計算は重いので、岩の近く以外ではノイズの評価を省いている（第 9 章のバウンディングボリューム）。</p>
+</section>
+</section>
+<section id="fbm">
+<h2>fBm<a class="headerlink" href="#fbm" title="Link to this heading"></a></h2>
+<p>自然の地形や雲は、大きなうねりの上に中くらいの起伏が重なり、さらにその上に細かい凹凸が重なった構造をしている。この構造は、周波数を上げながら振幅を下げたノイズを何層も重ねることで表せる。これを <a class="reference internal" href="glossary.html#term-fBm"><span class="xref std std-term">fBm</span></a> （fractional Brownian motion、フラクタルブラウン運動）と呼ぶ。</p>
+<div class="math notranslate nohighlight">
+\[\operatorname{fbm}(\mathbf{p}) = \sum_{k=0}^{K-1} g^k\, n\bigl(\lambda^k \mathbf{p}\bigr)\]</div>
+<p>各層をオクターブと呼び、<span class="math notranslate nohighlight">\(K\)</span> をオクターブ数、<span class="math notranslate nohighlight">\(\lambda\)</span> を周波数の倍率（ラクナリティ）、<span class="math notranslate nohighlight">\(g\)</span> を振幅の減衰率（ゲイン）と呼ぶ。一般的な値は <span class="math notranslate nohighlight">\(\lambda = 2\)</span>、<span class="math notranslate nohighlight">\(g = 0.5\)</span> である。<span class="math notranslate nohighlight">\(g\)</span> を大きくすると細かい凹凸が強調されて粗い表面になり、小さくすると滑らかな表面になる。</p>
+<div class="literal-block-wrapper docutils container" id="id35">
+<div class="code-block-caption"><span class="caption-text">10_noise2d.frag（抜粋）</span><a class="headerlink" href="#id35" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">65</span><span class="c1">// オクターブごとに座標を回転させ、格子の方向が揃って見えるのを防ぐ</span>
+<span class="linenos">66</span><span class="k">const</span><span class="w"> </span><span class="kt">mat2</span><span class="w"> </span><span class="n">OCTAVE_ROT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">mat2</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">);</span>
+<span class="linenos">67</span>
+<span class="linenos">68</span><span class="c1">// フラクタルブラウン運動: 周波数を 2 倍、振幅を半分にしながら 6 層重ねる</span>
+<span class="linenos">69</span><span class="kt">float</span><span class="w"> </span><span class="n">fbm</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">70</span><span class="p">{</span>
+<span class="linenos">71</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">72</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">73</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">6</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">74</span><span class="w">        </span><span class="n">value</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">75</span><span class="w">        </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">OCTAVE_ROT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="linenos">76</span><span class="w">        </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">77</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">78</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="linenos">79</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>周波数をちょうど 2 倍にすると、すべてのオクターブの格子点が同じ位置に揃い、格子の構造が強調される。サンプルでは、オクターブごとに座標を回転させてこれを防いでいる（<code class="docutils literal notranslate"><span class="pre">OCTAVE_ROT</span></code> は約 37° の回転行列である）。第 16 章の雲のように、倍率を 2.02 のように 2 からわずかにずらす方法もある。</p>
+</section>
+<section id="id13">
+<h2>fBm の応用<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<section id="id14">
+<h3>ドメインワーピング<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p>第 4 章では、SDF を評価する前に座標を変換して形状を変形させた。同じ考え方をノイズに適用し、ノイズを評価する前に座標をノイズでゆがめる手法をドメインワーピングと呼ぶ。</p>
+<div class="math notranslate nohighlight">
+\[f(\mathbf{p}) = \operatorname{fbm}\bigl(\mathbf{p} + s\,\mathbf{q}(\mathbf{p})\bigr), \qquad
+\mathbf{q}(\mathbf{p}) = \bigl(\operatorname{fbm}(\mathbf{p}),\ \operatorname{fbm}(\mathbf{p} + \mathbf{c})\bigr)\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbf{c}\)</span> は、2 つの成分を無関係にするための適当なずらし量、<span class="math notranslate nohighlight">\(s\)</span> はゆがみの強さである。流体が渦を巻いたような模様や、地層のような模様が得られる（図の下段中央）。</p>
+<div class="literal-block-wrapper docutils container" id="id36">
+<div class="code-block-caption"><span class="caption-text">10_noise2d.frag（抜粋）</span><a class="headerlink" href="#id36" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">81</span><span class="c1">// ドメインワーピング: fBm でゆがめた座標で、もう一度 fBm を評価する</span>
+<span class="linenos">82</span><span class="kt">float</span><span class="w"> </span><span class="n">warpedFbm</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">83</span><span class="p">{</span>
+<span class="linenos">84</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">fbm</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)),</span><span class="w"> </span><span class="n">fbm</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">5.2</span><span class="p">,</span><span class="w"> </span><span class="mf">1.3</span><span class="p">)));</span>
+<span class="linenos">85</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">fbm</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iTime</span><span class="p">);</span>
+<span class="linenos">86</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id15">
+<h3>リッジノイズ<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<p>勾配ノイズの値は 0 のまわりで正負に変化する。絶対値をとって反転させた <span class="math notranslate nohighlight">\(1 - |n|\)</span> は、<span class="math notranslate nohighlight">\(n = 0\)</span> の線に沿って鋭い尾根を作る。これを重ねたものをリッジノイズと呼び、山脈の稜線や稲妻のような網目模様に使う（図の下段右）。</p>
+<div class="literal-block-wrapper docutils container" id="id37">
+<div class="code-block-caption"><span class="caption-text">10_noise2d.frag（抜粋）</span><a class="headerlink" href="#id37" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 88</span><span class="c1">// リッジノイズ: 勾配ノイズの絶対値を反転させ、尾根のような鋭い線を作る</span>
+<span class="linenos"> 89</span><span class="kt">float</span><span class="w"> </span><span class="n">ridgedFbm</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos"> 90</span><span class="p">{</span>
+<span class="linenos"> 91</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 92</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos"> 93</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">6</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 94</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">gradientNoise</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1.4</span><span class="p">);</span>
+<span class="linenos"> 95</span><span class="w">        </span><span class="n">value</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<span class="linenos"> 96</span><span class="w">        </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">OCTAVE_ROT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="linenos"> 97</span><span class="w">        </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 99</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="linenos">100</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id16">
+<h3>カールノイズ<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>ドメインワーピングでは、座標をノイズでずらして模様をゆがめた。ずらす量をベクトル場とみなし、そのベクトル場に沿って模様を流す（移流させる）と考えることもできる。このとき、ベクトル場の性質によって、ゆがみ方が大きく変わる。</p>
+<p>スカラーのノイズ <span class="math notranslate nohighlight">\(\psi\)</span> の勾配 <span class="math notranslate nohighlight">\(\nabla\psi\)</span> をベクトル場にすると、流れは <span class="math notranslate nohighlight">\(\psi\)</span> の大きい場所に集まり、小さい場所から湧き出す。そのため、模様は一部に押し縮められ、別の場所では引き伸ばされる。これに対し、勾配を 90° 回転させた次のベクトル場を考える。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{v} = \left(\frac{\partial \psi}{\partial y},\ -\frac{\partial \psi}{\partial x}\right)\]</div>
+<p>このベクトル場は <span class="math notranslate nohighlight">\(\psi\)</span> の等高線に沿って流れ、発散（湧き出しの量）が常に 0 になる。</p>
+<div class="math notranslate nohighlight">
+\[\nabla \cdot \mathbf{v} = \frac{\partial^2 \psi}{\partial x \partial y} - \frac{\partial^2 \psi}{\partial y \partial x} = 0\]</div>
+<p>発散が 0 の流れでは、模様の面積が保たれるので、押し縮められたり引き伸ばされたりせず、流体が渦を巻くような自然な動きになる。このように、ノイズの回転（curl）から作るベクトル場を <a class="reference internal" href="glossary.html#term-4"><span class="xref std std-term">カールノイズ</span></a> と呼ぶ（Bridson et al., 2007）。</p>
+<div class="literal-block-wrapper docutils container" id="id38">
+<div class="code-block-caption"><span class="caption-text">10_curl.frag（抜粋）</span><a class="headerlink" href="#id38" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">52</span><span class="c1">// ψ の勾配を中心差分で求める</span>
+<span class="linenos">53</span><span class="kt">vec2</span><span class="w"> </span><span class="n">potentialGradient</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">54</span><span class="p">{</span>
+<span class="linenos">55</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01</span><span class="p">;</span>
+<span class="linenos">56</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">potential</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">potential</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)),</span>
+<span class="linenos">57</span><span class="w">                </span><span class="n">potential</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">potential</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">)))</span><span class="w"> </span><span class="o">/</span>
+<span class="linenos">58</span><span class="w">           </span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">e</span><span class="p">);</span>
+<span class="linenos">59</span><span class="p">}</span>
+<span class="linenos">60</span>
+<span class="linenos">61</span><span class="c1">// 勾配の場: ψ の大きくなる方向に流れる。発散は 0 ではない</span>
+<span class="linenos">62</span><span class="kt">vec2</span><span class="w"> </span><span class="n">gradientField</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">63</span><span class="p">{</span>
+<span class="linenos">64</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">potentialGradient</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">65</span><span class="p">}</span>
+<span class="linenos">66</span>
+<span class="linenos">67</span><span class="c1">// カールの場: 勾配を 90° 回転させたもの。ψ の等高線に沿って流れ、発散が 0 になる</span>
+<span class="linenos">68</span><span class="kt">vec2</span><span class="w"> </span><span class="n">curlField</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">69</span><span class="p">{</span>
+<span class="linenos">70</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">potentialGradient</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">71</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">g</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">g</span><span class="p">.</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">72</span><span class="p">}</span>
+<span class="linenos">73</span>
+<span class="linenos">74</span><span class="c1">// 点 p の色が、時間 duration の間にどこから流れてきたかを、流れを逆にたどって求める</span>
+<span class="linenos">75</span><span class="kt">vec2</span><span class="w"> </span><span class="n">traceBack</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">duration</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">curl</span><span class="p">)</span>
+<span class="linenos">76</span><span class="p">{</span>
+<span class="linenos">77</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">duration</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">ADVECT_STEPS</span><span class="p">);</span>
+<span class="linenos">78</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ADVECT_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">79</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">curl</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">curlField</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">gradientField</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">80</span><span class="w">        </span><span class="n">p</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">dt</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v</span><span class="p">;</span>
+<span class="linenos">81</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">82</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="linenos">83</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>サンプルでは、各ピクセルの色が、一定時間の間にどこから流れてきたかを、流れを逆向きにたどって求めている。流れてくる前の位置の市松模様の色を、そのピクセルの色とする。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/c5ef4edcd849588cf27d33b1fd1ec814/10_curl.frag"><code class="xref download docutils literal notranslate"><span class="pre">10_curl.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/10_curl.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id39">
+<img alt="同じ範囲の画像が左右に並ぶ。左は市松模様の一部が線状に潰れ、一部が大きく広がっている。右は市松模様が面積を保ったまま渦状にねじれている" src="_images/10_curl.png" />
+<figcaption>
+<p><span class="caption-text">10_curl.frag の実行結果。左は勾配の場、右はカールの場に沿って市松模様を流したもの。</span><a class="headerlink" href="#id39" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>左では、流れが集まる場所で市松模様のマスが線状に潰れ、流れが湧き出す場所では大きく広がっている。右では、マスが渦状にねじれながらも、どのマスもほぼ同じ面積を保っている。</p>
+<p>3 次元では、3 つの独立なノイズを成分とするベクトルポテンシャル <span class="math notranslate nohighlight">\(\boldsymbol{\Psi}\)</span> の回転 <span class="math notranslate nohighlight">\(\mathbf{v} = \nabla \times \boldsymbol{\Psi}\)</span> がカールノイズになる。カールノイズの主な用途は、煙や炎の粒子を流れに沿って動かすことである。レイマーチングでは、第 16 章の雲の密度をカールノイズで流すと、雲の形が潰れずに自然に変化する。粒子の位置のように、フレームごとの状態を保存する必要がある場合は、第 17 章の複数パスの描画を使う。</p>
+</section>
+</section>
+<section id="id17">
+<h2>ノイズによる地形<a class="headerlink" href="#id17" title="Link to this heading"></a></h2>
+<section id="id18">
+<h3>高さの関数<a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<p>fBm で水平位置 <span class="math notranslate nohighlight">\((x, z)\)</span> の高さ <span class="math notranslate nohighlight">\(h(x, z)\)</span> を決めると、地形を表せる。地形の表面は <span class="math notranslate nohighlight">\(y = h(x, z)\)</span> を満たす点の集合なので、次の関数は地形の上で正、下で負、表面で 0 になる。</p>
+<div class="math notranslate nohighlight">
+\[f(\mathbf{p}) = p_y - h(p_x, p_z)\]</div>
+<p>この関数をシーンの SDF の代わりに使えば、地形をレイマーチングで描ける。</p>
+<div class="literal-block-wrapper docutils container" id="id40">
+<div class="code-block-caption"><span class="caption-text">10_terrain.frag（抜粋）</span><a class="headerlink" href="#id40" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">53</span><span class="c1">// 水平位置 xz での地形の高さ。octaves はノイズを重ねる層の数</span>
+<span class="linenos">54</span><span class="kt">float</span><span class="w"> </span><span class="n">terrainHeight</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">octaves</span><span class="p">)</span>
+<span class="linenos">55</span><span class="p">{</span>
+<span class="linenos">56</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.25</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="p">;</span>
+<span class="linenos">57</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">58</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">59</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">octaves</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">60</span><span class="w">        </span><span class="n">value</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">61</span><span class="w">        </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">OCTAVE_ROT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="linenos">62</span><span class="w">        </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">63</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">64</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">3.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="linenos">65</span><span class="p">}</span>
+<span class="linenos">66</span>
+<span class="linenos">67</span><span class="c1">// 高さの関数から作った「SDF の代わり」の関数。</span>
+<span class="linenos">68</span><span class="c1">// 真の距離ではないが、表面 (値が 0) の外側で正、内側で負になる</span>
+<span class="linenos">69</span><span class="kt">float</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">octaves</span><span class="p">)</span>
+<span class="linenos">70</span><span class="p">{</span>
+<span class="linenos">71</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">terrainHeight</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">octaves</span><span class="p">);</span>
+<span class="linenos">72</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/ad7b196d65cccc802abb5144e79b8698/10_terrain.frag"><code class="xref download docutils literal notranslate"><span class="pre">10_terrain.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/10_terrain.html">ブラウザで実行</a></p>
+<figure class="align-center" id="id41">
+<img alt="雪を頂いた山々が連なり、遠くの山は霞んでいる" src="_images/10_terrain.png" />
+<figcaption>
+<p><span class="caption-text">10_terrain.frag の実行結果</span><a class="headerlink" href="#id41" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id19">
+<h3>歩幅の調整<a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<p><span class="math notranslate nohighlight">\(f\)</span> は表面までの鉛直方向の距離であり、真の距離ではない。斜面の上にある点では、真の距離（斜面に垂直な方向の距離）は鉛直方向の距離より短い。そのため <span class="math notranslate nohighlight">\(f\)</span> だけ進むと、表面を通り過ぎることがある。</p>
+<p>高さの関数の勾配の大きさが <span class="math notranslate nohighlight">\(|\nabla h| \le G\)</span> を満たすとき、真の距離 <span class="math notranslate nohighlight">\(d\)</span> について次の関係が成り立つ。</p>
+<div class="math notranslate nohighlight">
+\[\frac{f(\mathbf{p})}{\sqrt{1 + G^2}} \le d(\mathbf{p}) \le f(\mathbf{p})\]</div>
+<p>したがって、<span class="math notranslate nohighlight">\(f\)</span> に <span class="math notranslate nohighlight">\(1/\sqrt{1 + G^2}\)</span> を掛けた距離だけ進めば安全である。これは、第 9 章で説明した歩幅の縮小の具体例になっている。サンプルでは係数を 0.5 （<span class="math notranslate nohighlight">\(G \approx 1.7\)</span>、傾斜約 60° に相当）としている。</p>
+<p>fBm の勾配は、オクターブ数とともに大きくなる点に注意が必要である。オクターブ <span class="math notranslate nohighlight">\(k\)</span> の勾配の大きさは <span class="math notranslate nohighlight">\(g^k \lambda^k\)</span> に比例するので、<span class="math notranslate nohighlight">\(g = 0.5\)</span>、<span class="math notranslate nohighlight">\(\lambda = 2\)</span> の場合は、どのオクターブも同じ大きさの勾配を持つ。つまりオクターブを増やすほど地形は急峻になり、安全な歩幅は小さくなる。</p>
+</section>
+<section id="id20">
+<h3>オクターブ数の使い分け<a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<p>細かいオクターブは、形状の大まかな位置にはほとんど影響せず、表面の陰影にだけ影響する。そこでサンプルでは、レイマーチングでは 5 オクターブの粗い地形を使い、法線の計算では 9 オクターブの細かい地形を使っている。レイマーチングの計算量を抑えつつ、細かな凹凸の陰影を表現できる。</p>
+<div class="literal-block-wrapper docutils container" id="id42">
+<div class="code-block-caption"><span class="caption-text">10_terrain.frag（抜粋）</span><a class="headerlink" href="#id42" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 74</span><span class="kt">float</span><span class="w"> </span><span class="n">raymarch</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos"> 75</span><span class="p">{</span>
+<span class="linenos"> 76</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 77</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 78</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos"> 79</span><span class="w">        </span><span class="c1">// レイマーチングでは粗い地形 (5 層) で十分</span>
+<span class="linenos"> 80</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span>
+<span class="linenos"> 81</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 82</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos"> 83</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 84</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">STEP_SCALE</span><span class="p">;</span>
+<span class="linenos"> 85</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 86</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos"> 87</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos"> 88</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 89</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos"> 90</span><span class="p">}</span>
+<span class="linenos"> 91</span>
+<span class="linenos"> 92</span><span class="c1">// 高さの関数の勾配から法線を求める。陰影には細かい地形 (9 層) を使う</span>
+<span class="linenos"> 93</span><span class="kt">vec3</span><span class="w"> </span><span class="n">calcNormal</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">)</span>
+<span class="linenos"> 94</span><span class="p">{</span>
+<span class="linenos"> 95</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.001</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.001</span><span class="p">;</span>
+<span class="linenos"> 96</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">hx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">terrainHeight</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mi">9</span><span class="p">)</span><span class="w"> </span><span class="o">-</span>
+<span class="linenos"> 97</span><span class="w">               </span><span class="n">terrainHeight</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mi">9</span><span class="p">);</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">hz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">terrainHeight</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span><span class="w"> </span><span class="mi">9</span><span class="p">)</span><span class="w"> </span><span class="o">-</span>
+<span class="linenos"> 99</span><span class="w">               </span><span class="n">terrainHeight</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span><span class="w"> </span><span class="mi">9</span><span class="p">);</span>
+<span class="linenos">100</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="n">hx</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">hz</span><span class="p">));</span>
+<span class="linenos">101</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>法線は、第 5 章と同じく勾配から求める。<span class="math notranslate nohighlight">\(f = p_y - h(p_x, p_z)\)</span> の勾配は <span class="math notranslate nohighlight">\((-\partial h/\partial x,\ 1,\ -\partial h/\partial z)\)</span> なので、<span class="math notranslate nohighlight">\(h\)</span> の中心差分だけで計算できる。差分の幅は、第 13 章のマンデルバルブと同じく距離に比例させ、遠くの地形の法線が乱れないようにしている。</p>
+<p>中心差分では、1 点の法線を求めるのに高さの関数を 4 回評価する。ノイズの式を微分しておくと、ノイズの値と同時に勾配（解析的な微分）を計算でき、1 回の評価で法線が得られる。例えば値ノイズでは、補間の係数 <span class="math notranslate nohighlight">\(u = 3f^2 - 2f^3\)</span> の微分 <span class="math notranslate nohighlight">\(6f(1 - f)\)</span> を使って、各軸の偏微分を式で求められる。fBm では、各オクターブの勾配に周波数と振幅を掛けて足し合わせればよい。勾配を使って、急な斜面ほど細かいオクターブを弱めると、浸食されたような地形も作れる（Quilez による解説がある）。</p>
+<p>地面の色は、法線の <span class="math notranslate nohighlight">\(y\)</span> 成分（傾き）と高さで決めている。平らな場所には草を、高く平らな場所には雪を置き、急な斜面は岩肌のままにしている。</p>
+</section>
+</section>
+<section id="id21">
+<h2>手続き的なテクスチャ<a class="headerlink" href="#id21" title="Link to this heading"></a></h2>
+<p>ノイズは形状だけでなく、表面の模様（テクスチャ）にも使える。画像を読み込む代わりに計算で作るテクスチャを、手続き的なテクスチャと呼ぶ。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/2caf9b60e76f07f1ff0b29134dcffceb/10_texture.frag"><code class="xref download docutils literal notranslate"><span class="pre">10_texture.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/10_texture.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id43">
+<img alt="同じ構図の画像が左右に並ぶ。左の物体は白一色、右の物体には大理石のような模様と凹凸がある" src="_images/10_texture.png" />
+<figcaption>
+<p><span class="caption-text">10_texture.frag の実行結果。左はテクスチャなし、右はトライプラナーマッピングとバンプマッピングあり。</span><a class="headerlink" href="#id43" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<section id="id22">
+<h3>トライプラナーマッピング<a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<p>2 次元の模様を立体の表面に貼るには、表面上の点に 2 次元の座標（UV 座標）を対応させる必要がある。ポリゴンのモデルでは頂点ごとに UV 座標を持たせるが、SDF で表した形状にはそのような情報が無い。</p>
+<p>そこで、3 つの座標平面（<span class="math notranslate nohighlight">\(yz\)</span>、<span class="math notranslate nohighlight">\(zx\)</span>、<span class="math notranslate nohighlight">\(xy\)</span>）それぞれに模様を投影し、表面の向きに応じて混ぜ合わせる。この方法を <a class="reference internal" href="glossary.html#term-29"><span class="xref std std-term">トライプラナーマッピング</span></a> と呼ぶ。法線が <span class="math notranslate nohighlight">\(x\)</span> 軸に近い面には <span class="math notranslate nohighlight">\(yz\)</span> 平面に投影した模様を、<span class="math notranslate nohighlight">\(y\)</span> 軸に近い面には <span class="math notranslate nohighlight">\(zx\)</span> 平面の模様を主に使う。重みは法線の各成分の絶対値のべき乗で決める。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{w} = \frac{|\hat{\mathbf{n}}|^k}{|n_x|^k + |n_y|^k + |n_z|^k}, \qquad
+T(\mathbf{p}) = w_x\, T_{2}(p_y, p_z) + w_y\, T_{2}(p_z, p_x) + w_z\, T_{2}(p_x, p_y)\]</div>
+<p>指数 <span class="math notranslate nohighlight">\(k\)</span> を大きくすると、3 つの投影の混ざる範囲が狭くなり、境目がくっきりする。サンプルでは <span class="math notranslate nohighlight">\(k = 4\)</span> としている。</p>
+<div class="literal-block-wrapper docutils container" id="id44">
+<div class="code-block-caption"><span class="caption-text">10_texture.frag（抜粋）</span><a class="headerlink" href="#id44" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">64</span><span class="c1">// 2 次元の模様: 大理石のような縞。値は 0〜1</span>
+<span class="linenos">65</span><span class="kt">float</span><span class="w"> </span><span class="n">marble</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">uv</span><span class="p">)</span>
+<span class="linenos">66</span><span class="p">{</span>
+<span class="linenos">67</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fbm</span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">uv</span><span class="p">);</span>
+<span class="linenos">68</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="mf">6.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">uv</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">10.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">69</span><span class="p">}</span>
+<span class="linenos">70</span>
+<span class="linenos">71</span><span class="c1">// トライプラナーマッピング: 3 つの座標平面に投影した模様を、</span>
+<span class="linenos">72</span><span class="c1">// 法線の向きに応じた重みで混ぜ合わせる</span>
+<span class="linenos">73</span><span class="kt">float</span><span class="w"> </span><span class="n">triplanar</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="linenos">74</span><span class="p">{</span>
+<span class="linenos">75</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">n</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">4.0</span><span class="p">));</span><span class="w">   </span><span class="c1">// 指数が大きいほど境目がくっきりする</span>
+<span class="linenos">76</span><span class="w">    </span><span class="n">w</span><span class="w"> </span><span class="o">/=</span><span class="w"> </span><span class="n">w</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">w</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">w</span><span class="p">.</span><span class="n">z</span><span class="p">;</span>
+<span class="linenos">77</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">w</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">marble</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">yz</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">w</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">marble</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">zx</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">w</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">marble</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xy</span><span class="p">);</span>
+<span class="linenos">78</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>模様の関数 <code class="docutils literal notranslate"><span class="pre">marble</span></code> は、<span class="math notranslate nohighlight">\(x\)</span> 方向の縞模様を fBm でゆがめたもので、前述のドメインワーピングと同じ考え方である。トライプラナーマッピングでは模様を 3 回評価するため、計算量は 3 倍になる。2 つの平面だけを使って計算量を減らす方法も知られている（Quilez による「biplanar mapping」）。</p>
+</section>
+<section id="id23">
+<h3>バンプマッピング<a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
+<p>模様の値を表面の高さとみなし、その勾配で法線を傾けると、形状を変えずに細かな凹凸の陰影だけを付けられる。この方法を <a class="reference internal" href="glossary.html#term-33"><span class="xref std std-term">バンプマッピング</span></a> と呼ぶ。高さの関数 <span class="math notranslate nohighlight">\(b(\mathbf{p})\)</span> の勾配から、表面に沿った成分だけを取り出して法線から引く。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{g} = \nabla b - (\hat{\mathbf{n}} \cdot \nabla b)\, \hat{\mathbf{n}}, \qquad
+\hat{\mathbf{n}}' = \frac{\hat{\mathbf{n}} - s\,\mathbf{g}}{|\hat{\mathbf{n}} - s\,\mathbf{g}|}\]</div>
+<p><span class="math notranslate nohighlight">\(s\)</span> は凹凸の強さである。斜面の法線は、高さが増す方向とは逆の方向に傾くので、<span class="math notranslate nohighlight">\(\mathbf{g}\)</span> を引いている。</p>
+<div class="literal-block-wrapper docutils container" id="id45">
+<div class="code-block-caption"><span class="caption-text">10_texture.frag（抜粋）</span><a class="headerlink" href="#id45" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">135</span><span class="c1">// バンプマッピング: 模様の値を高さとみなし、その勾配で法線を傾ける。</span>
+<span class="linenos">136</span><span class="c1">// 形状 (SDF) は変えないので、レイマーチングの計算量は増えない</span>
+<span class="linenos">137</span><span class="kt">vec3</span><span class="w"> </span><span class="n">bumpNormal</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">strength</span><span class="p">)</span>
+<span class="linenos">138</span><span class="p">{</span>
+<span class="linenos">139</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">140</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">grad</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">triplanar</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">-</span>
+<span class="linenos">141</span><span class="w">                     </span><span class="n">triplanar</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">n</span><span class="p">),</span>
+<span class="linenos">142</span><span class="w">                     </span><span class="n">triplanar</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">-</span>
+<span class="linenos">143</span><span class="w">                     </span><span class="n">triplanar</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">n</span><span class="p">),</span>
+<span class="linenos">144</span><span class="w">                     </span><span class="n">triplanar</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">-</span>
+<span class="linenos">145</span><span class="w">                     </span><span class="n">triplanar</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span><span class="w"> </span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">e</span><span class="p">);</span>
+<span class="linenos">146</span><span class="w">    </span><span class="c1">// 勾配のうち、表面に沿った成分だけで法線を傾ける</span>
+<span class="linenos">147</span><span class="w">    </span><span class="n">grad</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">grad</span><span class="p">);</span>
+<span class="linenos">148</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">strength</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">grad</span><span class="p">);</span>
+<span class="linenos">149</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>バンプマッピングは SDF を変えないので、レイマーチングの計算量は増えず、第 9 章で述べた歩幅の問題も起こらない。一方で、物体の輪郭や影の形は滑らかなままである。輪郭まで凹凸させたい場合は、ノイズを SDF に加える（次節）。</p>
+</section>
+<section id="id24">
+<h3>四分木による模様<a class="headerlink" href="#id24" title="Link to this heading"></a></h3>
+<p>ハッシュ関数は、ノイズだけでなく、空間をどう区切るかを決めるのにも使える。正方形を 4 つの正方形に分割する操作を、ハッシュ関数で選んだ場所だけ繰り返すと、大小の正方形が混ざったタイル張りの模様ができる。このように、領域を 4 分割していく構造を <a class="reference internal" href="glossary.html#term-12"><span class="xref std std-term">四分木</span></a> と呼ぶ。</p>
+<p>点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> が属するタイル（分割を終えた正方形。木の葉にあたる）は、根の正方形から順に、分割するかどうかの判定をたどって求める。分割する場合は、4 つの子のうち <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> を含むものに進む。判定に使う乱数は、正方形の位置と深さのハッシュ値なので、同じ正方形では常に同じ判定になり、木のデータを保存しておく必要がない。</p>
+<div class="literal-block-wrapper docutils container" id="id46">
+<div class="code-block-caption"><span class="caption-text">10_quadtree_pattern.frag（抜粋）</span><a class="headerlink" href="#id46" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">29</span><span class="c1">// 点 p を含む葉のセルを、根から順に分割の判定をたどって求める。</span>
+<span class="linenos">30</span><span class="c1">// cellMin にはセルの左下の角、size には 1 辺の長さ、戻り値には深さを返す</span>
+<span class="linenos">31</span><span class="kt">int</span><span class="w"> </span><span class="n">quadtreeLeaf</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">pattern</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">size</span><span class="p">)</span>
+<span class="linenos">32</span><span class="p">{</span>
+<span class="linenos">33</span><span class="w">    </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ROOT_SIZE</span><span class="p">;</span>
+<span class="linenos">34</span><span class="w">    </span><span class="n">cellMin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">size</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<span class="linenos">35</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span>
+<span class="linenos">36</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(;</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_DEPTH</span><span class="p">;</span><span class="w"> </span><span class="n">depth</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">37</span><span class="w">        </span><span class="c1">// 深いほど分割しにくくする。セルの位置は最小のセルの大きさを単位とする整数</span>
+<span class="linenos">38</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellMin</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">ROOT_SIZE</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">exp2</span><span class="p">(</span><span class="kt">float</span><span class="p">(</span><span class="n">MAX_DEPTH</span><span class="p">)));</span>
+<span class="linenos">39</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">splitProbability</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.85</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.12</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">depth</span><span class="p">);</span>
+<span class="linenos">40</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hashCell</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">depth</span><span class="p">,</span><span class="w"> </span><span class="n">pattern</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">splitProbability</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">41</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">42</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">43</span><span class="w">        </span><span class="c1">// 4 つの子のうち、p を含む子に進む</span>
+<span class="linenos">44</span><span class="w">        </span><span class="n">size</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">45</span><span class="w">        </span><span class="n">cellMin</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">step</span><span class="p">(</span><span class="n">cellMin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<span class="linenos">46</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">47</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">depth</span><span class="p">;</span>
+<span class="linenos">48</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/3c5af3d65a9b651f7b65b19359ffe52e/10_quadtree_pattern.frag"><code class="xref download docutils literal notranslate"><span class="pre">10_quadtree_pattern.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/10_quadtree_pattern.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id47">
+<img alt="大小さまざまな角の丸い正方形が、深さごとに色分けされて敷き詰められている" src="_images/10_quadtree_pattern.png" />
+<figcaption>
+<p><span class="caption-text">10_quadtree_pattern.frag の実行結果。分割の深さごとに色を変えている。</span><a class="headerlink" href="#id47" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>深いほど分割する確率を下げているので、大きなタイルから小さなタイルまでが適度に混ざる。タイルの輪郭の太さを画面上で一定にするため、局所座標での太さをタイルの大きさで割っている。この四分木を 3 次元の空間に広げる方法と、レイで走査する方法は、第 15 章で説明する。</p>
+</section>
+</section>
+<section id="sdf">
+<h2>ノイズと SDF の組み合わせ<a class="headerlink" href="#sdf" title="Link to this heading"></a></h2>
+<p>ノイズは、高さの関数だけでなく、第 4 章の変位として任意の SDF に加えられる。例えば球の SDF に fBm を加えれば、岩のような形状になる。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">// 球の表面を fBm で凹凸させて岩にする (3 次元の fBm を使う)</span>
+<span class="linenos">2</span><span class="kt">float</span><span class="w"> </span><span class="n">sdRock</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">3</span><span class="p">{</span>
+<span class="linenos">4</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sdSphere</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fbm3</span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">5</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>この場合も、ノイズの勾配の分だけリプシッツ定数が大きくなるため、地形と同じく歩幅を小さくする必要がある。第 16 章では、SDF とノイズを組み合わせて雲の密度を定義する。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="09_optimization.html" class="btn btn-neutral float-left" title="第 9 章 最適化とデバッグ" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="11_reflection_refraction.html" class="btn btn-neutral float-right" title="第 11 章 反射と屈折" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

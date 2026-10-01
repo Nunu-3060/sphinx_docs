@@ -382,6 +382,22 @@ Worley ノイズの :math:`F_2 - F_1` による網目模様。:download:`example
 
 ノイズから作ったフローフィールドに沿って流れるパーティクルの軌跡。:download:`examples/flow_field.py <../../examples/flow_field.py>`
 
+.. image:: ../_static/gallery/curl_noise.png
+   :alt: カールノイズに沿って流したパーティクルの軌跡。流れ関数の等高線に沿った閉じた曲線が重なり、地形図のような模様になっている
+   :width: 250px
+
+カールノイズに沿って流れるパーティクルの軌跡。:download:`examples/curl_noise.py <../../examples/curl_noise.py>` の ``simulate_curl_particles`` 関数。
+
+.. image:: ../_static/gallery/curl_compare_angle.png
+   :alt: 一様に散らした点を、ノイズの値を角度にしたフローフィールドで流した結果。点の多くが細い筋に集まっている
+   :width: 250px
+
+.. image:: ../_static/gallery/curl_compare_curl.png
+   :alt: 一様に散らした点を、カールノイズで流した結果。点は画面全体にほぼ一様に分布したままになっている
+   :width: 250px
+
+一様に散らした点を、角度によるフローフィールド（1 枚目）とカールノイズ（2 枚目）で流したあとの分布。:download:`examples/curl_noise.py <../../examples/curl_noise.py>`
+
 距離関数
 ----------
 

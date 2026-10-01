@@ -93,6 +93,7 @@ HSV は、色相（Hue）を角度、彩度（Saturation）を中心からの距
 実装では、区間ごとの場合分けを ``if`` 文で書くと配列全体を一度に処理できなくなる。区間番号を NumPy 配列として求めた上で、``np.select`` で 6 つの区間それぞれの候補値から実際の値を選び出すことで、色 1 つでも配列（例えば画像全体の色相配列）でも同じコードで扱えるようにしている。
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: hsv_to_rgb
    :caption: examples/palette.py の hsv_to_rgb 関数
@@ -103,6 +104,7 @@ HSV は、色相（Hue）を角度、彩度（Saturation）を中心からの距
 上記の配色パターンを実際にコードで生成し、画像として確認する。先ほどの自前実装の ``hsv_to_rgb`` で HSV→RGB 変換を行い、基準色相とオフセットのリストから、PIL でスウォッチ（色見本）画像を描画する。
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: hue_scheme
    :caption: examples/palette.py の hue_scheme 関数
@@ -110,26 +112,31 @@ HSV は、色相（Hue）を角度、彩度（Saturation）を中心からの距
 この ``hue_scheme`` を土台に、代表的な配色パターンをオフセットの違いとして定義できる。
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: analogous_palette
    :caption: examples/palette.py の analogous_palette 関数
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: complementary_palette
    :caption: examples/palette.py の complementary_palette 関数
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: split_complementary_palette
    :caption: examples/palette.py の split_complementary_palette 関数
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: triadic_palette
    :caption: examples/palette.py の triadic_palette 関数
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: render_swatches
    :caption: examples/palette.py の render_swatches 関数
@@ -143,17 +150,20 @@ HSV は、色相（Hue）を角度、彩度（Saturation）を中心からの距
 トーンオントーン・トーンイントーンも、同じ ``hsv_to_rgb`` を使い、彩度・明度の組み合わせ（トーン）をあらかじめ 12 種類定義しておくことで実装できる。
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :start-at: # PCCS
    :end-at: }
    :caption: examples/palette.py の PCCS_TONES
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: tone_on_tone_palette
    :caption: examples/palette.py の tone_on_tone_palette 関数
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: tone_in_tone_palette
    :caption: examples/palette.py の tone_in_tone_palette 関数
@@ -173,6 +183,7 @@ HSV は、色相（Hue）を角度、彩度（Saturation）を中心からの距
 配色パターンは離散的な色の集合だが、2 色の間をなめらかに補間したグラデーションが欲しい場合もある。ここで注意が必要なのは、色相が環状の値だという点である。色相をそのまま線形補間すると、例えば赤 (0.98) から橙 (0.08) へは、本来はすぐ隣り合う色なのに、色相環をほぼ一周する遠回りの補間になってしまう。差分を ``[-0.5, 0.5)`` の範囲に正規化してから補間すれば、常に短い方の弧を通るようにできる。
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: hsb_gradient
    :caption: examples/palette.py の hsb_gradient 関数
@@ -186,6 +197,7 @@ HSV は、色相（Hue）を角度、彩度（Saturation）を中心からの距
 逆に、既存の画像から配色を抽出したい場合もある。手描きで配色を決めるのではなく、写真やこれまで生成した画像から「使われている色」を取り出し、別の作品のパレットとして転用するという使い方である。PIL の ``Image.quantize`` はメディアンカット法によるパレット量子化を実装しており、画像全体を指定した色数に減色できる。減色後のパレットと、量子化画像上での各色の出現画素数を突き合わせれば、使用頻度の高い色から順にパレットとして取り出せる。
 
 .. literalinclude:: ../examples/palette.py
+   :linenos:
    :language: python
    :pyobject: extract_palette
    :caption: examples/palette.py の extract_palette 関数
@@ -224,22 +236,26 @@ sRGB から OKLab への変換は、次の 3 段階で行う。
 OKLab から sRGB への逆変換は、各段階を逆にたどればよい。行列は逆行列に、立方根は 3 乗に置き換える。
 
 .. literalinclude:: ../examples/oklab.py
+   :linenos:
    :language: python
    :start-at: # 線形 sRGB
    :end-at: -0.8086757660]])
    :caption: examples/oklab.py の変換行列
 
 .. literalinclude:: ../examples/oklab.py
+   :linenos:
    :language: python
    :pyobject: srgb_to_linear
    :caption: examples/oklab.py の srgb_to_linear 関数
 
 .. literalinclude:: ../examples/oklab.py
+   :linenos:
    :language: python
    :pyobject: srgb_to_oklab
    :caption: examples/oklab.py の srgb_to_oklab 関数
 
 .. literalinclude:: ../examples/oklab.py
+   :linenos:
    :language: python
    :pyobject: oklab_to_srgb
    :caption: examples/oklab.py の oklab_to_srgb 関数
@@ -247,6 +263,7 @@ OKLab から sRGB への逆変換は、各段階を逆にたどればよい。�
 HSB のように色相を角度として扱いたい場合は、:math:`(a, b)` 平面を極座標で表した **OKLCH** を使う。彩度 :math:`C = \sqrt{a^2 + b^2}` は色の鮮やかさを、色相 :math:`h = \operatorname{atan2}(b, a)` は色合いを表す。HSB と同じく色相環の上で角度を操作できるうえに、:math:`L` がそのまま見た目の明るさになる点が異なる。ただし、:math:`L` と :math:`C` の組み合わせによっては、sRGB では表せない色（色域外の色）になる。本資料の実装では、範囲外の成分を 0〜1 に切り詰めている。
 
 .. literalinclude:: ../examples/oklab.py
+   :linenos:
    :language: python
    :pyobject: oklch_to_srgb
    :caption: examples/oklab.py の oklch_to_srgb 関数
@@ -260,11 +277,13 @@ HSB のように色相を角度として扱いたい場合は、:math:`(a, b)` �
 2 色の間のグラデーションも、どの色空間で補間するかによって見え方が変わる。sRGB の値のまま線形補間すると、中間の色が両端より暗く沈んだり、くすんだりしやすい。OKLab で補間すると、明るさ :math:`L` は両端の値の間を一定の割合で変化する。
 
 .. literalinclude:: ../examples/oklab.py
+   :linenos:
    :language: python
    :pyobject: mix_srgb
    :caption: examples/oklab.py の mix_srgb 関数
 
 .. literalinclude:: ../examples/oklab.py
+   :linenos:
    :language: python
    :pyobject: mix_oklab
    :caption: examples/oklab.py の mix_oklab 関数
@@ -285,11 +304,13 @@ HSB のように色相を角度として扱いたい場合は、:math:`(a, b)` �
 ここまでに作ったパレットは、色見本として眺めるだけでなく、模様に色を割り当てるときに使ってこそ意味がある。その効果を確かめるために、格子の各マスに背景色と、円・四分円・半円のどれか 1 つの図形を描くだけの単純な模様を使う。図形の種類と向き、各マスでどの色を選ぶかを決める乱数は 1 度だけ作っておき、色を取り出すパレットだけを差し替えて描く。こうすると、描いた画像どうしの違いは、配色だけによるものになる。
 
 .. literalinclude:: ../examples/color_pattern.py
+   :linenos:
    :language: python
    :pyobject: make_layout
    :caption: examples/color_pattern.py の make_layout 関数
 
 .. literalinclude:: ../examples/color_pattern.py
+   :linenos:
    :language: python
    :pyobject: render_pattern
    :caption: examples/color_pattern.py の render_pattern 関数
@@ -297,6 +318,7 @@ HSB のように色相を角度として扱いたい場合は、:math:`(a, b)` �
 パレットの中の色を均等に使うのではなく、特定の色を少しだけ使いたい場合もある。そこで、色ごとに重みを与え、重みに比例した確率で色を選べるようにしている。
 
 .. literalinclude:: ../examples/color_pattern.py
+   :linenos:
    :language: python
    :pyobject: pick_index
    :caption: examples/color_pattern.py の pick_index 関数

@@ -1,0 +1,639 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 15 章 グリッドの走査 &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 16 章 ボリュームレンダリング" href="16_volume.html" />
+    <link rel="prev" title="第 14 章 4 次元の形状" href="14_four_dimensions.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 15 章 グリッドの走査</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#d-dda">3D DDA</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">考え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">ボクセルの描画</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">セルの中のスフィアトレーシング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">第 4 章の問題</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">グリッドの走査との組み合わせ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">三角形と六角形の格子</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">走査の一般的な考え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">三角形の格子</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">六角形の格子</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">四分木と八分木</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id12">考え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">点が属する葉のセル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">大きさの異なるセルの走査</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">八分木と空の空間の飛ばし</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">データ構造としての八分木</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id17">計算量</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 15 章 グリッドの走査</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 15 章 グリッドの走査<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>第 4 章の空間の繰り返しでは、自分のセルの形状だけを評価していたため、セルごとに形状が異なると、隣のセルの形状を見落として距離を過大評価することがあった。この章では、レイが通過する格子のセルを、始点に近い順に 1 つずつたどる方法（グリッドの走査）を説明する。この方法を使うと、ボクセル（格子状に並んだ立方体）で作った世界を描けるほか、セルごとに異なる形状を置いたシーンを正しく描ける。後半では、正方形以外の格子として三角形と六角形の格子の走査を、大きさの異なるセルからなる格子として四分木と八分木を扱う。</p>
+<section id="d-dda">
+<h2>3D DDA<a class="headerlink" href="#d-dda" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3>考え方<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>1 辺の長さが 1 の立方体で空間を区切った格子を考える。レイ <span class="math notranslate nohighlight">\(\mathbf{o} + t\hat{\mathbf{d}}\)</span> が通過するセルを順にたどるには、レイが次にどのセルの境界を越えるかを求めればよい。Amanatides と Woo（1987）は、この計算を各軸ごとの簡単な加算だけで行う方法を示した。これを <a class="reference internal" href="glossary.html#term-DDA"><span class="xref std std-term">DDA</span></a> （digital differential analyzer）と呼ぶ。</p>
+<p>各軸 <span class="math notranslate nohighlight">\(i \in \{x, y, z\}\)</span> について、次の 2 つの値を管理する。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>変数</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tDelta</span></code></p></td>
+<td><p>レイが軸 <span class="math notranslate nohighlight">\(i\)</span> の方向にセル 1 つ分進むのに必要な <span class="math notranslate nohighlight">\(t\)</span> の増分 <span class="math notranslate nohighlight">\(|1/d_i|\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tMax</span></code></p></td>
+<td><p>レイが軸 <span class="math notranslate nohighlight">\(i\)</span> の次のセルの境界に達する <span class="math notranslate nohighlight">\(t\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">tMax</span></code> の 3 つの成分のうち最小のものが、レイが次に越える境界である。その軸の方向に 1 セル進み、その軸の <code class="docutils literal notranslate"><span class="pre">tMax</span></code> に <code class="docutils literal notranslate"><span class="pre">tDelta</span></code> を加える。これを繰り返すと、レイが通過するセルを漏れなく、近い順にたどれる。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">15_voxel.frag（抜粋）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">59</span><span class="c1">// レイが通過するボクセルを、始点に近い順に 1 つずつたどる (Amanatides and Woo, 1987)</span>
+<span class="linenos">60</span><span class="n">Hit</span><span class="w"> </span><span class="n">traverse</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">maxSteps</span><span class="p">)</span>
+<span class="linenos">61</span><span class="p">{</span>
+<span class="linenos">62</span><span class="w">    </span><span class="c1">// 0 による割り算を避ける</span>
+<span class="linenos">63</span><span class="w">    </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">),</span><span class="w"> </span><span class="n">lessThan</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">rd</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">)));</span>
+<span class="linenos">64</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">ro</span><span class="p">);</span>
+<span class="linenos">65</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">stepDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sign</span><span class="p">(</span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">66</span><span class="w">    </span><span class="c1">// 1 セル進むのに必要な t の増分</span>
+<span class="linenos">67</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">tDelta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">68</span><span class="w">    </span><span class="c1">// 各軸について、次のセルの境界に達する t</span>
+<span class="linenos">69</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">tMax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">stepDir</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">cell</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ro</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">stepDir</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tDelta</span><span class="p">;</span>
+<span class="linenos">70</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">71</span>
+<span class="linenos">72</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">maxSteps</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">73</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">isFilled</span><span class="p">(</span><span class="n">cell</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">74</span><span class="w">            </span><span class="c1">// 最後に越えた境界 (mask の軸) が、当たった面である</span>
+<span class="linenos">75</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mo">0</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">tMax</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">tDelta</span><span class="p">,</span><span class="w"> </span><span class="n">mask</span><span class="p">);</span>
+<span class="linenos">76</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Hit</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">cell</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">stepDir</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mask</span><span class="p">);</span>
+<span class="linenos">77</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">78</span><span class="w">        </span><span class="c1">// 最も近い境界の軸を選び、その方向に 1 セル進む</span>
+<span class="linenos">79</span><span class="w">        </span><span class="n">mask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">step</span><span class="p">(</span><span class="n">tMax</span><span class="p">,</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">tMax</span><span class="p">.</span><span class="n">yzx</span><span class="p">,</span><span class="w"> </span><span class="n">tMax</span><span class="p">.</span><span class="n">zxy</span><span class="p">));</span>
+<span class="linenos">80</span><span class="w">        </span><span class="n">tMax</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tDelta</span><span class="p">;</span>
+<span class="linenos">81</span><span class="w">        </span><span class="n">cell</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">stepDir</span><span class="p">;</span>
+<span class="linenos">82</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">83</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">Hit</span><span class="p">(</span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">cell</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">84</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">tMax</span></code> の初期値は、始点を含むセルの境界までの距離から求める。<span class="math notranslate nohighlight">\(d_i &gt; 0\)</span> の場合は、セルの上側の境界 <span class="math notranslate nohighlight">\(\lfloor o_i \rfloor + 1\)</span> までの距離 <span class="math notranslate nohighlight">\((\lfloor o_i \rfloor + 1 - o_i)/d_i\)</span> になり、<span class="math notranslate nohighlight">\(d_i &lt; 0\)</span> の場合は下側の境界 <span class="math notranslate nohighlight">\(\lfloor o_i \rfloor\)</span> までの距離になる。サンプルでは、この 2 つの場合を <code class="docutils literal notranslate"><span class="pre">stepDir</span></code> （<span class="math notranslate nohighlight">\(\pm 1\)</span>）を使った 1 つの式にまとめている。</p>
+<p><code class="docutils literal notranslate"><span class="pre">mask</span></code> は、最小の <code class="docutils literal notranslate"><span class="pre">tMax</span></code> を持つ軸だけが 1、ほかが 0 のベクトルである。<code class="docutils literal notranslate"><span class="pre">step(tMax,</span> <span class="pre">min(tMax.yzx,</span> <span class="pre">tMax.zxy))</span></code> は、各成分が他の 2 つの成分以下のときに 1 になる。<code class="docutils literal notranslate"><span class="pre">mask</span></code> を使うと、分岐を使わずに 1 つの軸だけを更新でき、最後に越えた境界の面から法線も得られる。</p>
+</section>
+<section id="id3">
+<h3>ボクセルの描画<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>ボクセルが埋まっているかどうかは、セルの番号から決める。サンプルでは、第 10 章の値ノイズで列ごとの地面の高さを決め、それより低いボクセルを埋まっているとしている。</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">15_voxel.frag（抜粋）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">37</span><span class="c1">// 列 (x, z) の地面の高さ (整数)</span>
+<span class="linenos">38</span><span class="kt">float</span><span class="w"> </span><span class="n">groundHeight</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">xz</span><span class="p">)</span>
+<span class="linenos">39</span><span class="p">{</span>
+<span class="linenos">40</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">valueNoise</span><span class="p">(</span><span class="mf">0.06</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">3.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">valueNoise</span><span class="p">(</span><span class="mf">0.2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="p">);</span>
+<span class="linenos">41</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">h</span><span class="p">);</span>
+<span class="linenos">42</span><span class="p">}</span>
+<span class="linenos">43</span>
+<span class="linenos">44</span><span class="c1">// 格子の番号 cell のボクセルが埋まっていれば true</span>
+<span class="linenos">45</span><span class="kt">bool</span><span class="w"> </span><span class="n">isFilled</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">cell</span><span class="p">)</span>
+<span class="linenos">46</span><span class="p">{</span>
+<span class="linenos">47</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">groundHeight</span><span class="p">(</span><span class="n">cell</span><span class="p">.</span><span class="n">xz</span><span class="p">);</span>
+<span class="linenos">48</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/95cc3e5f14c39d26fbb125359c978bbf/15_voxel.frag"><code class="xref download docutils literal notranslate"><span class="pre">15_voxel.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/15_voxel.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id20">
+<img alt="立方体を積み重ねて作った起伏のある草原" src="_images/15_voxel.png" />
+<figcaption>
+<p><span class="caption-text">15_voxel.frag の実行結果</span><a class="headerlink" href="#id20" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>影は、当たった面から光源の方向に、もう一度 DDA でたどって求める。ボクセルの世界では形状がすべて格子に沿った立方体なので、SDF を使うスフィアトレーシングよりも、DDA の方が単純で確実である。一方、ソフトシャドウ（第 6 章）のように SDF の値を使う技法は、そのままでは使えない。</p>
+</section>
+</section>
+<section id="id4">
+<h2>セルの中のスフィアトレーシング<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<section id="id5">
+<h3>第 4 章の問題<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>第 4 章の空間の繰り返しで、セルごとに高さの異なるビルを並べることを考える。あるセルの中の点では、そのセルのビルまでの距離しか分からない。隣のセルに高いビルがあると、実際にはそちらの方が近いにもかかわらず、大きな距離を返してしまう。その結果、スフィアトレーシングが隣のビルを通り越し、ビルの一部が欠けて見える。</p>
+</section>
+<section id="id6">
+<h3>グリッドの走査との組み合わせ<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>この問題は、グリッドの走査とスフィアトレーシングを組み合わせることで解決できる。レイが通過するセルを DDA で順にたどり、各セルの中では、そのセルの形状だけを使ってスフィアトレーシングを行う。スフィアトレーシングは、レイがセルに入る <span class="math notranslate nohighlight">\(t\)</span> から出る <span class="math notranslate nohighlight">\(t\)</span> までの区間だけで行い、区間の終わりまで何にも当たらなければ次のセルに進む。</p>
+<p>各セルの中では、そのセルの形状だけを考えればよいので、隣のセルの形状を見落とすことはない。ただし、形状はセルの中に収まっている必要がある。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">15_city.frag（抜粋）</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">58</span><span class="c1">// レイが最初に当たる点までの距離を返す。当たらなければ -1.0。</span>
+<span class="linenos">59</span><span class="c1">// cellOut には当たったセルの番号を返す</span>
+<span class="linenos">60</span><span class="kt">float</span><span class="w"> </span><span class="n">trace</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cellOut</span><span class="p">)</span>
+<span class="linenos">61</span><span class="p">{</span>
+<span class="linenos">62</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">),</span><span class="w"> </span><span class="n">lessThan</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">xz</span><span class="p">),</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">)));</span>
+<span class="linenos">63</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="p">);</span>
+<span class="linenos">64</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">stepDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sign</span><span class="p">(</span><span class="n">dir</span><span class="p">);</span>
+<span class="linenos">65</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">tDelta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">dir</span><span class="p">);</span>
+<span class="linenos">66</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">tMax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">stepDir</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">cell</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">stepDir</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tDelta</span><span class="p">;</span>
+<span class="linenos">67</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">tEnter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">68</span>
+<span class="linenos">69</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_CELLS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">70</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">tMax</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">tMax</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">71</span><span class="w">        </span><span class="c1">// このセルの中 (tEnter〜tExit) だけでスフィアトレーシングを行う</span>
+<span class="linenos">72</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tEnter</span><span class="p">;</span>
+<span class="linenos">73</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">CELL_STEPS</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">tExit</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">74</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellSDF</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">cell</span><span class="p">);</span>
+<span class="linenos">75</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">76</span><span class="w">                </span><span class="n">cellOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="p">;</span>
+<span class="linenos">77</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos">78</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">79</span><span class="w">            </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">80</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">81</span><span class="w">        </span><span class="c1">// 上に向かうレイが、ビルより高い所まで上がったら、もう何にも当たらない</span>
+<span class="linenos">82</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">ro</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_HEIGHT</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">83</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">84</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">85</span><span class="w">        </span><span class="c1">// 次のセルに進む</span>
+<span class="linenos">86</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">step</span><span class="p">(</span><span class="n">tMax</span><span class="p">,</span><span class="w"> </span><span class="n">tMax</span><span class="p">.</span><span class="n">yx</span><span class="p">);</span>
+<span class="linenos">87</span><span class="w">        </span><span class="n">tMax</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tDelta</span><span class="p">;</span>
+<span class="linenos">88</span><span class="w">        </span><span class="n">cell</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">stepDir</span><span class="p">;</span>
+<span class="linenos">89</span><span class="w">        </span><span class="n">tEnter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tExit</span><span class="p">;</span>
+<span class="linenos">90</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tEnter</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">91</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">92</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">93</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">94</span><span class="w">    </span><span class="n">cellOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="p">;</span>
+<span class="linenos">95</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">96</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>このサンプルでは、ビルはすべて地面に立っているので、水平方向（<span class="math notranslate nohighlight">\(xz\)</span> 平面）の 2 次元の DDA で十分である。レイが上に向かっていて、すでにビルの最大の高さより上にある場合は、以降は何にも当たらないので走査を打ち切る。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/9b89be55b320cf7925782298cdbc2646/15_city.frag"><code class="xref download docutils literal notranslate"><span class="pre">15_city.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/15_city.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id22">
+<img alt="高さと幅の異なるビルが無数に並ぶ街並みを見下ろしている" src="_images/15_city.png" />
+<figcaption>
+<p><span class="caption-text">15_city.frag の実行結果。ビルの高さと幅は、第 10 章のハッシュ関数でセルごとに決めている。</span><a class="headerlink" href="#id22" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>セルごとの形状は、第 10 章のハッシュ関数でセルの番号から決めている。セルの番号が同じなら常に同じ値が得られるので、ビルの形は描画のたびに変わらない。</p>
+</section>
+</section>
+<section id="id7">
+<h2>三角形と六角形の格子<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>ここまでは、正方形（3 次元では立方体）の格子を扱ってきた。平面を同じ形の正多角形で隙間なく敷き詰められるのは、正方形のほかに正三角形と正六角形だけである。正六角形の格子は、隣り合うセルの中心までの距離がどの方向でも等しく、格子の向きが目立ちにくいため、蜂の巣や柱状の岩などの自然物によく使われる。正三角形の格子は、第 10 章で紹介したシンプレックスノイズの格子でもある。</p>
+<section id="id8">
+<h3>走査の一般的な考え方<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>この章の 3D DDA は、各軸の次の境界までの距離を比べ、最も近い境界を越える方法であった。これは、次の一般的な考え方の特別な場合とみなせる。</p>
+<ol class="arabic simple">
+<li><p>レイが現在のセルから出ていくとき、最初に通過する境界（辺や面）を求める。</p></li>
+<li><p>その境界の向こう側にあるセルに進む。</p></li>
+</ol>
+<p>セルが凸多角形（3 次元では凸多面体）であれば、レイがセルの中を通る区間は 1 つにつながっており、出ていく境界は 1 つに決まる。各境界までの距離を計算して最小のものを選べばよい。この考え方は、三角形や六角形の格子にもそのまま使える。</p>
+</section>
+<section id="id9">
+<h3>三角形の格子<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>正三角形の格子は、互いに 120° ずつ向きの異なる 3 組の平行な直線で平面を区切ったものである。正方形の格子が 2 組の平行な直線（<span class="math notranslate nohighlight">\(x\)</span> 一定と <span class="math notranslate nohighlight">\(y\)</span> 一定）でできているのと同じように考えられる。そこで、3 組の直線の法線を <span class="math notranslate nohighlight">\(\hat{\mathbf{m}}_0, \hat{\mathbf{m}}_1, \hat{\mathbf{m}}_2\)</span>、直線の間隔を <span class="math notranslate nohighlight">\(s\)</span> として、各組について点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> が何本目の直線の間にあるかを、セルの番号とする。</p>
+<div class="math notranslate nohighlight">
+\[L_k = \left\lfloor \frac{\mathbf{p} \cdot \hat{\mathbf{m}}_k}{s} \right\rfloor \qquad (k = 0, 1, 2)\]</div>
+<p>3 つの法線の和は 0 なので、<span class="math notranslate nohighlight">\(\sum_k \mathbf{p} \cdot \hat{\mathbf{m}}_k = 0\)</span> となり、セルの番号の和は <span class="math notranslate nohighlight">\(-1\)</span> か <span class="math notranslate nohighlight">\(-2\)</span> のどちらかになる。和が <span class="math notranslate nohighlight">\(-1\)</span> のセルと <span class="math notranslate nohighlight">\(-2\)</span> のセルは、向きが逆の三角形（上向きと下向き）である。</p>
+<p>走査は、前述の DDA を 3 組の直線に広げるだけでよい。各組について、次の直線に達する <span class="math notranslate nohighlight">\(t\)</span> （<code class="docutils literal notranslate"><span class="pre">tMax</span></code>）と、1 本進むのに必要な <span class="math notranslate nohighlight">\(t\)</span> の増分（<code class="docutils literal notranslate"><span class="pre">tDelta</span></code>）を管理し、最も近い直線を越えて、その組の番号だけを 1 つ進める。</p>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text">15_tri_grid.frag（抜粋）</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 80</span><span class="kt">float</span><span class="w"> </span><span class="n">trace</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">cellOut</span><span class="p">)</span>
+<span class="linenos"> 81</span><span class="p">{</span>
+<span class="linenos"> 82</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">triCell</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="p">);</span>
+<span class="linenos"> 83</span><span class="w">    </span><span class="c1">// 各組の直線について、レイの進行方向の成分と、1 本進むのに必要な t の増分</span>
+<span class="linenos"> 84</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">dirDots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mo">0</span><span class="p">]),</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+<span class="linenos"> 85</span><span class="w">                        </span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mi">2</span><span class="p">]));</span>
+<span class="linenos"> 86</span><span class="w">    </span><span class="n">dirDots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">dirDots</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">),</span><span class="w"> </span><span class="n">lessThan</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">dirDots</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">)));</span>
+<span class="linenos"> 87</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">stepDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sign</span><span class="p">(</span><span class="n">dirDots</span><span class="p">);</span>
+<span class="linenos"> 88</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">tDelta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SPACING</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">dirDots</span><span class="p">);</span>
+<span class="linenos"> 89</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">originDots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mo">0</span><span class="p">]),</span>
+<span class="linenos"> 90</span><span class="w">                           </span><span class="n">dot</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+<span class="linenos"> 91</span><span class="w">                           </span><span class="n">dot</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mi">2</span><span class="p">]));</span>
+<span class="linenos"> 92</span><span class="w">    </span><span class="c1">// 各組の次の直線に達する t (15_voxel.frag の 3D DDA と同じ式)</span>
+<span class="linenos"> 93</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">tMax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">((</span><span class="n">cell</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">stepDir</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">SPACING</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">originDots</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">dirDots</span><span class="p">;</span>
+<span class="linenos"> 94</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">tEnter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 95</span>
+<span class="linenos"> 96</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_CELLS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 97</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">tMax</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">tMax</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">tMax</span><span class="p">.</span><span class="n">z</span><span class="p">));</span>
+<span class="linenos"> 98</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tEnter</span><span class="p">;</span>
+<span class="linenos"> 99</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">CELL_STEPS</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">tExit</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">100</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellSDF</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">cell</span><span class="p">);</span>
+<span class="linenos">101</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">102</span><span class="w">                </span><span class="n">cellOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="p">;</span>
+<span class="linenos">103</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos">104</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">105</span><span class="w">            </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">106</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">107</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">ro</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_HEIGHT</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">||</span>
+<span class="linenos">108</span><span class="w">            </span><span class="n">tExit</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">109</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">110</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">111</span><span class="w">        </span><span class="c1">// 最も近い直線を越え、その組の番号だけを 1 つ進める</span>
+<span class="linenos">112</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">step</span><span class="p">(</span><span class="n">tMax</span><span class="p">,</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">tMax</span><span class="p">.</span><span class="n">yzx</span><span class="p">,</span><span class="w"> </span><span class="n">tMax</span><span class="p">.</span><span class="n">zxy</span><span class="p">));</span>
+<span class="linenos">113</span><span class="w">        </span><span class="n">tMax</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">tDelta</span><span class="p">;</span>
+<span class="linenos">114</span><span class="w">        </span><span class="n">cell</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">stepDir</span><span class="p">;</span>
+<span class="linenos">115</span><span class="w">        </span><span class="n">tEnter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tExit</span><span class="p">;</span>
+<span class="linenos">116</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">117</span><span class="w">    </span><span class="n">cellOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="p">;</span>
+<span class="linenos">118</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">119</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>セルの中の三角柱は、三角形の 3 つの辺の直線までの距離の最大値（から少し内側にずらしたもの）と、高さによる制限の最大値で表す。凸多角形の各辺までの距離の最大値は、第 3 章の箱の SDF の内側の項と同じく、内側では正確な距離、外側では距離の下界になる。</p>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">15_tri_grid.frag（抜粋）</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">48</span><span class="c1">// セルの番号の和は -1 か -2 になり、それによって三角形の向きが決まる。</span>
+<span class="linenos">49</span><span class="c1">// 和が -1 の三角形は「各直線の下側の境界」、-2 の三角形は「上側の境界」で囲まれる</span>
+<span class="linenos">50</span><span class="kt">float</span><span class="w"> </span><span class="n">sdTriangleCell</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">cell</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">inset</span><span class="p">)</span>
+<span class="linenos">51</span><span class="p">{</span>
+<span class="linenos">52</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">dots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mo">0</span><span class="p">]),</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+<span class="linenos">53</span><span class="w">                     </span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">TRI_NORMALS</span><span class="p">[</span><span class="mi">2</span><span class="p">]));</span>
+<span class="linenos">54</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cell</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="o">-</span><span class="mf">1.5</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">55</span><span class="w">        </span><span class="c1">// 和が -1: 3 本の下側の境界から内側にある</span>
+<span class="linenos">56</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">SPACING</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">inset</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dots</span><span class="p">;</span>
+<span class="linenos">57</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">.</span><span class="n">z</span><span class="p">));</span>
+<span class="linenos">58</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">59</span><span class="w">    </span><span class="c1">// 和が -2: 3 本の上側の境界から内側にある</span>
+<span class="linenos">60</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dots</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="n">cell</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">SPACING</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">inset</span><span class="p">;</span>
+<span class="linenos">61</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">.</span><span class="n">z</span><span class="p">));</span>
+<span class="linenos">62</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/8ae0a26e3fac70482bc0640ebb0fcc5b/15_tri_grid.frag"><code class="xref download docutils literal notranslate"><span class="pre">15_tri_grid.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/15_tri_grid.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id25">
+<img alt="高さの異なる三角柱が隙間なく並んでいる。上向きの三角形は赤、下向きの三角形は青で塗り分けられている" src="_images/15_tri_grid.png" />
+<figcaption>
+<p><span class="caption-text">15_tri_grid.frag の実行結果。上向きの三角形のセルを赤、下向きの三角形のセルを青で塗り分けている。</span><a class="headerlink" href="#id25" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id10">
+<h3>六角形の格子<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>正六角形の格子の境界は、三角形の格子と違い、平面全体を横切る直線にはならない（六角形の辺は、隣のセルでは別の位置にずれる）。そのため、DDA のように各組の直線の番号を数える方法は使えない。そこで、「出ていく辺を求めて隣のセルに進む」という一般的な考え方をそのまま使う。</p>
+<p>隣り合うセルの中心の間隔を 1 とすると、六角形のセルの 6 つの辺は、3 組の向かい合う辺の対になっている。各組の辺の法線を <span class="math notranslate nohighlight">\(\hat{\mathbf{n}}_k\)</span> とすると、辺はセルの中心 <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> から法線方向に <span class="math notranslate nohighlight">\(\pm 0.5\)</span> の位置にあり、辺の向こう側の隣のセルの中心は <span class="math notranslate nohighlight">\(\mathbf{c} \pm \hat{\mathbf{n}}_k\)</span> である。レイの方向の成分 <span class="math notranslate nohighlight">\(d_k = \hat{\mathbf{d}} \cdot \hat{\mathbf{n}}_k\)</span> の符号から、各組のどちらの辺に向かうかがわかるので、その辺に達する <span class="math notranslate nohighlight">\(t\)</span> を求める。</p>
+<div class="math notranslate nohighlight">
+\[t_k = \frac{\operatorname{sign}(d_k) \cdot 0.5 - (\mathbf{o} - \mathbf{c}) \cdot \hat{\mathbf{n}}_k}{d_k}\]</div>
+<p>3 つの <span class="math notranslate nohighlight">\(t_k\)</span> のうち最小のものが、レイがセルから出ていく辺である。</p>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-text">15_hex_columns.frag（抜粋）</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 93</span><span class="c1">// レイが最初に当たる点までの距離を返す。当たらなければ -1.0。</span>
+<span class="linenos"> 94</span><span class="c1">// cellOut には当たったセルの中心を返す</span>
+<span class="linenos"> 95</span><span class="kt">float</span><span class="w"> </span><span class="n">trace</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cellOut</span><span class="p">)</span>
+<span class="linenos"> 96</span><span class="p">{</span>
+<span class="linenos"> 97</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hexCenter</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="p">);</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">tEnter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 99</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_CELLS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">100</span><span class="w">        </span><span class="c1">// このセルから出ていく辺: 3 組の辺のそれぞれについて、</span>
+<span class="linenos">101</span><span class="w">        </span><span class="c1">// レイが進む向きにある辺に達する t を求め、最小のものを選ぶ</span>
+<span class="linenos">102</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="n">e9</span><span class="p">;</span>
+<span class="linenos">103</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">nextCenter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">center</span><span class="p">;</span>
+<span class="linenos">104</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">105</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HEX_NORMALS</span><span class="p">[</span><span class="n">k</span><span class="p">];</span>
+<span class="linenos">106</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">dn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">107</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">dn</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">108</span><span class="w">                </span><span class="k">continue</span><span class="p">;</span>
+<span class="linenos">109</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">110</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">side</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sign</span><span class="p">(</span><span class="n">dn</span><span class="p">);</span><span class="w">   </span><span class="c1">// 正の側と負の側のどちらの辺に向かうか</span>
+<span class="linenos">111</span><span class="w">            </span><span class="c1">// 辺は、セルの中心から法線方向に ±0.5 の位置にある</span>
+<span class="linenos">112</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">side</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">center</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">dn</span><span class="p">;</span>
+<span class="linenos">113</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">tExit</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">114</span><span class="w">                </span><span class="n">tExit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos">115</span><span class="w">                </span><span class="n">nextCenter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">center</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">side</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w">   </span><span class="c1">// 辺の向こう側のセル</span>
+<span class="linenos">116</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">117</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">118</span>
+<span class="linenos">119</span><span class="w">        </span><span class="c1">// このセルの中 (tEnter〜tExit) だけでスフィアトレーシングを行う</span>
+<span class="linenos">120</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tEnter</span><span class="p">;</span>
+<span class="linenos">121</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">CELL_STEPS</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">tExit</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">122</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellSDF</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">center</span><span class="p">);</span>
+<span class="linenos">123</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">124</span><span class="w">                </span><span class="n">cellOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">center</span><span class="p">;</span>
+<span class="linenos">125</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos">126</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">127</span><span class="w">            </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">128</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">129</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">ro</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_HEIGHT</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">||</span>
+<span class="linenos">130</span><span class="w">            </span><span class="n">tExit</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">131</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">132</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">133</span><span class="w">        </span><span class="n">center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nextCenter</span><span class="p">;</span>
+<span class="linenos">134</span><span class="w">        </span><span class="n">tEnter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tExit</span><span class="p">;</span>
+<span class="linenos">135</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">136</span><span class="w">    </span><span class="n">cellOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">center</span><span class="p">;</span>
+<span class="linenos">137</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">138</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>走査の始めには、レイの始点を含むセルの中心が必要になる。これは、第 4 章で説明する六角形の繰り返しと同じ方法で求める（関数 <code class="docutils literal notranslate"><span class="pre">hexCenter</span></code>）。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/4f7cadc17b7a6923c13f127a3b89b6af/15_hex_columns.frag"><code class="xref download docutils literal notranslate"><span class="pre">15_hex_columns.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/15_hex_columns.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id27">
+<img alt="高さの異なる六角柱が敷き詰められた岩場が、奥の海に向かって低くなっている" src="_images/15_hex_columns.png" />
+<figcaption>
+<p><span class="caption-text">15_hex_columns.frag の実行結果。玄武岩の柱状節理のように、六角柱の高さはセルごとに少しずつ異なる。</span><a class="headerlink" href="#id27" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>六角柱の高さは、海岸からの距離に応じた大まかな高さに、セルごとのハッシュ値による段差を加えている。隣のセルとの高さの差が大きいので、第 4 章の繰り返しでは隣の六角柱を見落とすが、走査を使えば正しく描ける。</p>
+</section>
+</section>
+<section id="id11">
+<h2>四分木と八分木<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<section id="id12">
+<h3>考え方<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>ここまでの格子は、どの場所でもセルの大きさが同じであった。第 10 章の四分木の模様のように、正方形を必要な場所だけ 4 つに分割していくと、大きさの異なるセルからなる格子ができる。3 次元で立方体を 8 つに分割していくものを <a class="reference internal" href="glossary.html#term-31"><span class="xref std std-term">八分木</span></a> と呼ぶ。</p>
+<p>四分木・八分木には、次の 2 つの使い方がある。</p>
+<ul class="simple">
+<li><p><strong>手続き的な四分木・八分木</strong>: セルを分割するかどうかを、セルの位置と深さのハッシュ値で、その場で計算して決める。木のデータを保存しないので、シェーダーだけで扱える。大小の区画が混ざった街並みや、大小の物体が散らばった空間を作るのに使う。</p></li>
+<li><p><strong>データ構造としての八分木</strong>: ボクセルや SDF の値を八分木のデータとして保存し、描画時にたどる。何も無い大きな領域を 1 つのノードにまとめられるので、記憶容量を節約でき、走査も速くなる。</p></li>
+</ul>
+<p>この節では、前者を実装し、後者は最後に紹介する。</p>
+</section>
+<section id="id13">
+<h3>点が属する葉のセル<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>点が属する葉のセル（それ以上分割しないセル）は、第 10 章と同じく、根のセルから順に分割の判定をたどって求める。分割する場合は、子のうち点を含むものに進む。子のセルの位置は、セルの最小の角に、点が子の境界を越えている軸の分だけ子の大きさを加えれば求まる。</p>
+<div class="literal-block-wrapper docutils container" id="id28">
+<div class="code-block-caption"><span class="caption-text">15_quadtree_city.frag（抜粋）</span><a class="headerlink" href="#id28" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">36</span><span class="c1">// 点 p (xz) を含む葉のセル (区画) を求める (10_quadtree_pattern.frag と同じ方法)</span>
+<span class="linenos">37</span><span class="kt">void</span><span class="w"> </span><span class="n">quadtreeLeaf</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">size</span><span class="p">)</span>
+<span class="linenos">38</span><span class="p">{</span>
+<span class="linenos">39</span><span class="w">    </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ROOT_SIZE</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">    </span><span class="n">cellMin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">size</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<span class="linenos">41</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_DEPTH</span><span class="p">;</span><span class="w"> </span><span class="n">depth</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">42</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hash31</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">depth</span><span class="p">)))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.7</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">43</span><span class="w">            </span><span class="k">break</span><span class="p">;</span><span class="w">                                   </span><span class="c1">// このセルは分割しない</span>
+<span class="linenos">44</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">45</span><span class="w">        </span><span class="n">size</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">46</span><span class="w">        </span><span class="n">cellMin</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">step</span><span class="p">(</span><span class="n">cellMin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">size</span><span class="p">;</span><span class="w">   </span><span class="c1">// p を含む子に進む</span>
+<span class="linenos">47</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">48</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id14">
+<h3>大きさの異なるセルの走査<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p>セルの大きさが場所によって異なると、隣のセルの大きさや位置が一定ではないため、DDA のように番号を 1 つずつ進める方法は使えない。そこで、前の節の一般的な考え方（出ていく境界を求めて隣のセルに進む）を、次のように使う。</p>
+<ol class="arabic simple">
+<li><p>現在の点が属する葉のセルを、根からたどって求める。</p></li>
+<li><p>レイがそのセル（正方形または立方体）から出ていく <span class="math notranslate nohighlight">\(t\)</span> を、箱との交差で求める。</p></li>
+<li><p>セルの中だけでスフィアトレーシングを行う。何にも当たらなければ、出口よりわずかに先の点に進み、1 に戻る。</p></li>
+</ol>
+<p>出口よりわずかに先（サンプルでは 0.001）に進むのは、ちょうど境界上の点では、どちらのセルに属するかが数値の誤差で不安定になるためである。隣のセルの大きさを知る必要がないので、四分木・八分木以外の、大きさや形の異なるセルにもそのまま使える。ただし、セルごとに根からたどり直すので、深い木ほど 1 セルあたりの計算が増える。</p>
+<div class="literal-block-wrapper docutils container" id="id29">
+<div class="code-block-caption"><span class="caption-text">15_quadtree_city.frag（抜粋）</span><a class="headerlink" href="#id29" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 77</span><span class="c1">// レイがセル (cellMin, size) の正方形から出ていく t を返す</span>
+<span class="linenos"> 78</span><span class="kt">float</span><span class="w"> </span><span class="n">cellExit</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">size</span><span class="p">)</span>
+<span class="linenos"> 79</span><span class="p">{</span>
+<span class="linenos"> 80</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">),</span><span class="w"> </span><span class="n">lessThan</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">xz</span><span class="p">),</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">)));</span>
+<span class="linenos"> 81</span><span class="w">    </span><span class="c1">// 各軸について、進む向きにある辺 (正なら上側、負なら下側)</span>
+<span class="linenos"> 82</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">edge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellMin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">step</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<span class="linenos"> 83</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">edge</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ro</span><span class="p">.</span><span class="n">xz</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">dir</span><span class="p">;</span>
+<span class="linenos"> 84</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos"> 85</span><span class="p">}</span>
+<span class="linenos"> 86</span>
+<span class="linenos"> 87</span><span class="c1">// レイが最初に当たる点までの距離を返す。当たらなければ -1.0</span>
+<span class="linenos"> 88</span><span class="kt">float</span><span class="w"> </span><span class="n">trace</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cellMinOut</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">sizeOut</span><span class="p">)</span>
+<span class="linenos"> 89</span><span class="p">{</span>
+<span class="linenos"> 90</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">tEnter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 91</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_CELLS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 92</span><span class="w">        </span><span class="c1">// 現在の点を含む葉のセルを、根から求め直す</span>
+<span class="linenos"> 93</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tEnter</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos"> 94</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cellMin</span><span class="p">;</span>
+<span class="linenos"> 95</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<span class="linenos"> 96</span><span class="w">        </span><span class="n">quadtreeLeaf</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">);</span>
+<span class="linenos"> 97</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellExit</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">);</span>
+<span class="linenos"> 98</span>
+<span class="linenos"> 99</span><span class="w">        </span><span class="c1">// このセルの中 (tEnter〜tExit) だけでスフィアトレーシングを行う</span>
+<span class="linenos">100</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tEnter</span><span class="p">;</span>
+<span class="linenos">101</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">CELL_STEPS</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">tExit</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">102</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellSDF</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">);</span>
+<span class="linenos">103</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">104</span><span class="w">                </span><span class="n">cellMinOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cellMin</span><span class="p">;</span>
+<span class="linenos">105</span><span class="w">                </span><span class="n">sizeOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<span class="linenos">106</span><span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos">107</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">108</span><span class="w">            </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">109</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">110</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">ro</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_HEIGHT</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">||</span>
+<span class="linenos">111</span><span class="w">            </span><span class="n">tExit</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">112</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">113</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">114</span><span class="w">        </span><span class="c1">// 出口より少し先に進み、次のセルに入る</span>
+<span class="linenos">115</span><span class="w">        </span><span class="n">tEnter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tExit</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">CELL_EPS</span><span class="p">;</span>
+<span class="linenos">116</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">117</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">118</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/c0c920cb3fd2a6e033247c1309153183/15_quadtree_city.frag"><code class="xref download docutils literal notranslate"><span class="pre">15_quadtree_city.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/15_quadtree_city.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id30">
+<img alt="大きな区画には大きく高いビル、小さな区画には小さなビルが建つ街並みを見下ろしている" src="_images/15_quadtree_city.png" />
+<figcaption>
+<p><span class="caption-text">15_quadtree_city.frag の実行結果。区画の大きさ（分割の深さ）ごとにビルの色を変えている。</span><a class="headerlink" href="#id30" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>15_city.frag では、すべての区画が同じ大きさだったため、街並みが単調であった。四分木で区画を分けると、大きな区画には大きく高いビル、細かく分割された場所には小さなビルが並び、より自然な街並みになる。</p>
+</section>
+<section id="id15">
+<h3>八分木と空の空間の飛ばし<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<p>3 次元の八分木でも、走査の手順は同じである。次のサンプルでは、1 辺 8 の立方体を八分木で分割し、葉のセルの一部にだけ立方体を置いている。</p>
+<div class="literal-block-wrapper docutils container" id="id31">
+<div class="code-block-caption"><span class="caption-text">15_octree.frag（抜粋）</span><a class="headerlink" href="#id31" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">35</span><span class="c1">// 点 p を含む葉のセルを求める。cellMin には最小の角、size には 1 辺、</span>
+<span class="linenos">36</span><span class="c1">// 戻り値には深さを返す</span>
+<span class="linenos">37</span><span class="kt">int</span><span class="w"> </span><span class="n">octreeLeaf</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">size</span><span class="p">)</span>
+<span class="linenos">38</span><span class="p">{</span>
+<span class="linenos">39</span><span class="w">    </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ROOT_HALF</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">    </span><span class="n">cellMin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="n">ROOT_HALF</span><span class="p">);</span>
+<span class="linenos">41</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span>
+<span class="linenos">42</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(;</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_DEPTH</span><span class="p">;</span><span class="w"> </span><span class="n">depth</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">43</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hashCell</span><span class="p">(</span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="n">depth</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.75</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">44</span><span class="w">            </span><span class="k">break</span><span class="p">;</span><span class="w">                                   </span><span class="c1">// このセルは分割しない</span>
+<span class="linenos">45</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">46</span><span class="w">        </span><span class="n">size</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">47</span><span class="w">        </span><span class="n">cellMin</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">step</span><span class="p">(</span><span class="n">cellMin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">size</span><span class="p">;</span><span class="w">   </span><span class="c1">// 8 つの子のうち p を含む子</span>
+<span class="linenos">48</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">49</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">depth</span><span class="p">;</span>
+<span class="linenos">50</span><span class="p">}</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span><span class="c1">// 葉のセルに物体を置くか。深いセル (小さなセル) ほど置く確率を高くする</span>
+<span class="linenos">53</span><span class="kt">bool</span><span class="w"> </span><span class="n">hasObject</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">depth</span><span class="p">)</span>
+<span class="linenos">54</span><span class="p">{</span>
+<span class="linenos">55</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">hashCell</span><span class="p">(</span><span class="n">cellMin</span><span class="p">,</span><span class="w"> </span><span class="n">depth</span><span class="p">,</span><span class="w"> </span><span class="mf">7.0</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.15</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.12</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">depth</span><span class="p">);</span>
+<span class="linenos">56</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/fa31ed9f7b2980693b6eba5ff5bb4ee9/15_octree.frag"><code class="xref download docutils literal notranslate"><span class="pre">15_octree.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/15_octree.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id32">
+<img alt="大小さまざまな立方体が、空間の一部に集まって浮かんでいる" src="_images/15_octree.png" />
+<figcaption>
+<p><span class="caption-text">15_octree.frag の実行結果。立方体の大きさは、置かれた葉のセルの大きさ（分割の深さ）で決まる。</span><a class="headerlink" href="#id32" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>分割しなかったセルは大きいまま残るので、そのセルに物体が無ければ、レイはセル全体を 1 回で通り過ぎる。物体のあるセルでだけスフィアトレーシングを行えばよい。これが、八分木による空の空間の飛ばしの基本的な考え方である。また、根のセル全体との交差を最初に調べ、根のセルの外の空間は一度に飛ばしている。</p>
+</section>
+<section id="id16">
+<h3>データ構造としての八分木<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>実際のボクセルのデータ（例えば 3D スキャンの結果や、ゲームの地形）を描く場合は、八分木をデータ構造として保存する。各ノードは、8 つの子が存在するかどうかのビットと、子のデータの位置を持つ。何も無い大きな領域は子を持たない 1 つのノードで表せるので、細かいボクセルを大量に含む空間でも、記憶容量を大きく節約できる。このような八分木をスパースボクセル八分木と呼ぶ。</p>
+<p>スパースボクセル八分木の走査では、この節の方法と同じく、レイが通過するノードを順にたどる。毎回根からたどり直す代わりに、親のノードを記録したスタックを使って隣のノードに移ることで、計算量を減らす方法が知られている（Laine and Karras, 2010）。</p>
+<p>SDF の値を細かい格子（ブリック）に保存し、ブリックを八分木で管理する方法も、SDF を使う制作ツールなどで使われている。物体の近くの細かいブリックでは正確な距離を、遠くでは粗い距離を使うことで、複雑な形状でも一定の速さで描ける。</p>
+<p>本資料のビューアーと Shadertoy の形式では、外部のデータを読み込む仕組みを用意していないため、データ構造としての八分木の実装は扱わない。第 17 章の複数パスの描画を使えば、テクスチャの中に八分木を構築して読み出すこともできる。</p>
+</section>
+</section>
+<section id="id17">
+<h2>計算量<a class="headerlink" href="#id17" title="Link to this heading"></a></h2>
+<p>グリッドの走査では、何も無いセルでも 1 セルずつ進むため、空の空間が広いと反復回数が増える。スフィアトレーシングなら、何も無い空間を 1 回で大きく飛ばせる。そのため、次のような工夫を組み合わせることが多い。</p>
+<ul class="simple">
+<li><p>形状が存在しうる範囲（15_city.frag ではビルの最大の高さ）の外では、走査を打ち切るか、SDF で大きく進む。</p></li>
+<li><p>格子を階層的にし、空の大きなセルをまとめて飛ばす。前の節の八分木はその代表的な方法である。例えば、8 × 8 × 8 のボクセルをまとめた粗い格子で空かどうかを先に調べ、空であれば細かい格子の走査を省く。</p></li>
+</ul>
+<p>グリッドの走査とスフィアトレーシングは、どちらか一方が優れているというものではなく、形状の性質に応じて使い分け、組み合わせるものである。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="14_four_dimensions.html" class="btn btn-neutral float-left" title="第 14 章 4 次元の形状" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="16_volume.html" class="btn btn-neutral float-right" title="第 16 章 ボリュームレンダリング" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

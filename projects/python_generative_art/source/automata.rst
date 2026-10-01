@@ -9,6 +9,7 @@
 Stephen Wolfram が分類した\ **初等セルオートマトン**\ は、1 次元に並んだ 0/1 の 2 状態セルを対象とし、次の世代のあるセルの状態は、自分自身と両隣（合計 3 セル、8 通りの組み合わせ）だけから決まる。8 通りの組み合わせそれぞれについて次の状態を 0/1 で指定すると、8 ビット、つまり 0-255 の\ **ルール番号**\ で全ての規則を表現できる。
 
 .. literalinclude:: ../examples/automata.py
+   :linenos:
    :language: python
    :pyobject: elementary_ca
    :caption: examples/automata.py の elementary_ca 関数
@@ -32,6 +33,7 @@ John Conway の\ **ライフゲーム**\ （Game of Life）は、2 次元格子�
 - 生きているセルは、周囲に 2 つか 3 つ生きたセルがあれば生存し、それ以外（過疎・過密）では死滅する。
 
 .. literalinclude:: ../examples/automata.py
+   :linenos:
    :language: python
    :pyobject: life_step
    :caption: examples/automata.py の life_step 関数
@@ -41,6 +43,7 @@ John Conway の\ **ライフゲーム**\ （Game of Life）は、2 次元格子�
 本資料は静止画を中心とした資料であるため、ここでは各世代を薄れさせながら重ね合わせることで、動きの軌跡を 1 枚の静止画として捉える（同じ発想は、後の\ :doc:`particles`\ で扱うパーティクルの軌跡表現にも登場する）。世代の進行をそのままアニメーションとして書き出す方法は、:ref:`animation`\ で扱う。
 
 .. literalinclude:: ../examples/automata.py
+   :linenos:
    :language: python
    :pyobject: render_life_trail
    :caption: examples/automata.py の render_life_trail 関数
@@ -59,6 +62,7 @@ John Conway の\ **ライフゲーム**\ （Game of Life）は、2 次元格子�
 **Brian's Brain** は、ライフゲームの 2 状態（死・生）を、死 (0)・発火 (1)・消えかけ (2) の 3 状態に増やしたセルオートマトンである。死んでいるセルは周囲 8 マスにちょうど 2 つ発火セルがあれば新たに発火するが、発火セルは近傍によらず必ず消えかけに移り、消えかけのセルは近傍によらず必ず死に戻る。ライフゲームの「生存」に相当する状態がなく、発火したセルは 1 世代後には必ず消えてしまうため、模様は決して静止せず走り続ける。
 
 .. literalinclude:: ../examples/automata.py
+   :linenos:
    :language: python
    :pyobject: brians_brain_step
    :caption: examples/automata.py の brians_brain_step 関数
@@ -72,6 +76,7 @@ John Conway の\ **ライフゲーム**\ （Game of Life）は、2 次元格子�
 **ラングトンの蟻**\ （Langton's ant）は、格子全体を一括更新するここまでの規則とは違い、盤面上を 1 匹の「蟻」が歩き回りながら盤面を書き換える。蟻は現在いるマスの色に応じて「白マスなら右に 90 度回頭し、マスを黒く塗ってから前進する」「黒マスなら左に 90 度回頭し、マスを白く塗ってから前進する」という規則にただ従うだけである。
 
 .. literalinclude:: ../examples/automata.py
+   :linenos:
    :language: python
    :pyobject: langtons_ant
    :caption: examples/automata.py の langtons_ant 関数
@@ -85,6 +90,7 @@ John Conway の\ **ライフゲーム**\ （Game of Life）は、2 次元格子�
 **BML 交通モデル**\ （Biham-Middleton-Levine model）は、格子上の車の流れを模した 2 状態ならぬ 3 状態（空・右へ進む赤い車・下へ進む青い車）のセルオートマトンである。1 世代を「赤い車だけが動く半ステップ」と「青い車だけが動く半ステップ」の 2 段階に分け、それぞれの半ステップでは、進行方向のマスが空いている車だけが 1 マス前進する。
 
 .. literalinclude:: ../examples/automata.py
+   :linenos:
    :language: python
    :pyobject: bml_traffic_step
    :caption: examples/automata.py の bml_traffic_step 関数
@@ -117,11 +123,13 @@ John Conway の\ **ライフゲーム**\ （Game of Life）は、2 次元格子�
 離散化した格子上では、ラプラシアン :math:`\nabla^2` は上下左右の隣接セルとの差の合計（5 点ステンシル）として計算できる。
 
 .. literalinclude:: ../examples/reaction_diffusion.py
+   :linenos:
    :language: python
    :pyobject: laplacian
    :caption: examples/reaction_diffusion.py の laplacian 関数
 
 .. literalinclude:: ../examples/reaction_diffusion.py
+   :linenos:
    :language: python
    :pyobject: gray_scott_step
    :caption: examples/reaction_diffusion.py の gray_scott_step 関数
@@ -129,6 +137,7 @@ John Conway の\ **ライフゲーム**\ （Game of Life）は、2 次元格子�
 ``feed`` と ``kill`` の組み合わせだけで、模様の種類ががらりと変わる。種を 1 箇所だけに置くと模様が完全に対称なまま成長が止まってしまうことがあるため、ランダムな位置に複数の種を撒いて対称性を崩している。
 
 .. literalinclude:: ../examples/reaction_diffusion.py
+   :linenos:
    :language: python
    :pyobject: simulate_gray_scott
    :caption: examples/reaction_diffusion.py の simulate_gray_scott 関数

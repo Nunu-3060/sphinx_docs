@@ -1,0 +1,800 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 18 章 実践：夕暮れの風景を描く &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 19 章 実践：ボクセルの都市の夜景" href="19_night_city.html" />
+    <link rel="prev" title="第 17 章 パストレーシング" href="17_path_tracing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 18 章 実践：夕暮れの風景を描く</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">完成イメージと作品の設計</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">シーンの構成と計算の予算</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">パスの構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">空と太陽</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">地形</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">高さの関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">レイマーチング</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">材質</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">湖面</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">波</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">反射と屈折</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">雲</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id14">雲の密度</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">雲の描画</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id16">複数パスによる雲の合成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#buffer-a">Buffer A</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">拡大と合成</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id18">空気遠近法と仕上げ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id19">デバッグ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id20">改造の案</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 18 章 実践：夕暮れの風景を描く</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 18 章 実践：夕暮れの風景を描く<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>第 8 章では、本編の技法を組み合わせて 1 つのシーンを作った。発展編の最後の 3 つの章では、発展編の技法を組み合わせて作品を完成させる。この章では、夕日に照らされた山々と湖、空に浮かぶ雲を描く。</p>
+<p>発展編の各章は独立して読めるように書いているため、技法同士をどう組み合わせるかはあまり説明していない。この章では、特に次の 2 点に注目する。</p>
+<ul class="simple">
+<li><p><strong>技法同士の連携</strong>: 大気の散乱（第 16 章）で求めた太陽の色と空の色を、地形・湖面・雲のすべての照明に使い、光の色を画面全体で一貫させる。</p></li>
+<li><p><strong>計算量の管理</strong>: 発展編の技法はどれも計算が重い。どこにどれだけの計算を割り当てるかを考え、雲を複数パスの描画（第 17 章）で低い解像度に描くことで、計算量を減らす。</p></li>
+</ul>
+<section id="id2">
+<h2>完成イメージと作品の設計<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<figure class="align-center" id="id21">
+<img alt="夕日が山の端に沈みかけ、湖面に夕日と山々が映っている。空には淡い雲が浮かんでいる" src="_images/18_landscape.png" />
+<figcaption>
+<p><span class="caption-text">18_landscape.frag の実行結果</span><a class="headerlink" href="#id21" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/1234a155f826714add572fb8ac7fde89/18_landscape.frag"><code class="xref download docutils literal notranslate"><span class="pre">18_landscape.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/18_landscape.html">ブラウザーで実行</a></p>
+<p>作品を作るときは、技法を選ぶ前に、どのような絵にしたいかを決める。このシーンでは、次のように設計した。</p>
+<ul class="simple">
+<li><p><strong>構図</strong>: 画面の下半分を湖面、中央を遠くの山並み、上半分を空とする。湖面に山と空が映り込むので、画面全体が同じ光の色でまとまる。</p></li>
+<li><p><strong>時刻と光</strong>: 太陽の高度を約 5° の夕方にする。太陽の光は大気の中を長い距離通るため橙色になり、空は地平線の近くが明るく、天頂に向かって青くなる。</p></li>
+<li><p><strong>光の方向</strong>: 太陽を画面の右奥に置き、山並みを逆光気味に見せる。山の手前側の斜面は天空光だけで照らされて青みを帯び、稜線と雪だけが夕日で明るくなる。</p></li>
+<li><p><strong>動き</strong>: カメラは湖の上をゆっくり進み、雲は風とともに流れる。太陽はわずかずつ沈んでいく。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>シーンの構成と計算の予算<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>シーンを構成する要素と、使う技法を次の表に示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 55.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>要素</p></th>
+<th class="head"><p>技法</p></th>
+<th class="head"><p>関連する章</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>空と太陽</p></td>
+<td><p>大気の散乱。同じモデルで地上に届く太陽の色も求める</p></td>
+<td><p>第 16 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>山と湖岸</p></td>
+<td><p>リッジノイズによる地形、距離に応じたオクターブ数、歩幅の調整</p></td>
+<td><p>第 10 章</p></td>
+</tr>
+<tr class="row-even"><td><p>岩・草・雪・砂</p></td>
+<td><p>高さと傾きによる材質の割り当て、GGX による鏡面反射、雪のラップライティング</p></td>
+<td><p>第 10 章、第 12 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>湖面</p></td>
+<td><p>波の法線（バンプマッピング）、フレネル反射、屈折と水中での吸収</p></td>
+<td><p>第 10 章、第 11 章</p></td>
+</tr>
+<tr class="row-even"><td><p>雲</p></td>
+<td><p>ボリュームレンダリング、カールノイズによる流れ</p></td>
+<td><p>第 10 章、第 16 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>かすみ</p></td>
+<td><p>大気の散乱による空気遠近法</p></td>
+<td><p>第 7 章、第 16 章</p></td>
+</tr>
+<tr class="row-even"><td><p>仕上げ</p></td>
+<td><p>トーンマッピング、カラーグレーディング</p></td>
+<td><p>第 7 章</p></td>
+</tr>
+</tbody>
+</table>
+<p>計算量の大部分を占めるのは、レイマーチングで繰り返し評価する関数である。1 ピクセルあたりの評価の回数は、最悪の場合でおおよそ次のようになる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 40.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>処理</p></th>
+<th class="head"><p>評価の回数（ファイルの先頭の定数で決まる）</p></th>
+<th class="head"><p>備考</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>地形のレイマーチング</p></td>
+<td><p>地形の関数を最大 250 回（6 オクターブ）</p></td>
+<td><p>遠いほどオクターブ数を減らす</p></td>
+</tr>
+<tr class="row-odd"><td><p>地形の法線と影</p></td>
+<td><p>法線に 4 回（最大 10 オクターブ）、影に最大 40 回（4 オクターブ）</p></td>
+<td><p>地形が見えるピクセルだけ</p></td>
+</tr>
+<tr class="row-even"><td><p>湖面の映り込み</p></td>
+<td><p>地形の関数を最大 100 回</p></td>
+<td><p>湖面が見えるピクセルだけ</p></td>
+</tr>
+<tr class="row-odd"><td><p>空の色</p></td>
+<td><p>大気の密度を 12 × (1 + 4) = 60 回、これを 3 方向（視線、天頂、映り込み）</p></td>
+<td><p>毎ピクセル</p></td>
+</tr>
+<tr class="row-even"><td><p>雲</p></td>
+<td><p>雲の密度を 32 × (1 + 3) = 128 回</p></td>
+<td><p>1/4 の解像度で計算する</p></td>
+</tr>
+</tbody>
+</table>
+<p>雲は 1 ピクセルあたりの評価の回数が多く、しかも空が見えるピクセルの大部分で必要になる。一方、雲は輪郭がぼんやりしていて、低い解像度で計算しても見た目がほとんど変わらない。そこで、雲だけを縦横半分（ピクセル数で 1/4）の解像度で計算し、拡大して合成する。これにより、雲の計算量は 1/4 になる。</p>
+</section>
+<section id="id4">
+<h2>パスの構成<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>このサンプルは、第 17 章の複数パスの描画を使い、3 つの部分からなる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>パス</p></th>
+<th class="head"><p>役割</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Common</p></td>
+<td><p>すべてのパスで共有するコード。ノイズ、大気の散乱、雲の密度、地形の高さ、カメラを定義する。</p></td>
+</tr>
+<tr class="row-odd"><td><p>Buffer A</p></td>
+<td><p>雲を 1/4 の解像度で描き、雲から届く光と雲の透過率をテクスチャに保存する。</p></td>
+</tr>
+<tr class="row-even"><td><p>Image</p></td>
+<td><p>地形・湖面・空を描き、Buffer A の雲を合成して表示する。</p></td>
+</tr>
+</tbody>
+</table>
+<p>Common は Shadertoy の Common のタブに当たり、付属のビューアーでは <code class="docutils literal notranslate"><span class="pre">//</span> <span class="pre">====</span> <span class="pre">Common</span> <span class="pre">====</span></code> の行から次の区切りまでのコードが、すべてのパスの先頭に加えられる。複数のパスで同じ関数（例えばカメラや雲の層の位置）を使う場合に、コードの重複を避けられる。</p>
+</section>
+<section id="id5">
+<h2>空と太陽<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>大気の散乱のモデル（第 16 章）は、空の色だけでなく、地上に届く太陽の光の色も与える。太陽の光が大気を通過する間に減衰する割合は、第 16 章で光学的深さから求めた透過率そのものである。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 98</span><span class="c1">// 太陽の方向。夕方の低い高度で、時間とともにわずかに沈んでいく</span>
+<span class="linenos"> 99</span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunDirection</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">time</span><span class="p">)</span>
+<span class="linenos">100</span><span class="p">{</span>
+<span class="linenos">101</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">elevation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.09</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.0015</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">time</span><span class="p">;</span>
+<span class="linenos">102</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.55</span><span class="p">,</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="n">elevation</span><span class="p">),</span><span class="w"> </span><span class="o">-</span><span class="mf">0.83</span><span class="p">));</span>
+<span class="linenos">103</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">135</span><span class="c1">// 地上の高さ heightMeters に届く太陽の光 (大気を通過して減衰した色)。</span>
+<span class="linenos">136</span><span class="c1">// この色を、地形・湖面・雲の照明に共通して使う</span>
+<span class="linenos">137</span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunlightAt</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">heightMeters</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunDir</span><span class="p">)</span>
+<span class="linenos">138</span><span class="p">{</span>
+<span class="linenos">139</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">EARTH_RADIUS</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">heightMeters</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">140</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opticalDepthToSun</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">141</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">tau</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BETA_RAYLEIGH</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">depth</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BETA_MIE</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">depth</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">142</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SUN_INTENSITY</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">tau</span><span class="p">);</span>
+<span class="linenos">143</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>太陽の高度が低いと、太陽の光は大気の中を長い距離通るため、青い光が散乱されて失われ、橙色の光が残る。この色を地形・湖面・雲の照明に使うことで、太陽に照らされた部分が自然に夕日の色になる。照明の色を手で決めるのではなく、空と同じ物理モデルから求めているため、太陽の高度を変えても空と地上の色が食い違わない。</p>
+<p>天空光（環境光）の色も、同じモデルで天頂方向の空の色として求める。これらの値は 1 ピクセルにつき 1 回だけ計算し、そのピクセルのすべての照明で使い回す。</p>
+</section>
+<section id="id6">
+<h2>地形<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<section id="id7">
+<h3>高さの関数<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>山は、第 10 章のリッジノイズで尾根のある形にする。湖の中心からの距離に応じて、湖底の低い起伏から高い山へ滑らかにつなぐことで、湖を山が囲む地形にしている。湖面の高さは <span class="math notranslate nohighlight">\(y = 0\)</span> である。</p>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">284</span><span class="kt">float</span><span class="w"> </span><span class="n">terrainHeight</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">octaves</span><span class="p">)</span>
+<span class="linenos">285</span><span class="p">{</span>
+<span class="linenos">286</span><span class="w">    </span><span class="c1">// リッジノイズで尾根のある山を作る</span>
+<span class="linenos">287</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.025</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="p">;</span>
+<span class="linenos">288</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">ridges</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">289</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">290</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">octaves</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">291</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="mf">1.4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="n">p</span><span class="p">));</span>
+<span class="linenos">292</span><span class="w">        </span><span class="n">ridges</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<span class="linenos">293</span><span class="w">        </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">OCTAVE_ROT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="linenos">294</span><span class="w">        </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">295</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">296</span><span class="w">    </span><span class="c1">// 湖からの距離に応じて、湖底から山の高さへ滑らかにつなぐ</span>
+<span class="linenos">297</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">distanceFromLake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">length</span><span class="p">((</span><span class="n">xz</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">LAKE_CENTER</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos">298</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">12.0</span><span class="p">,</span><span class="w"> </span><span class="mf">38.0</span><span class="p">,</span><span class="w"> </span><span class="n">distanceFromLake</span><span class="p">);</span>
+<span class="linenos">299</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">mountains</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">14.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ridges</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">2.0</span><span class="p">;</span>
+<span class="linenos">300</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">shore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.6</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ridges</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.35</span><span class="p">;</span><span class="w">   </span><span class="c1">// 湖の近くの低い起伏</span>
+<span class="linenos">301</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">shore</span><span class="p">,</span><span class="w"> </span><span class="n">mountains</span><span class="p">,</span><span class="w"> </span><span class="n">mask</span><span class="p">);</span>
+<span class="linenos">302</span><span class="p">}</span>
+<span class="linenos">303</span>
+<span class="linenos">304</span><span class="c1">// 遠いほど少ないオクターブで計算する (1 ピクセルより細かい起伏は見えない)</span>
+<span class="linenos">305</span><span class="kt">int</span><span class="w"> </span><span class="n">octavesAt</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">maxOctaves</span><span class="p">)</span>
+<span class="linenos">306</span><span class="p">{</span>
+<span class="linenos">307</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="n">maxOctaves</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">int</span><span class="p">(</span><span class="n">log2</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">20.0</span><span class="p">)),</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="n">maxOctaves</span><span class="p">);</span>
+<span class="linenos">308</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>関数 <code class="docutils literal notranslate"><span class="pre">octavesAt</span></code> は、距離 <span class="math notranslate nohighlight">\(t\)</span> に応じてオクターブ数を減らす。距離が 2 倍になるごとに、画面上での起伏の大きさは半分になるので、オクターブを 1 つ減らしても見た目はほとんど変わらない。第 10 章の「オクターブ数の使い分け」を、距離に応じて連続的に行うものである。</p>
+</section>
+<section id="id8">
+<h3>レイマーチング<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>地形のレイマーチングでは、第 9 章の距離に比例する閾値と、第 10 章の歩幅の縮小を使う。</p>
+<div class="literal-block-wrapper docutils container" id="id25">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id25" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">372</span><span class="c1">// 戻り値は (t, 反復回数)。何にも当たらずに tMax を超えたら t は -1</span>
+<span class="linenos">373</span><span class="kt">vec2</span><span class="w"> </span><span class="n">marchTerrain</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tMax</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">maxSteps</span><span class="p">)</span>
+<span class="linenos">374</span><span class="p">{</span>
+<span class="linenos">375</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.1</span><span class="p">;</span>
+<span class="linenos">376</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">maxSteps</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">377</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">378</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">terrainSDF</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">octavesAt</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">TERRAIN_OCTAVES</span><span class="p">));</span>
+<span class="linenos">379</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">380</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+<span class="linenos">381</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">382</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">STEP_SCALE</span><span class="p">;</span>
+<span class="linenos">383</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">tMax</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">384</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+<span class="linenos">385</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">386</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">387</span><span class="w">    </span><span class="c1">// 反復回数の上限に達したレイは、地形すれすれを進んでいたとみなし、</span>
+<span class="linenos">388</span><span class="w">    </span><span class="c1">// 当たったものとして扱う (空として扱うと、山の映り込みに穴が空く)</span>
+<span class="linenos">389</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">maxSteps</span><span class="p">));</span>
+<span class="linenos">390</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>反復回数の上限に達したレイを「当たった」ものとして扱っている点に注意する。山の稜線や湖面の映り込みでは、レイが地形の表面すれすれを進み、上限に達しやすい。これを「当たらなかった」（空が見える）として扱うと、山の輪郭や映り込みに空の色の点が散らばる。地形の近くで上限に達したレイは、ほぼ地形に当たっていると考えてよい。</p>
+</section>
+</section>
+<section id="id9">
+<h2>材質<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>地形の各点の材質は、高さと傾き（法線の <span class="math notranslate nohighlight">\(y\)</span> 成分）で決める。湖面に近い低い場所は砂、高く平らな場所は雪、低く平らな場所は草、それ以外は岩とする。境界をノイズで揺らし、材質の境目が等高線に沿った直線にならないようにしている。</p>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">426</span><span class="c1">// 高さと傾きで材質を割り当てる</span>
+<span class="linenos">427</span><span class="n">Material</span><span class="w"> </span><span class="n">terrainMaterial</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="linenos">428</span><span class="p">{</span>
+<span class="linenos">429</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">slope</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">y</span><span class="p">;</span><span class="w">                       </span><span class="c1">// 1 が水平</span>
+<span class="linenos">430</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">detail</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="mf">0.8</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">);</span>
+<span class="linenos">431</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.08</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.05</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">detail</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">432</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Material</span><span class="p">(</span><span class="n">MAT_SAND</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.32</span><span class="p">,</span><span class="w"> </span><span class="mf">0.28</span><span class="p">,</span><span class="w"> </span><span class="mf">0.22</span><span class="p">),</span><span class="w"> </span><span class="mf">0.9</span><span class="p">);</span>
+<span class="linenos">433</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">434</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">6.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">detail</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">slope</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.6</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">435</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Material</span><span class="p">(</span><span class="n">MAT_SNOW</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.85</span><span class="p">,</span><span class="w"> </span><span class="mf">0.88</span><span class="p">,</span><span class="w"> </span><span class="mf">0.92</span><span class="p">),</span><span class="w"> </span><span class="mf">0.5</span><span class="p">);</span>
+<span class="linenos">436</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">437</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">slope</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.8</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">4.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">detail</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">438</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Material</span><span class="p">(</span><span class="n">MAT_GRASS</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.17</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">),</span><span class="w"> </span><span class="mf">0.9</span><span class="p">);</span>
+<span class="linenos">439</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">440</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">Material</span><span class="p">(</span><span class="n">MAT_ROCK</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.22</span><span class="p">,</span><span class="w"> </span><span class="mf">0.19</span><span class="p">,</span><span class="w"> </span><span class="mf">0.17</span><span class="p">),</span><span class="w"> </span><span class="mf">0.8</span><span class="p">);</span>
+<span class="linenos">441</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>照明は、第 12 章の非金属の PBR である。雪には、第 12 章のラップライティングを使い、光が雪の中で散乱して影の側に回り込む様子を近似している。間接光（環境光）は、天空光の色にベースカラーを掛け、上を向いた面ほど強くしている。</p>
+<div class="literal-block-wrapper docutils container" id="id27">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id27" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">456</span><span class="c1">// 非金属の PBR (第 12 章)。雪にはラップライティングで SSS を近似する</span>
+<span class="linenos">457</span><span class="kt">vec3</span><span class="w"> </span><span class="n">shadeTerrain</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">Material</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunDir</span><span class="p">,</span>
+<span class="linenos">458</span><span class="w">                  </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunColor</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ambient</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">shadow</span><span class="p">)</span>
+<span class="linenos">459</span><span class="p">{</span>
+<span class="linenos">460</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">sunDir</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">v</span><span class="p">);</span>
+<span class="linenos">461</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">462</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">3</span><span class="p">);</span>
+<span class="linenos">463</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.04</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.96</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mf">5.0</span><span class="p">);</span>
+<span class="linenos">464</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">roughness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">roughness</span><span class="p">;</span>
+<span class="linenos">465</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">specular</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">distributionGGX</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">466</span><span class="w">                     </span><span class="n">geometrySmith</span><span class="p">(</span><span class="n">nv</span><span class="p">,</span><span class="w"> </span><span class="n">nl</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">roughness</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">/</span>
+<span class="linenos">467</span><span class="w">                     </span><span class="p">(</span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">468</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">diffuseTerm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nl</span><span class="p">;</span>
+<span class="linenos">469</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_SNOW</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">470</span><span class="w">        </span><span class="c1">// 雪の中で散乱した光が、影の側にわずかに回り込む (第 12 章)</span>
+<span class="linenos">471</span><span class="w">        </span><span class="n">diffuseTerm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">((</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.3</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">472</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">473</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">direct</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">((</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">baseColor</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">diffuseTerm</span><span class="w"> </span><span class="o">+</span>
+<span class="linenos">474</span><span class="w">                   </span><span class="n">specular</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nl</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sunColor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">shadow</span><span class="p">;</span>
+<span class="linenos">475</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">indirect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">baseColor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ambient</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">0.6</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">476</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">direct</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">indirect</span><span class="p">;</span>
+<span class="linenos">477</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id10">
+<h2>湖面<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<section id="id11">
+<h3>波<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>湖面は平面のまま、波による法線の傾きだけを第 10 章のバンプマッピングで表す。2 つの勾配ノイズを逆向きに流すことで、波が一方向に動き続けるだけの単調な動きにならないようにしている。</p>
+<div class="literal-block-wrapper docutils container" id="id28">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id28" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">481</span><span class="c1">// 波の高さ。2 つの勾配ノイズを逆向きに流す</span>
+<span class="linenos">482</span><span class="kt">float</span><span class="w"> </span><span class="n">waveHeight</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">time</span><span class="p">)</span>
+<span class="linenos">483</span><span class="p">{</span>
+<span class="linenos">484</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">0.004</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="mf">3.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">time</span><span class="p">))</span><span class="w"> </span><span class="o">+</span>
+<span class="linenos">485</span><span class="w">           </span><span class="mf">0.002</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="mf">9.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">486</span><span class="p">}</span>
+<span class="linenos">487</span>
+<span class="linenos">488</span><span class="c1">// 波の法線。湖面の形は平面のまま、法線だけを傾ける (バンプマッピング)</span>
+<span class="linenos">489</span><span class="kt">vec3</span><span class="w"> </span><span class="n">waterNormal</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">time</span><span class="p">)</span>
+<span class="linenos">490</span><span class="p">{</span>
+<span class="linenos">491</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01</span><span class="p">;</span>
+<span class="linenos">492</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">hx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">waveHeight</span><span class="p">(</span><span class="n">xz</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">time</span><span class="p">)</span><span class="w"> </span><span class="o">-</span>
+<span class="linenos">493</span><span class="w">               </span><span class="n">waveHeight</span><span class="p">(</span><span class="n">xz</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">time</span><span class="p">);</span>
+<span class="linenos">494</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">hz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">waveHeight</span><span class="p">(</span><span class="n">xz</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span><span class="w"> </span><span class="n">time</span><span class="p">)</span><span class="w"> </span><span class="o">-</span>
+<span class="linenos">495</span><span class="w">               </span><span class="n">waveHeight</span><span class="p">(</span><span class="n">xz</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span><span class="w"> </span><span class="n">time</span><span class="p">);</span>
+<span class="linenos">496</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="n">hx</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">hz</span><span class="p">));</span>
+<span class="linenos">497</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id12">
+<h3>反射と屈折<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>湖面の色は、第 11 章のガラスと同じく、フレネル反射率で反射と屈折を混ぜて求める。水の屈折率は 1.33 なので、垂直入射での反射率は <span class="math notranslate nohighlight">\(F_0 = ((1.33 - 1)/(1.33 + 1))^2 \approx 0.02\)</span> である。カメラの近くの湖面は真上に近い角度から見るので湖底が透けて見え、遠くの湖面は浅い角度から見るので山と空が鏡のように映る。</p>
+<div class="literal-block-wrapper docutils container" id="id29">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id29" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">502</span><span class="kt">vec3</span><span class="w"> </span><span class="n">shadeWater</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunDir</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunColor</span><span class="p">,</span>
+<span class="linenos">503</span><span class="w">                </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ambient</span><span class="p">)</span>
+<span class="linenos">504</span><span class="p">{</span>
+<span class="linenos">505</span><span class="w">    </span><span class="c1">// 遠くの波は 1 ピクセルより細かくなりちらつくので、距離に応じて平らにする</span>
+<span class="linenos">506</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">mix</span><span class="p">(</span><span class="n">waterNormal</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="n">iTime</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span>
+<span class="linenos">507</span><span class="w">                           </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span><span class="w"> </span><span class="mf">40.0</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">)));</span>
+<span class="linenos">508</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">509</span><span class="w">    </span><span class="c1">// フレネル反射率 (水の屈折率 1.33 では F0 = 0.02)</span>
+<span class="linenos">510</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">fresnel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.02</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.98</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mf">5.0</span><span class="p">);</span>
+<span class="linenos">511</span>
+<span class="linenos">512</span><span class="w">    </span><span class="c1">// 反射: 映り込む山と空</span>
+<span class="linenos">513</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">reflDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">514</span><span class="w">    </span><span class="n">reflDir</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">reflDir</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">515</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">reflection</span><span class="p">;</span>
+<span class="linenos">516</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">hit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">marchTerrain</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">reflDir</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">,</span>
+<span class="linenos">517</span><span class="w">                            </span><span class="n">REFLECT_STEPS</span><span class="p">);</span>
+<span class="linenos">518</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">519</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">reflDir</span><span class="p">;</span>
+<span class="linenos">520</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">qn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">terrainNormal</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">521</span><span class="w">        </span><span class="n">reflection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shadeTerrain</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="n">qn</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">reflDir</span><span class="p">,</span><span class="w"> </span><span class="n">terrainMaterial</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="n">qn</span><span class="p">),</span>
+<span class="linenos">522</span><span class="w">                                  </span><span class="n">sunDir</span><span class="p">,</span><span class="w"> </span><span class="n">sunColor</span><span class="p">,</span><span class="w"> </span><span class="n">ambient</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">523</span><span class="w">        </span><span class="n">reflection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">aerialPerspective</span><span class="p">(</span><span class="n">reflection</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="p">,</span>
+<span class="linenos">524</span><span class="w">                                       </span><span class="n">skyRadiance</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="n">reflDir</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">));</span>
+<span class="linenos">525</span><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">526</span><span class="w">        </span><span class="n">reflection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">skyRadiance</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="n">reflDir</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">527</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">528</span><span class="w">    </span><span class="c1">// 太陽の映り込み (きらめき)</span>
+<span class="linenos">529</span><span class="w">    </span><span class="n">reflection</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">sunColor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">15.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">reflDir</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mf">1200.0</span><span class="p">);</span>
+<span class="linenos">530</span>
+<span class="linenos">531</span><span class="w">    </span><span class="c1">// 屈折: 湖底の色を、水の中を通る距離で減衰させる (第 11 章、第 16 章)</span>
+<span class="linenos">532</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">refrDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">refract</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1.33</span><span class="p">);</span>
+<span class="linenos">533</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="o">-</span><span class="n">terrainHeight</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">534</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">pathLength</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="o">-</span><span class="n">refrDir</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">);</span>
+<span class="linenos">535</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">WATER_SIGMA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pathLength</span><span class="p">);</span>
+<span class="linenos">536</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">bottom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.27</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">sunColor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">sunDir</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">PI</span><span class="w"> </span><span class="o">+</span>
+<span class="linenos">537</span><span class="w">                                          </span><span class="n">ambient</span><span class="p">);</span>
+<span class="linenos">538</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">deepWater</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="mf">0.03</span><span class="p">,</span><span class="w"> </span><span class="mf">0.035</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ambient</span><span class="p">;</span>
+<span class="linenos">539</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">refraction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bottom</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">deepWater</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">transmittance</span><span class="p">);</span>
+<span class="linenos">540</span>
+<span class="linenos">541</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">refraction</span><span class="p">,</span><span class="w"> </span><span class="n">reflection</span><span class="p">,</span><span class="w"> </span><span class="n">fresnel</span><span class="p">);</span>
+<span class="linenos">542</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<ul class="simple">
+<li><p><strong>反射</strong>: 反射方向に地形のレイマーチングをもう一度行い、当たれば地形の色を、当たらなければ空の色を使う。映り込みの地形は、計算を減らすために影を省略している。</p></li>
+<li><p><strong>屈折</strong>: 湖底までの深さと屈折方向から、水の中を通る距離を求め、第 16 章のランベルト・ベールの法則で減衰させる。水は赤い光を最も強く吸収するので、深い場所ほど青緑になる。</p></li>
+<li><p><strong>遠くの波</strong>: 遠くの波は 1 ピクセルより細かくなり、法線が隣のピクセルとまったく異なる向きになってちらつく。そこで、距離に応じて法線を真上に近づけ、遠くの湖面を平らにしている。第 9 章で述べた「1 ピクセルより細かい形状は描かない」という考え方の応用である。</p></li>
+</ul>
+</section>
+</section>
+<section id="id13">
+<h2>雲<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<section id="id14">
+<h3>雲の密度<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p>雲は、高さ 2.2 km〜3.2 km の層の中にある関与媒質として扱う。密度は 3 次元の値ノイズの fBm で作り、層の上端と下端で 0 に近づける。雲の形は、一定の風で流すとともに、第 10 章のカールノイズで位置をずらし、形が潰れずに少しずつ変化するようにしている。</p>
+<div class="literal-block-wrapper docutils container" id="id30">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id30" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">196</span><span class="c1">// カールノイズ (第 10 章) で雲の流れを作る</span>
+<span class="linenos">197</span><span class="kt">vec2</span><span class="w"> </span><span class="n">curlField</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">198</span><span class="p">{</span>
+<span class="linenos">199</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.05</span><span class="p">;</span>
+<span class="linenos">200</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">201</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">gradientNoise</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">));</span>
+<span class="linenos">202</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">dx</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">e</span><span class="p">);</span>
+<span class="linenos">203</span><span class="p">}</span>
+<span class="linenos">204</span>
+<span class="linenos">205</span><span class="c1">// 点 p での雲の密度 (0〜1)</span>
+<span class="linenos">206</span><span class="kt">float</span><span class="w"> </span><span class="n">cloudDensity</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">time</span><span class="p">)</span>
+<span class="linenos">207</span><span class="p">{</span>
+<span class="linenos">208</span><span class="w">    </span><span class="c1">// 雲の層の中での高さに応じて、下端と上端で密度を 0 に近づける</span>
+<span class="linenos">209</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">CLOUD_BOTTOM</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">CLOUD_TOP</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">CLOUD_BOTTOM</span><span class="p">);</span>
+<span class="linenos">210</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">);</span>
+<span class="linenos">211</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">profile</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">212</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">213</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">214</span><span class="w">    </span><span class="c1">// 風で流しつつ、カールノイズの流れで形を変化させる</span>
+<span class="linenos">215</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="linenos">216</span><span class="w">    </span><span class="n">q</span><span class="p">.</span><span class="n">xz</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">time</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="kt">vec2</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">curlField</span><span class="p">(</span><span class="mf">0.01</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">));</span>
+<span class="linenos">217</span><span class="w">    </span><span class="n">q</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.03</span><span class="p">;</span>
+<span class="linenos">218</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">valueNoise3</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.25</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">valueNoise3</span><span class="p">(</span><span class="mf">2.03</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">+</span>
+<span class="linenos">219</span><span class="w">              </span><span class="mf">0.125</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">valueNoise3</span><span class="p">(</span><span class="mf">4.01</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.0625</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">valueNoise3</span><span class="p">(</span><span class="mf">8.02</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">q</span><span class="p">);</span>
+<span class="linenos">220</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">clamp</span><span class="p">((</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">CLOUD_COVERAGE</span><span class="p">))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">3.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">profile</span><span class="p">;</span>
+<span class="linenos">221</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id15">
+<h3>雲の描画<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<p>雲の描画は、第 16 章のボリュームレンダリングと同じである。雲の層は平らなので、レイが層を通過する区間は、2 つの平面との交点から解析的に求められる（関数 <code class="docutils literal notranslate"><span class="pre">cloudSlab</span></code>）。</p>
+<div class="literal-block-wrapper docutils container" id="id31">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id31" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">234</span><span class="c1">// 雲を描く。戻り値の rgb は雲から届く光、a は雲の透過率</span>
+<span class="linenos">235</span><span class="kt">vec4</span><span class="w"> </span><span class="n">renderClouds</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunDir</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunColor</span><span class="p">,</span>
+<span class="linenos">236</span><span class="w">                  </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ambient</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">jitter</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">time</span><span class="p">)</span>
+<span class="linenos">237</span><span class="p">{</span>
+<span class="linenos">238</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">slab</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cloudSlab</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">239</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">slab</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">240</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kt">vec4</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">241</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">242</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">slab</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">CLOUD_STEPS</span><span class="p">);</span>
+<span class="linenos">243</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">jitter</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dt</span><span class="p">;</span>
+<span class="linenos">244</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">mu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">245</span><span class="w">    </span><span class="c1">// 前方散乱と後方散乱を混ぜた位相関数 (Henyey-Greenstein の和)</span>
+<span class="linenos">246</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.6</span><span class="p">;</span>
+<span class="linenos">247</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">hgForward</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="w"> </span><span class="o">/</span>
+<span class="linenos">248</span><span class="w">                      </span><span class="p">(</span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mu</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">));</span>
+<span class="linenos">249</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">hgBack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.09</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.09</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.6</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mu</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">));</span>
+<span class="linenos">250</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">phase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">hgBack</span><span class="p">,</span><span class="w"> </span><span class="n">hgForward</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="p">;</span>
+<span class="linenos">251</span>
+<span class="linenos">252</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">253</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">254</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">CLOUD_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">255</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">256</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">dens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cloudDensity</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="p">);</span>
+<span class="linenos">257</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dens</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">258</span><span class="w">            </span><span class="c1">// 太陽の方向の透過率</span>
+<span class="linenos">259</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">lightDepth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">260</span><span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">CLOUD_LIGHT_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">261</span><span class="w">                </span><span class="n">lightDepth</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">cloudDensity</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sunDir</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">j</span><span class="p">),</span><span class="w"> </span><span class="n">time</span><span class="p">);</span>
+<span class="linenos">262</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">263</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">lightT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">CLOUD_SIGMA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">lightDepth</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1.5</span><span class="p">);</span>
+<span class="linenos">264</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">absorbed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">CLOUD_SIGMA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dens</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dt</span><span class="p">);</span>
+<span class="linenos">265</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">light</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sunColor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">lightT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">phase</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.05</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ambient</span><span class="p">;</span>
+<span class="linenos">266</span><span class="w">            </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">absorbed</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">light</span><span class="p">;</span>
+<span class="linenos">267</span><span class="w">            </span><span class="n">transmittance</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">absorbed</span><span class="p">;</span>
+<span class="linenos">268</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">transmittance</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.02</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">269</span><span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">270</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">271</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">272</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">dt</span><span class="p">;</span>
+<span class="linenos">273</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">274</span><span class="w">    </span><span class="c1">// 遠くの雲ほど空の色に溶け込ませる (空気遠近法)</span>
+<span class="linenos">275</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">fade</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.004</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">slab</span><span class="p">.</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">276</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec4</span><span class="p">(</span><span class="n">col</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fade</span><span class="p">,</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">transmittance</span><span class="p">,</span><span class="w"> </span><span class="n">fade</span><span class="p">));</span>
+<span class="linenos">277</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>雲の照明には、雲の高さで求めた太陽の色を使う。雲の高さでは太陽の光が通る大気が少し短いので、地上よりわずかに明るく黄色い光になる。位相関数は、前方散乱の強い Henyey-Greenstein の関数と、後方散乱の関数を混ぜたものを使っている。夕日の方向の雲の縁が明るく輝き、太陽と反対側の雲も真っ暗にならない。</p>
+</section>
+</section>
+<section id="id16">
+<h2>複数パスによる雲の合成<a class="headerlink" href="#id16" title="Link to this heading"></a></h2>
+<section id="buffer-a">
+<h3>Buffer A<a class="headerlink" href="#buffer-a" title="Link to this heading"></a></h3>
+<p>Buffer A では、画面の左下の 1/4 の範囲だけを計算する。この範囲の座標を全画面の座標に対応させてレイを作るので、Buffer A の左下には、画面全体の雲が縦横半分の大きさで描かれる。残りのピクセルは何もせずに終える。</p>
+<div class="literal-block-wrapper docutils container" id="id32">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋。Buffer A のパス）</span><a class="headerlink" href="#id32" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">331</span><span class="kt">void</span><span class="w"> </span><span class="n">mainImage</span><span class="p">(</span><span class="k">out</span><span class="w"> </span><span class="kt">vec4</span><span class="w"> </span><span class="n">fragColor</span><span class="p">,</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">fragCoord</span><span class="p">)</span>
+<span class="linenos">332</span><span class="p">{</span>
+<span class="linenos">333</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">halfRes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iResolution</span><span class="p">.</span><span class="n">xy</span><span class="p">);</span>
+<span class="linenos">334</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fragCoord</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">halfRes</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">fragCoord</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">halfRes</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">335</span><span class="w">        </span><span class="n">fragColor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec4</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">336</span><span class="w">        </span><span class="k">return</span><span class="p">;</span>
+<span class="linenos">337</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">338</span><span class="w">    </span><span class="c1">// 1/4 の画面の座標を、全画面の座標に対応させる</span>
+<span class="linenos">339</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fragCoord</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">halfRes</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">halfRes</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">340</span>
+<span class="linenos">341</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">;</span>
+<span class="linenos">342</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">343</span><span class="w">    </span><span class="n">cameraRay</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">iTime</span><span class="p">,</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">344</span>
+<span class="linenos">345</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sunDirection</span><span class="p">(</span><span class="n">iTime</span><span class="p">);</span>
+<span class="linenos">346</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunColor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sunlightAt</span><span class="p">(</span><span class="n">CLOUD_BOTTOM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">METERS_PER_UNIT</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">347</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ambient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.6</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">skyRadiance</span><span class="p">(</span><span class="n">CLOUD_BOTTOM</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">METERS_PER_UNIT</span><span class="p">,</span>
+<span class="linenos">348</span><span class="w">                                     </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">349</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">jitter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hash31</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="n">fragCoord</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">iFrame</span><span class="p">)));</span>
+<span class="linenos">350</span><span class="w">    </span><span class="n">fragColor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">renderClouds</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">,</span><span class="w"> </span><span class="n">sunColor</span><span class="p">,</span><span class="w"> </span><span class="n">ambient</span><span class="p">,</span><span class="w"> </span><span class="n">jitter</span><span class="p">,</span><span class="w"> </span><span class="n">iTime</span><span class="p">);</span>
+<span class="linenos">351</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>雲の結果は、雲から届く光（RGB）と、雲の透過率（アルファ成分）の 2 つである。透過率を保存しておくと、Image のパスで、雲の奥にある空の色を雲の透過率だけ残して合成できる。</p>
+</section>
+<section id="id17">
+<h3>拡大と合成<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<p>Image のパスでは、Buffer A の 4 つのテクセルを双線形補間して、半分の解像度の雲を全画面に拡大する。付属のビューアーのテクスチャは補間を行わない設定（最近傍）なので、補間は <code class="docutils literal notranslate"><span class="pre">texelFetch</span></code> で 4 点を読み出して自分で行う。</p>
+<div class="literal-block-wrapper docutils container" id="id33">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id33" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">546</span><span class="c1">// Buffer A の 1/4 の解像度の雲を、双線形補間で拡大して読み出す</span>
+<span class="linenos">547</span><span class="kt">vec4</span><span class="w"> </span><span class="n">sampleClouds</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">fragCoord</span><span class="p">)</span>
+<span class="linenos">548</span><span class="p">{</span>
+<span class="linenos">549</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">halfRes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iResolution</span><span class="p">.</span><span class="n">xy</span><span class="p">);</span>
+<span class="linenos">550</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">uv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fragCoord</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">551</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">uv</span><span class="p">);</span>
+<span class="linenos">552</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uv</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">base</span><span class="p">;</span>
+<span class="linenos">553</span><span class="w">    </span><span class="kt">ivec2</span><span class="w"> </span><span class="n">maxTexel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">ivec2</span><span class="p">(</span><span class="n">halfRes</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">554</span><span class="w">    </span><span class="kt">ivec2</span><span class="w"> </span><span class="n">i00</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="kt">ivec2</span><span class="p">(</span><span class="n">base</span><span class="p">),</span><span class="w"> </span><span class="kt">ivec2</span><span class="p">(</span><span class="mo">0</span><span class="p">),</span><span class="w"> </span><span class="n">maxTexel</span><span class="p">);</span>
+<span class="linenos">555</span><span class="w">    </span><span class="kt">ivec2</span><span class="w"> </span><span class="n">i11</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="kt">ivec2</span><span class="p">(</span><span class="n">base</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="kt">ivec2</span><span class="p">(</span><span class="mo">0</span><span class="p">),</span><span class="w"> </span><span class="n">maxTexel</span><span class="p">);</span>
+<span class="linenos">556</span><span class="w">    </span><span class="kt">vec4</span><span class="w"> </span><span class="n">c00</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">texelFetch</span><span class="p">(</span><span class="n">iChannel0</span><span class="p">,</span><span class="w"> </span><span class="n">i00</span><span class="p">,</span><span class="w"> </span><span class="mo">0</span><span class="p">);</span>
+<span class="linenos">557</span><span class="w">    </span><span class="kt">vec4</span><span class="w"> </span><span class="n">c10</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">texelFetch</span><span class="p">(</span><span class="n">iChannel0</span><span class="p">,</span><span class="w"> </span><span class="kt">ivec2</span><span class="p">(</span><span class="n">i11</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">i00</span><span class="p">.</span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mo">0</span><span class="p">);</span>
+<span class="linenos">558</span><span class="w">    </span><span class="kt">vec4</span><span class="w"> </span><span class="n">c01</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">texelFetch</span><span class="p">(</span><span class="n">iChannel0</span><span class="p">,</span><span class="w"> </span><span class="kt">ivec2</span><span class="p">(</span><span class="n">i00</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">i11</span><span class="p">.</span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mo">0</span><span class="p">);</span>
+<span class="linenos">559</span><span class="w">    </span><span class="kt">vec4</span><span class="w"> </span><span class="n">c11</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">texelFetch</span><span class="p">(</span><span class="n">iChannel0</span><span class="p">,</span><span class="w"> </span><span class="n">i11</span><span class="p">,</span><span class="w"> </span><span class="mo">0</span><span class="p">);</span>
+<span class="linenos">560</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">mix</span><span class="p">(</span><span class="n">c00</span><span class="p">,</span><span class="w"> </span><span class="n">c10</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">c01</span><span class="p">,</span><span class="w"> </span><span class="n">c11</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">561</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>雲の層は山より高いので、雲は空が見える方向にだけ合成すればよい。地形や湖面が見えるピクセルでは雲を使わない。ただし、雲は低い解像度で計算しているので、山の稜線のすぐ上の雲は、拡大するときにわずかにぼやける。この誤差は雲の輪郭がもともとぼんやりしているため目立たないが、雲の層を山より低くする場合は、Buffer A でも地形との前後関係を考える必要がある。</p>
+</section>
+</section>
+<section id="id18">
+<h2>空気遠近法と仕上げ<a class="headerlink" href="#id18" title="Link to this heading"></a></h2>
+<p>遠くの山ほど、手前の大気で散乱された光が加わり、空の色に近づく。この効果を空気遠近法と呼ぶ。第 7 章のフォグを、大気の散乱のモデルに合わせたものである。</p>
+<div class="literal-block-wrapper docutils container" id="id34">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id34" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">180</span><span class="c1">// 空気遠近法: 距離 t (シーンの単位) の物体の色を、大気の散乱でかすませる。</span>
+<span class="linenos">181</span><span class="c1">// 海面付近の消散係数で透過率を求め、失われた分を空の色で置き換える近似</span>
+<span class="linenos">182</span><span class="kt">vec3</span><span class="w"> </span><span class="n">aerialPerspective</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">skyCol</span><span class="p">)</span>
+<span class="linenos">183</span><span class="p">{</span>
+<span class="linenos">184</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">meters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">METERS_PER_UNIT</span><span class="p">;</span>
+<span class="linenos">185</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">BETA_RAYLEIGH</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BETA_MIE</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">meters</span><span class="p">);</span>
+<span class="linenos">186</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">skyCol</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">transmittance</span><span class="p">);</span>
+<span class="linenos">187</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>透過率は、海面付近のレイリー散乱とミー散乱の消散係数から求め、失われた光の分を、その方向の空の色で置き換える。高さによる大気の密度の変化を無視した近似だが、湖面の高さから数十 km 先の山を見る場面では十分に自然に見える。レイリー散乱の係数は青ほど大きいので、遠くの山は青みを帯びる。</p>
+<p>最後に、第 7 章のトーンマッピングとカラーグレーディング（彩度の調整とビネット）を施して仕上げる。</p>
+<div class="literal-block-wrapper docutils container" id="id35">
+<div class="code-block-caption"><span class="caption-text">18_landscape.frag（抜粋）</span><a class="headerlink" href="#id35" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">589</span><span class="c1">// 1 ピクセルの色を求める。mode は DEBUG_MODE の値 (0〜3)。</span>
+<span class="linenos">590</span><span class="c1">// screenCoord は全画面での座標で、雲の読み出しに使う</span>
+<span class="linenos">591</span><span class="kt">vec3</span><span class="w"> </span><span class="n">renderPixel</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">screenCoord</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">mode</span><span class="p">)</span>
+<span class="linenos">592</span><span class="p">{</span>
+<span class="linenos">593</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">;</span>
+<span class="linenos">594</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">595</span><span class="w">    </span><span class="n">cameraRay</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">iTime</span><span class="p">,</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">596</span>
+<span class="linenos">597</span><span class="w">    </span><span class="c1">// 太陽と空の光は 1 ピクセルにつき 1 回だけ求め、すべての照明に使う</span>
+<span class="linenos">598</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sunDirection</span><span class="p">(</span><span class="n">iTime</span><span class="p">);</span>
+<span class="linenos">599</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunColor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sunlightAt</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">METERS_PER_UNIT</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">600</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ambient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.6</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">skyRadiance</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">METERS_PER_UNIT</span><span class="p">,</span>
+<span class="linenos">601</span><span class="w">                                     </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">602</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">skyCol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">skyRadiance</span><span class="p">(</span><span class="n">ro</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">METERS_PER_UNIT</span><span class="p">,</span>
+<span class="linenos">603</span><span class="w">                              </span><span class="n">normalize</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">rd</span><span class="p">.</span><span class="n">z</span><span class="p">)),</span>
+<span class="linenos">604</span><span class="w">                              </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">605</span><span class="w">    </span><span class="kt">vec4</span><span class="w"> </span><span class="n">clouds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sampleClouds</span><span class="p">(</span><span class="n">screenCoord</span><span class="p">);</span>
+<span class="linenos">606</span>
+<span class="linenos">607</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">608</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">clouds</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">clouds</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="mf">0.07</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">);</span>
+<span class="linenos">609</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">610</span>
+<span class="linenos">611</span><span class="w">    </span><span class="c1">// 湖面と地形のどちらに先に当たるか</span>
+<span class="linenos">612</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">tWater</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="o">-</span><span class="n">ro</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">rd</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">613</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">tLimit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">tWater</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">tWater</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">;</span>
+<span class="linenos">614</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">hit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">marchTerrain</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">tLimit</span><span class="p">,</span><span class="w"> </span><span class="n">TERRAIN_STEPS</span><span class="p">);</span>
+<span class="linenos">615</span>
+<span class="linenos">616</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">617</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">heatmap</span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">TERRAIN_STEPS</span><span class="p">));</span>
+<span class="linenos">618</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">619</span>
+<span class="linenos">620</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">621</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">622</span><span class="w">        </span><span class="c1">// 地形</span>
+<span class="linenos">623</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">pos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">624</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">terrainNormal</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">625</span><span class="w">        </span><span class="n">Material</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">terrainMaterial</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">626</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">627</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_SNOW</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="linenos">628</span><span class="w">                 </span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_GRASS</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">)</span>
+<span class="linenos">629</span><span class="w">                 </span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_SAND</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">);</span>
+<span class="linenos">630</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">631</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">shadow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">terrainShadow</span><span class="p">(</span><span class="n">pos</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">632</span><span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shadeTerrain</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">,</span><span class="w"> </span><span class="n">sunColor</span><span class="p">,</span><span class="w"> </span><span class="n">ambient</span><span class="p">,</span><span class="w"> </span><span class="n">shadow</span><span class="p">);</span>
+<span class="linenos">633</span><span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">aerialPerspective</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">skyCol</span><span class="p">);</span>
+<span class="linenos">634</span><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">tWater</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">635</span><span class="w">        </span><span class="c1">// 湖面</span>
+<span class="linenos">636</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">637</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="mf">0.9</span><span class="p">);</span>
+<span class="linenos">638</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">639</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">pos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tWater</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">640</span><span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shadeWater</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">tWater</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">,</span><span class="w"> </span><span class="n">sunColor</span><span class="p">,</span><span class="w"> </span><span class="n">ambient</span><span class="p">);</span>
+<span class="linenos">641</span><span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">aerialPerspective</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="n">tWater</span><span class="p">,</span><span class="w"> </span><span class="n">skyCol</span><span class="p">);</span>
+<span class="linenos">642</span><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">643</span><span class="w">        </span><span class="c1">// 空: 雲を手前に重ねる (雲の層は山より高いので、空が見える方向だけでよい)</span>
+<span class="linenos">644</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">645</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">),</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">clouds</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
+<span class="linenos">646</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">647</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">sun</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">0.9996</span><span class="p">,</span><span class="w"> </span><span class="mf">0.9999</span><span class="p">,</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">));</span>
+<span class="linenos">648</span><span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">skyCol</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sun</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sunColor</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">4.0</span><span class="p">;</span>
+<span class="linenos">649</span><span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clouds</span><span class="p">.</span><span class="n">rgb</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">clouds</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">650</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">651</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">652</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id19">
+<h2>デバッグ<a class="headerlink" href="#id19" title="Link to this heading"></a></h2>
+<p>大きなシェーダーでは、どの要素が見た目や計算量を決めているかを確かめながら作業を進める。デバッグ版のサンプルは、第 9 章と同じく画面を 4 分割し、通常の描画、地形の反復回数、要素の色分け、雲だけを同時に表示する。デバッグ版は、ファイルの <code class="docutils literal notranslate"><span class="pre">DEBUG_MODE</span></code> の値だけが異なる。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/c6cc1463d901009715fbd08fb5b289fe/18_landscape_debug.frag"><code class="xref download docutils literal notranslate"><span class="pre">18_landscape_debug.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/18_landscape_debug.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id36">
+<img alt="画面が 4 分割され、通常の描画、反復回数のヒートマップ、地形の材質と湖面と雲の色分け、雲だけの表示が並んでいる" src="_images/18_landscape_debug.png" />
+<figcaption>
+<p><span class="caption-text">18_landscape_debug.frag の実行結果。左上が通常の描画、右上が地形の反復回数、左下が要素の色分け（白: 雪、緑: 草、茶: 岩、黄: 砂、青: 湖面、桃: 雲）、右下が雲だけの表示である。</span><a class="headerlink" href="#id36" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>反復回数の表示（右上）では、山の稜線と、遠くの湖岸の付近が赤くなっている。どちらも、レイが地形の表面とほぼ平行に進む場所である。湖面が見える方向は、湖面までの距離で地形のレイマーチングを打ち切るので、反復回数が少ない（青い）。このように、計算量が大きい場所を特定してから、品質の設定（ファイルの先頭の定数）を調整する。</p>
+</section>
+<section id="id20">
+<h2>改造の案<a class="headerlink" href="#id20" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sunDirection</span></code> の高度を変え、昼の風景や日没後の薄明を作る。太陽の色と空の色は自動的に変わる。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CLOUD_COVERAGE</span></code> を大きくして曇り空にする。</p></li>
+<li><p>雲の影を地形に落とす。地形の点から太陽の方向にレイを伸ばし、雲の層で雲の密度を数点評価して、太陽の光を減衰させる。</p></li>
+<li><p>第 10 章のセルラーノイズで、湖岸に岩を置く。計算が重いので、岩の近くだけで評価する（第 9 章のバウンディングボリューム）。</p></li>
+<li><p>雲だけでなく、地形の影や湖面の映り込みも低い解像度で計算し、複数パスの描画で合成する。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="17_path_tracing.html" class="btn btn-neutral float-left" title="第 17 章 パストレーシング" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="19_night_city.html" class="btn btn-neutral float-right" title="第 19 章 実践：ボクセルの都市の夜景" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

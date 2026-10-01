@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 13 章 フラクタル &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 14 章 4 次元の形状" href="14_four_dimensions.html" />
+    <link rel="prev" title="第 12 章 物理ベースの材質" href="12_materials.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 13 章 フラクタル</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">メンガーのスポンジ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">構成</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sdf">SDF</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">マンデルバルブ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">マンデルブロ集合の 3 次元への拡張</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">距離推定関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">軌道トラップによる色付け</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">マンデルボックス</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">構成</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">距離推定関数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">パラメーターによる形の変化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#kifs">折り返しによるフラクタル（KIFS）</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id12">考え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">KIFS の応用</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">フラクタルを描くときの注意</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 13 章 フラクタル</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 13 章 フラクタル<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>レイマーチングは、ポリゴンでは表現しにくい、無限に細かい構造を持つ形状（フラクタル）を描くのに向いている。フラクタルの SDF は、空間の変換を反復的に適用することで作れるものが多い。この章では、代表的なフラクタルとして、メンガーのスポンジ、マンデルバルブ、マンデルボックスを描き、最後に折り返しによってフラクタルを作る一般的な方法（KIFS）を紹介する。</p>
+<section id="id2">
+<h2>メンガーのスポンジ<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3>構成<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>メンガーのスポンジは、次の操作を無限に繰り返して得られる立体である。</p>
+<ol class="arabic simple">
+<li><p>立方体を 3 × 3 × 3 = 27 個の小さな立方体に分ける。</p></li>
+<li><p>各面の中央の 6 個と、全体の中心の 1 個の、合わせて 7 個を取り除く。</p></li>
+<li><p>残った 20 個の立方体のそれぞれに、同じ操作を施す。</p></li>
+</ol>
+<p>2 の操作は、立方体から「3 方向に貫通する十字形の穴」をくり抜くことと同じである。そして 3 の操作は、第 4 章の空間の繰り返しを使えば、すべての小さな立方体に対して一度に適用できる。</p>
+</section>
+<section id="sdf">
+<h3>SDF<a class="headerlink" href="#sdf" title="Link to this heading"></a></h3>
+<p>次の関数は、Quilez による実装に基づくメンガーのスポンジの SDF である。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">13_menger.frag（抜粋）</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">18</span><span class="c1">// メンガーのスポンジの SDF。戻り値は (距離, 最後にくり抜いた階層)</span>
+<span class="linenos">19</span><span class="kt">vec2</span><span class="w"> </span><span class="n">sdMenger</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">20</span><span class="p">{</span>
+<span class="linenos">21</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sdBox</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos">22</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">23</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">24</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ITERATIONS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">25</span><span class="w">        </span><span class="c1">// 1 辺 2 / scale の立方体で空間を繰り返す</span>
+<span class="linenos">26</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mod</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">scale</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">27</span><span class="w">        </span><span class="n">scale</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">3.0</span><span class="p">;</span>
+<span class="linenos">28</span><span class="w">        </span><span class="c1">// 3 方向に貫通する十字形の穴までの距離</span>
+<span class="linenos">29</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">3.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">a</span><span class="p">));</span>
+<span class="linenos">30</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">da</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">31</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">db</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">z</span><span class="p">);</span>
+<span class="linenos">32</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">dc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">33</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">min</span><span class="p">(</span><span class="n">da</span><span class="p">,</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="w"> </span><span class="n">dc</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">scale</span><span class="p">;</span>
+<span class="linenos">34</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">35</span><span class="w">            </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">c</span><span class="p">;</span><span class="w">               </span><span class="c1">// 穴の方が表面を決めている</span>
+<span class="linenos">36</span><span class="w">            </span><span class="n">level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="linenos">37</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">38</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">39</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">level</span><span class="p">);</span>
+<span class="linenos">40</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>最初に 1 辺 2 の立方体の SDF を <code class="docutils literal notranslate"><span class="pre">d</span></code> とし、ループの 1 回ごとに 1 段階細かい穴をくり抜く。<code class="docutils literal notranslate"><span class="pre">scale</span></code> は各段階の縮尺で、1、3、9、27、…と 3 倍ずつ大きくなる。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">=</span> <span class="pre">mod(p</span> <span class="pre">*</span> <span class="pre">scale,</span> <span class="pre">2.0)</span> <span class="pre">-</span> <span class="pre">1.0</span></code> は、空間を 1 辺 <span class="math notranslate nohighlight">\(2/\mathrm{scale}\)</span> の立方体のセルに分け、セル内の局所座標を <span class="math notranslate nohighlight">\([-1, 1)\)</span> の範囲で表したものである。<code class="docutils literal notranslate"><span class="pre">mod</span></code> の性質から、セルの境界が <span class="math notranslate nohighlight">\(a = 0\)</span>、セルの中心が <span class="math notranslate nohighlight">\(|a| = 1\)</span> に対応する。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">r</span> <span class="pre">=</span> <span class="pre">abs(1.0</span> <span class="pre">-</span> <span class="pre">3.0</span> <span class="pre">*</span> <span class="pre">abs(a))</span></code> の各成分は、その座標がセルの中央の 1/3 にあるとき（<span class="math notranslate nohighlight">\(|a| &gt; 2/3\)</span>）に 1 より大きくなる。</p></li>
+<li><p>十字形の穴は、2 つ以上の座標がセルの中央の 1/3 にある領域である。<code class="docutils literal notranslate"><span class="pre">max(r.x,</span> <span class="pre">r.y)</span></code> などの 3 つの値の最小値から 1 を引いた値は、点がこの穴の内側にあるとき正、外側にあるとき負になる。これを <code class="docutils literal notranslate"><span class="pre">scale</span></code> で割ってワールド座標の尺度に戻したものが <code class="docutils literal notranslate"><span class="pre">c</span></code> である。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">=</span> <span class="pre">max(d,</span> <span class="pre">c)</span></code> は、第 4 章の積集合である。<code class="docutils literal notranslate"><span class="pre">c</span></code> は「穴の外側」を内側とする SDF なので、積をとると穴がくり抜かれる。</p></li>
+</ul>
+<p>ループの回数 <code class="docutils literal notranslate"><span class="pre">ITERATIONS</span></code> が、フラクタルの深さを決める。4 回で最も小さな穴の大きさは元の立方体の <span class="math notranslate nohighlight">\(1/81\)</span> になり、画面上ではほぼ 1 ピクセルに達する。この SDF は厳密な距離ではなく距離の下界である。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/5ff4c2468f9c37a35e5dc057017c5044/13_menger.frag"><code class="xref download docutils literal notranslate"><span class="pre">13_menger.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/13_menger.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id16">
+<img alt="大小の四角い穴が規則的に空いた立方体" src="_images/13_menger.png" />
+<figcaption>
+<p><span class="caption-text">13_menger.frag の実行結果。穴の階層ごとに、第 7 章の余弦関数によるパレットで色を変えている。</span><a class="headerlink" href="#id16" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>フラクタルでは、表面がどこまでも細かいため、影と AO の計算が重要になる。このサンプルでは、AO の代わりに、レイマーチングの反復回数を使った簡易的な遮蔽を使っている。細い隙間の近くを通るレイは反復回数が多くなるので、反復回数が多いピクセルほど暗くしている。追加の SDF の評価が不要なので、計算の重いフラクタルに向いている。</p>
+</section>
+</section>
+<section id="id4">
+<h2>マンデルバルブ<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<section id="id5">
+<h3>マンデルブロ集合の 3 次元への拡張<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>マンデルブロ集合は、複素数 <span class="math notranslate nohighlight">\(c\)</span> について次の漸化式を反復したとき、<span class="math notranslate nohighlight">\(|z_n|\)</span> が発散しない <span class="math notranslate nohighlight">\(c\)</span> の集合である。</p>
+<div class="math notranslate nohighlight">
+\[z_0 = 0, \qquad z_{n+1} = z_n^2 + c\]</div>
+<p>複素数の 2 乗は、極形式で「絶対値を 2 乗し、偏角を 2 倍する」操作である。White と Nylander は、これを 3 次元の極座標に拡張し、点 <span class="math notranslate nohighlight">\(\mathbf{z} = (r, \theta, \phi)\)</span> の <span class="math notranslate nohighlight">\(n\)</span> 乗を次のように定義した。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{z}^n = r^n \bigl(\sin(n\theta)\cos(n\phi),\ \cos(n\theta),\ \sin(n\theta)\sin(n\phi)\bigr)\]</div>
+<p>ここでは <span class="math notranslate nohighlight">\(y\)</span> 軸を極軸とし、<span class="math notranslate nohighlight">\(\theta\)</span> を <span class="math notranslate nohighlight">\(y\)</span> 軸からの角度、<span class="math notranslate nohighlight">\(\phi\)</span> を <span class="math notranslate nohighlight">\(xz\)</span> 平面内の角度としている。この <span class="math notranslate nohighlight">\(n\)</span> 乗を使って漸化式 <span class="math notranslate nohighlight">\(\mathbf{z}_{k+1} = \mathbf{z}_k^n + \mathbf{c}\)</span> を反復し、発散しない点 <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> の集合をマンデルバルブと呼ぶ。<span class="math notranslate nohighlight">\(n = 8\)</span> のときに、最もよく知られた形になる。</p>
+</section>
+<section id="id6">
+<h3>距離推定関数<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>マンデルバルブには厳密な SDF が知られていない。その代わりに、次の距離推定関数（distance estimator、DE）を使う。</p>
+<div class="math notranslate nohighlight">
+\[d(\mathbf{c}) \approx \frac{1}{2} \frac{|\mathbf{z}_k| \log |\mathbf{z}_k|}{|\mathbf{z}'_k|}\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbf{z}'_k\)</span> は <span class="math notranslate nohighlight">\(\mathbf{z}_k\)</span> の <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> による微分で、その大きさは漸化式 <span class="math notranslate nohighlight">\(|\mathbf{z}'_{k+1}| \approx n |\mathbf{z}_k|^{n-1} |\mathbf{z}'_k| + 1\)</span> で近似できる。この式は、集合の外側で定義されるポテンシャル関数 <span class="math notranslate nohighlight">\(G\)</span> について <span class="math notranslate nohighlight">\(G / |\nabla G|\)</span> が集合までの距離の近似になることから導かれる（Hubbard と Douady による複素力学系の結果に基づく）。<span class="math notranslate nohighlight">\(|\mathbf{z}_k|\)</span> が十分大きくなった（発散した）時点で反復を打ち切り、そのときの値から距離を推定する。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">13_mandelbulb.frag（抜粋）</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">13</span><span class="c1">// マンデルバルブの距離推定関数。trap には軌道が原点に最も近づいた距離を返す</span>
+<span class="linenos">14</span><span class="kt">float</span><span class="w"> </span><span class="n">sdMandelbulb</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">trap</span><span class="p">)</span>
+<span class="linenos">15</span><span class="p">{</span>
+<span class="linenos">16</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
+<span class="linenos">17</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w">   </span><span class="c1">// |dz/dc| の近似</span>
+<span class="linenos">18</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">z</span><span class="p">);</span>
+<span class="linenos">19</span><span class="w">    </span><span class="n">trap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<span class="linenos">20</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ITERATIONS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">21</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">r</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">2.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">22</span><span class="w">            </span><span class="k">break</span><span class="p">;</span><span class="w">        </span><span class="c1">// 発散した</span>
+<span class="linenos">23</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">24</span><span class="w">        </span><span class="c1">// 極座標で z を POWER 乗する</span>
+<span class="linenos">25</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">theta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">acos</span><span class="p">(</span><span class="n">clamp</span><span class="p">(</span><span class="n">z</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">POWER</span><span class="p">;</span>
+<span class="linenos">26</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">phi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">atan</span><span class="p">(</span><span class="n">z</span><span class="p">.</span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">POWER</span><span class="p">;</span>
+<span class="linenos">27</span><span class="w">        </span><span class="n">dr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">POWER</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">POWER</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dr</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">28</span><span class="w">        </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">POWER</span><span class="p">)</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">29</span><span class="w">            </span><span class="kt">vec3</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
+<span class="linenos">30</span><span class="w">        </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">z</span><span class="p">);</span>
+<span class="linenos">31</span><span class="w">        </span><span class="n">trap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">trap</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">);</span>
+<span class="linenos">32</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">33</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">log</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">dr</span><span class="p">;</span>
+<span class="linenos">34</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>距離推定関数は近似なので、場所によっては真の距離を過大評価することがある。不具合が見られる場合は、第 9 章で説明したように歩幅を小さくする。</p>
+</section>
+<section id="id7">
+<h3>軌道トラップによる色付け<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>漸化式の反復の間に <span class="math notranslate nohighlight">\(\mathbf{z}_k\)</span> がたどる点の列を軌道と呼ぶ。軌道が原点や特定の図形に最も近づいたときの距離（軌道トラップ）は、表面上の場所によって複雑に変化する。サンプルでは、軌道が原点に最も近づいた距離 <code class="docutils literal notranslate"><span class="pre">trap</span></code> を使って色を付けている。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/7fff9f3783dd1bf8119b1107d10b87ed/13_mandelbulb.frag"><code class="xref download docutils literal notranslate"><span class="pre">13_mandelbulb.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/13_mandelbulb.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id18">
+<img alt="細かい突起が無数に重なったマンデルバルブ" src="_images/13_mandelbulb.png" />
+<figcaption>
+<p><span class="caption-text">13_mandelbulb.frag の実行結果</span><a class="headerlink" href="#id18" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+<section id="id8">
+<h2>マンデルボックス<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<section id="id9">
+<h3>構成<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>マンデルボックスは、Lowe（2010）が考案したフラクタルで、建築物や機械のような直線的で入り組んだ構造を持つ。マンデルバルブが複素数の 2 乗を 3 次元に拡張したものであったのに対し、マンデルボックスは、次の 3 つの操作を繰り返すことで作られる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>操作</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ボックスフォールド</p></td>
+<td><p>各座標が範囲 <span class="math notranslate nohighlight">\([-1, 1]\)</span> の外に出ていれば、境界 <span class="math notranslate nohighlight">\(\pm 1\)</span> で折り返す。第 4 章の対称化（<code class="docutils literal notranslate"><span class="pre">abs</span></code> による折り返し）を、原点ではなく <span class="math notranslate nohighlight">\(\pm 1\)</span> の位置で行うものである。</p></td>
+</tr>
+<tr class="row-odd"><td><p>スフィアフォールド</p></td>
+<td><p>原点からの距離 <span class="math notranslate nohighlight">\(r\)</span> に応じて点を動かす。<span class="math notranslate nohighlight">\(r\)</span> が内側の半径 <span class="math notranslate nohighlight">\(r_{\min}\)</span> より小さければ一定の倍率で拡大し、<span class="math notranslate nohighlight">\(r_{\min}\)</span> と外側の半径 <span class="math notranslate nohighlight">\(r_{\text{fix}}\)</span> の間にあれば、外側の球面について反転させる（<span class="math notranslate nohighlight">\(\mathbf{z} \leftarrow (r_{\text{fix}}^2 / r^2)\, \mathbf{z}\)</span>）。</p></td>
+</tr>
+<tr class="row-even"><td><p>拡大と平行移動</p></td>
+<td><p>拡大率 <span class="math notranslate nohighlight">\(s\)</span> を掛け、元の点 <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> を加える（<span class="math notranslate nohighlight">\(\mathbf{z} \leftarrow s\mathbf{z} + \mathbf{c}\)</span>）。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">13_mandelbox.frag（抜粋）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">21</span><span class="c1">// ボックスフォールド: 範囲 [-1, 1] の外に出た座標を、境界で折り返す</span>
+<span class="linenos">22</span><span class="kt">vec3</span><span class="w"> </span><span class="n">boxFold</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">z</span><span class="p">)</span>
+<span class="linenos">23</span><span class="p">{</span>
+<span class="linenos">24</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">z</span><span class="p">;</span>
+<span class="linenos">25</span><span class="p">}</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="c1">// スフィアフォールド: 原点に近い点を外側へ、ある範囲の点を球面について反転させる。</span>
+<span class="linenos">28</span><span class="c1">// 点を k 倍するので、距離推定のための導関数の大きさ dr も k 倍する</span>
+<span class="linenos">29</span><span class="kt">void</span><span class="w"> </span><span class="n">sphereFold</span><span class="p">(</span><span class="k">inout</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="k">inout</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">dr</span><span class="p">)</span>
+<span class="linenos">30</span><span class="p">{</span>
+<span class="linenos">31</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">r2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">);</span>
+<span class="linenos">32</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">r2</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MIN_RADIUS2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">33</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FIXED_RADIUS2</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">MIN_RADIUS2</span><span class="p">;</span><span class="w">   </span><span class="c1">// 内側の球の中は一定の倍率で拡大</span>
+<span class="linenos">34</span><span class="w">        </span><span class="n">z</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">k</span><span class="p">;</span>
+<span class="linenos">35</span><span class="w">        </span><span class="n">dr</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">k</span><span class="p">;</span>
+<span class="linenos">36</span><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">r2</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">FIXED_RADIUS2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">37</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FIXED_RADIUS2</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">r2</span><span class="p">;</span><span class="w">            </span><span class="c1">// 球面についての反転</span>
+<span class="linenos">38</span><span class="w">        </span><span class="n">z</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">k</span><span class="p">;</span>
+<span class="linenos">39</span><span class="w">        </span><span class="n">dr</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">k</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">41</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id10">
+<h3>距離推定関数<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>距離推定関数の考え方は、マンデルバルブと同じである。反復の間、点の位置 <span class="math notranslate nohighlight">\(\mathbf{z}\)</span> に加えて、<span class="math notranslate nohighlight">\(\mathbf{z}\)</span> を元の点で微分したものの大きさ <span class="math notranslate nohighlight">\(dr\)</span> を追跡し、最後に <span class="math notranslate nohighlight">\(|\mathbf{z}| / |dr|\)</span> を距離の推定値とする。</p>
+<ul class="simple">
+<li><p>ボックスフォールドは、折り返しなので長さを変えない。<span class="math notranslate nohighlight">\(dr\)</span> はそのままでよい。</p></li>
+<li><p>スフィアフォールドで点を <span class="math notranslate nohighlight">\(k\)</span> 倍するときは、<span class="math notranslate nohighlight">\(dr\)</span> も <span class="math notranslate nohighlight">\(k\)</span> 倍する（反転の場合は厳密には倍率が場所によって変わるが、<span class="math notranslate nohighlight">\(k\)</span> 倍で近似する）。</p></li>
+<li><p>拡大と平行移動では、<span class="math notranslate nohighlight">\(dr \leftarrow |s|\, dr + 1\)</span> とする。<span class="math notranslate nohighlight">\(+1\)</span> は、元の点 <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> を加えることによる寄与である。拡大率が負の場合もあるので、絶対値を使う。</p></li>
+</ul>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">13_mandelbox.frag（抜粋）</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">43</span><span class="c1">// マンデルボックスの距離推定関数。trap には軌道が原点に最も近づいた距離の 2 乗を返す</span>
+<span class="linenos">44</span><span class="kt">float</span><span class="w"> </span><span class="n">sdMandelbox</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">scale</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">trap</span><span class="p">)</span>
+<span class="linenos">45</span><span class="p">{</span>
+<span class="linenos">46</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="linenos">47</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w">     </span><span class="c1">// 導関数の大きさの近似</span>
+<span class="linenos">48</span><span class="w">    </span><span class="n">trap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="n">e10</span><span class="p">;</span>
+<span class="linenos">49</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ITERATIONS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">50</span><span class="w">        </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">boxFold</span><span class="p">(</span><span class="n">z</span><span class="p">);</span>
+<span class="linenos">51</span><span class="w">        </span><span class="n">sphereFold</span><span class="p">(</span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="n">dr</span><span class="p">);</span>
+<span class="linenos">52</span><span class="w">        </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scale</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">p</span><span class="p">;</span><span class="w">               </span><span class="c1">// 拡大と平行移動</span>
+<span class="linenos">53</span><span class="w">        </span><span class="n">dr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dr</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">54</span><span class="w">        </span><span class="n">trap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">trap</span><span class="p">,</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="p">));</span>
+<span class="linenos">55</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">56</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">dr</span><span class="p">);</span>
+<span class="linenos">57</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>マンデルバルブは、極座標の変換と 3 角関数、べき乗を毎回の反復で計算する必要があった。マンデルボックスの反復は、比較、乗算、加算だけでできているので、計算が軽い。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/a9bd1f6cafb2eb9861512c18e7086af5/13_mandelbox.frag"><code class="xref download docutils literal notranslate"><span class="pre">13_mandelbox.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/13_mandelbox.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id21">
+<img alt="立方体の形をした、無数の小さな部品が入り組んだ建造物のようなフラクタル" src="_images/13_mandelbox.png" />
+<figcaption>
+<p><span class="caption-text">13_mandelbox.frag の実行結果（拡大率 2.5 付近）</span><a class="headerlink" href="#id21" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id11">
+<h3>パラメーターによる形の変化<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>マンデルボックスの形は、主に拡大率 <span class="math notranslate nohighlight">\(s\)</span> で決まる。サンプルの拡大率 2〜3 では、全体が立方体に近い形になり、各面に入り組んだ構造が現れる。拡大率を負にする（例えば <span class="math notranslate nohighlight">\(-1.5\)</span>）と、まったく異なる形になり、内部に入り込んだ視点からの描画に向いた、迷路のような空間が得られる。スフィアフォールドの 2 つの半径を変えると、構造の丸みが変わる。サンプルでは拡大率を時間とともにゆっくり変えているので、形の変化を確かめられる。</p>
+<p>色は、マンデルバルブと同じく軌道トラップ（反復の間に <span class="math notranslate nohighlight">\(|\mathbf{z}|^2\)</span> がとった最小値）で付けている。</p>
+</section>
+</section>
+<section id="kifs">
+<h2>折り返しによるフラクタル（KIFS）<a class="headerlink" href="#kifs" title="Link to this heading"></a></h2>
+<section id="id12">
+<h3>考え方<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>マンデルボックスのボックスフォールドや、第 4 章の対称化のように、空間を平面で折り返す操作は、フラクタルを作る強力な道具になる。折り返し、回転、拡大と平行移動を繰り返してフラクタルを作る方法を、一般に KIFS（kaleidoscopic iterated function system、万華鏡的な反復関数系）と呼ぶ。万華鏡の鏡のように、空間を何枚もの平面で折り返すことから、この名前がある。</p>
+<p>KIFS の 1 回の反復は、次の操作からなる。</p>
+<ol class="arabic simple">
+<li><p><strong>折り返し</strong>: <code class="docutils literal notranslate"><span class="pre">abs</span></code> で 3 つの座標平面について折り返す。さらに、座標を大きい順に並べ替えると、3 つの対角面（<span class="math notranslate nohighlight">\(x = y\)</span> など）についても折り返したことになる。</p></li>
+<li><p><strong>回転</strong>: 折り返した空間を回転させる。回転の角度を変えると、形が大きく変化する。</p></li>
+<li><p><strong>拡大と平行移動</strong>: ある中心 <span class="math notranslate nohighlight">\(\mathbf{o}\)</span> を基準に、拡大率 <span class="math notranslate nohighlight">\(s\)</span> で拡大する（<span class="math notranslate nohighlight">\(\mathbf{p} \leftarrow s\mathbf{p} - (s - 1)\mathbf{o}\)</span>）。</p></li>
+</ol>
+<p>反復を終えたら、小さな基本形状（箱や球）の SDF を評価し、拡大率の積 <span class="math notranslate nohighlight">\(s^n\)</span> で割って、元の尺度の距離に戻す。折り返しと回転は距離を縮めないので、得られる値は距離の下界になり、スフィアトレーシングで正しく描ける。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">13_kifs.frag（抜粋）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">28</span><span class="c1">// KIFS の距離推定関数</span>
+<span class="linenos">29</span><span class="kt">float</span><span class="w"> </span><span class="n">sdKIFS</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">angle</span><span class="p">)</span>
+<span class="linenos">30</span><span class="p">{</span>
+<span class="linenos">31</span><span class="w">    </span><span class="kt">mat2</span><span class="w"> </span><span class="n">r1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rot</span><span class="p">(</span><span class="n">angle</span><span class="p">);</span>
+<span class="linenos">32</span><span class="w">    </span><span class="kt">mat2</span><span class="w"> </span><span class="n">r2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rot</span><span class="p">(</span><span class="mf">0.7</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">angle</span><span class="p">);</span>
+<span class="linenos">33</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w">   </span><span class="c1">// ここまでの拡大率の積</span>
+<span class="linenos">34</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ITERATIONS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">35</span><span class="w">        </span><span class="c1">// 3 つの座標平面で折り返す</span>
+<span class="linenos">36</span><span class="w">        </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">37</span><span class="w">        </span><span class="c1">// x &gt;= y &gt;= z となるように並べ替える。これは 3 つの対角面での折り返しに当たる</span>
+<span class="linenos">38</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">xy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">yx</span><span class="p">;</span>
+<span class="linenos">39</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">z</span><span class="p">)</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">zx</span><span class="p">;</span>
+<span class="linenos">40</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">z</span><span class="p">)</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">yz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">zy</span><span class="p">;</span>
+<span class="linenos">41</span><span class="w">        </span><span class="c1">// 回転させる</span>
+<span class="linenos">42</span><span class="w">        </span><span class="n">p</span><span class="p">.</span><span class="n">xy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
+<span class="linenos">43</span><span class="w">        </span><span class="n">p</span><span class="p">.</span><span class="n">yz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">yz</span><span class="p">;</span>
+<span class="linenos">44</span><span class="w">        </span><span class="c1">// OFFSET を中心に拡大する</span>
+<span class="linenos">45</span><span class="w">        </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SCALE</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">OFFSET</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">SCALE</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">46</span><span class="w">        </span><span class="n">scale</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">SCALE</span><span class="p">;</span>
+<span class="linenos">47</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">48</span><span class="w">    </span><span class="c1">// 最後に小さな箱を置き、拡大率の積で割って元の尺度の距離に戻す</span>
+<span class="linenos">49</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sdBox</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">scale</span><span class="p">;</span>
+<span class="linenos">50</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/5df87849c7c5352d673e645395947499/13_kifs.frag"><code class="xref download docutils literal notranslate"><span class="pre">13_kifs.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/13_kifs.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id23">
+<img alt="立方体に近い外形の中に、層状に折り重なった構造が見えるフラクタル" src="_images/13_kifs.png" />
+<figcaption>
+<p><span class="caption-text">13_kifs.frag の実行結果</span><a class="headerlink" href="#id23" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id13">
+<h3>KIFS の応用<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>この章の前半のメンガーのスポンジも、折り返しと拡大の繰り返しとして書き直せる。また、折り返しの平面（正四面体や正十二面体の対称面など）、回転の角度、拡大の中心を変えることで、シェルピンスキーの四面体をはじめ、多様なフラクタルを同じ枠組みで作れる。パラメーターを時間とともに変えると、形が連続的に変化するので、デモシーンの作品でよく使われる。</p>
+</section>
+</section>
+<section id="id14">
+<h2>フラクタルを描くときの注意<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<p>フラクタルの SDF は反復計算を含むため、評価に時間がかかる。また、表面が無限に細かいため、どこまで細かく描くかを決める必要がある。本章のサンプルでは、第 9 章で説明した次の工夫を使っている。</p>
+<ul class="simple">
+<li><p>距離に応じた閾値 <span class="math notranslate nohighlight">\(f &lt; \varepsilon t\)</span> を使い、遠くの細かい構造の計算を省く。</p></li>
+<li><p>マンデルバルブでは、法線を求める差分の幅も距離に比例させ（<code class="docutils literal notranslate"><span class="pre">calcNormal</span></code> の引数 <code class="docutils literal notranslate"><span class="pre">t</span></code>）、遠くの表面の法線がノイズのように乱れるのを防ぐ。</p></li>
+<li><p>マンデルバルブでは外接球をバウンディングボリュームとして使い、外接球の外では反復計算を省く。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="12_materials.html" class="btn btn-neutral float-left" title="第 12 章 物理ベースの材質" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="14_four_dimensions.html" class="btn btn-neutral float-right" title="第 14 章 4 次元の形状" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -12,6 +12,7 @@
 発生した例外が対処されなかった場合、Python はエラーの内容を「トレースバック（traceback）」と呼ばれる形式でコンソールに表示し、プログラムを終了します。次のプログラムを例に、トレースバックの読み方を説明します。
 
 .. code-block:: python
+   :linenos:
 
    def divide(a: int, b: int) -> float:
        return a / b
@@ -67,6 +68,7 @@ try 文による例外処理
 発生する可能性のある例外に対処するには、``try`` 文を使用します。``try`` ブロックの中で例外が発生すると、対応する ``except`` ブロックの処理が実行されます。
 
 .. code-block:: python
+   :linenos:
 
    try:
        result = 10 / 0
@@ -79,6 +81,7 @@ try 文による例外処理
 ``try`` 文には、``else`` ブロックと ``finally`` ブロックを追加できます。``else`` ブロックは、例外が発生しなかったときにだけ実行され、``finally`` ブロックは、例外の発生有無にかかわらず必ず実行されます。
 
 .. code-block:: python
+   :linenos:
 
    try:
        result = 10 / 2
@@ -95,6 +98,7 @@ try 文による例外処理
 Python では、``Exception`` クラスを継承することで、独自の例外クラスを定義できます。プログラム固有のエラーを表現したい場合に利用します。
 
 .. code-block:: python
+   :linenos:
 
    class InvalidScoreError(Exception):
        """点数が正しい範囲外である場合に送出される例外です。"""
@@ -107,6 +111,7 @@ Python では、``Exception`` クラスを継承することで、独自の例�
 定義した例外は、``raise`` 文で送出し、呼び出し元の ``except`` ブロックで受け取ります。
 
 .. code-block:: python
+   :linenos:
 
    try:
        validate_score(150)
@@ -119,6 +124,7 @@ assert 文
 ``assert`` 文を使うと、プログラムの前提条件を確認できます。``assert`` に続けて書いた条件式が偽であった場合、``AssertionError`` という例外が発生し、プログラムが停止します。条件式の後にカンマで区切ってメッセージを書くと、``AssertionError`` が発生した際にそのメッセージが表示されます。
 
 .. code-block:: python
+   :linenos:
 
    def calculate_average(scores: list[int]) -> float:
        assert len(scores) > 0, "scores は空にできません。"

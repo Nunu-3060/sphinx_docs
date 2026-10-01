@@ -3,7 +3,7 @@
 
 本資料中で使用した ``examples/`` 以下の Python スクリプトを、章をまたいで一括で閲覧できるようにまとめたページ。個別のファイルは各章の本文からも ``literalinclude`` で参照しているが、全体を通して読みたい場合や、手元にまとめて持っておきたい場合はこちらを使う。
 
-:download:`examples.zip <_static/downloads/examples.zip>` として全ファイルをまとめてダウンロードできる。展開すると ``examples/`` ディレクトリの中に本ページと同じ 40 個のスクリプトが入っている。
+:download:`examples.zip <_static/downloads/examples.zip>` として全ファイルをまとめてダウンロードできる。展開すると ``examples/`` ディレクトリの中に本ページと同じ 41 個のスクリプトが入っている。
 
 .. contents:: このページの目次
    :local:
@@ -259,6 +259,17 @@ flow_field.py
 :download:`examples/flow_field.py <../examples/flow_field.py>`
 
 .. literalinclude:: ../examples/flow_field.py
+   :language: python
+   :linenos:
+
+curl_noise.py
+---------------
+
+:doc:`noise`\ で使用。カールノイズによる発散が 0 の流れと、角度によるフローフィールドとの比較。
+
+:download:`examples/curl_noise.py <../examples/curl_noise.py>`
+
+.. literalinclude:: ../examples/curl_noise.py
    :language: python
    :linenos:
 

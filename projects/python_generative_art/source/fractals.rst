@@ -23,11 +23,13 @@
 ``F`` を前進、``X`` をダミーとして使う植物風の規則 ``X -> F+[[X]-X]-F[-FX]+X``, ``F -> FF`` を角度 25 度で適用すると、反復のたびに枝分かれが増えていく樹木状の構造が得られる。
 
 .. literalinclude:: ../examples/l_system.py
+   :linenos:
    :language: python
    :pyobject: generate
    :caption: examples/l_system.py の generate 関数
 
 .. literalinclude:: ../examples/l_system.py
+   :linenos:
    :language: python
    :pyobject: draw_l_system
    :caption: examples/l_system.py の draw_l_system 関数
@@ -39,6 +41,7 @@
 同じ ``generate`` / ``draw_l_system`` の組み合わせで、axiom と規則を変えるだけでまったく違う図形になる。正三角形を初期形 ``F--F--F`` とし、各辺を ``F -> F+F--F+F``\ （角度 60 度）で置き換えると、おなじみのコッホ雪片になる。
 
 .. code-block:: python
+   :linenos:
 
    from l_system import draw_l_system, generate
 
@@ -64,6 +67,7 @@ L-system でペンローズタイルを描く
 :doc:`tiling`\ では、ペンローズタイルを Robinson 三角形の細分割によって構成したが、実は L-system でも同じ模様を描ける。ただし、ここまでの ``F`` を前進記号として使う流儀とは少し違う書き方をする。
 
 .. code-block:: text
+   :linenos:
 
    axiom: [N]++[N]++[N]++[N]++[N]
    M -> OA++PA----NA[-OA----MA]++
@@ -102,11 +106,13 @@ L-system でペンローズタイルを描く
 実装上のポイントは、画素ごとに Python のループを回すのではなく、「まだ発散していない画素」を表すブールマスクを使い、NumPy 配列全体に対する演算として反復することである。反復回数（``max_iter``）分だけ Python のループを回す必要はあるが、その内側は画素配列全体へのベクトル演算になっており、画像の解像度が上がってもループ本体の実行回数は増えない。
 
 .. literalinclude:: ../examples/mandelbrot.py
+   :linenos:
    :language: python
    :pyobject: _escape_time
    :caption: examples/mandelbrot.py の _escape_time 関数
 
 .. literalinclude:: ../examples/mandelbrot.py
+   :linenos:
    :language: python
    :pyobject: mandelbrot_escape
    :caption: examples/mandelbrot.py の mandelbrot_escape 関数
@@ -114,6 +120,7 @@ L-system でペンローズタイルを描く
 脱出時間の配列は、そのままではグレースケール画像にしかならないので、matplotlib のカラーマップで着色して見やすくする。反復回数の分布は外周ほど密になるため、平方根を取ってから正規化すると階調のメリハリが出やすい。
 
 .. literalinclude:: ../examples/mandelbrot.py
+   :linenos:
    :language: python
    :pyobject: render_image
    :caption: examples/mandelbrot.py の render_image 関数
@@ -125,6 +132,7 @@ L-system でペンローズタイルを描く
 ジュリア集合は、``c`` を固定した上で ``z0`` 側を画素座標にして同じ ``_escape_time`` を呼ぶだけで得られる。``c`` の値によって形が大きく変わるのが特徴で、境界付近の値（例えば ``c = -0.7 + 0.27015j``）を選ぶと、渦を巻いたような複雑な模様になる。
 
 .. literalinclude:: ../examples/mandelbrot.py
+   :linenos:
    :language: python
    :pyobject: julia_escape
    :caption: examples/mandelbrot.py の julia_escape 関数
@@ -149,6 +157,7 @@ L-system が文字列の書き換え、マンデルブロ/ジュリア集合が�
 驚くべきことに、変換とその確率さえ正しく選べば、点がどのような順序で変換を選んでも、十分な数の点を打てば同じ図形（アトラクター）が浮かび上がってくる。1 本の軌跡は「直前の点」に依存する逐次処理だが、独立した軌跡を多数同時に走らせれば、ステップごとの更新は NumPy でベクトル化できる。
 
 .. literalinclude:: ../examples/ifs.py
+   :linenos:
    :language: python
    :pyobject: chaos_game
    :caption: examples/ifs.py の chaos_game 関数
@@ -156,6 +165,7 @@ L-system が文字列の書き換え、マンデルブロ/ジュリア集合が�
 有名な例が\ **バーンズリーのシダ**\ で、4 つのアフィン変換（茎、小葉、左右の葉）を、偏った確率（茎はごくまれにしか選ばれない）で適用すると、本物のシダによく似た葉序が現れる。
 
 .. literalinclude:: ../examples/ifs.py
+   :linenos:
    :language: python
    :pyobject: barnsley_fern_ifs
    :caption: examples/ifs.py の barnsley_fern_ifs 関数
@@ -167,6 +177,7 @@ L-system が文字列の書き換え、マンデルブロ/ジュリア集合が�
 もう 1 つの定番が\ **シェルピンスキーの三角形**\ である。正三角形の 3 頂点それぞれに対して「現在の点とその頂点の中点に移動する」という変換を用意し、等確率で選ぶだけで、無限に自己相似な三角形の抜け模様が現れる。
 
 .. literalinclude:: ../examples/ifs.py
+   :linenos:
    :language: python
    :pyobject: sierpinski_triangle_ifs
    :caption: examples/ifs.py の sierpinski_triangle_ifs 関数
@@ -178,6 +189,7 @@ L-system が文字列の書き換え、マンデルブロ/ジュリア集合が�
 打った点は密度にかなりの偏りがあるため、そのまま 2 次元ヒストグラムにすると濃い部分だけが目立ってしまう。対数を取ってから正規化することで、点数の少ない領域（シダで言えば葉の先端など）も見えるようにしている。
 
 .. literalinclude:: ../examples/ifs.py
+   :linenos:
    :language: python
    :pyobject: render_density
    :caption: examples/ifs.py の render_density 関数
@@ -194,6 +206,7 @@ IFS のカオスゲームは「複数の変換をランダムに選んで反復�
 2 次元平面上の点 :math:`(x, y)` を、非線形な三角関数を含む式で次の点に写す離散写像であれば、同様の性質を持つものが数多く知られている。実装上は IFS と同様、多数の点をわずかにばらけた初期位置から出発させて並行に反復し、密度を可視化する。レンダリングには、先ほどの IFS の節で使った ``render_density`` をそのまま使い回せる。
 
 .. literalinclude:: ../examples/attractors.py
+   :linenos:
    :language: python
    :pyobject: clifford_attractor
    :caption: examples/attractors.py の clifford_attractor 関数
@@ -205,6 +218,7 @@ IFS のカオスゲームは「複数の変換をランダムに選んで反復�
 **De Jong attractor** も同様の形の写像で、パラメータが変わるだけで全く異なる印象の模様になる。
 
 .. literalinclude:: ../examples/attractors.py
+   :linenos:
    :language: python
    :pyobject: de_jong_attractor
    :caption: examples/attractors.py の de_jong_attractor 関数
@@ -220,6 +234,7 @@ IFS のカオスゲームは「複数の変換をランダムに選んで反復�
    g(x) = \mu x + \frac{2(1-\mu)x^2}{1+x^2}
 
 .. literalinclude:: ../examples/attractors.py
+   :linenos:
    :language: python
    :pyobject: gumowski_mira_attractor
    :caption: examples/attractors.py の gumowski_mira_attractor 関数

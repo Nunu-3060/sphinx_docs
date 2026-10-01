@@ -22,6 +22,7 @@
 * O. Biham, A.A. Middleton, D. Levine, "Self-organization and a dynamical transition in traffic-flow models", Physical Review A 46(10), 1992. — 本資料の\ :doc:`automata`\ で扱った BML 交通モデルの原論文。密度によって流れが渋滞へ相転移する現象を報告している。
 * Stuart P. Lloyd, "Least Squares Quantization in PCM", IEEE Transactions on Information Theory 28(2), 1982. — 本資料の\ :ref:`lloyd`\ で扱ったロイド緩和の原論文。1957 年に社内報告としてまとめられた内容を論文として発表したもの。
 * Steven Worley, "A Cellular Texture Basis Function", Proceedings of SIGGRAPH '96, 1996. — 本資料の :ref:`worley`\ で扱った Worley ノイズの原論文。
+* Robert Bridson, Jim Houriham, Marcus Nordenstam, "Curl-Noise for Procedural Fluid Flow", ACM Transactions on Graphics 26(3) (SIGGRAPH 2007), 2007. — 本資料の\ :ref:`curl-noise`\ で扱ったカールノイズの原論文。流れ関数の回転から発散が 0 の速度場を作る考え方と、障害物の周りを回り込む流れへの拡張を扱う。
 * Adrian Secord, "Weighted Voronoi Stippling", Proceedings of the 2nd International Symposium on Non-Photorealistic Animation and Rendering (NPAR 2002), 2002. — 本資料の\ :ref:`stippling`\ で扱った、重み付きロイド緩和による点描の原論文。
 * Edwin Catmull, Raphael Rom, "A Class of Local Interpolating Splines", in R.E. Barnhill, R.F. Riesenfeld (eds.), *Computer Aided Geometric Design*, Academic Press, 1974. — 本資料の\ :ref:`bezier`\ で扱った Catmull-Rom スプラインの原論文。
 
