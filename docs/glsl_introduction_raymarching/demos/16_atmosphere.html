@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>16_atmosphere.frag</title>
+<style>
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; }
+#error {
+  position: absolute; top: 0; left: 0; right: 0; margin: 0; padding: 1em;
+  color: #fff; background: rgba(160, 0, 0, 0.85);
+  font: 14px/1.4 monospace; white-space: pre-wrap; display: none;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<pre id="error"></pre>
+<script>
+"use strict";
+// [{name: "Buffer A" | "Image", source: GLSL, line: ファイル中の開始行}]
+const PASSES = [{"name": "Image", "source": "// 16_atmosphere.frag\n// \u7b2c 16 \u7ae0: \u5927\u6c17\u306e\u6563\u4e71\u3002\u30ec\u30a4\u30ea\u30fc\u6563\u4e71\u3068\u30df\u30fc\u6563\u4e71\u306e\u5358\u4e00\u6563\u4e71\u3092\u7a4d\u5206\u3057\u3066\u3001\u7a7a\u306e\u8272\u3092\u6c42\u3081\u308b\u3002\n// \u592a\u967d\u306e\u9ad8\u5ea6\u3092\u6642\u9593\u3068\u3068\u3082\u306b\u5909\u3048\u3001\u663c\u306e\u9752\u7a7a\u304b\u3089\u5915\u713c\u3051\u307e\u3067\u3092\u8868\u793a\u3059\u308b\u3002\n// \u9577\u3055\u306e\u5358\u4f4d\u306f\u30e1\u30fc\u30c8\u30eb\u3002\n\nconst float PI = 3.14159265;\n\nconst float EARTH_RADIUS = 6360e3;        // \u5730\u7403\u306e\u534a\u5f84\nconst float ATMOSPHERE_RADIUS = 6420e3;   // \u5927\u6c17\u306e\u4e0a\u7aef\u306e\u534a\u5f84\n\n// \u30ec\u30a4\u30ea\u30fc\u6563\u4e71 (\u7a7a\u6c17\u306e\u5206\u5b50\u306b\u3088\u308b\u6563\u4e71)\u3002\u6ce2\u9577\u306e\u77ed\u3044\u9752\u307b\u3069\u5f37\u304f\u6563\u4e71\u3059\u308b\nconst vec3  BETA_RAYLEIGH = vec3(5.8e-6, 13.5e-6, 33.1e-6);   // \u6d77\u9762\u3067\u306e\u6563\u4e71\u4fc2\u6570 [1/m]\nconst float HEIGHT_RAYLEIGH = 8.0e3;                          // \u30b9\u30b1\u30fc\u30eb\u30cf\u30a4\u30c8 [m]\n\n// \u30df\u30fc\u6563\u4e71 (\u30a8\u30a2\u30ed\u30be\u30eb\u306b\u3088\u308b\u6563\u4e71)\u3002\u6ce2\u9577\u306b\u3088\u3089\u305a\u3001\u524d\u65b9\u306b\u5f37\u304f\u6563\u4e71\u3059\u308b\nconst float BETA_MIE = 21e-6;\nconst float HEIGHT_MIE = 1.2e3;\nconst float MIE_G = 0.76;                 // \u524d\u65b9\u6563\u4e71\u306e\u5f37\u3055 (\u4f4d\u76f8\u95a2\u6570\u306e g)\n\nconst float SUN_INTENSITY = 20.0;\nconst int   VIEW_SAMPLES = 16;            // \u8996\u7dda\u65b9\u5411\u306e\u5206\u5272\u6570\nconst int   LIGHT_SAMPLES = 8;            // \u592a\u967d\u306e\u65b9\u5411\u306e\u5206\u5272\u6570\n\n// \u539f\u70b9\u3092\u4e2d\u5fc3\u3068\u3059\u308b\u534a\u5f84 r \u306e\u7403\u3068\u3001\u30ec\u30a4 ro + t * rd \u306e\u4ea4\u70b9\u306e t (\u8fd1\u3044\u65b9, \u9060\u3044\u65b9)\u3002\n// \u4ea4\u308f\u3089\u306a\u3051\u308c\u3070 (-1, -1)\nvec2 raySphere(vec3 ro, vec3 rd, float r)\n{\n    float b = dot(ro, rd);\n    float c = dot(ro, ro) - r * r;\n    float disc = b * b - c;\n    if (disc < 0.0) {\n        return vec2(-1.0);\n    }\n    float s = sqrt(disc);\n    return vec2(-b - s, -b + s);\n}\n\n// \u9ad8\u3055 h \u3067\u306e\u3001\u30ec\u30a4\u30ea\u30fc\u6563\u4e71\u3068\u30df\u30fc\u6563\u4e71\u306e\u7c92\u5b50\u306e\u5bc6\u5ea6 (\u6d77\u9762\u3092 1 \u3068\u3059\u308b)\nvec2 densityAt(vec3 p)\n{\n    float h = length(p) - EARTH_RADIUS;\n    return exp(-h / vec2(HEIGHT_RAYLEIGH, HEIGHT_MIE));\n}\n\n// \u70b9 p \u304b\u3089\u592a\u967d\u306e\u65b9\u5411\u306b\u5927\u6c17\u306e\u4e0a\u7aef\u307e\u3067\u9032\u3093\u3060\u3068\u304d\u306e\u5149\u5b66\u7684\u6df1\u3055 (\u5bc6\u5ea6 \u00d7 \u8ddd\u96e2\u306e\u7a4d\u5206)\nvec2 opticalDepthToSun(vec3 p, vec3 sunDir)\n{\n    float tEnd = raySphere(p, sunDir, ATMOSPHERE_RADIUS).y;\n    float ds = tEnd / float(LIGHT_SAMPLES);\n    vec2 depth = vec2(0.0);\n    for (int i = 0; i < LIGHT_SAMPLES; i++) {\n        depth += densityAt(p + (float(i) + 0.5) * ds * sunDir) * ds;\n    }\n    return depth;\n}\n\n// \u8996\u70b9 ro \u304b\u3089\u65b9\u5411 rd \u3092\u898b\u305f\u3068\u304d\u306b\u5c4a\u304f\u3001\u6563\u4e71\u3055\u308c\u305f\u592a\u967d\u5149\nvec3 skyRadiance(vec3 ro, vec3 rd, vec3 sunDir)\n{\n    // \u5927\u6c17\u306e\u4e2d\u3092\u9032\u3080\u533a\u9593\u3092\u6c42\u3081\u308b\u3002\u5730\u9762\u306b\u5f53\u305f\u308b\u5834\u5408\u306f\u5730\u9762\u307e\u3067\n    float tEnd = raySphere(ro, rd, ATMOSPHERE_RADIUS).y;\n    vec2 ground = raySphere(ro, rd, EARTH_RADIUS);\n    if (ground.x > 0.0) {\n        tEnd = ground.x;\n    }\n    float ds = tEnd / float(VIEW_SAMPLES);\n\n    vec3 sumRayleigh = vec3(0.0);\n    vec3 sumMie = vec3(0.0);\n    vec2 depthView = vec2(0.0);   // \u8996\u70b9\u304b\u3089\u30b5\u30f3\u30d7\u30eb\u70b9\u307e\u3067\u306e\u5149\u5b66\u7684\u6df1\u3055\n    for (int i = 0; i < VIEW_SAMPLES; i++) {\n        vec3 p = ro + (float(i) + 0.5) * ds * rd;\n        vec2 density = densityAt(p) * ds;\n        depthView += density;\n        // \u592a\u967d\u306e\u5149\u304c\u5730\u7403\u306b\u906e\u3089\u308c\u308b\u70b9\u306f\u3001\u6563\u4e71\u306b\u5bc4\u4e0e\u3057\u306a\u3044\n        if (raySphere(p, sunDir, EARTH_RADIUS).x > 0.0) {\n            continue;\n        }\n        vec2 depthSun = opticalDepthToSun(p, sunDir);\n        // \u592a\u967d \u2192 \u30b5\u30f3\u30d7\u30eb\u70b9 \u2192 \u8996\u70b9 \u306e\u7d4c\u8def\u306e\u900f\u904e\u7387 (\u30e9\u30f3\u30d9\u30eb\u30c8\u30fb\u30d9\u30fc\u30eb\u306e\u6cd5\u5247)\n        vec2 depth = depthView + depthSun;\n        vec3 tau = BETA_RAYLEIGH * depth.x + 1.1 * BETA_MIE * depth.y;\n        vec3 transmittance = exp(-tau);\n        sumRayleigh += transmittance * density.x;\n        sumMie += transmittance * density.y;\n    }\n\n    // \u4f4d\u76f8\u95a2\u6570: \u30ec\u30a4\u30ea\u30fc\u6563\u4e71\u306f\u524d\u5f8c\u306b\u5bfe\u79f0\u3001\u30df\u30fc\u6563\u4e71\u306f\u524d\u65b9\u306b\u5f37\u3044\n    float mu = dot(rd, sunDir);\n    float phaseRayleigh = 3.0 / (16.0 * PI) * (1.0 + mu * mu);\n    float g2 = MIE_G * MIE_G;\n    float phaseMie = 3.0 / (8.0 * PI) * ((1.0 - g2) * (1.0 + mu * mu)) /\n                     ((2.0 + g2) * pow(1.0 + g2 - 2.0 * MIE_G * mu, 1.5));\n\n    return SUN_INTENSITY * (sumRayleigh * BETA_RAYLEIGH * phaseRayleigh +\n                            sumMie * BETA_MIE * phaseMie);\n}\n\nvec3 toneMapACES(vec3 x)\n{\n    x *= 0.6;\n    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14),\n                 0.0, 1.0);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 p = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n\n    // \u592a\u967d\u306e\u9ad8\u5ea6 [rad] \u3092\u6642\u9593\u3068\u3068\u3082\u306b\u5909\u3048\u308b\u3002-0.05 (\u65e5\u6ca1\u5f8c)\u301c1.0 \u306e\u7bc4\u56f2\n    float elevation = 0.47 + 0.52 * cos(0.15 * iTime + 1.4);\n    vec3 sunDir = normalize(vec3(0.0, sin(elevation), -cos(elevation)));\n\n    // \u5730\u4e0a 2 m \u304b\u3089\u3001\u592a\u967d\u306e\u65b9\u5411 (-z) \u306e\u5730\u5e73\u7dda\u3092\u5c11\u3057\u898b\u4e0a\u3052\u308b\n    vec3 ro = vec3(0.0, EARTH_RADIUS + 2.0, 0.0);\n    vec3 forward = normalize(vec3(0.0, 0.25, -1.0));\n    vec3 right = normalize(cross(forward, vec3(0.0, 1.0, 0.0)));\n    vec3 up = cross(right, forward);\n    vec3 rd = normalize(p.x * right + p.y * up + 1.2 * forward);\n\n    vec3 col = skyRadiance(ro, rd, sunDir);\n    // \u592a\u967d\u306e\u5186\u76e4\n    float sun = smoothstep(0.9995, 0.9998, dot(rd, sunDir));\n    col += sun * 20.0 * exp(-BETA_RAYLEIGH * 8e4 / max(sunDir.y + 0.05, 0.05));\n\n    col = pow(toneMapACES(col), vec3(1.0 / 2.2));\n    fragColor = vec4(col, 1.0);\n}\n", "line": 1, "common": "", "commonLine": 1}];
+
+const HEADER = [
+  "#version 300 es",
+  "precision highp float;",
+  "precision highp int;",
+  "uniform vec3 iResolution;",
+  "uniform float iTime;",
+  "uniform float iTimeDelta;",
+  "uniform int iFrame;",
+  "uniform vec4 iMouse;",
+  "uniform sampler2D iChannel0;",
+  "uniform vec3 iChannelResolution[4];",
+  "out vec4 shadertoyOutColor;"
+].join("\n");
+
+// Image のパスでは不透明度を 1 にする。Buffer A では 4 成分をそのまま残す
+function footer(passName) {
+  return [
+    "",
+    "void main() {",
+    "  mainImage(shadertoyOutColor, gl_FragCoord.xy);",
+    passName === "Image" ? "  shadertoyOutColor.a = 1.0;" : "",
+    "}"
+  ].join("\n");
+}
+
+const VERTEX_SOURCE = [
+  "#version 300 es",
+  "in vec2 position;",
+  "void main() { gl_Position = vec4(position, 0.0, 1.0); }"
+].join("\n");
+
+function showError(message) {
+  const element = document.getElementById("error");
+  element.textContent = message;
+  element.style.display = "block";
+  document.title = "ERROR: " + document.title;
+}
+
+function compile(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
+// パスのプログラムを作る。Common のコードがあれば先頭に加える。
+// #line でエラーの行番号をファイルの行番号に合わせる
+function createProgram(gl, pass) {
+  const program = gl.createProgram();
+  let source = HEADER;
+  if (pass.common) {
+    source += "\n#line " + pass.commonLine + "\n" + pass.common;
+  }
+  source += "\n#line " + pass.line + "\n" + pass.source + footer(pass.name);
+  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX_SOURCE));
+  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, source));
+  gl.bindAttribLocation(program, 0, "position");
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program));
+  }
+  const uniforms = {};
+  for (const name of ["iResolution", "iTime", "iTimeDelta", "iFrame",
+                      "iMouse", "iChannel0", "iChannelResolution"]) {
+    uniforms[name] = gl.getUniformLocation(program, name);
+  }
+  return {name: pass.name, program: program, uniforms: uniforms};
+}
+
+// URL のフラグメント (#t=2.5&frames=16 など) から数値のパラメーターを読む
+function hashParameter(name) {
+  const pattern = new RegExp("(?:^#|&)" + name + "=([0-9.]+)");
+  const match = pattern.exec(location.hash);
+  return match ? parseFloat(match[1]) : null;
+}
+
+function run() {
+  const canvas = document.getElementById("canvas");
+  const gl = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
+  if (!gl) {
+    showError("WebGL2 is not supported by this browser.");
+    return;
+  }
+
+  let passes;
+  try {
+    passes = PASSES.map((pass) => createProgram(gl, pass));
+  } catch (e) {
+    showError("Shader compile error:\n" + e.message);
+    return;
+  }
+  const bufferPass = passes.find((pass) => pass.name === "Buffer A");
+  const imagePass = passes.find((pass) => pass.name === "Image");
+
+  // 浮動小数点数のテクスチャへの描画に対応していなければ 8 ビットで代用する
+  const floatBuffer = gl.getExtension("EXT_color_buffer_float") !== null;
+
+  // 画面全体を覆う 2 つの三角形
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
+    [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  // Buffer A の描画先。前のフレームを読みながら次のフレームを書くため 2 枚使う
+  let targets = [];
+  function createTarget(width, height) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    if (floatBuffer) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0,
+                    gl.RGBA, gl.FLOAT, null);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0,
+                    gl.RGBA, gl.UNSIGNED_BYTE, null);
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const framebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                            gl.TEXTURE_2D, texture, 0);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return {texture: texture, framebuffer: framebuffer};
+  }
+
+  // iMouse: xy はドラッグ中の座標、zw はクリック位置 (離すと負)
+  const mouse = [0, 0, 0, 0];
+  let dragging = false;
+  function mousePosition(event) {
+    const rect = canvas.getBoundingClientRect();
+    const scale = canvas.width / rect.width;
+    return [(event.clientX - rect.left) * scale,
+            (rect.bottom - event.clientY) * scale];
+  }
+  canvas.addEventListener("mousedown", (event) => {
+    const [x, y] = mousePosition(event);
+    dragging = true;
+    mouse[0] = x; mouse[1] = y; mouse[2] = x; mouse[3] = y;
+  });
+  canvas.addEventListener("mousemove", (event) => {
+    if (!dragging) { return; }
+    const [x, y] = mousePosition(event);
+    mouse[0] = x; mouse[1] = y;
+  });
+  window.addEventListener("mouseup", () => {
+    dragging = false;
+    mouse[2] = -Math.abs(mouse[2]); mouse[3] = -Math.abs(mouse[3]);
+  });
+
+  function drawPass(pass, width, height, time, timeDelta, frame, channel) {
+    gl.useProgram(pass.program);
+    const u = pass.uniforms;
+    gl.uniform3f(u.iResolution, width, height, 1);
+    gl.uniform1f(u.iTime, time);
+    gl.uniform1f(u.iTimeDelta, timeDelta);
+    gl.uniform1i(u.iFrame, frame);
+    gl.uniform4fv(u.iMouse, mouse);
+    gl.uniform3fv(u.iChannelResolution,
+                  [width, height, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, channel);
+    gl.uniform1i(u.iChannel0, 0);
+    gl.viewport(0, 0, width, height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+
+  // 1 フレームを描画する
+  function renderFrame(time, timeDelta, frame) {
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.floor(canvas.clientWidth * ratio));
+    const height = Math.max(1, Math.floor(canvas.clientHeight * ratio));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      targets = [];
+    }
+    if (bufferPass && targets.length === 0) {
+      targets = [createTarget(width, height), createTarget(width, height)];
+    }
+    let latest = null;
+    if (bufferPass) {
+      // targets[0] (前のフレーム) を読み、targets[1] に書いてから入れ替える
+      gl.bindFramebuffer(gl.FRAMEBUFFER, targets[1].framebuffer);
+      drawPass(bufferPass, width, height, time, timeDelta, frame,
+               targets[0].texture);
+      targets.reverse();
+      latest = targets[0].texture;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    drawPass(imagePass, width, height, time, timeDelta, frame, latest);
+  }
+
+  const fixedTime = hashParameter("t");
+  const fixedFrame = hashParameter("frame");
+  const frameCount = hashParameter("frames");
+
+  if (frameCount !== null) {
+    // 指定したフレーム数だけを続けて描画して止める (撮影用)。
+    // 画面の大きさが変わったときは、最初から描画し直す
+    const renderFixedFrames = () => {
+      const time = fixedTime !== null ? fixedTime : 0;
+      targets = [];
+      for (let frame = 0; frame < frameCount; frame++) {
+        renderFrame(time, 1 / 60, frame);
+      }
+      gl.finish();
+    };
+    new ResizeObserver(renderFixedFrames).observe(canvas);
+    return;
+  }
+
+  const startTime = performance.now();
+  let previousTime = 0;
+  let frame = 0;
+  function loop(now) {
+    const time = fixedTime !== null ? fixedTime : (now - startTime) / 1000;
+    renderFrame(time, time - previousTime,
+                fixedFrame !== null ? fixedFrame : frame);
+    previousTime = time;
+    frame += 1;
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+run();
+</script>
+</body>
+</html>

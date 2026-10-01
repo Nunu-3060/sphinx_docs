@@ -1,0 +1,473 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 19 章 実践：ボクセルの都市の夜景 &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 20 章 実践：パストレーシングによる静物画" href="20_still_life.html" />
+    <link rel="prev" title="第 18 章 実践：夕暮れの風景を描く" href="18_landscape.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 19 章 実践：ボクセルの都市の夜景</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">完成イメージ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">シーンの構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">街の構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">窓の明かり</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">霧の中の街灯の光</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">点光源からの散乱の積分</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">セルごとの積分</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">霧による減衰</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">街灯による照明</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">濡れた路面</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">夜空と露出</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">デバッグ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">改造の案</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 19 章 実践：ボクセルの都市の夜景</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 19 章 実践：ボクセルの都市の夜景<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>この章では、第 15 章のグリッドの走査で描いた街並みを夜景にする。窓の明かり、霧の中でにじむ街灯の光、雨に濡れた路面の映り込みを加える。第 18 章の風景では太陽という 1 つの光源で画面全体を照らしたが、夜景では多数の小さな光源が画面の印象を決める。多数の光源をどう効率よく扱うかが、この章の中心になる。</p>
+<section id="id2">
+<h2>完成イメージ<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<figure class="align-center" id="id15">
+<img alt="両側に窓の明かりの灯った高層ビルが並ぶ大通り。街灯の光が霧の中でにじみ、濡れた路面に窓の明かりが映っている" src="_images/19_night_city.png" />
+<figcaption>
+<p><span class="caption-text">19_night_city.frag の実行結果</span><a class="headerlink" href="#id15" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/8a6169f52e629ff50aa2c0caf9d44b0f/19_night_city.frag"><code class="xref download docutils literal notranslate"><span class="pre">19_night_city.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/19_night_city.html">ブラウザーで実行</a></p>
+<p>カメラは大通りの上を、少し見上げながら進む。画面の明るさのほとんどは、窓の明かりと街灯という人工の光によるもので、月の光はごく弱い。</p>
+</section>
+<section id="id3">
+<h2>シーンの構成<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 55.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>要素</p></th>
+<th class="head"><p>技法</p></th>
+<th class="head"><p>関連する章</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>街並み</p></td>
+<td><p>2D DDA とセル内のスフィアトレーシング、ハッシュによるビルの生成、大通りの配置</p></td>
+<td><p>第 10 章、第 15 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>窓の明かり</p></td>
+<td><p>ハッシュによる点灯・消灯と色の決定、発光する材質</p></td>
+<td><p>第 10 章</p></td>
+</tr>
+<tr class="row-even"><td><p>霧の中の街灯の光</p></td>
+<td><p>一様な関与媒質での単一散乱を、セルごとに解析的に積分する</p></td>
+<td><p>第 15 章、第 16 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>街灯による照明</p></td>
+<td><p>近くの点光源だけを評価する</p></td>
+<td><p>第 5 章</p></td>
+</tr>
+<tr class="row-even"><td><p>濡れた路面</p></td>
+<td><p>ノイズによる水たまり、フレネル反射による映り込み</p></td>
+<td><p>第 10 章、第 11 章、第 12 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>夜空と露出</p></td>
+<td><p>光害で赤みを帯びた夜空、露出を上げたトーンマッピング</p></td>
+<td><p>第 7 章</p></td>
+</tr>
+</tbody>
+</table>
+<p>多数の光源をすべての点で評価すると、計算量が光源の数に比例して増える。この章では、光源も格子のセルに対応させて配置し、レイが通過するセルの近くの光源だけを評価する。第 15 章のグリッドの走査を、形状だけでなく光源の選択にも使うのである。</p>
+</section>
+<section id="id4">
+<h2>街の構成<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>第 15 章の街並みに、4 セルごとに大通りを通す。大通りのセルにはビルを置かず、交差点と大通り沿いの角に街灯を置く。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">19_night_city.frag（抜粋）</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">64</span><span class="c1">// 4 セルごとに大通りを通す。大通りのセルにはビルを置かない</span>
+<span class="linenos">65</span><span class="kt">bool</span><span class="w"> </span><span class="n">isAvenue</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">cell</span><span class="p">)</span>
+<span class="linenos">66</span><span class="p">{</span>
+<span class="linenos">67</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mod</span><span class="p">(</span><span class="n">cell</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="mf">4.0</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">mod</span><span class="p">(</span><span class="n">cell</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="mf">4.0</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">68</span><span class="p">}</span>
+<span class="linenos">69</span>
+<span class="linenos">70</span><span class="kt">float</span><span class="w"> </span><span class="n">sdBox</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">b</span><span class="p">)</span>
+<span class="linenos">71</span><span class="p">{</span>
+<span class="linenos">72</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="linenos">73</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">q</span><span class="p">.</span><span class="n">z</span><span class="p">)),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">74</span><span class="p">}</span>
+<span class="linenos">75</span>
+<span class="linenos">76</span><span class="kt">vec3</span><span class="w"> </span><span class="n">buildingSize</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">cell</span><span class="p">)</span>
+<span class="linenos">77</span><span class="p">{</span>
+<span class="linenos">78</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MAX_HEIGHT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">hash21</span><span class="p">(</span><span class="n">cell</span><span class="p">),</span><span class="w"> </span><span class="mf">1.5</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.3</span><span class="p">;</span>
+<span class="linenos">79</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.12</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">hash21</span><span class="p">(</span><span class="n">cell</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">17.0</span><span class="p">);</span>
+<span class="linenos">80</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">);</span>
+<span class="linenos">81</span><span class="p">}</span>
+<span class="linenos">82</span>
+<span class="linenos">83</span><span class="c1">// セル cell の中の形状 (路面とビル) の SDF (第 15 章)</span>
+<span class="linenos">84</span><span class="kt">float</span><span class="w"> </span><span class="n">cellSDF</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cell</span><span class="p">)</span>
+<span class="linenos">85</span><span class="p">{</span>
+<span class="linenos">86</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">87</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">isAvenue</span><span class="p">(</span><span class="n">cell</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">88</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buildingSize</span><span class="p">(</span><span class="n">cell</span><span class="p">);</span>
+<span class="linenos">89</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="n">cell</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">);</span>
+<span class="linenos">90</span><span class="w">        </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdBox</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">center</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">));</span>
+<span class="linenos">91</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">92</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">93</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>走査の関数は第 15 章とほぼ同じだが、セルを通過するたびに、そのセルで霧から散乱される光を加えている（後述）。</p>
+</section>
+<section id="id5">
+<h2>窓の明かり<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>ビルの壁を細かい格子に分け、各格子を 1 つの窓とする。窓が点灯しているかどうかと、光の色（暖色か寒色か）と明るさは、窓の番号とセルの番号のハッシュ値で決める。同じ窓は常に同じ値になるので、カメラが動いても窓の明かりはちらつかない。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">19_night_city.frag（抜粋）</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">203</span><span class="c1">// 窓の明かり: 窓ごとにハッシュで点灯・消灯と色を決める</span>
+<span class="linenos">204</span><span class="kt">vec3</span><span class="w"> </span><span class="n">windowLight</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cell</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">isWindow</span><span class="p">)</span>
+<span class="linenos">205</span><span class="p">{</span>
+<span class="linenos">206</span><span class="w">    </span><span class="c1">// 壁の上の座標 (横方向、高さ)</span>
+<span class="linenos">207</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">n</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">208</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">uv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">u</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">8.0</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">7.0</span><span class="p">);</span>
+<span class="linenos">209</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">uv</span><span class="p">);</span>
+<span class="linenos">210</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">uv</span><span class="p">);</span>
+<span class="linenos">211</span><span class="w">    </span><span class="n">isWindow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.25</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.8</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.8</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.12</span><span class="p">;</span>
+<span class="linenos">212</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">isWindow</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">213</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">214</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">215</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hash31</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">31.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cell</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">7.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">13.0</span><span class="p">));</span>
+<span class="linenos">216</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">h</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.55</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">217</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span><span class="w">                                  </span><span class="c1">// 消灯</span>
+<span class="linenos">218</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">219</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">warm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">0.35</span><span class="p">);</span>
+<span class="linenos">220</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">cool</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">221</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">warm</span><span class="p">,</span><span class="w"> </span><span class="n">cool</span><span class="p">,</span><span class="w"> </span><span class="n">step</span><span class="p">(</span><span class="mf">0.85</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">0.6</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.8</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">h</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">13.7</span><span class="p">));</span>
+<span class="linenos">222</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>窓の明かりは、照明の計算を行わずに表面の色にそのまま加える発光（emission）として扱う。窓の明かりが周囲を照らす効果は省略しているが、窓は暗い夜景の中で最も明るい要素なので、これだけで夜景らしさが大きく増す。</p>
+</section>
+<section id="id6">
+<h2>霧の中の街灯の光<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<section id="id7">
+<h3>点光源からの散乱の積分<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>霧の中では、街灯の光が霧の粒子に散乱され、光源のまわりがぼんやりと光って見える。これを、一様な霧（消散係数 <span class="math notranslate nohighlight">\(\sigma_t\)</span>、散乱係数 <span class="math notranslate nohighlight">\(\sigma_s\)</span>）の中にある点光源からの単一散乱として計算する。</p>
+<p>視線 <span class="math notranslate nohighlight">\(\mathbf{o} + t\hat{\mathbf{d}}\)</span> 上の点と光源 <span class="math notranslate nohighlight">\(\mathbf{L}\)</span> の距離を <span class="math notranslate nohighlight">\(r(t)\)</span> とすると、点光源からの光は <span class="math notranslate nohighlight">\(I / r^2\)</span> で弱まる。視線上の区間 <span class="math notranslate nohighlight">\([t_a, t_b]\)</span> で散乱されて視点に届く光は、透過率と位相関数を一定とみなすと、次の積分に比例する。</p>
+<div class="math notranslate nohighlight">
+\[\int_{t_a}^{t_b} \frac{dt}{r(t)^2}, \qquad r(t)^2 = h^2 + (t - t_c)^2\]</div>
+<p><span class="math notranslate nohighlight">\(t_c\)</span> は視線が光源に最も近づく位置、<span class="math notranslate nohighlight">\(h\)</span> はそのときの距離である。この積分は解析的に求められる。</p>
+<div class="math notranslate nohighlight">
+\[\int_{t_a}^{t_b} \frac{dt}{h^2 + (t - t_c)^2}
+= \frac{1}{h}\left(\arctan\frac{t_b - t_c}{h} - \arctan\frac{t_a - t_c}{h}\right)\]</div>
+<p>レイマーチングのように区間を細かく分けて数値的に積分する必要がないので、1 つの光源につき数回の計算で済む。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">19_night_city.frag（抜粋）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 97</span><span class="c1">// 点光源 lamp から、レイ ro + t rd の区間 [ta, tb] に散乱されて届く光の量。</span>
+<span class="linenos"> 98</span><span class="c1">// 光源までの距離の 2 乗に反比例する光を、区間について解析的に積分する:</span>
+<span class="linenos"> 99</span><span class="c1">//   ∫ dt / (d^2 + (t - tc)^2) = (atan((tb - tc) / d) - atan((ta - tc) / d)) / d</span>
+<span class="linenos">100</span><span class="kt">float</span><span class="w"> </span><span class="n">lampInScatter</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">lamp</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">ta</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tb</span><span class="p">)</span>
+<span class="linenos">101</span><span class="p">{</span>
+<span class="linenos">102</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">tc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">lamp</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span><span class="w">                 </span><span class="c1">// 光源に最も近づく t</span>
+<span class="linenos">103</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tc</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">lamp</span><span class="p">),</span><span class="w"> </span><span class="mf">0.02</span><span class="p">);</span>
+<span class="linenos">104</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">atan</span><span class="p">((</span><span class="n">tb</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">tc</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">atan</span><span class="p">((</span><span class="n">ta</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">tc</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">d</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">105</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id8">
+<h3>セルごとの積分<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>街灯は無数にあるので、すべての街灯について積分するわけにはいかない。点光源からの光は距離の 2 乗で弱まるので、ある区間で散乱される光の大部分は、その区間の近くの光源から来る。そこで、走査でレイが通過する各セルについて、そのセルの 4 つの角にある街灯だけを考え、セルの中の区間で積分する。</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">19_night_city.frag（抜粋）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">122</span><span class="c1">// レイがセル cell を通過する区間 [ta, tb] で、周囲の街灯から散乱される光</span>
+<span class="linenos">123</span><span class="kt">vec3</span><span class="w"> </span><span class="n">fogInScatter</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">cell</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">ta</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tb</span><span class="p">)</span>
+<span class="linenos">124</span><span class="p">{</span>
+<span class="linenos">125</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">126</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">127</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">128</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">corner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">j</span><span class="p">));</span>
+<span class="linenos">129</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hasLamp</span><span class="p">(</span><span class="n">corner</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">130</span><span class="w">                </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">lampInScatter</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">lampPosition</span><span class="p">(</span><span class="n">corner</span><span class="p">),</span><span class="w"> </span><span class="n">ta</span><span class="p">,</span><span class="w"> </span><span class="n">tb</span><span class="p">);</span>
+<span class="linenos">131</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">132</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">133</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">134</span><span class="w">    </span><span class="c1">// 区間の中央までの霧の透過率で減衰させる</span>
+<span class="linenos">135</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">FOG_SIGMA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">ta</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tb</span><span class="p">));</span>
+<span class="linenos">136</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">LAMP_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">FOG_SCATTER</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">transmittance</span><span class="p">;</span>
+<span class="linenos">137</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>各街灯の光は、その街灯に接する 4 つのセルを通過する区間でだけ数えられ、それより遠くを通るレイには届かないことになる。そのため、光のにじみの外縁はわずかに途切れるが、遠くでは光が十分弱いので目立たない。また、ビルが街灯の光を遮る効果（光の筋）は省略している。光の筋まで表現するには、視線上の各点から街灯への影を調べる必要があり、計算量が大きく増える。</p>
+</section>
+<section id="id9">
+<h3>霧による減衰<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>霧による減衰と、街全体の明かりが霧で散乱される効果（夜空のぼんやりした明るさ）は、第 7 章のフォグと同じ式で加える。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">19_night_city.frag（抜粋）</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">286</span><span class="c1">// 霧による減衰と散乱を、表面または空の色に加える</span>
+<span class="linenos">287</span><span class="kt">vec3</span><span class="w"> </span><span class="n">applyFog</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">inScatter</span><span class="p">)</span>
+<span class="linenos">288</span><span class="p">{</span>
+<span class="linenos">289</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">FOG_SIGMA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="p">);</span>
+<span class="linenos">290</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">FOG_AMBIENT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">transmittance</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">inScatter</span><span class="p">;</span>
+<span class="linenos">291</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="id10">
+<h2>街灯による照明<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>壁や路面を照らす街灯の光も、近くの街灯だけを評価する。表面の点の周囲 3 × 3 の角にある街灯について、ランバート反射と距離の 2 乗による減衰を計算する。影は省略している。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">19_night_city.frag（抜粋）</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">231</span><span class="c1">// 表面の点 p が受ける街灯の光 (周囲 4 つの角の街灯。影は省略する)</span>
+<span class="linenos">232</span><span class="kt">vec3</span><span class="w"> </span><span class="n">lampLighting</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="linenos">233</span><span class="p">{</span>
+<span class="linenos">234</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">235</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">236</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">237</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">238</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">corner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">j</span><span class="p">));</span>
+<span class="linenos">239</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">hasLamp</span><span class="p">(</span><span class="n">corner</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">240</span><span class="w">                </span><span class="k">continue</span><span class="p">;</span>
+<span class="linenos">241</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">242</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">toLamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lampPosition</span><span class="p">(</span><span class="n">corner</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">p</span><span class="p">;</span>
+<span class="linenos">243</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">dist2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">toLamp</span><span class="p">,</span><span class="w"> </span><span class="n">toLamp</span><span class="p">);</span>
+<span class="linenos">244</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">toLamp</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">inversesqrt</span><span class="p">(</span><span class="n">dist2</span><span class="p">)),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">245</span><span class="w">            </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">LAMP_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">dist2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.01</span><span class="p">);</span>
+<span class="linenos">246</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">247</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">248</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<span class="linenos">249</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>距離の 2 乗に <code class="docutils literal notranslate"><span class="pre">0.01</span></code> を加えているのは、光源のすぐ近くで値が無限大に発散するのを防ぐためである。</p>
+</section>
+<section id="id11">
+<h2>濡れた路面<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>雨上がりの路面には、ところどころに水たまりができる。水たまりの場所は、第 10 章の値ノイズで決める。水たまりは鏡に近い滑らかな表面、乾いた路面は映り込みの弱い粗い表面として扱い、フレネル反射率で映り込みの強さを決める。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">19_night_city.frag（抜粋）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">301</span><span class="kt">vec3</span><span class="w"> </span><span class="n">renderPixel</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">mode</span><span class="p">)</span>
+<span class="linenos">302</span><span class="p">{</span>
+<span class="linenos">303</span><span class="w">    </span><span class="c1">// カメラは大通りの上を、少し見上げながら進む</span>
+<span class="linenos">304</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.35</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iTime</span><span class="p">);</span>
+<span class="linenos">305</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">forward</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.08</span><span class="p">,</span><span class="w"> </span><span class="mf">0.12</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1.0</span><span class="p">));</span>
+<span class="linenos">306</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">right</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">cross</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)));</span>
+<span class="linenos">307</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cross</span><span class="p">(</span><span class="n">right</span><span class="p">,</span><span class="w"> </span><span class="n">forward</span><span class="p">);</span>
+<span class="linenos">308</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">right</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">up</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">forward</span><span class="p">);</span>
+<span class="linenos">309</span>
+<span class="linenos">310</span><span class="w">    </span><span class="n">Hit</span><span class="w"> </span><span class="n">hit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trace</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">MAX_CELLS</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span>
+<span class="linenos">311</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">312</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">heatmap</span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">cells</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">MAX_CELLS</span><span class="p">));</span>
+<span class="linenos">313</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">314</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">315</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">inScatter</span><span class="p">;</span>
+<span class="linenos">316</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">317</span>
+<span class="linenos">318</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">319</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4</span><span class="p">)</span>
+<span class="linenos">320</span><span class="w">                           </span><span class="o">:</span><span class="w"> </span><span class="n">applyFog</span><span class="p">(</span><span class="n">skyColor</span><span class="p">(</span><span class="n">rd</span><span class="p">),</span><span class="w"> </span><span class="n">MAX_DIST</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">inScatter</span><span class="p">);</span>
+<span class="linenos">321</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">322</span>
+<span class="linenos">323</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">pos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">324</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">material</span><span class="p">;</span>
+<span class="linenos">325</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shadeSurface</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">cell</span><span class="p">,</span><span class="w"> </span><span class="n">material</span><span class="p">);</span>
+<span class="linenos">326</span>
+<span class="linenos">327</span><span class="w">    </span><span class="c1">// 濡れた路面: フレネル反射で、窓や街灯の光を映り込ませる (第 11 章、第 12 章)</span>
+<span class="linenos">328</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">wet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">material</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_ROAD</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">wetness</span><span class="p">(</span><span class="n">pos</span><span class="p">.</span><span class="n">xz</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">329</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">330</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">material</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_ROAD</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.3</span><span class="p">)</span><span class="w"> </span><span class="o">:</span>
+<span class="linenos">331</span><span class="w">                  </span><span class="p">(</span><span class="n">material</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_WINDOW</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">)</span><span class="w"> </span><span class="o">:</span>
+<span class="linenos">332</span><span class="w">                  </span><span class="p">(</span><span class="n">material</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_ROOF</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6</span><span class="p">);</span>
+<span class="linenos">333</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">),</span><span class="w"> </span><span class="n">wet</span><span class="p">);</span>
+<span class="linenos">334</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">335</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">material</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_ROAD</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">336</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">337</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">cosTheta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="o">-</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">338</span><span class="w">        </span><span class="c1">// 乾いた路面は粗く、映り込みが弱い。水たまりは鏡に近い</span>
+<span class="linenos">339</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">f0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span><span class="w"> </span><span class="mf">0.04</span><span class="p">,</span><span class="w"> </span><span class="n">wet</span><span class="p">);</span>
+<span class="linenos">340</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">fresnel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">f0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cosTheta</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p">))</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">341</span><span class="w">                        </span><span class="n">mix</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">wet</span><span class="p">);</span>
+<span class="linenos">342</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">reflDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">343</span><span class="w">        </span><span class="n">Hit</span><span class="w"> </span><span class="n">refl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trace</span><span class="p">(</span><span class="n">pos</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">,</span><span class="w"> </span><span class="n">reflDir</span><span class="p">,</span><span class="w"> </span><span class="n">REFLECT_CELLS</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">);</span>
+<span class="linenos">344</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">reflection</span><span class="p">;</span>
+<span class="linenos">345</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">refl</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">346</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">m</span><span class="p">;</span>
+<span class="linenos">347</span><span class="w">            </span><span class="n">reflection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shadeSurface</span><span class="p">(</span><span class="n">pos</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">refl</span><span class="p">.</span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">reflDir</span><span class="p">,</span><span class="w"> </span><span class="n">reflDir</span><span class="p">,</span>
+<span class="linenos">348</span><span class="w">                                      </span><span class="n">refl</span><span class="p">.</span><span class="n">cell</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">);</span>
+<span class="linenos">349</span><span class="w">            </span><span class="n">reflection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applyFog</span><span class="p">(</span><span class="n">reflection</span><span class="p">,</span><span class="w"> </span><span class="n">refl</span><span class="p">.</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">350</span><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">351</span><span class="w">            </span><span class="n">reflection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">skyColor</span><span class="p">(</span><span class="n">reflDir</span><span class="p">);</span>
+<span class="linenos">352</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">353</span><span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="n">reflection</span><span class="p">,</span><span class="w"> </span><span class="n">fresnel</span><span class="p">);</span>
+<span class="linenos">354</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">355</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">applyFog</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">inScatter</span><span class="p">);</span>
+<span class="linenos">356</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>映り込みは、路面から反射方向に、もう一度グリッドの走査を行って求める。映り込みのレイでは、計算を減らすために霧の散乱光を省略し、走査するセルの数も少なくしている。夜景の路面の映り込みは、窓の明かりや街灯のような明るい光だけが目立つので、この程度の近似でも十分に効果がある。</p>
+<p>カメラの位置が低いので、路面はほぼ真横から見ることになり、フレネル反射率は乾いた路面でも大きくなる。乾いた路面の映り込みが強すぎると、路面全体が水面のように見えてしまう。そこで、乾いた路面では反射率に 0.05 を掛けて、粗い表面でぼやけて弱まった映り込みを近似している。</p>
+</section>
+<section id="id12">
+<h2>夜空と露出<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<p>夜空は、天頂は暗い紺色にし、地平線に近いほど街の明かりで赤みを帯びるようにする（光害）。星は、方向を格子に分けてハッシュ値で散らばらせている。</p>
+<p>夜景は全体に暗いので、トーンマッピングの前に値を 3 倍して露出を上げている。写真で夜景を撮るときに、露光時間を長くするのと同じである。露出を上げると窓の明かりや街灯は白く飛びやすくなるが、トーンマッピングにより滑らかに白に近づく。</p>
+</section>
+<section id="id13">
+<h2>デバッグ<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<p>デバッグ版は、通常の描画、走査したセルの数、霧の散乱光だけ、材質の色分けを 4 分割で表示する。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/d6503d4ae6e0a05cfe02de6353a55337/19_night_city_debug.frag"><code class="xref download docutils literal notranslate"><span class="pre">19_night_city_debug.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/19_night_city_debug.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id23">
+<img alt="画面が 4 分割され、通常の描画、走査したセルの数のヒートマップ、街灯のまわりだけが光る霧の散乱光、材質の色分けが並んでいる" src="_images/19_night_city_debug.png" />
+<figcaption>
+<p><span class="caption-text">19_night_city_debug.frag の実行結果。左上が通常の描画、右上が走査したセルの数、左下が霧の散乱光だけ、右下が材質の色分け（灰: 路面、青: 水たまり、黄: 窓、灰青: 壁、赤茶: 屋上）である。</span><a class="headerlink" href="#id23" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>走査したセルの数（右上）は、大通りの奥に向かうレイで最も多くなる。大通りに沿って進むレイは、ビルに当たらずに多くのセルを通過するためである。霧の散乱光（左下）では、街灯の位置にだけ光がにじんでいることを確かめられる。材質の色分け（右下）では、水たまりの範囲を確かめながら、<code class="docutils literal notranslate"><span class="pre">wetness</span></code> の閾値を調整できる。</p>
+</section>
+<section id="id14">
+<h2>改造の案<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>霧の濃さ <code class="docutils literal notranslate"><span class="pre">FOG_SIGMA</span></code> と <code class="docutils literal notranslate"><span class="pre">FOG_SCATTER</span></code> を大きくして、深い霧の夜にする。</p></li>
+<li><p>窓の明かりの点灯の割合を時間とともに変え、夜が更けていく様子を表現する。</p></li>
+<li><p>街灯の光の筋を表現する。視線上の数点から街灯への影を、グリッドの走査で調べる。</p></li>
+<li><p>第 17 章の複数パスの描画で、ピクセル内の位置を少しずつずらした前のフレームの結果と混ぜ、窓の格子の輪郭のギザギザを減らす（時間方向のアンチエイリアス）。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="18_landscape.html" class="btn btn-neutral float-left" title="第 18 章 実践：夕暮れの風景を描く" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="20_still_life.html" class="btn btn-neutral float-right" title="第 20 章 実践：パストレーシングによる静物画" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

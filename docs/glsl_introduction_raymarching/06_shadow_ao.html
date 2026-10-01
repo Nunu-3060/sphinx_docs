@@ -1,0 +1,307 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 6 章 影と AO &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 7 章 カメラと演出" href="07_camera.html" />
+    <link rel="prev" title="第 5 章 照明" href="05_lighting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 6 章 影と AO</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">ハードシャドウ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">ソフトシャドウ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">アンビエントオクルージョン</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">定義</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sdf">SDF による近似</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 6 章 影と AO</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ao">
+<h1>第 6 章 影と AO<a class="headerlink" href="#ao" title="Link to this heading"></a></h1>
+<p>第 5 章の照明モデルは、光源と表面の間に物体があっても光が届くものとして計算していた。この章では、光源からの光が遮られてできる影と、周囲の物体に環境光が遮られて暗くなる効果（アンビエントオクルージョン）を加える。どちらも、SDF を使って効率よく近似できる。</p>
+<section id="id1">
+<h2>ハードシャドウ<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>表面上の点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> に光源の光が届くかどうかは、<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> から光源の方向 <span class="math notranslate nohighlight">\(\hat{\mathbf{l}}\)</span> にレイを飛ばせば判定できる。このレイ（シャドウレイ）が途中で物体に当たれば、<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> は影の中にある。平行光源は無限遠にあるので、シャドウレイの長さは十分大きな値 <span class="math notranslate nohighlight">\(t_{\max}\)</span> で打ち切る。</p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">06_shadow.frag（抜粋）</span><a class="headerlink" href="#id5" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">109</span><span class="c1">// ハードシャドウ: 光源の方向へのレイが何かに当たれば 0、当たらなければ 1</span>
+<span class="linenos">110</span><span class="kt">float</span><span class="w"> </span><span class="n">hardShadow</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tmin</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tmax</span><span class="p">)</span>
+<span class="linenos">111</span><span class="p">{</span>
+<span class="linenos">112</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tmin</span><span class="p">;</span>
+<span class="linenos">113</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">128</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">tmax</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">114</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">).</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">115</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">h</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">116</span><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">117</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">118</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">h</span><span class="p">;</span>
+<span class="linenos">119</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">120</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">121</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>影の値は、拡散反射と鏡面反射の項に掛ける。天空光は空全体から届くので、光源の影は掛けない。</p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">06_shadow.frag（抜粋）</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">142</span><span class="kt">vec3</span><span class="w"> </span><span class="n">shade</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">mat</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">soft</span><span class="p">)</span>
+<span class="linenos">143</span><span class="p">{</span>
+<span class="linenos">144</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calcNormal</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">145</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">146</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">LIGHT_DIR</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">v</span><span class="p">);</span>
+<span class="linenos">147</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">albedo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">albedoOf</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">148</span>
+<span class="linenos">149</span><span class="w">    </span><span class="c1">// 自己交差を避けるため、表面から法線方向に少し離した点を始点にする</span>
+<span class="linenos">150</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">origin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">;</span>
+<span class="linenos">151</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">shadow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">soft</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">softShadow</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="mf">20.0</span><span class="p">,</span><span class="w"> </span><span class="mf">8.0</span><span class="p">)</span>
+<span class="linenos">152</span><span class="w">                        </span><span class="o">:</span><span class="w"> </span><span class="n">hardShadow</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="mf">20.0</span><span class="p">);</span>
+<span class="linenos">153</span>
+<span class="linenos">154</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">shadow</span><span class="p">;</span>
+<span class="linenos">155</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">specular</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mf">32.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">diffuse</span><span class="p">;</span>
+<span class="linenos">156</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sky</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">157</span>
+<span class="linenos">158</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">albedo</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">SKY_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sky</span><span class="p">);</span>
+<span class="linenos">159</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">specular</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">160</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">161</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>シャドウレイの始点は、<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> から法線方向に少し離した点にしている。レイマーチングで求めた <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> は表面から閾値 <span class="math notranslate nohighlight">\(\varepsilon\)</span> 以内の位置にあり、表面のわずかに内側にあることもある。この点からそのままシャドウレイを飛ばすと、最初の評価で SDF がすでに閾値未満になり、自分自身の表面に当たったと判定されてしまう。その結果、影にならないはずの面にまだら模様の影が現れる。この現象を <a class="reference internal" href="glossary.html#term-14"><span class="xref std std-term">シャドウアクネ</span></a> と呼ぶ。</p>
+</section>
+<section id="id2">
+<h2>ソフトシャドウ<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>ハードシャドウは、光源が大きさを持たない点（または無限遠の平行光源）である場合の影で、影の境界がくっきりしている。実際の光源には大きさがあるため、影の境界には光源の一部だけが見える半影ができ、境界がぼやける。</p>
+<p>厳密に半影を求めるには、光源の各点へのシャドウレイを飛ばして平均をとる必要がある。レイマーチングでは、SDF の値を使うことで、1 本のシャドウレイだけで半影を近似できる。</p>
+<p>シャドウレイ上の距離 <span class="math notranslate nohighlight">\(t\)</span> の点で SDF の値が <span class="math notranslate nohighlight">\(h\)</span> であるとき、その点を中心とする半径 <span class="math notranslate nohighlight">\(h\)</span> の球の中に物体は無い。この球を <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> から見込む角度はおよそ <span class="math notranslate nohighlight">\(h/t\)</span> である。つまり <span class="math notranslate nohighlight">\(h/t\)</span> は、シャドウレイが物体からどれだけ離れて通過したかを角度で表した量になる。シャドウレイ全体でこの値の最小値をとり、定数 <span class="math notranslate nohighlight">\(k\)</span> を掛けて 0〜1 に収めたものを影の値とする。</p>
+<div class="math notranslate nohighlight">
+\[s = \operatorname{clamp}\left(\min_{i} \frac{k\, h_i}{t_i},\ 0,\ 1\right)\]</div>
+<p>シャドウレイが物体にかすりもせずに通過すれば <span class="math notranslate nohighlight">\(s = 1\)</span> （影なし）、物体に当たれば <span class="math notranslate nohighlight">\(h_i \to 0\)</span> なので <span class="math notranslate nohighlight">\(s = 0\)</span> （完全な影）になる。その間の値が半影を表す。<span class="math notranslate nohighlight">\(k\)</span> は半影の幅を調整するパラメーターで、<span class="math notranslate nohighlight">\(h/t\)</span> が <span class="math notranslate nohighlight">\(1/k\)</span> 未満になると暗くなり始める。したがって、<span class="math notranslate nohighlight">\(k\)</span> が大きいほど半影が狭くなり、影の境界がくっきりする。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">06_shadow.frag（抜粋）</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">123</span><span class="c1">// ソフトシャドウ: レイが物体をかすめた度合い k * h / t から半影を近似する</span>
+<span class="linenos">124</span><span class="kt">float</span><span class="w"> </span><span class="n">softShadow</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tmin</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">tmax</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">k</span><span class="p">)</span>
+<span class="linenos">125</span><span class="p">{</span>
+<span class="linenos">126</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">127</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tmin</span><span class="p">;</span>
+<span class="linenos">128</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">128</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">tmax</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">129</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">).</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">130</span><span class="w">        </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">t</span><span class="p">);</span>
+<span class="linenos">131</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">res</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.001</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">132</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">133</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">134</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">);</span>
+<span class="linenos">135</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">136</span><span class="w">    </span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">137</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">res</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">res</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">3.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">res</span><span class="p">);</span><span class="w">  </span><span class="c1">// smoothstep と同じ補間で滑らかにする</span>
+<span class="linenos">138</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>ソフトシャドウでは、表面に当たったかどうかではなく、物体の近くを通過したかどうかが重要である。そのため、1 回に進む距離を <code class="docutils literal notranslate"><span class="pre">clamp(h,</span> <span class="pre">0.01,</span> <span class="pre">0.5)</span></code> で制限し、物体から離れた場所でも大きく進みすぎないようにしている。最後の <code class="docutils literal notranslate"><span class="pre">res</span> <span class="pre">*</span> <span class="pre">res</span> <span class="pre">*</span> <span class="pre">(3.0</span> <span class="pre">-</span> <span class="pre">2.0</span> <span class="pre">*</span> <span class="pre">res)</span></code> は <code class="docutils literal notranslate"><span class="pre">smoothstep</span></code> と同じ 3 次の補間で、半影の明暗の変化を滑らかにする。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/d080ce59da2dd0b97fb70c13a4216195/06_shadow.frag"><code class="xref download docutils literal notranslate"><span class="pre">06_shadow.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/06_shadow.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id8">
+<img alt="画面の左半分はくっきりした影、右半分は境界がぼやけた影が描かれている" src="_images/06_shadow.png" />
+<figcaption>
+<p><span class="caption-text">06_shadow.frag の実行結果。左半分はハードシャドウ、右半分はソフトシャドウである。</span><a class="headerlink" href="#id8" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>この方法は物理的に正確な半影を求めるものではなく、見た目を近似する手法である。また、シャドウレイ上の離散的な点でしか SDF を評価しないため、物体の角の近くを通過するシャドウレイでは物体に最も近づく点を見逃しやすく、半影にむらが出ることがある。これを改善した方法が Quilez による記事で紹介されている（<a class="reference internal" href="references.html"><span class="doc">付録 B 参考文献</span></a>）。</p>
+</section>
+<section id="id3">
+<h2>アンビエントオクルージョン<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>第 5 章の天空光は、すべての点で空全体が見えるものとして計算していた。しかし実際には、物体同士が接する部分や、くぼみの奥では、周囲の物体に遮られて空の一部しか見えない。そのため、これらの場所は天空光を受ける量が減り、暗くなる。この効果を <a class="reference internal" href="glossary.html#term-3"><span class="xref std std-term">アンビエントオクルージョン</span></a> （ambient occlusion、AO）と呼ぶ。</p>
+<section id="id4">
+<h3>定義<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> での AO は、法線まわりの半球 <span class="math notranslate nohighlight">\(\Omega\)</span> のうち、周囲の物体に遮られずに見える方向の割合を、余弦で重み付けして表す。</p>
+<div class="math notranslate nohighlight">
+\[A(\mathbf{p}) = \frac{1}{\pi} \int_{\Omega} V(\mathbf{p}, \hat{\omega})\, (\hat{\mathbf{n}} \cdot \hat{\omega})\, d\omega\]</div>
+<p><span class="math notranslate nohighlight">\(V\)</span> は方向 <span class="math notranslate nohighlight">\(\hat{\omega}\)</span> に遮るものが無ければ 1、あれば 0 になる関数である。何にも遮られていなければ <span class="math notranslate nohighlight">\(A = 1\)</span> になる。この積分を正確に求めるには多数のレイを飛ばす必要があり、計算量が大きい。</p>
+</section>
+<section id="sdf">
+<h3>SDF による近似<a class="headerlink" href="#sdf" title="Link to this heading"></a></h3>
+<p>SDF を使うと、法線方向の数点で SDF を評価するだけで AO を近似できる。点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> から法線方向に距離 <span class="math notranslate nohighlight">\(h_i\)</span> だけ離れた点 <span class="math notranslate nohighlight">\(\mathbf{p} + h_i \hat{\mathbf{n}}\)</span> を考える。<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> の周囲に表面以外の物体が無ければ、この点での SDF の値は <span class="math notranslate nohighlight">\(h_i\)</span> に等しい。周囲に物体があれば、SDF の値は <span class="math notranslate nohighlight">\(h_i\)</span> より小さくなる。この差 <span class="math notranslate nohighlight">\(h_i - f(\mathbf{p} + h_i \hat{\mathbf{n}})\)</span> が大きいほど、近くに遮るものがあると考えられる。</p>
+<div class="math notranslate nohighlight">
+\[A(\mathbf{p}) \approx \operatorname{clamp}\left(1 - c \sum_{i=0}^{N-1} w_i \bigl(h_i - f(\mathbf{p} + h_i \hat{\mathbf{n}})\bigr),\ 0,\ 1\right)\]</div>
+<p><span class="math notranslate nohighlight">\(w_i\)</span> は近い点ほど大きくする重み、<span class="math notranslate nohighlight">\(c\)</span> は効果の強さを調整する係数である。サンプルでは <span class="math notranslate nohighlight">\(N = 5\)</span>、<span class="math notranslate nohighlight">\(h_i = 0.02 + 0.1i\)</span>、<span class="math notranslate nohighlight">\(w_i = 0.6^i\)</span>、<span class="math notranslate nohighlight">\(c = 2.5\)</span> としている。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">06_ao.frag（抜粋）</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">143</span><span class="c1">// 法線方向の 5 点で SDF を評価し、理想値 (サンプル点までの距離 h) より</span>
+<span class="linenos">144</span><span class="c1">// どれだけ小さいかで遮蔽の度合いを見積もる。1 は遮蔽なし、0 は完全な遮蔽</span>
+<span class="linenos">145</span><span class="kt">float</span><span class="w"> </span><span class="n">calcAO</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="linenos">146</span><span class="p">{</span>
+<span class="linenos">147</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">occ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">148</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">weight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">149</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">150</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.02</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+<span class="linenos">151</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">).</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">152</span><span class="w">        </span><span class="n">occ</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="p">(</span><span class="n">h</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">weight</span><span class="p">;</span>
+<span class="linenos">153</span><span class="w">        </span><span class="n">weight</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.6</span><span class="p">;</span>
+<span class="linenos">154</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">155</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">2.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">occ</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">156</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>AO は環境光の遮蔽を表すので、天空光の項にだけ掛ける。光源からの直接光の遮蔽はソフトシャドウで扱っている。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">06_ao.frag（抜粋）</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">160</span><span class="kt">vec3</span><span class="w"> </span><span class="n">shade</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">mat</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">useAO</span><span class="p">)</span>
+<span class="linenos">161</span><span class="p">{</span>
+<span class="linenos">162</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calcNormal</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">163</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">164</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">LIGHT_DIR</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">v</span><span class="p">);</span>
+<span class="linenos">165</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">albedo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">albedoOf</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">166</span>
+<span class="linenos">167</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">shadow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">softShadow</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="mf">20.0</span><span class="p">,</span><span class="w"> </span><span class="mf">8.0</span><span class="p">);</span>
+<span class="linenos">168</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">occ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">useAO</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">calcAO</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">169</span>
+<span class="linenos">170</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">shadow</span><span class="p">;</span>
+<span class="linenos">171</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">specular</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mf">32.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">diffuse</span><span class="p">;</span>
+<span class="linenos">172</span><span class="w">    </span><span class="c1">// AO は環境光 (天空光) にだけ掛ける</span>
+<span class="linenos">173</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sky</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">occ</span><span class="p">;</span>
+<span class="linenos">174</span>
+<span class="linenos">175</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">albedo</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">SKY_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sky</span><span class="p">);</span>
+<span class="linenos">176</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">specular</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">177</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">178</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/4b6a0e626ad992ef4ddedbb366516dac/06_ao.frag"><code class="xref download docutils literal notranslate"><span class="pre">06_ao.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/06_ao.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id11">
+<img alt="画面の右半分では、物体と地面が接する部分が暗くなっている" src="_images/06_ao.png" />
+<figcaption>
+<p><span class="caption-text">06_ao.frag の実行結果。左半分は AO なし、右半分は AO ありである。右半分では、トーラスと地面の隙間や、物体と地面が接する部分が暗くなり、物体が地面に接していることがわかりやすくなる。</span><a class="headerlink" href="#id11" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>この近似は法線方向の 1 本の線上だけを調べるので、横方向にある物体による遮蔽は十分に考慮できない。また、SDF が距離を大きく過小評価している場所では、実際より暗くなる。それでも、数回の SDF の評価で自然な陰影が得られるため、レイマーチングでは広く使われている。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="05_lighting.html" class="btn btn-neutral float-left" title="第 5 章 照明" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="07_camera.html" class="btn btn-neutral float-right" title="第 7 章 カメラと演出" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

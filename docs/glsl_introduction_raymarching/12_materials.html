@@ -1,0 +1,410 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 12 章 物理ベースの材質 &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 13 章 フラクタル" href="13_fractal.html" />
+    <link rel="prev" title="第 11 章 反射と屈折" href="11_reflection_refraction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 12 章 物理ベースの材質</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">マイクロファセット理論</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">考え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">法線分布関数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">金属度と粗さ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">材質の指定</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">エネルギー保存と照明の合成</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">環境光</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">サブサーフェススキャッタリング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">現象</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">ラップライティング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">透過光</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">近似の限界</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 12 章 物理ベースの材質</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 12 章 物理ベースの材質<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>第 5 章の照明モデルでは、鏡面反射を Blinn-Phong モデルで近似した。このモデルは計算が軽いが、金属と非金属の違いや、表面の粗さによるハイライトの広がりを、物理的に一貫した形で表せない。この章では、現在のリアルタイムレンダリングで標準的に使われている、マイクロファセット理論に基づく <a class="reference internal" href="glossary.html#term-PBR"><span class="xref std std-term">PBR</span></a> （physically based rendering、物理ベースレンダリング）の材質を扱う。後半では、光が物体の内部に入り込んで散乱するサブサーフェススキャッタリングの近似を説明する。</p>
+<figure class="align-center" id="id14">
+<img alt="上の列に金色の球、下の列に赤い球が 6 個ずつ並び、右ほどハイライトがぼやけている" src="_images/12_pbr.png" />
+<figcaption>
+<p><span class="caption-text">12_pbr.frag の実行結果。上の列は金属、下の列は非金属で、左から右へ粗さを 0.05 から 1 まで大きくしている。</span><a class="headerlink" href="#id14" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/72da49ef5828c5795c9bb5a5556b8fb2/12_pbr.frag"><code class="xref download docutils literal notranslate"><span class="pre">12_pbr.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/12_pbr.html">ブラウザーで実行</a></p>
+<section id="id2">
+<h2>マイクロファセット理論<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3>考え方<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>実際の表面は、顕微鏡で見ると細かな凹凸で覆われている。マイクロファセット理論では、表面を、向きがさまざまな無数の微小な鏡（マイクロファセット）の集まりとみなす。光源の方向 <span class="math notranslate nohighlight">\(\hat{\mathbf{l}}\)</span> から来た光が視点の方向 <span class="math notranslate nohighlight">\(\hat{\mathbf{v}}\)</span> に反射されるのは、法線がハーフベクトル <span class="math notranslate nohighlight">\(\hat{\mathbf{h}}\)</span> （第 5 章）を向いているマイクロファセットだけである。滑らかな表面ではマイクロファセットの向きが揃っているので、ハイライトは小さく鋭くなる。粗い表面では向きがばらつくので、ハイライトは広がって弱くなる。</p>
+<p>この考え方から、鏡面反射の BRDF は次の Cook-Torrance の式で表される。</p>
+<div class="math notranslate nohighlight">
+\[f_{\text{spec}}(\hat{\mathbf{l}}, \hat{\mathbf{v}}) =
+\frac{D(\hat{\mathbf{h}})\, G(\hat{\mathbf{l}}, \hat{\mathbf{v}})\, F(\hat{\mathbf{v}}, \hat{\mathbf{h}})}
+     {4\, (\hat{\mathbf{n}} \cdot \hat{\mathbf{l}})\, (\hat{\mathbf{n}} \cdot \hat{\mathbf{v}})}\]</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>項</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(D\)</span> （法線分布関数）</p></td>
+<td><p>マイクロファセットの法線が <span class="math notranslate nohighlight">\(\hat{\mathbf{h}}\)</span> を向いている割合。ハイライトの形と大きさを決める。</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(G\)</span> （幾何減衰項）</p></td>
+<td><p>マイクロファセット同士が光や視線を遮る割合。斜めから見たり照らしたりするときに効く。</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(F\)</span> （フレネル項）</p></td>
+<td><p>マイクロファセットで反射される光の割合（第 11 章）</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id4">
+<h3>法線分布関数<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>法線分布関数には、GGX（Trowbridge-Reitz 分布、Walter et al., 2007）がよく使われる。粗さのパラメーターを <span class="math notranslate nohighlight">\(\alpha\)</span> とすると、次の式で表される。</p>
+<div class="math notranslate nohighlight">
+\[D(\hat{\mathbf{h}}) = \frac{\alpha^2}{\pi \bigl((\hat{\mathbf{n}} \cdot \hat{\mathbf{h}})^2 (\alpha^2 - 1) + 1\bigr)^2}\]</div>
+<p>GGX は、Blinn-Phong のべき乗の分布に比べて、ハイライトの周りに長く尾を引く分布を持ち、実際の材質の測定結果によく一致する。<span class="math notranslate nohighlight">\(\alpha\)</span> は、人間が指定する粗さ <span class="math notranslate nohighlight">\(r \in [0, 1]\)</span> の 2 乗 <span class="math notranslate nohighlight">\(\alpha = r^2\)</span> とすることが多い。こうすると、<span class="math notranslate nohighlight">\(r\)</span> の変化に対して見た目の変化がほぼ均等になる（Karis, 2013）。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">12_pbr.frag（抜粋）</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 95</span><span class="c1">// GGX の法線分布関数。alpha は粗さの 2 乗</span>
+<span class="linenos"> 96</span><span class="kt">float</span><span class="w"> </span><span class="n">distributionGGX</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">nh</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="linenos"> 97</span><span class="p">{</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">alpha</span><span class="p">;</span>
+<span class="linenos"> 99</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nh</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nh</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">a2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">100</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">a2</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">d</span><span class="p">);</span>
+<span class="linenos">101</span><span class="p">}</span>
+<span class="linenos">102</span>
+<span class="linenos">103</span><span class="c1">// 幾何減衰項: Smith の方法を Schlick-GGX の式で近似したもの</span>
+<span class="linenos">104</span><span class="kt">float</span><span class="w"> </span><span class="n">geometrySmith</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">nv</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">nl</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">roughness</span><span class="p">)</span>
+<span class="linenos">105</span><span class="p">{</span>
+<span class="linenos">106</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">roughness</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">roughness</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">8.0</span><span class="p">;</span>
+<span class="linenos">107</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">gv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">nv</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">);</span>
+<span class="linenos">108</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">gl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">nl</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="p">);</span>
+<span class="linenos">109</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">gv</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">gl</span><span class="p">;</span>
+<span class="linenos">110</span><span class="p">}</span>
+<span class="linenos">111</span>
+<span class="linenos">112</span><span class="c1">// Schlick の近似によるフレネル反射率 (第 11 章)。f0 は RGB ごとの値</span>
+<span class="linenos">113</span><span class="kt">vec3</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">cosTheta</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">f0</span><span class="p">)</span>
+<span class="linenos">114</span><span class="p">{</span>
+<span class="linenos">115</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">f0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cosTheta</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p">);</span>
+<span class="linenos">116</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>幾何減衰項には、Smith の方法を Schlick の式で近似したものを使っている。係数 <span class="math notranslate nohighlight">\(k = (r + 1)^2 / 8\)</span> は、平行光源などの直接光に対して Karis が示した値である。フレネル項は第 11 章と同じ Schlick の近似だが、垂直入射での反射率 <span class="math notranslate nohighlight">\(F_0\)</span> を RGB ごとの値にしている。</p>
+</section>
+</section>
+<section id="id5">
+<h2>金属度と粗さ<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="id6">
+<h3>材質の指定<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>PBR では、材質を少数の直感的なパラメーターで指定する。本資料では、広く使われている次の 3 つを使う。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>パラメーター</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ベースカラー</p></td>
+<td><p>非金属では拡散反射の色（アルベド）、金属では鏡面反射の色</p></td>
+</tr>
+<tr class="row-odd"><td><p>金属度（metallic）</p></td>
+<td><p>0 は非金属（誘電体）、1 は金属。中間の値は、金属と非金属の境目を表すのに使う。</p></td>
+</tr>
+<tr class="row-even"><td><p>粗さ（roughness）</p></td>
+<td><p>0 は鏡のように滑らか、1 は非常に粗い</p></td>
+</tr>
+</tbody>
+</table>
+<p>金属と非金属では、光の反射の仕方が大きく異なる。</p>
+<ul class="simple">
+<li><p><strong>非金属</strong>: 表面で反射される光（鏡面反射）は少なく、垂直入射での反射率 <span class="math notranslate nohighlight">\(F_0\)</span> は 0.02〜0.05 程度で、色を持たない。残りの光は内部に入って散乱し、ベースカラーの色で拡散反射される。</p></li>
+<li><p><strong>金属</strong>: 内部に入った光はすぐに吸収されるので、拡散反射は無い。鏡面反射の反射率は高く、<span class="math notranslate nohighlight">\(F_0\)</span> そのものが金属の色（金は黄、銅は赤みを帯びる）になる。</p></li>
+</ul>
+<p>この違いを、金属度で次のように補間する。</p>
+<div class="math notranslate nohighlight">
+\[F_0 = \operatorname{mix}(0.04,\ \mathbf{c}_{\text{base}},\ m), \qquad
+\mathbf{k}_d = (1 - F)(1 - m)\]</div>
+<p><span class="math notranslate nohighlight">\(m\)</span> は金属度である。<span class="math notranslate nohighlight">\(\mathbf{k}_d\)</span> は拡散反射に使われる光の割合で、鏡面反射された分 <span class="math notranslate nohighlight">\(F\)</span> と、金属の分 <span class="math notranslate nohighlight">\(m\)</span> を除いたものである。</p>
+</section>
+<section id="id7">
+<h3>エネルギー保存と照明の合成<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>拡散反射の BRDF は、第 5 章で省略した <span class="math notranslate nohighlight">\(1/\pi\)</span> を含めて <span class="math notranslate nohighlight">\(\mathbf{k}_d\, \mathbf{c}_{\text{base}} / \pi\)</span> とする。鏡面反射と合わせると、光源による表面の色は次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{L} = \left(\mathbf{k}_d \frac{\mathbf{c}_{\text{base}}}{\pi} + f_{\text{spec}}\right) \mathbf{E}\, (\hat{\mathbf{n}} \cdot \hat{\mathbf{l}})\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbf{E}\)</span> は光源の放射照度（光に垂直な面が受ける光の強さ）である。鏡面反射と拡散反射の割合を <span class="math notranslate nohighlight">\(F\)</span> で分け合うため、表面が受けた以上の光を反射することはない（エネルギー保存）。この性質により、粗さや金属度をどのように変えても、材質の明るさが不自然にならない。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">12_pbr.frag（抜粋）</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">118</span><span class="c1">// 材質 (色、金属度、粗さ) を持つ表面の色を求める</span>
+<span class="linenos">119</span><span class="kt">vec3</span><span class="w"> </span><span class="n">shadePBR</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">baseColor</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">metallic</span><span class="p">,</span>
+<span class="linenos">120</span><span class="w">              </span><span class="kt">float</span><span class="w"> </span><span class="n">roughness</span><span class="p">)</span>
+<span class="linenos">121</span><span class="p">{</span>
+<span class="linenos">122</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">;</span>
+<span class="linenos">123</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">l</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">v</span><span class="p">);</span>
+<span class="linenos">124</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">l</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">125</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">126</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">nh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">127</span>
+<span class="linenos">128</span><span class="w">    </span><span class="c1">// 垂直入射での反射率: 非金属は 0.04、金属は色そのもの</span>
+<span class="linenos">129</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">f0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.04</span><span class="p">),</span><span class="w"> </span><span class="n">baseColor</span><span class="p">,</span><span class="w"> </span><span class="n">metallic</span><span class="p">);</span>
+<span class="linenos">130</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">f0</span><span class="p">);</span>
+<span class="linenos">131</span>
+<span class="linenos">132</span><span class="w">    </span><span class="c1">// 鏡面反射: Cook-Torrance のマイクロファセット BRDF</span>
+<span class="linenos">133</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">roughness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">roughness</span><span class="p">;</span>
+<span class="linenos">134</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">specular</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">distributionGGX</span><span class="p">(</span><span class="n">nh</span><span class="p">,</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">135</span><span class="w">                    </span><span class="n">geometrySmith</span><span class="p">(</span><span class="n">nv</span><span class="p">,</span><span class="w"> </span><span class="n">nl</span><span class="p">,</span><span class="w"> </span><span class="n">roughness</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">136</span><span class="w">    </span><span class="c1">// 拡散反射: 鏡面反射されなかった光のうち、非金属の部分だけが拡散反射する</span>
+<span class="linenos">137</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">kd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">metallic</span><span class="p">);</span>
+<span class="linenos">138</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kd</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">baseColor</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">PI</span><span class="p">;</span>
+<span class="linenos">139</span>
+<span class="linenos">140</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">shadow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">softShadow</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="n">l</span><span class="p">);</span>
+<span class="linenos">141</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">direct</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">diffuse</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">specular</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">SUN_IRRADIANCE</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">shadow</span><span class="p">;</span>
+<span class="linenos">142</span>
+<span class="linenos">143</span><span class="w">    </span><span class="c1">// 環境光: 拡散反射は法線方向、鏡面反射は反射方向の環境の色で近似する</span>
+<span class="linenos">144</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">fAmbient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">nv</span><span class="p">,</span><span class="w"> </span><span class="n">f0</span><span class="p">);</span>
+<span class="linenos">145</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ambientDiffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">fAmbient</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">metallic</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">baseColor</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">146</span><span class="w">                          </span><span class="n">environment</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">147</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ambientSpecular</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fAmbient</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">environment</span><span class="p">(</span><span class="n">reflect</span><span class="p">(</span><span class="o">-</span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">),</span><span class="w"> </span><span class="n">roughness</span><span class="p">);</span>
+<span class="linenos">148</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">direct</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ambientDiffuse</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ambientSpecular</span><span class="p">;</span>
+<span class="linenos">149</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id8">
+<h3>環境光<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>PBR では、環境からの光（空や周囲の物体からの光）の扱いが見た目を大きく左右する。特に金属は拡散反射を持たないため、周囲の映り込みが無いと暗く見える。正確には、環境の光を BRDF で重み付けして半球全体で積分する必要がある。実用的には、環境の画像をあらかじめ粗さごとにぼかしておき、反射方向の値を読み出す方法（split-sum 近似、Karis, 2013）が使われる。</p>
+<p>サンプルでは簡単のため、反射方向の空の色を、粗さに応じて空の平均的な色に近づけることで、ぼけた映り込みを近似している（関数 <code class="docutils literal notranslate"><span class="pre">environment</span></code>）。環境光のフレネル項には、視線と法線の角度を使っている。</p>
+<p>図では、金属の球（上の列）は粗さが小さいと空と地面が鮮明に映り込み、粗くなるにつれて映り込みがぼけ、金色の拡散反射のような見た目に変わっていく。非金属の球（下の列）は、どの粗さでも赤い拡散反射が主で、粗さによってハイライトの大きさだけが変わる。</p>
+</section>
+</section>
+<section id="id9">
+<h2>サブサーフェススキャッタリング<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<section id="id10">
+<h3>現象<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>肌、蝋、大理石、翡翠、葉、牛乳などの材質では、表面から入った光が内部で何度も散乱してから、入った点とは別の場所から出ていく。この現象を <a class="reference internal" href="glossary.html#term-9"><span class="xref std std-term">サブサーフェススキャッタリング</span></a> （subsurface scattering、SSS、表面下散乱）と呼ぶ。SSS のある材質は、柔らかく、内側から光っているように見える。特に、光源を背にした薄い部分（耳や葉など）は、光が透けて明るく見える。</p>
+<p>物理的には、SSS は物体の内部を関与媒質とみなした光の散乱であり、第 16 章のボリュームレンダリングや第 17 章のパストレーシングで正確に扱える。ここでは、1 回の描画で済む近似を 2 つ組み合わせる。SDF は物体の内部でも表面までの距離を返すため、物体の厚みを簡単に調べられる。これは、SDF を使うレイマーチングならではの利点である。</p>
+<figure class="align-center" id="id17">
+<img alt="同じ構図の画像が左右に並ぶ。左の物体は暗い緑、右の物体は光が透けて明るい緑に見え、特に薄い葉の形が明るい" src="_images/12_sss.png" />
+<figcaption>
+<p><span class="caption-text">12_sss.frag の実行結果。左は通常の拡散反射、右は SSS の近似を加えたもの。光源は物体の奥にある。</span><a class="headerlink" href="#id17" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/a3a0796610e0c1a1d2a2290ddb51dd55/12_sss.frag"><code class="xref download docutils literal notranslate"><span class="pre">12_sss.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/12_sss.html">ブラウザーで実行</a></p>
+</section>
+<section id="id11">
+<h3>ラップライティング<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>表面から入った光は内部で散乱して横に広がるため、光の当たらない側の近くまで明るくなる。この効果を、拡散反射の <span class="math notranslate nohighlight">\(\hat{\mathbf{n}} \cdot \hat{\mathbf{l}}\)</span> を裏側に少し回り込ませることで近似する。これをラップライティングと呼ぶ。</p>
+<div class="math notranslate nohighlight">
+\[L_{\text{wrap}} \propto \max\left(\frac{\hat{\mathbf{n}} \cdot \hat{\mathbf{l}} + w}{1 + w},\ 0\right)\]</div>
+<p><span class="math notranslate nohighlight">\(w\)</span> は回り込みの量で、<span class="math notranslate nohighlight">\(w = 0\)</span> のときは通常のランバート反射と一致する。</p>
+</section>
+<section id="id12">
+<h3>透過光<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>光源の反対側から見たときの透け感は、光が物体の中を通る距離で決まる。表面上の点から光源の方向に物体の内部を進み、反対側の表面までの距離 <span class="math notranslate nohighlight">\(\ell\)</span> を求める。第 11 章のガラスと同じく、内部では SDF の符号を反転させた値が表面までの距離になるので、スフィアトレーシングで求められる。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">12_sss.frag（抜粋）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 99</span><span class="c1">// 物体の内部を光源の方向に進み、出口までの距離 (光が物体の中を通る長さ) を返す。</span>
+<span class="linenos">100</span><span class="c1">// 内部では -sdObjects(p) が表面までの距離になる (第 11 章)</span>
+<span class="linenos">101</span><span class="kt">float</span><span class="w"> </span><span class="n">thicknessToLight</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="linenos">102</span><span class="p">{</span>
+<span class="linenos">103</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">;</span>
+<span class="linenos">104</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">105</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">106</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">sdObjects</span><span class="p">(</span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">);</span>
+<span class="linenos">107</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">h</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">SURF_DIST</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">4.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">108</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">109</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">110</span><span class="w">        </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">);</span>
+<span class="linenos">111</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">112</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos">113</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>物体の中を距離 <span class="math notranslate nohighlight">\(\ell\)</span> だけ通った光は、ランベルト・ベールの法則により <span class="math notranslate nohighlight">\(e^{-\sigma \ell}\)</span> の割合で残る。消散係数 <span class="math notranslate nohighlight">\(\sigma\)</span> を RGB ごとに変えると、透過光の色を決められる。サンプルでは赤を最も減衰しやすくし、翡翠のような緑がかった透過光にしている。さらに、散乱が前方に偏っていることを近似するため、視線が光源の方向に近いほど透過光を強くしている。</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">12_sss.frag（抜粋）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">115</span><span class="kt">vec3</span><span class="w"> </span><span class="n">shade</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">mat</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">sss</span><span class="p">)</span>
+<span class="linenos">116</span><span class="p">{</span>
+<span class="linenos">117</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calcNormal</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">118</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">119</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">albedo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">mat</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.35</span><span class="p">,</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.3</span><span class="p">);</span>
+<span class="linenos">120</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">shadow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">softShadow</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">);</span>
+<span class="linenos">121</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">);</span>
+<span class="linenos">122</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sky</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">123</span>
+<span class="linenos">124</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">sss</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">mat</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">125</span><span class="w">        </span><span class="c1">// 通常の拡散反射 (第 5 章)</span>
+<span class="linenos">126</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">nl</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">shadow</span><span class="p">;</span>
+<span class="linenos">127</span><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">albedo</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">diffuse</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">SKY_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sky</span><span class="p">);</span>
+<span class="linenos">128</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">129</span>
+<span class="linenos">130</span><span class="w">    </span><span class="c1">// ラップライティング: 光の当たる範囲を裏側に少し回り込ませる</span>
+<span class="linenos">131</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">wrapped</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">((</span><span class="n">nl</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">WRAP</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">WRAP</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">132</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">albedo</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">wrapped</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">shadow</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">+</span>
+<span class="linenos">133</span><span class="w">                         </span><span class="n">SKY_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sky</span><span class="p">);</span>
+<span class="linenos">134</span>
+<span class="linenos">135</span><span class="w">    </span><span class="c1">// 透過光: 物体の中を光源まで通る長さで減衰させる (ランベルト・ベールの法則)</span>
+<span class="linenos">136</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">SIGMA_T</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">thicknessToLight</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">));</span>
+<span class="linenos">137</span><span class="w">    </span><span class="c1">// 光源を正面から見る方向ほど強く見える (前方散乱)</span>
+<span class="linenos">138</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">forward</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.7</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">LIGHT_DIR</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mf">4.0</span><span class="p">);</span>
+<span class="linenos">139</span><span class="w">    </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">albedo</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">forward</span><span class="p">;</span>
+<span class="linenos">140</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="p">;</span>
+<span class="linenos">141</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>図の右側では、薄い葉の形の物体が最も明るく透け、厚い球はあまり透けていない。輪の形の物体は、光が通る距離が短い縁の部分が明るくなっている。</p>
+</section>
+<section id="id13">
+<h3>近似の限界<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>この近似は、光源から表面の点までの直線の経路だけを考えている。実際の SSS では、光は内部で多数回散乱して曲がった経路を通るため、光源から直接見えない部分にも光が回り込む。また、物体の外にある別の物体が光を遮っても、透過光は減らない。</p>
+<p>内部の厚みを求める別の方法として、第 6 章の AO と同じ考え方を法線の逆方向に適用し、内部の数点で SDF を評価して局所的な厚みを見積もる方法もある。光源の方向によらない厚みが得られ、計算も軽い。より正確な結果が必要な場合は、物体の内部を関与媒質とみなし、第 17 章のパストレーシングで内部の散乱を確率的に追跡する（ランダムウォーク法）。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="11_reflection_refraction.html" class="btn btn-neutral float-left" title="第 11 章 反射と屈折" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="13_fractal.html" class="btn btn-neutral float-right" title="第 13 章 フラクタル" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

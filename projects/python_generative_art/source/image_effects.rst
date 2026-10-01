@@ -9,6 +9,7 @@
 新聞や雑誌の印刷では、インクの濃淡を直接表現できない代わりに、規則正しく並んだ点の大きさを変えることで濃淡を表現する\ **ハーフトーン**\ （網点）という技法が使われてきた。画像を格子状のセルに分割し、セルごとの平均輝度を求め、暗いセルほど大きな円を、明るいセルほど小さな円を中心に描くだけで、遠目には元の濃淡が、近づくと規則正しい点の並びが見える表現になる。
 
 .. literalinclude:: ../examples/image_effects.py
+   :linenos:
    :language: python
    :pyobject: halftone
    :caption: examples/image_effects.py の halftone 関数
@@ -25,6 +26,7 @@
 画像の階調数を減らす（例えば白と黒の 2 値だけにする）ときに、各画素を単純に一番近い階調へ丸めるだけでは、なめらかだった濃淡が縞状のバンドとして目立ってしまう。**誤差拡散法**\ （error diffusion dithering）は、丸めによって生じた誤差を捨てずに周囲の未処理画素へ配ることで、この問題を避ける。Floyd-Steinberg 法では、誤差を右・左下・下・右下の画素へ ``7/16, 3/16, 5/16, 1/16`` の比率で配る。
 
 .. literalinclude:: ../examples/image_effects.py
+   :linenos:
    :language: python
    :pyobject: floyd_steinberg_dither
    :caption: examples/image_effects.py の floyd_steinberg_dither 関数
@@ -51,11 +53,13 @@ Adrian Secord が 2002 年に提案した\ **重み付きボロノイ点描**\ �
 暗さを求める際には、元の画像の明るさの幅が狭くても濃淡が点の密度に表れるように、明るさの範囲を 0〜1 に引き伸ばしてから、べき乗で濃淡の差を強調している。
 
 .. literalinclude:: ../examples/stippling.py
+   :linenos:
    :language: python
    :pyobject: darkness
    :caption: examples/stippling.py の darkness 関数
 
 .. literalinclude:: ../examples/stippling.py
+   :linenos:
    :language: python
    :pyobject: initial_points
    :caption: examples/stippling.py の initial_points 関数
@@ -76,6 +80,7 @@ Adrian Secord が 2002 年に提案した\ **重み付きボロノイ点描**\ �
 **ピクセルソート**\ （pixel sorting）は、画像の行（または列）ごとに、一定の条件を満たす画素だけを明るさの順に並べ替えるグリッチアートの技法である。各行について、輝度が指定した範囲に収まる連続した区間を見つけ、その区間の中だけを輝度順にソートする。範囲外の画素はソートの境界として手つかずのまま残る。
 
 .. literalinclude:: ../examples/image_effects.py
+   :linenos:
    :language: python
    :pyobject: pixel_sort
    :caption: examples/image_effects.py の pixel_sort 関数

@@ -11,7 +11,7 @@
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=64886222" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=9d2f6d3b" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -63,6 +63,14 @@
 <li class="toctree-l2"><a class="reference internal" href="#id3">ドメインワーピング</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#worley">Worley ノイズ（セルラーノイズ）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id5">フローフィールド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#curl-noise">カールノイズ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">考え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">実装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">密度が保たれることの確認</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#other-noises">その他のノイズ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">まとめ</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="shapes.html">距離関数による形状表現</a></li>
@@ -117,209 +125,209 @@
 </section>
 <section id="numpy">
 <h2>実装（NumPy でベクトル化）<a class="headerlink" href="#numpy" title="Link to this heading"></a></h2>
-<div class="literal-block-wrapper docutils container" id="id6">
-<div class="code-block-caption"><span class="caption-text">examples/perlin_noise.py</span><a class="headerlink" href="#id6" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;NumPy を用いた自前の2Dパーリンノイズ実装。</span>
-
-<span class="sd">外部のノイズ専用ライブラリには頼らず、Ken Perlin の</span>
-<span class="sd">&quot;Improving Noise&quot; (2002) で示された改良版アルゴリズムを</span>
-<span class="sd">ベクトル化して実装している。</span>
-
-<span class="sd">アルゴリズムの流れ:</span>
-
-<span class="sd">1. 平面を整数格子に区切り、各格子点に固定のランダムな勾配ベクトルを割り当てる</span>
-<span class="sd">   （実際には勾配ベクトルの集合と、座標をその集合の添字に変換するための</span>
-<span class="sd">   ハッシュ用の並び替えテーブル ``perm`` を用意する）。</span>
-<span class="sd">2. 評価したい座標が属する格子セルの4隅について、格子点から座標までの</span>
-<span class="sd">   変位ベクトルと勾配ベクトルの内積を取る。</span>
-<span class="sd">3. 4つの内積値を、なめらかな補間曲線（fade関数）を使ったバイリニア補間で</span>
-<span class="sd">   合成し、1点のノイズ値を得る。</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="c1"># 2Dで使用する8方向の勾配ベクトル。</span>
-<span class="n">_GRADIENTS</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-    <span class="p">[</span>
-        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-    <span class="p">],</span>
-    <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
-<span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">make_permutation</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;0-255 をシャッフルした並び替えテーブルを、長さ512に複製して返す。</span>
-
-<span class="sd">    座標を勾配ベクトルの添字に変換する際のハッシュ関数として使う。</span>
-<span class="sd">    末尾で格子座標が +1 されてもインデックスが配列範囲を超えないよう、</span>
-<span class="sd">    テーブルを2つ連結しておく（ラップアラウンドの簡易実装）。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-    <span class="n">rng</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">perm</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">perm</span><span class="p">,</span> <span class="n">perm</span><span class="p">])</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_fade</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;5次のイーズ曲線 6t^5 - 15t^4 + 10t^3 。</span>
-
-<span class="sd">    両端で1階・2階微分が0になり、格子の継ぎ目が滑らかにつながる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="mi">6</span> <span class="o">-</span> <span class="mi">15</span><span class="p">)</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_lerp</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_gradient_dot</span><span class="p">(</span>
-    <span class="n">hash_value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;ハッシュ値から勾配ベクトルを選び、変位ベクトル (x, y) との内積を返す。&quot;&quot;&quot;</span>
-    <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_GRADIENTS</span><span class="p">[</span><span class="n">hash_value</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">perlin2d</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;座標配列 x, y (任意の同じ形状) に対するパーリンノイズ値を返す。</span>
-
-<span class="sd">    値のレンジはおおよそ -1〜1 に収まる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">xi</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">255</span>
-    <span class="n">yi</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">255</span>
-    <span class="n">xf</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="n">yf</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-
-    <span class="n">u</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_fade</span><span class="p">(</span><span class="n">xf</span><span class="p">)</span>
-    <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_fade</span><span class="p">(</span><span class="n">yf</span><span class="p">)</span>
-
-    <span class="c1"># 格子セルの4隅のハッシュ値</span>
-    <span class="n">aa</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">perm</span><span class="p">[</span><span class="n">xi</span><span class="p">]</span> <span class="o">+</span> <span class="n">yi</span><span class="p">]</span>
-    <span class="n">ab</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">perm</span><span class="p">[</span><span class="n">xi</span><span class="p">]</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="n">ba</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">perm</span><span class="p">[</span><span class="n">xi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">yi</span><span class="p">]</span>
-    <span class="n">bb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">perm</span><span class="p">[</span><span class="n">xi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-
-    <span class="c1"># 各隅について、勾配ベクトルと変位ベクトルの内積を計算</span>
-    <span class="n">x1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_lerp</span><span class="p">(</span>
-        <span class="n">u</span><span class="p">,</span> <span class="n">_gradient_dot</span><span class="p">(</span><span class="n">aa</span><span class="p">,</span> <span class="n">xf</span><span class="p">,</span> <span class="n">yf</span><span class="p">),</span> <span class="n">_gradient_dot</span><span class="p">(</span><span class="n">ba</span><span class="p">,</span> <span class="n">xf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">yf</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">x2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_lerp</span><span class="p">(</span>
-        <span class="n">u</span><span class="p">,</span> <span class="n">_gradient_dot</span><span class="p">(</span><span class="n">ab</span><span class="p">,</span> <span class="n">xf</span><span class="p">,</span> <span class="n">yf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">_gradient_dot</span><span class="p">(</span><span class="n">bb</span><span class="p">,</span> <span class="n">xf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">yf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">_lerp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">fbm2d</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">octaves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="n">persistence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-    <span class="n">lacunarity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;複数のオクターブを重ね合わせた fBm (fractal Brownian motion)。</span>
-
-<span class="sd">    周波数を ``lacunarity`` 倍、振幅を ``persistence`` 倍しながら</span>
-<span class="sd">    ``octaves`` 回パーリンノイズを重ね、より複雑なディテールを加える。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">total</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">amplitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="n">max_amplitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">octaves</span><span class="p">):</span>
-        <span class="n">total</span> <span class="o">+=</span> <span class="n">amplitude</span> <span class="o">*</span> <span class="n">perlin2d</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">perm</span><span class="p">)</span>
-        <span class="n">max_amplitude</span> <span class="o">+=</span> <span class="n">amplitude</span>
-        <span class="n">amplitude</span> <span class="o">*=</span> <span class="n">persistence</span>
-        <span class="n">frequency</span> <span class="o">*=</span> <span class="n">lacunarity</span>
-
-    <span class="k">return</span> <span class="n">total</span> <span class="o">/</span> <span class="n">max_amplitude</span>
-
-
-<span class="c1"># 各ワープ段で q, r 用のノイズを評価する際に足しこむオフセット。</span>
-<span class="c1"># 適当に離れた値にすることで、複数回評価するノイズどうしの相関を薄める。</span>
-<span class="n">_WARP_OFFSETS</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-    <span class="p">[</span>
-        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-        <span class="p">[</span><span class="mf">5.2</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">],</span>
-        <span class="p">[</span><span class="mf">1.7</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">],</span>
-        <span class="p">[</span><span class="mf">8.3</span><span class="p">,</span> <span class="mf">2.8</span><span class="p">],</span>
-        <span class="p">[</span><span class="mf">4.1</span><span class="p">,</span> <span class="mf">6.6</span><span class="p">],</span>
-        <span class="p">[</span><span class="mf">2.9</span><span class="p">,</span> <span class="mf">7.4</span><span class="p">],</span>
-    <span class="p">]</span>
-<span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">domain_warp2d</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">octaves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="n">persistence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-    <span class="n">lacunarity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
-    <span class="n">warp_strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
-    <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;ドメインワーピング: fBmの評価座標そのものをノイズで歪める。</span>
-
-<span class="sd">    通常の fBm ``fbm(p)`` に対し、まず座標をずらすためのベクトル場</span>
-<span class="sd">    ``q(p) = (fbm(p + o0), fbm(p + o1))`` をノイズから作り、</span>
-<span class="sd">    ``fbm(p + warp_strength * q(p))`` を評価する。これを繰り返し適用する</span>
-<span class="sd">    （``iterations`` 回）ことで、格子状のfBmだけでは出せない、渦を巻いた</span>
-<span class="sd">    ような有機的な模様が得られる（Inigo Quilez, &quot;Domain Warping&quot;）。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">warped_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">x</span>
-    <span class="n">warped_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">y</span>
-
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
-        <span class="n">offset_a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_WARP_OFFSETS</span><span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WARP_OFFSETS</span><span class="p">)]</span>
-        <span class="n">offset_b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_WARP_OFFSETS</span><span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WARP_OFFSETS</span><span class="p">)]</span>
-
-        <span class="n">qx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
-            <span class="n">warped_x</span> <span class="o">+</span> <span class="n">offset_a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">warped_y</span> <span class="o">+</span> <span class="n">offset_a</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">qy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
-            <span class="n">warped_x</span> <span class="o">+</span> <span class="n">offset_b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">warped_y</span> <span class="o">+</span> <span class="n">offset_b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">warped_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">warp_strength</span> <span class="o">*</span> <span class="n">qx</span>
-        <span class="n">warped_y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">warp_strength</span> <span class="o">*</span> <span class="n">qy</span>
-
-    <span class="k">return</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">warped_x</span><span class="p">,</span> <span class="n">warped_y</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
-
-    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
-    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
-    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span>
-
-    <span class="n">xs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">ys</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">make_permutation</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_grayscale</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">normalized</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">((</span><span class="n">values</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
-        <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">normalized</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;L&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-
-    <span class="n">fbm_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">xs</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">ys</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">save_grayscale</span><span class="p">(</span><span class="n">fbm_values</span><span class="p">,</span> <span class="s2">&quot;perlin_noise.png&quot;</span><span class="p">)</span>
-
-    <span class="n">warped_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">domain_warp2d</span><span class="p">(</span>
-        <span class="n">xs</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">ys</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">warp_strength</span><span class="o">=</span><span class="mf">4.0</span>
-    <span class="p">)</span>
-    <span class="n">save_grayscale</span><span class="p">(</span><span class="n">warped_values</span><span class="p">,</span> <span class="s2">&quot;domain_warp.png&quot;</span><span class="p">)</span>
-
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">examples/perlin_noise.py</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="sd">&quot;&quot;&quot;NumPy を用いた自前の2Dパーリンノイズ実装。</span>
+<span class="linenos">  2</span>
+<span class="linenos">  3</span><span class="sd">外部のノイズ専用ライブラリには頼らず、Ken Perlin の</span>
+<span class="linenos">  4</span><span class="sd">&quot;Improving Noise&quot; (2002) で示された改良版アルゴリズムを</span>
+<span class="linenos">  5</span><span class="sd">ベクトル化して実装している。</span>
+<span class="linenos">  6</span>
+<span class="linenos">  7</span><span class="sd">アルゴリズムの流れ:</span>
+<span class="linenos">  8</span>
+<span class="linenos">  9</span><span class="sd">1. 平面を整数格子に区切り、各格子点に固定のランダムな勾配ベクトルを割り当てる</span>
+<span class="linenos"> 10</span><span class="sd">   （実際には勾配ベクトルの集合と、座標をその集合の添字に変換するための</span>
+<span class="linenos"> 11</span><span class="sd">   ハッシュ用の並び替えテーブル ``perm`` を用意する）。</span>
+<span class="linenos"> 12</span><span class="sd">2. 評価したい座標が属する格子セルの4隅について、格子点から座標までの</span>
+<span class="linenos"> 13</span><span class="sd">   変位ベクトルと勾配ベクトルの内積を取る。</span>
+<span class="linenos"> 14</span><span class="sd">3. 4つの内積値を、なめらかな補間曲線（fade関数）を使ったバイリニア補間で</span>
+<span class="linenos"> 15</span><span class="sd">   合成し、1点のノイズ値を得る。</span>
+<span class="linenos"> 16</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 17</span>
+<span class="linenos"> 18</span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos"> 19</span>
+<span class="linenos"> 20</span><span class="c1"># 2Dで使用する8方向の勾配ベクトル。</span>
+<span class="linenos"> 21</span><span class="n">_GRADIENTS</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+<span class="linenos"> 22</span>    <span class="p">[</span>
+<span class="linenos"> 23</span>        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+<span class="linenos"> 24</span>        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+<span class="linenos"> 25</span>    <span class="p">],</span>
+<span class="linenos"> 26</span>    <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 27</span><span class="p">)</span>
+<span class="linenos"> 28</span>
+<span class="linenos"> 29</span>
+<span class="linenos"> 30</span><span class="k">def</span><span class="w"> </span><span class="nf">make_permutation</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 31</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;0-255 をシャッフルした並び替えテーブルを、長さ512に複製して返す。</span>
+<span class="linenos"> 32</span>
+<span class="linenos"> 33</span><span class="sd">    座標を勾配ベクトルの添字に変換する際のハッシュ関数として使う。</span>
+<span class="linenos"> 34</span><span class="sd">    末尾で格子座標が +1 されてもインデックスが配列範囲を超えないよう、</span>
+<span class="linenos"> 35</span><span class="sd">    テーブルを2つ連結しておく（ラップアラウンドの簡易実装）。</span>
+<span class="linenos"> 36</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 37</span>    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<span class="linenos"> 38</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+<span class="linenos"> 39</span>    <span class="n">rng</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">perm</span><span class="p">)</span>
+<span class="linenos"> 40</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">perm</span><span class="p">,</span> <span class="n">perm</span><span class="p">])</span>
+<span class="linenos"> 41</span>
+<span class="linenos"> 42</span>
+<span class="linenos"> 43</span><span class="k">def</span><span class="w"> </span><span class="nf">_fade</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 44</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;5次のイーズ曲線 6t^5 - 15t^4 + 10t^3 。</span>
+<span class="linenos"> 45</span>
+<span class="linenos"> 46</span><span class="sd">    両端で1階・2階微分が0になり、格子の継ぎ目が滑らかにつながる。</span>
+<span class="linenos"> 47</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 48</span>    <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="mi">6</span> <span class="o">-</span> <span class="mi">15</span><span class="p">)</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span>
+<span class="linenos"> 49</span>
+<span class="linenos"> 50</span>
+<span class="linenos"> 51</span><span class="k">def</span><span class="w"> </span><span class="nf">_lerp</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 52</span>    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
+<span class="linenos"> 53</span>
+<span class="linenos"> 54</span>
+<span class="linenos"> 55</span><span class="k">def</span><span class="w"> </span><span class="nf">_gradient_dot</span><span class="p">(</span>
+<span class="linenos"> 56</span>    <span class="n">hash_value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos"> 57</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 58</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ハッシュ値から勾配ベクトルを選び、変位ベクトル (x, y) との内積を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 59</span>    <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_GRADIENTS</span><span class="p">[</span><span class="n">hash_value</span> <span class="o">&amp;</span> <span class="mi">7</span><span class="p">]</span>
+<span class="linenos"> 60</span>    <span class="k">return</span> <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span>
+<span class="linenos"> 61</span>
+<span class="linenos"> 62</span>
+<span class="linenos"> 63</span><span class="k">def</span><span class="w"> </span><span class="nf">perlin2d</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 64</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;座標配列 x, y (任意の同じ形状) に対するパーリンノイズ値を返す。</span>
+<span class="linenos"> 65</span>
+<span class="linenos"> 66</span><span class="sd">    値のレンジはおおよそ -1〜1 に収まる。</span>
+<span class="linenos"> 67</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 68</span>    <span class="n">xi</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">255</span>
+<span class="linenos"> 69</span>    <span class="n">yi</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">255</span>
+<span class="linenos"> 70</span>    <span class="n">xf</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="linenos"> 71</span>    <span class="n">yf</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="linenos"> 72</span>
+<span class="linenos"> 73</span>    <span class="n">u</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_fade</span><span class="p">(</span><span class="n">xf</span><span class="p">)</span>
+<span class="linenos"> 74</span>    <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_fade</span><span class="p">(</span><span class="n">yf</span><span class="p">)</span>
+<span class="linenos"> 75</span>
+<span class="linenos"> 76</span>    <span class="c1"># 格子セルの4隅のハッシュ値</span>
+<span class="linenos"> 77</span>    <span class="n">aa</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">perm</span><span class="p">[</span><span class="n">xi</span><span class="p">]</span> <span class="o">+</span> <span class="n">yi</span><span class="p">]</span>
+<span class="linenos"> 78</span>    <span class="n">ab</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">perm</span><span class="p">[</span><span class="n">xi</span><span class="p">]</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+<span class="linenos"> 79</span>    <span class="n">ba</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">perm</span><span class="p">[</span><span class="n">xi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">yi</span><span class="p">]</span>
+<span class="linenos"> 80</span>    <span class="n">bb</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">perm</span><span class="p">[</span><span class="n">xi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+<span class="linenos"> 81</span>
+<span class="linenos"> 82</span>    <span class="c1"># 各隅について、勾配ベクトルと変位ベクトルの内積を計算</span>
+<span class="linenos"> 83</span>    <span class="n">x1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_lerp</span><span class="p">(</span>
+<span class="linenos"> 84</span>        <span class="n">u</span><span class="p">,</span> <span class="n">_gradient_dot</span><span class="p">(</span><span class="n">aa</span><span class="p">,</span> <span class="n">xf</span><span class="p">,</span> <span class="n">yf</span><span class="p">),</span> <span class="n">_gradient_dot</span><span class="p">(</span><span class="n">ba</span><span class="p">,</span> <span class="n">xf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">yf</span><span class="p">)</span>
+<span class="linenos"> 85</span>    <span class="p">)</span>
+<span class="linenos"> 86</span>    <span class="n">x2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_lerp</span><span class="p">(</span>
+<span class="linenos"> 87</span>        <span class="n">u</span><span class="p">,</span> <span class="n">_gradient_dot</span><span class="p">(</span><span class="n">ab</span><span class="p">,</span> <span class="n">xf</span><span class="p">,</span> <span class="n">yf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">_gradient_dot</span><span class="p">(</span><span class="n">bb</span><span class="p">,</span> <span class="n">xf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">yf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 88</span>    <span class="p">)</span>
+<span class="linenos"> 89</span>    <span class="k">return</span> <span class="n">_lerp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
+<span class="linenos"> 90</span>
+<span class="linenos"> 91</span>
+<span class="linenos"> 92</span><span class="k">def</span><span class="w"> </span><span class="nf">fbm2d</span><span class="p">(</span>
+<span class="linenos"> 93</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 94</span>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 95</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 96</span>    <span class="n">octaves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="linenos"> 97</span>    <span class="n">persistence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="linenos"> 98</span>    <span class="n">lacunarity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="linenos"> 99</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">100</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;複数のオクターブを重ね合わせた fBm (fractal Brownian motion)。</span>
+<span class="linenos">101</span>
+<span class="linenos">102</span><span class="sd">    周波数を ``lacunarity`` 倍、振幅を ``persistence`` 倍しながら</span>
+<span class="linenos">103</span><span class="sd">    ``octaves`` 回パーリンノイズを重ね、より複雑なディテールを加える。</span>
+<span class="linenos">104</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">105</span>    <span class="n">total</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="linenos">106</span>    <span class="n">amplitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="linenos">107</span>    <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="linenos">108</span>    <span class="n">max_amplitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="linenos">109</span>
+<span class="linenos">110</span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">octaves</span><span class="p">):</span>
+<span class="linenos">111</span>        <span class="n">total</span> <span class="o">+=</span> <span class="n">amplitude</span> <span class="o">*</span> <span class="n">perlin2d</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">perm</span><span class="p">)</span>
+<span class="linenos">112</span>        <span class="n">max_amplitude</span> <span class="o">+=</span> <span class="n">amplitude</span>
+<span class="linenos">113</span>        <span class="n">amplitude</span> <span class="o">*=</span> <span class="n">persistence</span>
+<span class="linenos">114</span>        <span class="n">frequency</span> <span class="o">*=</span> <span class="n">lacunarity</span>
+<span class="linenos">115</span>
+<span class="linenos">116</span>    <span class="k">return</span> <span class="n">total</span> <span class="o">/</span> <span class="n">max_amplitude</span>
+<span class="linenos">117</span>
+<span class="linenos">118</span>
+<span class="linenos">119</span><span class="c1"># 各ワープ段で q, r 用のノイズを評価する際に足しこむオフセット。</span>
+<span class="linenos">120</span><span class="c1"># 適当に離れた値にすることで、複数回評価するノイズどうしの相関を薄める。</span>
+<span class="linenos">121</span><span class="n">_WARP_OFFSETS</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+<span class="linenos">122</span>    <span class="p">[</span>
+<span class="linenos">123</span>        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">124</span>        <span class="p">[</span><span class="mf">5.2</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">],</span>
+<span class="linenos">125</span>        <span class="p">[</span><span class="mf">1.7</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">],</span>
+<span class="linenos">126</span>        <span class="p">[</span><span class="mf">8.3</span><span class="p">,</span> <span class="mf">2.8</span><span class="p">],</span>
+<span class="linenos">127</span>        <span class="p">[</span><span class="mf">4.1</span><span class="p">,</span> <span class="mf">6.6</span><span class="p">],</span>
+<span class="linenos">128</span>        <span class="p">[</span><span class="mf">2.9</span><span class="p">,</span> <span class="mf">7.4</span><span class="p">],</span>
+<span class="linenos">129</span>    <span class="p">]</span>
+<span class="linenos">130</span><span class="p">)</span>
+<span class="linenos">131</span>
+<span class="linenos">132</span>
+<span class="linenos">133</span><span class="k">def</span><span class="w"> </span><span class="nf">domain_warp2d</span><span class="p">(</span>
+<span class="linenos">134</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos">135</span>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos">136</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos">137</span>    <span class="n">octaves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="linenos">138</span>    <span class="n">persistence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="linenos">139</span>    <span class="n">lacunarity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="linenos">140</span>    <span class="n">warp_strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+<span class="linenos">141</span>    <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="linenos">142</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">143</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ドメインワーピング: fBmの評価座標そのものをノイズで歪める。</span>
+<span class="linenos">144</span>
+<span class="linenos">145</span><span class="sd">    通常の fBm ``fbm(p)`` に対し、まず座標をずらすためのベクトル場</span>
+<span class="linenos">146</span><span class="sd">    ``q(p) = (fbm(p + o0), fbm(p + o1))`` をノイズから作り、</span>
+<span class="linenos">147</span><span class="sd">    ``fbm(p + warp_strength * q(p))`` を評価する。これを繰り返し適用する</span>
+<span class="linenos">148</span><span class="sd">    （``iterations`` 回）ことで、格子状のfBmだけでは出せない、渦を巻いた</span>
+<span class="linenos">149</span><span class="sd">    ような有機的な模様が得られる（Inigo Quilez, &quot;Domain Warping&quot;）。</span>
+<span class="linenos">150</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">151</span>    <span class="n">warped_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">x</span>
+<span class="linenos">152</span>    <span class="n">warped_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">y</span>
+<span class="linenos">153</span>
+<span class="linenos">154</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
+<span class="linenos">155</span>        <span class="n">offset_a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_WARP_OFFSETS</span><span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WARP_OFFSETS</span><span class="p">)]</span>
+<span class="linenos">156</span>        <span class="n">offset_b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_WARP_OFFSETS</span><span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WARP_OFFSETS</span><span class="p">)]</span>
+<span class="linenos">157</span>
+<span class="linenos">158</span>        <span class="n">qx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
+<span class="linenos">159</span>            <span class="n">warped_x</span> <span class="o">+</span> <span class="n">offset_a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">warped_y</span> <span class="o">+</span> <span class="n">offset_a</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+<span class="linenos">160</span>            <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">,</span>
+<span class="linenos">161</span>        <span class="p">)</span>
+<span class="linenos">162</span>        <span class="n">qy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
+<span class="linenos">163</span>            <span class="n">warped_x</span> <span class="o">+</span> <span class="n">offset_b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">warped_y</span> <span class="o">+</span> <span class="n">offset_b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+<span class="linenos">164</span>            <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">,</span>
+<span class="linenos">165</span>        <span class="p">)</span>
+<span class="linenos">166</span>
+<span class="linenos">167</span>        <span class="n">warped_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">warp_strength</span> <span class="o">*</span> <span class="n">qx</span>
+<span class="linenos">168</span>        <span class="n">warped_y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">warp_strength</span> <span class="o">*</span> <span class="n">qy</span>
+<span class="linenos">169</span>
+<span class="linenos">170</span>    <span class="k">return</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">warped_x</span><span class="p">,</span> <span class="n">warped_y</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">)</span>
+<span class="linenos">171</span>
+<span class="linenos">172</span>
+<span class="linenos">173</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">174</span>    <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<span class="linenos">175</span>
+<span class="linenos">176</span>    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="linenos">177</span>    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="linenos">178</span>    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span>
+<span class="linenos">179</span>
+<span class="linenos">180</span>    <span class="n">xs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos">181</span>    <span class="n">ys</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos">182</span>    <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span>
+<span class="linenos">183</span>        <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="linenos">184</span>    <span class="p">)</span>
+<span class="linenos">185</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">make_permutation</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">186</span>
+<span class="linenos">187</span>    <span class="k">def</span><span class="w"> </span><span class="nf">save_grayscale</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">188</span>        <span class="n">normalized</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">((</span><span class="n">values</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+<span class="linenos">189</span>        <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">normalized</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;L&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="linenos">190</span>
+<span class="linenos">191</span>    <span class="n">fbm_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">xs</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">ys</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="linenos">192</span>    <span class="n">save_grayscale</span><span class="p">(</span><span class="n">fbm_values</span><span class="p">,</span> <span class="s2">&quot;perlin_noise.png&quot;</span><span class="p">)</span>
+<span class="linenos">193</span>
+<span class="linenos">194</span>    <span class="n">warped_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">domain_warp2d</span><span class="p">(</span>
+<span class="linenos">195</span>        <span class="n">xs</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">ys</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">warp_strength</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="linenos">196</span>    <span class="p">)</span>
+<span class="linenos">197</span>    <span class="n">save_grayscale</span><span class="p">(</span><span class="n">warped_values</span><span class="p">,</span> <span class="s2">&quot;domain_warp.png&quot;</span><span class="p">)</span>
+<span class="linenos">198</span>
+<span class="linenos">199</span>
+<span class="linenos">200</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">201</span>    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -327,18 +335,18 @@
 <a class="reference internal image-reference" href="_images/perlin_noise.png"><img alt="自前実装のパーリンノイズ（fBm）によるグレースケール画像" src="_images/perlin_noise.png" style="width: 400px;" />
 </a>
 <p>基本の <code class="docutils literal notranslate"><span class="pre">perlin2d</span></code> に加えて、周波数と振幅を変えながら重ね合わせる <code class="docutils literal notranslate"><span class="pre">fbm2d</span></code>（fractal Brownian motion）も実装している。オクターブ数を増やすほど、大きなうねりの上に細かいディテールが乗った複雑な模様になる。</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">perlin_noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">fbm2d</span><span class="p">,</span> <span class="n">make_permutation</span>
-
-<span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">make_permutation</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">xs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-<span class="n">ys</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-<span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-<span class="p">)</span>
-<span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
-    <span class="n">xs</span> <span class="o">*</span> <span class="mf">0.02</span><span class="p">,</span> <span class="n">ys</span> <span class="o">*</span> <span class="mf">0.02</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">persistence</span><span class="o">=</span><span class="mf">0.5</span>
-<span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos"> 2</span><span class="kn">from</span><span class="w"> </span><span class="nn">perlin_noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">fbm2d</span><span class="p">,</span> <span class="n">make_permutation</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">make_permutation</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 5</span><span class="n">xs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos"> 6</span><span class="n">ys</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos"> 7</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span>
+<span class="linenos"> 8</span>    <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="linenos"> 9</span><span class="p">)</span>
+<span class="linenos">10</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
+<span class="linenos">11</span>    <span class="n">xs</span> <span class="o">*</span> <span class="mf">0.02</span><span class="p">,</span> <span class="n">ys</span> <span class="o">*</span> <span class="mf">0.02</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">persistence</span><span class="o">=</span><span class="mf">0.5</span>
+<span class="linenos">12</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -351,46 +359,46 @@
 <div class="math notranslate nohighlight">
 \[f_{\mathrm{warp}}(p) = \mathrm{fbm}\bigl(p + k \cdot q(p)\bigr)\]</div>
 <p>ここで <span class="math notranslate nohighlight">\(o_0, o_1\)</span> は互いに離れた適当な定数オフセット（同じノイズ場を使い回しても座標が違えば無相関に近い値になる）、<span class="math notranslate nohighlight">\(k\)</span> はワープの強さを決める係数である。これを複数回繰り返し適用する（歪めた座標でさらに次のワープ用ベクトル場を作る）ことで、より複雑な渦模様が得られる。</p>
-<div class="literal-block-wrapper docutils container" id="id7">
-<div class="code-block-caption"><span class="caption-text">examples/perlin_noise.py の domain_warp2d 関数</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">domain_warp2d</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">octaves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="n">persistence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-    <span class="n">lacunarity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
-    <span class="n">warp_strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
-    <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;ドメインワーピング: fBmの評価座標そのものをノイズで歪める。</span>
-
-<span class="sd">    通常の fBm ``fbm(p)`` に対し、まず座標をずらすためのベクトル場</span>
-<span class="sd">    ``q(p) = (fbm(p + o0), fbm(p + o1))`` をノイズから作り、</span>
-<span class="sd">    ``fbm(p + warp_strength * q(p))`` を評価する。これを繰り返し適用する</span>
-<span class="sd">    （``iterations`` 回）ことで、格子状のfBmだけでは出せない、渦を巻いた</span>
-<span class="sd">    ような有機的な模様が得られる（Inigo Quilez, &quot;Domain Warping&quot;）。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">warped_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">x</span>
-    <span class="n">warped_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">y</span>
-
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
-        <span class="n">offset_a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_WARP_OFFSETS</span><span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WARP_OFFSETS</span><span class="p">)]</span>
-        <span class="n">offset_b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_WARP_OFFSETS</span><span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WARP_OFFSETS</span><span class="p">)]</span>
-
-        <span class="n">qx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
-            <span class="n">warped_x</span> <span class="o">+</span> <span class="n">offset_a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">warped_y</span> <span class="o">+</span> <span class="n">offset_a</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">qy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
-            <span class="n">warped_x</span> <span class="o">+</span> <span class="n">offset_b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">warped_y</span> <span class="o">+</span> <span class="n">offset_b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">warped_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">warp_strength</span> <span class="o">*</span> <span class="n">qx</span>
-        <span class="n">warped_y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">warp_strength</span> <span class="o">*</span> <span class="n">qy</span>
-
-    <span class="k">return</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">warped_x</span><span class="p">,</span> <span class="n">warped_y</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">)</span>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">examples/perlin_noise.py の domain_warp2d 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">domain_warp2d</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 4</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 5</span>    <span class="n">octaves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="linenos"> 6</span>    <span class="n">persistence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="linenos"> 7</span>    <span class="n">lacunarity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="linenos"> 8</span>    <span class="n">warp_strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+<span class="linenos"> 9</span>    <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="linenos">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">11</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ドメインワーピング: fBmの評価座標そのものをノイズで歪める。</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="sd">    通常の fBm ``fbm(p)`` に対し、まず座標をずらすためのベクトル場</span>
+<span class="linenos">14</span><span class="sd">    ``q(p) = (fbm(p + o0), fbm(p + o1))`` をノイズから作り、</span>
+<span class="linenos">15</span><span class="sd">    ``fbm(p + warp_strength * q(p))`` を評価する。これを繰り返し適用する</span>
+<span class="linenos">16</span><span class="sd">    （``iterations`` 回）ことで、格子状のfBmだけでは出せない、渦を巻いた</span>
+<span class="linenos">17</span><span class="sd">    ような有機的な模様が得られる（Inigo Quilez, &quot;Domain Warping&quot;）。</span>
+<span class="linenos">18</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">19</span>    <span class="n">warped_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">x</span>
+<span class="linenos">20</span>    <span class="n">warped_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">y</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
+<span class="linenos">23</span>        <span class="n">offset_a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_WARP_OFFSETS</span><span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WARP_OFFSETS</span><span class="p">)]</span>
+<span class="linenos">24</span>        <span class="n">offset_b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">_WARP_OFFSETS</span><span class="p">[(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">_WARP_OFFSETS</span><span class="p">)]</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span>        <span class="n">qx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
+<span class="linenos">27</span>            <span class="n">warped_x</span> <span class="o">+</span> <span class="n">offset_a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">warped_y</span> <span class="o">+</span> <span class="n">offset_a</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+<span class="linenos">28</span>            <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">,</span>
+<span class="linenos">29</span>        <span class="p">)</span>
+<span class="linenos">30</span>        <span class="n">qy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span>
+<span class="linenos">31</span>            <span class="n">warped_x</span> <span class="o">+</span> <span class="n">offset_b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">warped_y</span> <span class="o">+</span> <span class="n">offset_b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+<span class="linenos">32</span>            <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">,</span>
+<span class="linenos">33</span>        <span class="p">)</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span>        <span class="n">warped_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">warp_strength</span> <span class="o">*</span> <span class="n">qx</span>
+<span class="linenos">36</span>        <span class="n">warped_y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">warp_strength</span> <span class="o">*</span> <span class="n">qy</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span>    <span class="k">return</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">warped_x</span><span class="p">,</span> <span class="n">warped_y</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="p">,</span> <span class="n">persistence</span><span class="p">,</span> <span class="n">lacunarity</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -404,46 +412,46 @@
 <p>パーリンノイズは、格子点に割り当てた勾配をなめらかに補間するノイズだった。これとは異なる発想のノイズとして、Steven Worley が 1996 年に提案した <strong>Worley ノイズ</strong>（セルラーノイズとも呼ぶ）がある。平面に散らした<strong>特徴点</strong>までの距離をノイズの値として使うもので、細胞・泡・石畳・ひび割れのような、境界で区切られた模様を作るのに向く。</p>
 <p>特徴点は、平面を正方形のマスに区切り、各マスに 1 つずつランダムな位置に置く。評価する点について、もっとも近い特徴点までの距離を <span class="math notranslate nohighlight">\(F_1\)</span>、2 番目に近い特徴点までの距離を <span class="math notranslate nohighlight">\(F_2\)</span> とし、これらの値やその組み合わせをノイズとして使う。</p>
 <p>特徴点をマスごとに 1 つずつ置いておくと、近い特徴点を探すときに、全ての特徴点を調べる必要がなくなる。本実装では、評価点が属するマスとその周囲 8 マスにある計 9 個の特徴点だけを調べている。厳密には、この 9 個より外側の特徴点のほうが近い場合もあるが、まれであり、模様への影響は目立たない（作例では、<span class="math notranslate nohighlight">\(F_1\)</span> は全ての画素で厳密な値と一致し、<span class="math notranslate nohighlight">\(F_2\)</span> がずれた画素は全体の 0.02% 未満だった）。また、特徴点の配列を端で折り返して参照しているため、模様は上下左右に継ぎ目なくつながる。</p>
-<div class="literal-block-wrapper docutils container" id="id8">
-<div class="code-block-caption"><span class="caption-text">examples/worley.py の make_feature_points 関数</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">make_feature_points</span><span class="p">(</span>
-    <span class="n">cells</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``cells`` x ``cells`` のマスそれぞれに置く特徴点の、マス内での位置。</span>
-
-<span class="sd">    戻り値は形状 (cells, cells, 2) の配列で、値は 0.0-1.0。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">cells</span><span class="p">,</span> <span class="n">cells</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">examples/worley.py の make_feature_points 関数</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">make_feature_points</span><span class="p">(</span>
+<span class="linenos">2</span>    <span class="n">cells</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span>
+<span class="linenos">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;``cells`` x ``cells`` のマスそれぞれに置く特徴点の、マス内での位置。</span>
+<span class="linenos">5</span>
+<span class="linenos">6</span><span class="sd">    戻り値は形状 (cells, cells, 2) の配列で、値は 0.0-1.0。</span>
+<span class="linenos">7</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">8</span>    <span class="k">return</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">cells</span><span class="p">,</span> <span class="n">cells</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id9">
-<div class="code-block-caption"><span class="caption-text">examples/worley.py の worley2d 関数</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">worley2d</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;座標 (x, y) (マス単位)における Worley ノイズの F1 と F2 を返す。</span>
-
-<span class="sd">    評価点が属するマスと、その周囲 8 マスの計 9 個の特徴点までの</span>
-<span class="sd">    距離を求め、小さいほうから2つを F1・F2 とする。特徴点の配列は</span>
-<span class="sd">    端で折り返して参照するため、生成される模様は上下左右に継ぎ目なく</span>
-<span class="sd">    つながる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">ix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-    <span class="n">iy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-    <span class="n">distances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">dy</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">dx</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">cx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">ix</span> <span class="o">+</span> <span class="n">dx</span>
-            <span class="n">cy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">iy</span> <span class="o">+</span> <span class="n">dy</span>
-            <span class="n">offset</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">features</span><span class="p">[</span><span class="n">cy</span> <span class="o">%</span> <span class="n">cells</span><span class="p">,</span> <span class="n">cx</span> <span class="o">%</span> <span class="n">cells</span><span class="p">]</span>
-            <span class="n">fx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">+</span> <span class="n">offset</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-            <span class="n">fy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">offset</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-            <span class="n">distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">fx</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">fy</span><span class="p">))</span>
-
-    <span class="n">nearest</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">distances</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">nearest</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nearest</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">examples/worley.py の worley2d 関数</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">worley2d</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;座標 (x, y) (マス単位)における Worley ノイズの F1 と F2 を返す。</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="sd">    評価点が属するマスと、その周囲 8 マスの計 9 個の特徴点までの</span>
+<span class="linenos"> 7</span><span class="sd">    距離を求め、小さいほうから2つを F1・F2 とする。特徴点の配列は</span>
+<span class="linenos"> 8</span><span class="sd">    端で折り返して参照するため、生成される模様は上下左右に継ぎ目なく</span>
+<span class="linenos"> 9</span><span class="sd">    つながる。</span>
+<span class="linenos">10</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">11</span>    <span class="n">cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="linenos">12</span>    <span class="n">ix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+<span class="linenos">13</span>    <span class="n">iy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+<span class="linenos">14</span>    <span class="n">distances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">15</span>    <span class="k">for</span> <span class="n">dy</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">16</span>        <span class="k">for</span> <span class="n">dx</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">17</span>            <span class="n">cx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">ix</span> <span class="o">+</span> <span class="n">dx</span>
+<span class="linenos">18</span>            <span class="n">cy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">iy</span> <span class="o">+</span> <span class="n">dy</span>
+<span class="linenos">19</span>            <span class="n">offset</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">features</span><span class="p">[</span><span class="n">cy</span> <span class="o">%</span> <span class="n">cells</span><span class="p">,</span> <span class="n">cx</span> <span class="o">%</span> <span class="n">cells</span><span class="p">]</span>
+<span class="linenos">20</span>            <span class="n">fx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">+</span> <span class="n">offset</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="linenos">21</span>            <span class="n">fy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">offset</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="linenos">22</span>            <span class="n">distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">fx</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">fy</span><span class="p">))</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span>    <span class="n">nearest</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">distances</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">25</span>    <span class="k">return</span> <span class="n">nearest</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nearest</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -466,118 +474,273 @@
 <div class="math notranslate nohighlight">
 \[p_{t+1} = p_t + \mathrm{step\_length} \cdot
 \bigl(\cos\theta(p_t),\ \sin\theta(p_t)\bigr)\]</div>
-<div class="literal-block-wrapper docutils container" id="id10">
-<div class="code-block-caption"><span class="caption-text">examples/flow_field.py</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;パーリンノイズによるフローフィールド上のパーティクル軌跡描画。</span>
-
-<span class="sd">ノイズ値を角度に変換してベクトル場（フローフィールド）を作り、</span>
-<span class="sd">多数のパーティクルをその場に沿って移動させることで、水の流れや</span>
-<span class="sd">風のような曲線群を描く。</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageDraw</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">perlin_noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">fbm2d</span><span class="p">,</span> <span class="n">make_permutation</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">flow_angles</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">rotations</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;座標 x, y におけるフローフィールドの角度（ラジアン）を返す。</span>
-
-<span class="sd">    fBm の値（おおよそ -1〜1）を、``rotations`` 回転分の角度に</span>
-<span class="sd">    マッピングする。値を大きくするほど渦が細かく複雑になる。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">noise_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">noise_values</span> <span class="o">*</span> <span class="n">rotations</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">simulate_particles</span><span class="p">(</span>
-    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">num_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
-    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
-    <span class="n">step_length</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
-    <span class="n">noise_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;パーティクルをフローフィールドに沿って移動させ、軌跡を返す。</span>
-
-<span class="sd">    戻り値は形状 ``(num_steps + 1, num_particles, 2)`` の座標配列。</span>
-<span class="sd">    各パーティクルの移動は、その時点の位置におけるフィールドの角度</span>
-<span class="sd">    方向に、一定の歩幅 ``step_length`` だけ進む単純なオイラー法。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
-        <span class="n">low</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-        <span class="n">high</span><span class="o">=</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">width</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">height</span><span class="p">)],</span>
-        <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">num_particles</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-    <span class="p">)</span>
-
-    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_particles</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-    <span class="n">trail</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
-
-    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
-        <span class="n">angles</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">flow_angles</span><span class="p">(</span>
-            <span class="n">positions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">positions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">perm</span><span class="p">,</span> <span class="n">noise_scale</span>
-        <span class="p">)</span>
-        <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angles</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angles</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span>
-        <span class="p">)</span>
-        <span class="n">positions</span> <span class="o">=</span> <span class="n">positions</span> <span class="o">+</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_length</span>
-        <span class="n">trail</span><span class="p">[</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
-
-    <span class="k">return</span> <span class="n">trail</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">draw_trails</span><span class="p">(</span><span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;パーティクルの軌跡を線分として描画した画像を返す。</span>
-
-<span class="sd">    キャンバス外に出た座標も含めて渡してよい。Pillow は描画範囲外の</span>
-<span class="sd">    座標を自動的に切り詰めるため、追跡を打ち切る処理は不要。</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">img</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span> <span class="s2">&quot;white&quot;</span><span class="p">)</span>
-    <span class="n">draw</span><span class="p">:</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">ImageDraw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
-
-    <span class="n">num_steps</span><span class="p">,</span> <span class="n">num_particles</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">trail</span><span class="o">.</span><span class="n">shape</span>
-    <span class="k">for</span> <span class="n">particle_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_particles</span><span class="p">):</span>
-        <span class="n">points</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span>
-                <span class="nb">float</span><span class="p">(</span><span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="n">particle_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span>
-                <span class="nb">float</span><span class="p">(</span><span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="n">particle_index</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span>
-            <span class="p">)</span>
-            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
-        <span class="p">]</span>
-        <span class="n">draw</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">img</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
-    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
-    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">make_permutation</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">simulate_particles</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">perm</span><span class="p">)</span>
-    <span class="n">img</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">draw_trails</span><span class="p">(</span><span class="n">trail</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
-    <span class="n">img</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;flow_field.png&quot;</span><span class="p">)</span>
-
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">examples/flow_field.py</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="sd">&quot;&quot;&quot;パーリンノイズによるフローフィールド上のパーティクル軌跡描画。</span>
+<span class="linenos">  2</span>
+<span class="linenos">  3</span><span class="sd">ノイズ値を角度に変換してベクトル場（フローフィールド）を作り、</span>
+<span class="linenos">  4</span><span class="sd">多数のパーティクルをその場に沿って移動させることで、水の流れや</span>
+<span class="linenos">  5</span><span class="sd">風のような曲線群を描く。</span>
+<span class="linenos">  6</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">  7</span>
+<span class="linenos">  8</span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="linenos">  9</span><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageDraw</span>
+<span class="linenos"> 10</span>
+<span class="linenos"> 11</span><span class="kn">from</span><span class="w"> </span><span class="nn">perlin_noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">fbm2d</span><span class="p">,</span> <span class="n">make_permutation</span>
+<span class="linenos"> 12</span>
+<span class="linenos"> 13</span>
+<span class="linenos"> 14</span><span class="k">def</span><span class="w"> </span><span class="nf">flow_angles</span><span class="p">(</span>
+<span class="linenos"> 15</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 16</span>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 17</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 18</span>    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 19</span>    <span class="n">rotations</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="linenos"> 20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 21</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;座標 x, y におけるフローフィールドの角度（ラジアン）を返す。</span>
+<span class="linenos"> 22</span>
+<span class="linenos"> 23</span><span class="sd">    fBm の値（おおよそ -1〜1）を、``rotations`` 回転分の角度に</span>
+<span class="linenos"> 24</span><span class="sd">    マッピングする。値を大きくするほど渦が細かく複雑になる。</span>
+<span class="linenos"> 25</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 26</span>    <span class="n">noise_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="linenos"> 27</span>    <span class="k">return</span> <span class="n">noise_values</span> <span class="o">*</span> <span class="n">rotations</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+<span class="linenos"> 28</span>
+<span class="linenos"> 29</span>
+<span class="linenos"> 30</span><span class="k">def</span><span class="w"> </span><span class="nf">simulate_particles</span><span class="p">(</span>
+<span class="linenos"> 31</span>    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos"> 32</span>    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos"> 33</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 34</span>    <span class="n">num_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+<span class="linenos"> 35</span>    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+<span class="linenos"> 36</span>    <span class="n">step_length</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="linenos"> 37</span>    <span class="n">noise_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+<span class="linenos"> 38</span>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="linenos"> 39</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 40</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;パーティクルをフローフィールドに沿って移動させ、軌跡を返す。</span>
+<span class="linenos"> 41</span>
+<span class="linenos"> 42</span><span class="sd">    戻り値は形状 ``(num_steps + 1, num_particles, 2)`` の座標配列。</span>
+<span class="linenos"> 43</span><span class="sd">    各パーティクルの移動は、その時点の位置におけるフィールドの角度</span>
+<span class="linenos"> 44</span><span class="sd">    方向に、一定の歩幅 ``step_length`` だけ進む単純なオイラー法。</span>
+<span class="linenos"> 45</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 46</span>    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<span class="linenos"> 47</span>    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
+<span class="linenos"> 48</span>        <span class="n">low</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos"> 49</span>        <span class="n">high</span><span class="o">=</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">width</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">height</span><span class="p">)],</span>
+<span class="linenos"> 50</span>        <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">num_particles</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+<span class="linenos"> 51</span>    <span class="p">)</span>
+<span class="linenos"> 52</span>
+<span class="linenos"> 53</span>    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_particles</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="linenos"> 54</span>    <span class="n">trail</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+<span class="linenos"> 55</span>
+<span class="linenos"> 56</span>    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
+<span class="linenos"> 57</span>        <span class="n">angles</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">flow_angles</span><span class="p">(</span>
+<span class="linenos"> 58</span>            <span class="n">positions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">positions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">perm</span><span class="p">,</span> <span class="n">noise_scale</span>
+<span class="linenos"> 59</span>        <span class="p">)</span>
+<span class="linenos"> 60</span>        <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+<span class="linenos"> 61</span>            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angles</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angles</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span>
+<span class="linenos"> 62</span>        <span class="p">)</span>
+<span class="linenos"> 63</span>        <span class="n">positions</span> <span class="o">=</span> <span class="n">positions</span> <span class="o">+</span> <span class="n">direction</span> <span class="o">*</span> <span class="n">step_length</span>
+<span class="linenos"> 64</span>        <span class="n">trail</span><span class="p">[</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+<span class="linenos"> 65</span>
+<span class="linenos"> 66</span>    <span class="k">return</span> <span class="n">trail</span>
+<span class="linenos"> 67</span>
+<span class="linenos"> 68</span>
+<span class="linenos"> 69</span><span class="k">def</span><span class="w"> </span><span class="nf">draw_trails</span><span class="p">(</span><span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
+<span class="linenos"> 70</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;パーティクルの軌跡を線分として描画した画像を返す。</span>
+<span class="linenos"> 71</span>
+<span class="linenos"> 72</span><span class="sd">    キャンバス外に出た座標も含めて渡してよい。Pillow は描画範囲外の</span>
+<span class="linenos"> 73</span><span class="sd">    座標を自動的に切り詰めるため、追跡を打ち切る処理は不要。</span>
+<span class="linenos"> 74</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 75</span>    <span class="n">img</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span> <span class="s2">&quot;white&quot;</span><span class="p">)</span>
+<span class="linenos"> 76</span>    <span class="n">draw</span><span class="p">:</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">ImageDraw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+<span class="linenos"> 77</span>
+<span class="linenos"> 78</span>    <span class="n">num_steps</span><span class="p">,</span> <span class="n">num_particles</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">trail</span><span class="o">.</span><span class="n">shape</span>
+<span class="linenos"> 79</span>    <span class="k">for</span> <span class="n">particle_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_particles</span><span class="p">):</span>
+<span class="linenos"> 80</span>        <span class="n">points</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos"> 81</span>            <span class="p">(</span>
+<span class="linenos"> 82</span>                <span class="nb">float</span><span class="p">(</span><span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="n">particle_index</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span>
+<span class="linenos"> 83</span>                <span class="nb">float</span><span class="p">(</span><span class="n">trail</span><span class="p">[</span><span class="n">step</span><span class="p">,</span> <span class="n">particle_index</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span>
+<span class="linenos"> 84</span>            <span class="p">)</span>
+<span class="linenos"> 85</span>            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+<span class="linenos"> 86</span>        <span class="p">]</span>
+<span class="linenos"> 87</span>        <span class="n">draw</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 88</span>
+<span class="linenos"> 89</span>    <span class="k">return</span> <span class="n">img</span>
+<span class="linenos"> 90</span>
+<span class="linenos"> 91</span>
+<span class="linenos"> 92</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 93</span>    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="linenos"> 94</span>    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="linenos"> 95</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">make_permutation</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span>    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">simulate_particles</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">perm</span><span class="p">)</span>
+<span class="linenos"> 98</span>    <span class="n">img</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">=</span> <span class="n">draw_trails</span><span class="p">(</span><span class="n">trail</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+<span class="linenos"> 99</span>    <span class="n">img</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;flow_field.png&quot;</span><span class="p">)</span>
+<span class="linenos">100</span>
+<span class="linenos">101</span>
+<span class="linenos">102</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">103</span>    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <p>パーティクルの初期位置はキャンバス内に一様乱数で配置し、各ステップで現在位置におけるフィールドの角度を <code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> で求めて進む。全パーティクル分の位置をまとめて <code class="docutils literal notranslate"><span class="pre">(num_particles,</span> <span class="pre">2)</span></code> の配列として扱うことで、ステップごとの更新を Python のループではなく NumPy のベクトル演算で行っている。</p>
 <a class="reference internal image-reference" href="_images/flow_field.png"><img alt="パーリンノイズのフローフィールドに沿って流れるパーティクルの軌跡" src="_images/flow_field.png" style="width: 400px;" />
 </a>
-<p>本章で作った <code class="docutils literal notranslate"><span class="pre">perlin2d</span></code> は、それ単体では格子点にランダムな勾配を割り当てただけの 1 つの関数に過ぎないが、<code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> で重ね合わせ、<code class="docutils literal notranslate"><span class="pre">domain_warp2d</span></code> で座標そのものを歪め、角度に変換してフローフィールドとして使う、というように積み重ねるほど表現の幅が広がっていく。この「ノイズ値をどう解釈するか」という発想は本資料の随所で使い回されており、<a class="reference internal" href="tiling.html"><span class="doc">タイリングパターン</span></a>ではタイルの向きの決定に、<a class="reference internal" href="shapes.html"><span class="doc">距離関数による形状表現</span></a>では図形の輪郭を歪めるのに、それぞれ同じ <code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> が形を変えて登場する。<a class="reference internal" href="particles.html"><span class="doc">パーティクルシステム</span></a>でも、フローフィールドを粒子に加える力として使う応用に触れる。</p>
+<p>パーティクルの初期位置は一様乱数で決めているが、軌跡は何本かの太い筋に寄り集まっている。フィールドの向きが周りから 1 か所へ向かって集まる場所（吸い込み口）があると、その周りのパーティクルが同じ筋に合流し、以後は同じ道をたどるためである。筋が枝分かれしながら合流する模様は、川の流れのような表現には向くが、画面全体を均一な流れで満たしたい場合には不向きである。これを解決するのが次節のカールノイズである。</p>
+</section>
+<section id="curl-noise">
+<span id="id6"></span><h2>カールノイズ<a class="headerlink" href="#curl-noise" title="Link to this heading"></a></h2>
+<p><strong>カールノイズ</strong>（curl noise）は、Robert Bridson らが 2007 年に提案した、流体のような流れをノイズから作る手法である。前節のフローフィールドとは違い、流れの中にパーティクルが集まる場所も散っていく場所もできない。</p>
+<section id="id7">
+<h3>考え方<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>ノイズの値 <span class="math notranslate nohighlight">\(\psi(x, y)\)</span> を高さとみなすと、平面は山と谷のある地形になる。カールノイズでは、この地形の<strong>等高線に沿う向き</strong>を流れの向きとし、等高線が密な（傾きが急な）場所ほど速く流れるようにする。この向きと速さは、<span class="math notranslate nohighlight">\(\psi\)</span> の勾配（最も急に登る向き）を 90 度回すことで得られる。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{v}(x, y) = \left(\frac{\partial \psi}{\partial y},\ -\frac{\partial \psi}{\partial x}\right)\]</div>
+<p>この操作を<strong>回転</strong>（curl）と呼び、<span class="math notranslate nohighlight">\(\psi\)</span> を<strong>流れ関数</strong>と呼ぶ。こうして作った速度場 <span class="math notranslate nohighlight">\(\mathbf{v}\)</span> は、次の 2 つの性質を持つ。</p>
+<ul>
+<li><p><strong>発散が 0 になる。</strong> 発散は、ある点の周りで流れが湧き出す量（負ならば吸い込まれる量）を表す。偏微分の順序は入れ替えられるので、次式の通り、どの点でも発散は 0 になる。そのため、流れの中に吸い込み口も湧き出し口もできず、パーティクルの密度は流しても変わらない。</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial v_x}{\partial x} + \frac{\partial v_y}{\partial y} = \frac{\partial^2 \psi}{\partial x \partial y} - \frac{\partial^2 \psi}{\partial y \partial x} = 0\]</div>
+</li>
+<li><p><strong>パーティクルは等高線の上を動く。</strong> <span class="math notranslate nohighlight">\(\mathbf{v}\)</span> は <span class="math notranslate nohighlight">\(\psi\)</span> の勾配と直交するので、パーティクルが動いても <span class="math notranslate nohighlight">\(\psi\)</span> の値は変わらない。つまり、各パーティクルの軌跡は <span class="math notranslate nohighlight">\(\psi\)</span> の等高線そのものになる。</p></li>
+</ul>
+<p>前節のフローフィールドは、ノイズの値を角度に変えたもので、発散が 0 になる保証がない。これが、パーティクルが筋に寄り集まる原因である。</p>
+</section>
+<section id="id8">
+<h3>実装<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>偏微分は、微小な幅 <span class="math notranslate nohighlight">\(h\)</span> だけ前後にずらした 2 点での値の差から求める（中心差分）。</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial \psi}{\partial x} \approx \frac{\psi(x + h, y) - \psi(x - h, y)}{2h}\]</div>
+<p>流れ関数には、本章の前半で作った <code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> をそのまま使う。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">examples/curl_noise.py の curl_velocity 関数</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">curl_velocity</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 4</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 5</span>    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;座標 x, y におけるカールノイズの速度ベクトルを返す。</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">    fBm を流れ関数 psi とみなし、その回転</span>
+<span class="linenos">10</span><span class="sd">    ``(d psi / dy, -d psi / dx)`` を速度とする。偏微分は中心差分で</span>
+<span class="linenos">11</span><span class="sd">    近似する。戻り値は形状 ``x.shape + (2,)`` の配列。</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="sd">    ``scale`` を変えても速さが大きく変わらないよう、偏微分はノイズの</span>
+<span class="linenos">14</span><span class="sd">    座標 (ピクセル座標に ``scale`` を掛けたもの) について求める。</span>
+<span class="linenos">15</span><span class="sd">    速さの平均はおおよそ 1 になる。</span>
+<span class="linenos">16</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">17</span>    <span class="n">h</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_DIFF_STEP</span>
+<span class="linenos">18</span>    <span class="n">u</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">scale</span>
+<span class="linenos">19</span>    <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">scale</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span>    <span class="k">def</span><span class="w"> </span><span class="nf">psi</span><span class="p">(</span><span class="n">pu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">22</span>        <span class="c1"># 流れ関数。</span>
+<span class="linenos">23</span>        <span class="k">return</span> <span class="n">fbm2d</span><span class="p">(</span><span class="n">pu</span><span class="p">,</span> <span class="n">pv</span><span class="p">,</span> <span class="n">perm</span><span class="p">,</span> <span class="n">octaves</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span>    <span class="n">dpsi_du</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span><span class="n">psi</span><span class="p">(</span><span class="n">u</span> <span class="o">+</span> <span class="n">h</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="o">-</span> <span class="n">psi</span><span class="p">(</span><span class="n">u</span> <span class="o">-</span> <span class="n">h</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+<span class="linenos">26</span>    <span class="n">dpsi_dv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span><span class="n">psi</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">+</span> <span class="n">h</span><span class="p">)</span> <span class="o">-</span> <span class="n">psi</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">-</span> <span class="n">h</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+<span class="linenos">27</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">dpsi_dv</span><span class="p">,</span> <span class="o">-</span><span class="n">dpsi_du</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>パーティクルは、各ステップで現在位置の速度に <code class="docutils literal notranslate"><span class="pre">speed</span></code> を掛けた分だけ進める。前節のように速度の向きだけを取り出して歩幅を揃えると、発散が 0 の性質が失われるため、速度の大きさはそのまま使う。</p>
+<p>また、位置の更新にはオイラー法ではなく<strong>中点法</strong>を使う。まず半歩だけ進んだ位置（中点）を求め、その中点での速度を使って元の位置から 1 歩進める方法である。オイラー法では、渦の周りを回るパーティクルが 1 ステップごとに少しずつ外側へずれていくため、長く流すと渦の中心に点のない穴ができる。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">examples/curl_noise.py の simulate_curl_particles 関数</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">simulate_curl_particles</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">perm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 4</span>    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos"> 5</span>    <span class="n">speed</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 6</span>    <span class="n">noise_scale</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos"> 7</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;パーティクルをカールノイズの速度場に沿って移動させ、軌跡を返す。</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="sd">    ``positions`` は形状 ``(num_particles, 2)`` の初期位置。戻り値は</span>
+<span class="linenos">11</span><span class="sd">    形状 ``(num_steps + 1, num_particles, 2)`` の座標配列。速度の</span>
+<span class="linenos">12</span><span class="sd">    大きさは場所によって異なるため、向きだけを取り出して歩幅を</span>
+<span class="linenos">13</span><span class="sd">    揃えることはしない（揃えると発散が 0 の性質が失われる）。</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="sd">    位置の更新には中点法を使う。オイラー法では、渦の周りを回る</span>
+<span class="linenos">16</span><span class="sd">    パーティクルが 1 ステップごとに少しずつ外側へずれていき、</span>
+<span class="linenos">17</span><span class="sd">    渦の中心に点のない穴ができてしまうためである。</span>
+<span class="linenos">18</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">19</span>    <span class="n">trail</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">positions</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="linenos">20</span>    <span class="n">trail</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span>    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
+<span class="linenos">23</span>        <span class="c1"># 半歩だけ進んだ位置（中点）での速度を使って 1 歩進める。</span>
+<span class="linenos">24</span>        <span class="n">velocity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">curl_velocity</span><span class="p">(</span>
+<span class="linenos">25</span>            <span class="n">positions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">positions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">perm</span><span class="p">,</span> <span class="n">noise_scale</span>
+<span class="linenos">26</span>        <span class="p">)</span>
+<span class="linenos">27</span>        <span class="n">midpoint</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">positions</span> <span class="o">+</span> <span class="n">velocity</span> <span class="o">*</span> <span class="p">(</span><span class="n">speed</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="linenos">28</span>        <span class="n">velocity</span> <span class="o">=</span> <span class="n">curl_velocity</span><span class="p">(</span>
+<span class="linenos">29</span>            <span class="n">midpoint</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">midpoint</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">perm</span><span class="p">,</span> <span class="n">noise_scale</span>
+<span class="linenos">30</span>        <span class="p">)</span>
+<span class="linenos">31</span>        <span class="n">positions</span> <span class="o">=</span> <span class="n">positions</span> <span class="o">+</span> <span class="n">velocity</span> <span class="o">*</span> <span class="n">speed</span>
+<span class="linenos">32</span>        <span class="n">trail</span><span class="p">[</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span>    <span class="k">return</span> <span class="n">trail</span>
+</pre></div>
+</div>
+</div>
+<p>次の画像は、前節の <code class="docutils literal notranslate"><span class="pre">flow_field.png</span></code> と同じシード・同じスケールのノイズを流れ関数とし、400 個のパーティクルを 200 ステップ流した軌跡である。軌跡は筋に寄り集まらず、流れ関数の等高線に沿って閉じた曲線を描く。等高線が密な場所では軌跡の間隔が狭くなるため、全体として、地形図や大理石の模様のような濃淡が現れる。</p>
+<a class="reference internal image-reference" href="_images/curl_noise.png"><img alt="カールノイズに沿って流したパーティクルの軌跡。流れ関数の等高線に沿った閉じた曲線が重なり、地形図のような模様になっている" src="_images/curl_noise.png" style="width: 400px;" />
+</a>
+</section>
+<section id="id9">
+<h3>密度が保たれることの確認<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>発散が 0 であることの効果は、多数の点を一様に散らしてから流すと分かりやすい。次の 2 枚は、同じ位置に散らした点を、前節の角度によるフローフィールド（1 枚目）とカールノイズ（2 枚目）で 60 ステップ流したあとの位置である。キャンバスの外からも点が流れ込むよう、キャンバスの周囲 200 ピクセルにも点を散らしている。</p>
+<a class="reference internal image-reference" href="_images/curl_compare_angle.png"><img alt="一様に散らした点を、ノイズの値を角度にしたフローフィールドで流した結果。点の多くが細い筋に集まり、ほかの場所はほとんど空白になっている" src="_images/curl_compare_angle.png" style="width: 300px;" />
+</a>
+<a class="reference internal image-reference" href="_images/curl_compare_curl.png"><img alt="一様に散らした点を、カールノイズで流した結果。点は画面全体にほぼ一様に分布したままになっている" src="_images/curl_compare_curl.png" style="width: 300px;" />
+</a>
+<p>角度によるフローフィールドでは、点の大半が細い筋に集まり、ほかの場所はほとんど空白になる。一方、カールノイズでは、点は流れても画面全体にほぼ一様に分布したままである。煙・液体・星雲のように、画面を均一に満たしたまま渦を巻く表現にはカールノイズが向き、川の流れや毛並みのように筋がまとまる表現には角度によるフローフィールドが向く。</p>
+<p>なお、本節の流れ関数は時間によって変わらないため、パーティクルは同じ等高線の上を回り続ける。より複雑な流れにしたい場合は、流れ関数を時間とともに変化させる（ノイズの座標に時刻に比例したずれを加える、3 次元のノイズの 3 つ目の座標に時刻を使う、など）とよい。流れ関数が時間で変わっても、各時刻の速度場の発散は 0 のままである。</p>
+</section>
+</section>
+<section id="other-noises">
+<span id="id10"></span><h2>その他のノイズ<a class="headerlink" href="#other-noises" title="Link to this heading"></a></h2>
+<p>本章ではパーリンノイズと Worley ノイズを実装したが、ジェネラティブアートやコンピュータグラフィックスでは、ほかにも多くのノイズが使われる。代表的なものと、本資料での扱いを次の表にまとめる。いずれも、本章の実装を少し変えるか、他の章の手法で代用できるため、本資料では個別には実装しない。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>名前</p></th>
+<th class="head"><p>特徴</p></th>
+<th class="head"><p>本資料での扱い</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>バリューノイズ</p></td>
+<td><p>格子点に乱数の値そのものを置き、それを補間する。パーリンノイズより単純だが、格子に沿ったブロック状のむらが目立ちやすい。</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">perlin2d</span></code> の内積を、格子点ごとの乱数の値に置き換えれば作れる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>シンプレックスノイズ</p></td>
+<td><p>Ken Perlin が 2001 年に提案した。正方形の格子の代わりに三角形（高次元では単体）の格子を使う。高次元でも計算量が少なく、格子の向きによる偏りも小さい。</p></td>
+<td><p>2 次元の静止画ではパーリンノイズとの差が小さいため、扱わない。</p></td>
+</tr>
+<tr class="row-even"><td><p>タービュランス・リッジノイズ</p></td>
+<td><p>fBm の変種で、オクターブごとにノイズの絶対値 <span class="math notranslate nohighlight">\(|n|\)</span> を重ねたもの（タービュランス）や、<span class="math notranslate nohighlight">\(1 - |n|\)</span> を重ねたもの（リッジノイズ）を指す。値が 0 になる場所が鋭い谷や尾根になり、炎・煙や山脈の稜線のような模様になる。</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> の中の <code class="docutils literal notranslate"><span class="pre">perlin2d</span></code> の値を、絶対値などに変換してから足し合わせれば作れる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ホワイトノイズ</p></td>
+<td><p>点ごとに独立な一様乱数。空間的なまとまりがなく、ざらついた砂嵐のようになる。</p></td>
+<td><p><a class="reference internal" href="shapes.html"><span class="doc">距離関数による形状表現</span></a> のポアソン円盤サンプリングで、一様乱数による点の配置と比べている。</p></td>
+</tr>
+<tr class="row-even"><td><p>ブルーノイズ</p></td>
+<td><p>近い点どうしが似た値や位置になりにくい、偏りの少ないばらつき。点の配置やディザリングに使う。</p></td>
+<td><p><a class="reference internal" href="shapes.html"><span class="doc">距離関数による形状表現</span></a> のポアソン円盤サンプリングと、<a class="reference internal" href="image_effects.html#stippling"><span class="std std-ref">重み付きボロノイ図による点描</span></a> で扱う。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id11">
+<h2>まとめ<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>本章で作った <code class="docutils literal notranslate"><span class="pre">perlin2d</span></code> は、それ単体では格子点にランダムな勾配を割り当てただけの 1 つの関数に過ぎない。しかし、<code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> で重ね合わせ、<code class="docutils literal notranslate"><span class="pre">domain_warp2d</span></code> で座標そのものを歪め、角度に変換してフローフィールドとして使い、さらに回転を取ってカールノイズとして使う、というように積み重ねるほど表現の幅が広がっていく。この「ノイズ値をどう解釈するか」という発想は本資料の随所で使い回されており、<a class="reference internal" href="tiling.html"><span class="doc">タイリングパターン</span></a>ではタイルの向きの決定に、<a class="reference internal" href="shapes.html"><span class="doc">距離関数による形状表現</span></a>では図形の輪郭を歪めるのに、それぞれ同じ <code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> が形を変えて登場する。<a class="reference internal" href="particles.html"><span class="doc">パーティクルシステム</span></a>でも、フローフィールドを粒子に加える力として使う応用に触れる。</p>
 </section>
 </section>
 

@@ -1,0 +1,50 @@
+// Jenkins でテストを自動実行する設定の例（Declarative Pipeline）。
+// リポジトリのルートに Jenkinsfile という名前で置き、Jenkins に Pipeline の
+// ジョブを作ると、このファイルに書いた手順で実行される。
+// この例は、pyproject.toml、setup.cfg、requirements-dev.txt があるフォルダーを
+// リポジトリのルートとし、Python 3 がインストールされた Linux のエージェントで動かす。
+pipeline {
+    agent any
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    environment {
+        // 仮想環境の Python。各ステップの sh から $PY で参照する
+        PY = '.venv/bin/python'
+    }
+
+    stages {
+        stage('Install') {
+            steps {
+                sh 'python3 -m venv .venv'
+                sh '$PY -m pip install -r requirements-dev.txt'
+            }
+        }
+        stage('Lint') {
+            steps {
+                sh '$PY -m flake8 .'
+            }
+        }
+        stage('Type check') {
+            steps {
+                sh '$PY -m mypy .'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh '$PY -m coverage run -m pytest --junitxml=reports/junit.xml'
+                sh '$PY -m coverage report --fail-under=90'
+            }
+        }
+    }
+
+    post {
+        always {
+            // テスト結果を読み込み、Jenkins の画面で件数や失敗したテストを表示する
+            junit allowEmptyResults: true, testResults: 'reports/junit.xml'
+        }
+    }
+}

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10_noise2d.frag</title>
+<style>
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; }
+#error {
+  position: absolute; top: 0; left: 0; right: 0; margin: 0; padding: 1em;
+  color: #fff; background: rgba(160, 0, 0, 0.85);
+  font: 14px/1.4 monospace; white-space: pre-wrap; display: none;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<pre id="error"></pre>
+<script>
+"use strict";
+// [{name: "Buffer A" | "Image", source: GLSL, line: ファイル中の開始行}]
+const PASSES = [{"name": "Image", "source": "// 10_noise2d.frag\n// \u7b2c 10 \u7ae0: \u30cf\u30c3\u30b7\u30e5\u3068\u30ce\u30a4\u30ba\u306e\u6bd4\u8f03\u3002\u753b\u9762\u3092 6 \u3064\u306b\u5206\u3051\u3001\u6b21\u306e\u9806\u306b\u8868\u793a\u3059\u308b\u3002\n//   \u4e0a\u6bb5: \u30cf\u30c3\u30b7\u30e5 (\u683c\u5b50\u3054\u3068\u306e\u4e71\u6570)\u3001\u5024\u30ce\u30a4\u30ba\u3001\u52fe\u914d\u30ce\u30a4\u30ba\n//   \u4e0b\u6bb5: fBm\u3001\u30c9\u30e1\u30a4\u30f3\u30ef\u30fc\u30d4\u30f3\u30b0\u3001\u30ea\u30c3\u30b8\u30ce\u30a4\u30ba\n\nconst float PI = 3.14159265;\n\n// ---- \u30cf\u30c3\u30b7\u30e5 ------------------------------------------------------------\n\n// PCG \u30cf\u30c3\u30b7\u30e5 (Jarzynski and Olano, 2020)\u300232 \u30d3\u30c3\u30c8\u6574\u6570\u3092\u652a\u62cc\u3059\u308b\nuint pcgHash(uint v)\n{\n    uint state = v * 747796405u + 2891336453u;\n    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;\n    return (word >> 22u) ^ word;\n}\n\n// \u6574\u6570\u306e\u683c\u5b50\u70b9 p \u306b 0 \u4ee5\u4e0a 1 \u672a\u6e80\u306e\u4e71\u6570\u3092\u5272\u308a\u5f53\u3066\u308b\nfloat hash21(vec2 p)\n{\n    uvec2 q = uvec2(ivec2(p));  // \u8ca0\u306e\u5ea7\u6a19\u3082 32 \u30d3\u30c3\u30c8\u306e\u6574\u6570\u3068\u3057\u3066\u6271\u3046\n    return float(pcgHash(q.x + pcgHash(q.y))) / 4294967296.0;\n}\n\n// ---- \u5024\u30ce\u30a4\u30ba ------------------------------------------------------------\n\n// \u683c\u5b50\u70b9\u306e\u4e71\u6570\u3092 3 \u6b21\u306e\u30a8\u30eb\u30df\u30fc\u30c8\u88dc\u9593\u3067\u3064\u306a\u3050\u3002\u5024\u306e\u7bc4\u56f2\u306f 0\u301c1\nfloat valueNoise(vec2 p)\n{\n    vec2 i = floor(p);\n    vec2 f = fract(p);\n    vec2 u = f * f * (3.0 - 2.0 * f);\n    float a = hash21(i);\n    float b = hash21(i + vec2(1.0, 0.0));\n    float c = hash21(i + vec2(0.0, 1.0));\n    float d = hash21(i + vec2(1.0, 1.0));\n    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);\n}\n\n// ---- \u52fe\u914d\u30ce\u30a4\u30ba ----------------------------------------------------------\n\n// \u683c\u5b50\u70b9 i \u306b\u5272\u308a\u5f53\u3066\u308b\u5358\u4f4d\u30d9\u30af\u30c8\u30eb (\u52fe\u914d)\nvec2 gradientAt(vec2 i)\n{\n    float angle = 2.0 * PI * hash21(i);\n    return vec2(cos(angle), sin(angle));\n}\n\n// \u683c\u5b50\u70b9\u306e\u52fe\u914d\u3068\u3001\u683c\u5b50\u70b9\u304b\u3089 p \u3078\u306e\u30d9\u30af\u30c8\u30eb\u306e\u5185\u7a4d\u3092 5 \u6b21\u306e\u88dc\u9593\u3067\u3064\u306a\u3050\u3002\n// \u683c\u5b50\u70b9\u3067\u306e\u5024\u306f 0 \u3067\u3001\u5024\u306e\u7bc4\u56f2\u306f\u304a\u3088\u305d -0.7\u301c0.7\nfloat gradientNoise(vec2 p)\n{\n    vec2 i = floor(p);\n    vec2 f = fract(p);\n    vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);\n    float a = dot(gradientAt(i), f);\n    float b = dot(gradientAt(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0));\n    float c = dot(gradientAt(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0));\n    float d = dot(gradientAt(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0));\n    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);\n}\n\n// ---- fBm \u3068\u305d\u306e\u5fdc\u7528 ------------------------------------------------------\n\n// \u30aa\u30af\u30bf\u30fc\u30d6\u3054\u3068\u306b\u5ea7\u6a19\u3092\u56de\u8ee2\u3055\u305b\u3001\u683c\u5b50\u306e\u65b9\u5411\u304c\u63c3\u3063\u3066\u898b\u3048\u308b\u306e\u3092\u9632\u3050\nconst mat2 OCTAVE_ROT = mat2(0.8, 0.6, -0.6, 0.8);\n\n// \u30d5\u30e9\u30af\u30bf\u30eb\u30d6\u30e9\u30a6\u30f3\u904b\u52d5: \u5468\u6ce2\u6570\u3092 2 \u500d\u3001\u632f\u5e45\u3092\u534a\u5206\u306b\u3057\u306a\u304c\u3089 6 \u5c64\u91cd\u306d\u308b\nfloat fbm(vec2 p)\n{\n    float value = 0.0;\n    float amplitude = 0.5;\n    for (int i = 0; i < 6; i++) {\n        value += amplitude * gradientNoise(p);\n        p = 2.0 * OCTAVE_ROT * p;\n        amplitude *= 0.5;\n    }\n    return value;\n}\n\n// \u30c9\u30e1\u30a4\u30f3\u30ef\u30fc\u30d4\u30f3\u30b0: fBm \u3067\u3086\u304c\u3081\u305f\u5ea7\u6a19\u3067\u3001\u3082\u3046\u4e00\u5ea6 fBm \u3092\u8a55\u4fa1\u3059\u308b\nfloat warpedFbm(vec2 p)\n{\n    vec2 q = vec2(fbm(p + vec2(0.0, 0.0)), fbm(p + vec2(5.2, 1.3)));\n    return fbm(p + 4.0 * q + 0.1 * iTime);\n}\n\n// \u30ea\u30c3\u30b8\u30ce\u30a4\u30ba: \u52fe\u914d\u30ce\u30a4\u30ba\u306e\u7d76\u5bfe\u5024\u3092\u53cd\u8ee2\u3055\u305b\u3001\u5c3e\u6839\u306e\u3088\u3046\u306a\u92ed\u3044\u7dda\u3092\u4f5c\u308b\nfloat ridgedFbm(vec2 p)\n{\n    float value = 0.0;\n    float amplitude = 0.5;\n    for (int i = 0; i < 6; i++) {\n        float n = 1.0 - abs(gradientNoise(p) * 1.4);\n        value += amplitude * n * n;\n        p = 2.0 * OCTAVE_ROT * p;\n        amplitude *= 0.5;\n    }\n    return value;\n}\n\n// ---- \u30e1\u30a4\u30f3 --------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // \u753b\u9762\u3092\u6a2a 3 \u00d7 \u7e26 2 \u306e\u9818\u57df\u306b\u5206\u3051\u308b\n    vec2 grid = vec2(3.0, 2.0);\n    vec2 uv = fragCoord / iResolution.xy;\n    vec2 cell = floor(uv * grid);\n    int index = int(cell.x) + 3 * int(1.0 - cell.y);  // \u5de6\u4e0a\u304b\u3089 0, 1, 2, ...\n\n    // \u5404\u9818\u57df\u306e\u7e26\u65b9\u5411\u306b\u683c\u5b50 8 \u500b\u5206\u304c\u5165\u308b\u5ea7\u6a19\n    vec2 local = fract(uv * grid);\n    float aspect = (iResolution.x / grid.x) / (iResolution.y / grid.y);\n    vec2 p = 8.0 * local * vec2(aspect, 1.0);\n\n    float v;\n    if (index == 0) {\n        v = hash21(floor(p));                     // \u30cf\u30c3\u30b7\u30e5\n    } else if (index == 1) {\n        v = valueNoise(p);                        // \u5024\u30ce\u30a4\u30ba\n    } else if (index == 2) {\n        v = 0.5 + gradientNoise(p);               // \u52fe\u914d\u30ce\u30a4\u30ba\n    } else if (index == 3) {\n        v = 0.5 + fbm(0.5 * p);                   // fBm\n    } else if (index == 4) {\n        v = 0.5 + warpedFbm(0.3 * p);             // \u30c9\u30e1\u30a4\u30f3\u30ef\u30fc\u30d4\u30f3\u30b0\n    } else {\n        v = ridgedFbm(0.3 * p);                   // \u30ea\u30c3\u30b8\u30ce\u30a4\u30ba\n    }\n    vec3 col = vec3(clamp(v, 0.0, 1.0));\n\n    // \u9818\u57df\u306e\u5883\u754c\u7dda\n    vec2 border = step(vec2(0.005), local) * step(local, vec2(0.995));\n    col *= border.x * border.y;\n\n    fragColor = vec4(col, 1.0);\n}\n", "line": 1, "common": "", "commonLine": 1}];
+
+const HEADER = [
+  "#version 300 es",
+  "precision highp float;",
+  "precision highp int;",
+  "uniform vec3 iResolution;",
+  "uniform float iTime;",
+  "uniform float iTimeDelta;",
+  "uniform int iFrame;",
+  "uniform vec4 iMouse;",
+  "uniform sampler2D iChannel0;",
+  "uniform vec3 iChannelResolution[4];",
+  "out vec4 shadertoyOutColor;"
+].join("\n");
+
+// Image のパスでは不透明度を 1 にする。Buffer A では 4 成分をそのまま残す
+function footer(passName) {
+  return [
+    "",
+    "void main() {",
+    "  mainImage(shadertoyOutColor, gl_FragCoord.xy);",
+    passName === "Image" ? "  shadertoyOutColor.a = 1.0;" : "",
+    "}"
+  ].join("\n");
+}
+
+const VERTEX_SOURCE = [
+  "#version 300 es",
+  "in vec2 position;",
+  "void main() { gl_Position = vec4(position, 0.0, 1.0); }"
+].join("\n");
+
+function showError(message) {
+  const element = document.getElementById("error");
+  element.textContent = message;
+  element.style.display = "block";
+  document.title = "ERROR: " + document.title;
+}
+
+function compile(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
+// パスのプログラムを作る。Common のコードがあれば先頭に加える。
+// #line でエラーの行番号をファイルの行番号に合わせる
+function createProgram(gl, pass) {
+  const program = gl.createProgram();
+  let source = HEADER;
+  if (pass.common) {
+    source += "\n#line " + pass.commonLine + "\n" + pass.common;
+  }
+  source += "\n#line " + pass.line + "\n" + pass.source + footer(pass.name);
+  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX_SOURCE));
+  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, source));
+  gl.bindAttribLocation(program, 0, "position");
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program));
+  }
+  const uniforms = {};
+  for (const name of ["iResolution", "iTime", "iTimeDelta", "iFrame",
+                      "iMouse", "iChannel0", "iChannelResolution"]) {
+    uniforms[name] = gl.getUniformLocation(program, name);
+  }
+  return {name: pass.name, program: program, uniforms: uniforms};
+}
+
+// URL のフラグメント (#t=2.5&frames=16 など) から数値のパラメーターを読む
+function hashParameter(name) {
+  const pattern = new RegExp("(?:^#|&)" + name + "=([0-9.]+)");
+  const match = pattern.exec(location.hash);
+  return match ? parseFloat(match[1]) : null;
+}
+
+function run() {
+  const canvas = document.getElementById("canvas");
+  const gl = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
+  if (!gl) {
+    showError("WebGL2 is not supported by this browser.");
+    return;
+  }
+
+  let passes;
+  try {
+    passes = PASSES.map((pass) => createProgram(gl, pass));
+  } catch (e) {
+    showError("Shader compile error:\n" + e.message);
+    return;
+  }
+  const bufferPass = passes.find((pass) => pass.name === "Buffer A");
+  const imagePass = passes.find((pass) => pass.name === "Image");
+
+  // 浮動小数点数のテクスチャへの描画に対応していなければ 8 ビットで代用する
+  const floatBuffer = gl.getExtension("EXT_color_buffer_float") !== null;
+
+  // 画面全体を覆う 2 つの三角形
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
+    [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  // Buffer A の描画先。前のフレームを読みながら次のフレームを書くため 2 枚使う
+  let targets = [];
+  function createTarget(width, height) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    if (floatBuffer) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0,
+                    gl.RGBA, gl.FLOAT, null);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0,
+                    gl.RGBA, gl.UNSIGNED_BYTE, null);
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const framebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                            gl.TEXTURE_2D, texture, 0);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return {texture: texture, framebuffer: framebuffer};
+  }
+
+  // iMouse: xy はドラッグ中の座標、zw はクリック位置 (離すと負)
+  const mouse = [0, 0, 0, 0];
+  let dragging = false;
+  function mousePosition(event) {
+    const rect = canvas.getBoundingClientRect();
+    const scale = canvas.width / rect.width;
+    return [(event.clientX - rect.left) * scale,
+            (rect.bottom - event.clientY) * scale];
+  }
+  canvas.addEventListener("mousedown", (event) => {
+    const [x, y] = mousePosition(event);
+    dragging = true;
+    mouse[0] = x; mouse[1] = y; mouse[2] = x; mouse[3] = y;
+  });
+  canvas.addEventListener("mousemove", (event) => {
+    if (!dragging) { return; }
+    const [x, y] = mousePosition(event);
+    mouse[0] = x; mouse[1] = y;
+  });
+  window.addEventListener("mouseup", () => {
+    dragging = false;
+    mouse[2] = -Math.abs(mouse[2]); mouse[3] = -Math.abs(mouse[3]);
+  });
+
+  function drawPass(pass, width, height, time, timeDelta, frame, channel) {
+    gl.useProgram(pass.program);
+    const u = pass.uniforms;
+    gl.uniform3f(u.iResolution, width, height, 1);
+    gl.uniform1f(u.iTime, time);
+    gl.uniform1f(u.iTimeDelta, timeDelta);
+    gl.uniform1i(u.iFrame, frame);
+    gl.uniform4fv(u.iMouse, mouse);
+    gl.uniform3fv(u.iChannelResolution,
+                  [width, height, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, channel);
+    gl.uniform1i(u.iChannel0, 0);
+    gl.viewport(0, 0, width, height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+
+  // 1 フレームを描画する
+  function renderFrame(time, timeDelta, frame) {
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.floor(canvas.clientWidth * ratio));
+    const height = Math.max(1, Math.floor(canvas.clientHeight * ratio));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      targets = [];
+    }
+    if (bufferPass && targets.length === 0) {
+      targets = [createTarget(width, height), createTarget(width, height)];
+    }
+    let latest = null;
+    if (bufferPass) {
+      // targets[0] (前のフレーム) を読み、targets[1] に書いてから入れ替える
+      gl.bindFramebuffer(gl.FRAMEBUFFER, targets[1].framebuffer);
+      drawPass(bufferPass, width, height, time, timeDelta, frame,
+               targets[0].texture);
+      targets.reverse();
+      latest = targets[0].texture;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    drawPass(imagePass, width, height, time, timeDelta, frame, latest);
+  }
+
+  const fixedTime = hashParameter("t");
+  const fixedFrame = hashParameter("frame");
+  const frameCount = hashParameter("frames");
+
+  if (frameCount !== null) {
+    // 指定したフレーム数だけを続けて描画して止める (撮影用)。
+    // 画面の大きさが変わったときは、最初から描画し直す
+    const renderFixedFrames = () => {
+      const time = fixedTime !== null ? fixedTime : 0;
+      targets = [];
+      for (let frame = 0; frame < frameCount; frame++) {
+        renderFrame(time, 1 / 60, frame);
+      }
+      gl.finish();
+    };
+    new ResizeObserver(renderFixedFrames).observe(canvas);
+    return;
+  }
+
+  const startTime = performance.now();
+  let previousTime = 0;
+  let frame = 0;
+  function loop(now) {
+    const time = fixedTime !== null ? fixedTime : (now - startTime) / 1000;
+    renderFrame(time, time - previousTime,
+                fixedFrame !== null ? fixedFrame : frame);
+    previousTime = time;
+    frame += 1;
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+run();
+</script>
+</body>
+</html>

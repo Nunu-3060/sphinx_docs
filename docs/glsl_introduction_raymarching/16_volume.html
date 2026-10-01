@@ -1,0 +1,493 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 16 章 ボリュームレンダリング &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 17 章 パストレーシング" href="17_path_tracing.html" />
+    <link rel="prev" title="第 15 章 グリッドの走査" href="15_grid_traversal.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 16 章 ボリュームレンダリング</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">関与媒質による光の減衰と散乱</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">吸収と散乱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">透過率</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">ボリュームレンダリング方程式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">位相関数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">雲の形の定義</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">ノイズ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">密度</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">積分の計算</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">離散化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sdf">SDF による空の空間の飛ばし</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">太陽光の透過率</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">縞模様の抑制</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">大気の散乱</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id15">2 種類の散乱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">大気のモデル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">単一散乱の積分</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 16 章 ボリュームレンダリング</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 16 章 ボリュームレンダリング<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>雲、煙、霧のように、はっきりした表面を持たず、空間に広がって光を吸収・散乱する物体を関与媒質と呼ぶ。関与媒質を描くには、表面の 1 点ではなく、レイが媒質の中を通過する区間全体で光の変化を積分する必要がある。この手法を <a class="reference internal" href="glossary.html#term-42"><span class="xref std std-term">ボリュームレンダリング</span></a> と呼ぶ。この章では、SDF とノイズで雲の形を定義し、レイマーチングで光の吸収と散乱を積分して描く。最後に、同じ考え方を大気全体に適用し、空の色を求める。</p>
+<figure class="align-center" id="id18">
+<img alt="青空に白い雲が 1 つ浮かんでいる" src="_images/16_volume.png" />
+<figcaption>
+<p><span class="caption-text">16_volume.frag の実行結果</span><a class="headerlink" href="#id18" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/bc686053a2e87ebfaa628bfd12e9c33b/16_volume.frag"><code class="xref download docutils literal notranslate"><span class="pre">16_volume.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/16_volume.html">ブラウザーで実行</a></p>
+<section id="id2">
+<h2>関与媒質による光の減衰と散乱<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3>吸収と散乱<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>関与媒質の中を進む光は、媒質中の粒子によって次のように変化する。</p>
+<ul class="simple">
+<li><p><strong>吸収</strong>: 光のエネルギーが粒子に吸収されて失われる。</p></li>
+<li><p><strong>外への散乱</strong>: 光が粒子に当たって別の方向に進路を変え、レイの方向から失われる。</p></li>
+<li><p><strong>内への散乱</strong>: 別の方向から来た光（例えば太陽光）が粒子に当たり、レイの方向に進路を変えて加わる。</p></li>
+</ul>
+<p>単位長さあたりに吸収される割合を吸収係数 <span class="math notranslate nohighlight">\(\sigma_a\)</span>、散乱される割合を散乱係数 <span class="math notranslate nohighlight">\(\sigma_s\)</span> と呼び、両者の和 <span class="math notranslate nohighlight">\(\sigma_t = \sigma_a + \sigma_s\)</span> を消散係数と呼ぶ。</p>
+</section>
+<section id="id4">
+<h3>透過率<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>消散係数 <span class="math notranslate nohighlight">\(\sigma_t\)</span> の媒質の中を、点 <span class="math notranslate nohighlight">\(\mathbf{p}(0)\)</span> から <span class="math notranslate nohighlight">\(\mathbf{p}(t)\)</span> まで進んだ光が失われずに残る割合を透過率と呼ぶ。透過率は、第 7 章のフォグと同じくランベルト・ベールの法則で表される。</p>
+<div class="math notranslate nohighlight">
+\[T(t) = \exp\left(-\int_0^t \sigma_t\bigl(\mathbf{p}(s)\bigr)\, ds\right)\]</div>
+<p>第 7 章では媒質が一様（<span class="math notranslate nohighlight">\(\sigma_t\)</span> が定数）だったので <span class="math notranslate nohighlight">\(T = e^{-\sigma t}\)</span> となった。雲のように濃さが場所によって異なる媒質では、この積分を数値的に求める。</p>
+</section>
+<section id="id5">
+<h3>ボリュームレンダリング方程式<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>内への散乱として太陽光が 1 回だけ散乱される場合（単一散乱）だけを考えると、視点に届く光 <span class="math notranslate nohighlight">\(L\)</span> は次のように表せる。</p>
+<div class="math notranslate nohighlight">
+\[L = \int_0^{t_{\max}} T(t)\, \sigma_s\bigl(\mathbf{p}(t)\bigr)\, L_s\bigl(\mathbf{p}(t)\bigr)\, dt
+    + T(t_{\max})\, L_{\text{bg}}\]</div>
+<p>第 1 項は、レイ上の各点で散乱されてレイの方向に加わった光 <span class="math notranslate nohighlight">\(L_s\)</span> が、視点に届くまでに <span class="math notranslate nohighlight">\(T(t)\)</span> だけ減衰したものの総和である。第 2 項は、媒質を透過して見える背景 <span class="math notranslate nohighlight">\(L_{\text{bg}}\)</span> （空）の光である。</p>
+<p>点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> で散乱される光 <span class="math notranslate nohighlight">\(L_s\)</span> は、太陽から <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> までの透過率 <span class="math notranslate nohighlight">\(T_{\text{light}}\)</span> と、位相関数 <span class="math notranslate nohighlight">\(p(\theta)\)</span> で決まる。</p>
+<div class="math notranslate nohighlight">
+\[L_s(\mathbf{p}) = p(\theta)\, T_{\text{light}}(\mathbf{p})\, L_{\text{sun}} + L_{\text{ambient}}\]</div>
+<p><span class="math notranslate nohighlight">\(\theta\)</span> は太陽光の進行方向と散乱後の方向（視点に向かう方向）のなす角である。<span class="math notranslate nohighlight">\(L_{\text{ambient}}\)</span> は、空から届く光による散乱を定数で近似した項である。</p>
+</section>
+<section id="id6">
+<h3>位相関数<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>位相関数 <span class="math notranslate nohighlight">\(p(\theta)\)</span> は、光が散乱される方向の分布を表す。全方向に均等に散乱される場合は <span class="math notranslate nohighlight">\(p = 1/(4\pi)\)</span> である。雲の水滴は光を前方（元の進行方向に近い方向）に強く散乱する性質があり、太陽の方を向いて雲を見ると、雲の縁が明るく輝いて見える。この性質は、次の Henyey-Greenstein 位相関数でよく表される。</p>
+<div class="math notranslate nohighlight">
+\[p(\theta) = \frac{1}{4\pi} \frac{1 - g^2}{\bigl(1 + g^2 - 2g\cos\theta\bigr)^{3/2}}\]</div>
+<p><span class="math notranslate nohighlight">\(g \in (-1, 1)\)</span> は散乱の偏りを表し、正の値ほど前方に散乱しやすい。サンプルでは、計算を簡単にするために、定数とべき乗の和で前方散乱を近似した関数を使っている。</p>
+</section>
+</section>
+<section id="id7">
+<h2>雲の形の定義<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>雲の密度は、大まかな形を SDF で、細かな凹凸をノイズで表す。</p>
+<section id="id8">
+<h3>ノイズ<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>細かな凹凸には、第 10 章の値ノイズと fBm を 3 次元に拡張したものを使う。2 次元では正方形の 4 頂点の値を補間したが、3 次元では立方体の 8 頂点の値を補間する。ハッシュ関数は第 10 章と同じ PCG ハッシュで、3 つの座標を順にハッシュ関数に通して組み合わせる。</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">16_volume.frag（抜粋）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">16</span><span class="c1">// PCG ハッシュ (Jarzynski and Olano, 2020)</span>
+<span class="linenos">17</span><span class="kt">uint</span><span class="w"> </span><span class="n">pcgHash</span><span class="p">(</span><span class="kt">uint</span><span class="w"> </span><span class="n">v</span><span class="p">)</span>
+<span class="linenos">18</span><span class="p">{</span>
+<span class="linenos">19</span><span class="w">    </span><span class="kt">uint</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">747796405</span><span class="n">u</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2891336453</span><span class="n">u</span><span class="p">;</span>
+<span class="linenos">20</span><span class="w">    </span><span class="kt">uint</span><span class="w"> </span><span class="n">word</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">((</span><span class="n">state</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="p">((</span><span class="n">state</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="mi">28</span><span class="n">u</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="n">u</span><span class="p">))</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">277803737</span><span class="n">u</span><span class="p">;</span>
+<span class="linenos">21</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">word</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="mi">22</span><span class="n">u</span><span class="p">)</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="n">word</span><span class="p">;</span>
+<span class="linenos">22</span><span class="p">}</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="c1">// 3 次元の整数の格子点 p に 0 以上 1 未満の乱数を割り当てる</span>
+<span class="linenos">25</span><span class="kt">float</span><span class="w"> </span><span class="n">hash31</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">26</span><span class="p">{</span>
+<span class="linenos">27</span><span class="w">    </span><span class="kt">uvec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">uvec3</span><span class="p">(</span><span class="kt">ivec3</span><span class="p">(</span><span class="n">p</span><span class="p">));</span>
+<span class="linenos">28</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">pcgHash</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pcgHash</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">pcgHash</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">z</span><span class="p">))))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">4294967296.0</span><span class="p">;</span>
+<span class="linenos">29</span><span class="p">}</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="c1">// 3 次元の値ノイズ: 立方体の 8 頂点の乱数を 3 次のエルミート補間でつなぐ</span>
+<span class="linenos">32</span><span class="kt">float</span><span class="w"> </span><span class="n">valueNoise</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">x</span><span class="p">)</span>
+<span class="linenos">33</span><span class="p">{</span>
+<span class="linenos">34</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">35</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">36</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">3.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">f</span><span class="p">);</span>
+<span class="linenos">37</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">38</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">mix</span><span class="p">(</span><span class="n">mix</span><span class="p">(</span><span class="n">mix</span><span class="p">(</span><span class="n">hash31</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">yyy</span><span class="p">),</span><span class="w"> </span><span class="n">hash31</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">xyy</span><span class="p">),</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">x</span><span class="p">),</span>
+<span class="linenos">39</span><span class="w">                   </span><span class="n">mix</span><span class="p">(</span><span class="n">hash31</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">yxy</span><span class="p">),</span><span class="w"> </span><span class="n">hash31</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">xxy</span><span class="p">),</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">y</span><span class="p">),</span>
+<span class="linenos">40</span><span class="w">               </span><span class="n">mix</span><span class="p">(</span><span class="n">mix</span><span class="p">(</span><span class="n">hash31</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">yyx</span><span class="p">),</span><span class="w"> </span><span class="n">hash31</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">xyx</span><span class="p">),</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">x</span><span class="p">),</span>
+<span class="linenos">41</span><span class="w">                   </span><span class="n">mix</span><span class="p">(</span><span class="n">hash31</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">yxx</span><span class="p">),</span><span class="w"> </span><span class="n">hash31</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">xxx</span><span class="p">),</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">y</span><span class="p">),</span>
+<span class="linenos">42</span><span class="w">               </span><span class="n">u</span><span class="p">.</span><span class="n">z</span><span class="p">);</span>
+<span class="linenos">43</span><span class="p">}</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="c1">// フラクタルブラウン運動: 周波数を 2 倍、振幅を半分にしながらノイズを重ねる</span>
+<span class="linenos">46</span><span class="kt">float</span><span class="w"> </span><span class="n">fbm</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">47</span><span class="p">{</span>
+<span class="linenos">48</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">49</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">50</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">51</span><span class="w">        </span><span class="n">value</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">valueNoise</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">52</span><span class="w">        </span><span class="n">p</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">2.02</span><span class="p">;</span>
+<span class="linenos">53</span><span class="w">        </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">54</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">55</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="linenos">56</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>雲の密度は陰影に直接は現れないため、補間には計算の軽い 3 次のエルミート補間を使っている。fBm では、オクターブごとの格子点が揃わないように、周波数の倍率を 2 ではなく 2.02 にしている。</p>
+</section>
+<section id="id9">
+<h3>密度<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>3 つの球を smooth min でつないだ SDF を雲の大まかな形とし、その値を fBm で揺らしてから密度に変換する。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">16_volume.frag（抜粋）</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">71</span><span class="c1">// 雲の大まかな形 (3 つの球を滑らかにつないだもの)</span>
+<span class="linenos">72</span><span class="kt">float</span><span class="w"> </span><span class="n">sdCloudShape</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">73</span><span class="p">{</span>
+<span class="linenos">74</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sdSphere</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">75</span><span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smin</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdSphere</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">),</span><span class="w"> </span><span class="mf">0.75</span><span class="p">),</span><span class="w"> </span><span class="mf">0.6</span><span class="p">);</span>
+<span class="linenos">76</span><span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">smin</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdSphere</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="mf">1.1</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">0.1</span><span class="p">),</span><span class="w"> </span><span class="mf">0.7</span><span class="p">),</span><span class="w"> </span><span class="mf">0.6</span><span class="p">);</span>
+<span class="linenos">77</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">78</span><span class="p">}</span>
+<span class="linenos">79</span>
+<span class="linenos">80</span><span class="c1">// ノイズで削る量の最大値。SDF がこれより大きい場所には雲が無い</span>
+<span class="linenos">81</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">EROSION</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="linenos">82</span>
+<span class="linenos">83</span><span class="c1">// 位置 p での密度 (0 以上)</span>
+<span class="linenos">84</span><span class="kt">float</span><span class="w"> </span><span class="n">density</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">85</span><span class="p">{</span>
+<span class="linenos">86</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.15</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">iTime</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span><span class="w">  </span><span class="c1">// ノイズを流して形を変化させる</span>
+<span class="linenos">87</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sdCloudShape</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">EROSION</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">fbm</span><span class="p">(</span><span class="mf">3.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0</span><span class="p">;</span>
+<span class="linenos">88</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="o">-</span><span class="n">d</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">89</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>ノイズで揺らした SDF が負になる場所を雲の内部とし、内部に入るほど密度が大きくなるようにしている。ノイズの項 <code class="docutils literal notranslate"><span class="pre">EROSION</span> <span class="pre">*</span> <span class="pre">(fbm(3.0</span> <span class="pre">*</span> <span class="pre">q)</span> <span class="pre">-</span> <span class="pre">0.5)</span> <span class="pre">*</span> <span class="pre">2.0</span></code> は <span class="math notranslate nohighlight">\(-\mathrm{EROSION}\)</span> 以上なので、大まかな形の SDF が <code class="docutils literal notranslate"><span class="pre">EROSION</span></code> より大きい場所では密度は必ず 0 になる。この性質は、後で空の空間を飛ばすときに使う。</p>
+</section>
+</section>
+<section id="id10">
+<h2>積分の計算<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<section id="id11">
+<h3>離散化<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>ボリュームレンダリング方程式の積分は、レイを一定の歩幅 <span class="math notranslate nohighlight">\(\Delta t\)</span> で進みながら、区間ごとの寄与を足し合わせて求める。区間 <span class="math notranslate nohighlight">\(i\)</span> の中で密度が一定とみなすと、その区間で吸収・散乱される割合は <span class="math notranslate nohighlight">\(\alpha_i = 1 - e^{-\sigma_t \Delta t}\)</span> である。サンプルでは、散乱係数と消散係数が等しい（吸収が無い）と仮定し、次の手順で積分する。</p>
+<div class="math notranslate nohighlight">
+\[L \mathrel{+}= T\, \alpha_i\, L_s(\mathbf{p}_i), \qquad T \mathrel{\times}= 1 - \alpha_i\]</div>
+<p>最後に、残った透過率 <span class="math notranslate nohighlight">\(T\)</span> を背景の空の色に掛けて加える。雲の奥まで進んで <span class="math notranslate nohighlight">\(T\)</span> がほぼ 0 になったら、それ以降の寄与は無視できるので、ループを打ち切る。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">16_volume.frag（抜粋）</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">113</span><span class="kt">vec3</span><span class="w"> </span><span class="n">render</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">jitter</span><span class="p">)</span>
+<span class="linenos">114</span><span class="p">{</span>
+<span class="linenos">115</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span><span class="w">        </span><span class="c1">// 雲から視点に届く光の合計</span>
+<span class="linenos">116</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w">   </span><span class="c1">// 視点から現在位置までの透過率</span>
+<span class="linenos">117</span>
+<span class="linenos">118</span><span class="w">    </span><span class="c1">// 光が進行方向の前方に散乱しやすいことを近似する位相関数</span>
+<span class="linenos">119</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">mu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="p">);</span>
+<span class="linenos">120</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">phase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.6</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.8</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="mf">4.0</span><span class="p">);</span>
+<span class="linenos">121</span>
+<span class="linenos">122</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jitter</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">;</span>
+<span class="linenos">123</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">VOLUME_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">124</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">125</span><span class="w">        </span><span class="kt">float</span><span class="w"> </span><span class="n">shape</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sdCloudShape</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">126</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">shape</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">EROSION</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">127</span><span class="w">            </span><span class="c1">// 雲の外: SDF を使って空の空間を一気に飛ばす</span>
+<span class="linenos">128</span><span class="w">            </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">shape</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">EROSION</span><span class="p">,</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">);</span>
+<span class="linenos">129</span><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">130</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">dens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">density</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">131</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dens</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">132</span><span class="w">                </span><span class="c1">// この区間で吸収・散乱される割合</span>
+<span class="linenos">133</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">absorbed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">SIGMA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dens</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">);</span>
+<span class="linenos">134</span><span class="w">                </span><span class="kt">vec3</span><span class="w"> </span><span class="n">light</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SUN_COLOR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">lightTransmittance</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">phase</span><span class="w"> </span><span class="o">+</span>
+<span class="linenos">135</span><span class="w">                             </span><span class="n">AMBIENT</span><span class="p">;</span>
+<span class="linenos">136</span><span class="w">                </span><span class="n">col</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">absorbed</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">light</span><span class="p">;</span>
+<span class="linenos">137</span><span class="w">                </span><span class="n">transmittance</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">absorbed</span><span class="p">;</span>
+<span class="linenos">138</span><span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">transmittance</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.01</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">139</span><span class="w">                    </span><span class="k">break</span><span class="p">;</span><span class="w">   </span><span class="c1">// ほとんど光が届かないので打ち切る</span>
+<span class="linenos">140</span><span class="w">                </span><span class="p">}</span>
+<span class="linenos">141</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">142</span><span class="w">            </span><span class="n">t</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">;</span>
+<span class="linenos">143</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">144</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">t</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">20.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">145</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">146</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">147</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">148</span><span class="w">    </span><span class="c1">// 雲を透過した分だけ背景の空が見える</span>
+<span class="linenos">149</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">skyColor</span><span class="p">(</span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">150</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="sdf">
+<h3>SDF による空の空間の飛ばし<a class="headerlink" href="#sdf" title="Link to this heading"></a></h3>
+<p>一定の歩幅で進むと、雲の外の何も無い空間でも多くの反復を費やしてしまう。そこで、雲の外では大まかな形の SDF を使って、密度が 0 であることが保証された距離だけ一気に進む。前節で述べたとおり、大まかな形の SDF が <code class="docutils literal notranslate"><span class="pre">EROSION</span></code> より大きい場所では密度が 0 なので、<code class="docutils literal notranslate"><span class="pre">shape</span> <span class="pre">-</span> <span class="pre">EROSION</span></code> だけ進んでも雲を飛ばすことはない。スフィアトレーシングとボリュームレンダリングを組み合わせることで、計算量を大きく減らせる。</p>
+</section>
+<section id="id12">
+<h3>太陽光の透過率<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>各点での太陽光の透過率 <span class="math notranslate nohighlight">\(T_{\text{light}}\)</span> も、光源の方向に少しずつ進んで密度を足し合わせて求める。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">16_volume.frag（抜粋）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 91</span><span class="c1">// 点 p から光源の方向に進み、途中の密度から光の透過率を求める</span>
+<span class="linenos"> 92</span><span class="kt">float</span><span class="w"> </span><span class="n">lightTransmittance</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos"> 93</span><span class="p">{</span>
+<span class="linenos"> 94</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 95</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">stepSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.15</span><span class="p">;</span>
+<span class="linenos"> 96</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">LIGHT_STEPS</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 97</span><span class="w">        </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">density</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">LIGHT_DIR</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">stepSize</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos"> 99</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">SIGMA</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">stepSize</span><span class="p">);</span>
+<span class="linenos">100</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>視線方向の反復 1 回ごとにこの反復が入るため、計算量は両者の反復回数の積になる。光源に向かう方向の反復回数 <code class="docutils literal notranslate"><span class="pre">LIGHT_STEPS</span></code> は、見た目が大きく変わらない範囲でなるべく小さくする。</p>
+</section>
+<section id="id13">
+<h3>縞模様の抑制<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>一定の歩幅で進むと、すべてのピクセルでサンプリングする位置が揃うため、雲の中に等高線のような縞模様が現れる。サンプルでは、ピクセルの座標とフレーム番号をハッシュ関数に通して得た乱数 <code class="docutils literal notranslate"><span class="pre">jitter</span></code> で開始位置をずらし、縞模様を細かいノイズに置き換えている。ノイズは縞模様よりも目立ちにくく、複数のフレームを平均すれば消える。</p>
+<p>ここで使っている乱数は、ハッシュ関数で作った白色ノイズ（第 10 章）で、隣り合うピクセルの値に相関が無い。そのため、たまたま近い値が固まった場所が、粗い斑点として見える。これに対し、隣り合うピクセルの値がなるべく異なるように並べた乱数を <a class="reference internal" href="glossary.html#term-37"><span class="xref std std-term">ブルーノイズ</span></a> と呼ぶ。ブルーノイズは低い周波数の成分が少なく、高い周波数の成分だけからなるため、同じサンプル数でもノイズが細かく均一に見え、目立ちにくい。ブルーノイズは計算で作るのが難しいので、あらかじめ作成したテクスチャ（Peters による公開データなど）を読み込んで使うのが一般的である。ジッターのほか、第 17 章のパストレーシングのサンプリングや、ディザリングにも使われる。</p>
+</section>
+</section>
+<section id="id14">
+<h2>大気の散乱<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<p>第 7 章では、空の色を地平線から天頂への単純なグラデーションで描いた。実際の空の色は、太陽の光が大気中の分子やエアロゾル（微粒子）で散乱されることで生まれる。この章の関与媒質の考え方を大気全体に適用すると、昼の青空から夕焼けまでを 1 つのモデルで描ける。この手法は Nishita ら（1993）による単一散乱のモデルに基づく。</p>
+<figure class="align-center" id="id23">
+<img alt="地平線が橙色に輝き、上空に向かって暗い青緑色に変わる夕焼けの空" src="_images/16_atmosphere.png" />
+<figcaption>
+<p><span class="caption-text">16_atmosphere.frag の実行結果（太陽が地平線の近くにあるとき）</span><a class="headerlink" href="#id23" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/c7ae4c049fbcb6005578097d15d35e38/16_atmosphere.frag"><code class="xref download docutils literal notranslate"><span class="pre">16_atmosphere.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/16_atmosphere.html">ブラウザーで実行</a></p>
+<section id="id15">
+<h3>2 種類の散乱<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<p>大気による散乱は、粒子の大きさによって性質が大きく異なる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>散乱</p></th>
+<th class="head"><p>レイリー散乱</p></th>
+<th class="head"><p>ミー散乱</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>原因</p></td>
+<td><p>空気の分子（光の波長よりずっと小さい）</p></td>
+<td><p>エアロゾル（光の波長と同程度の大きさ）</p></td>
+</tr>
+<tr class="row-odd"><td><p>波長への依存</p></td>
+<td><p>波長の 4 乗に反比例する。青い光ほど強く散乱する</p></td>
+<td><p>ほとんど依存しない（白っぽく散乱する）</p></td>
+</tr>
+<tr class="row-even"><td><p>散乱の方向</p></td>
+<td><p>前方と後方に対称</p></td>
+<td><p>前方に強く偏る</p></td>
+</tr>
+<tr class="row-odd"><td><p>見え方</p></td>
+<td><p>空の青、夕焼けの赤</p></td>
+<td><p>太陽のまわりの白いかさ、かすみ</p></td>
+</tr>
+</tbody>
+</table>
+<p>昼の空が青いのは、青い光がレイリー散乱で空全体に散らばるためである。夕方に太陽が地平線に近づくと、太陽の光は大気の中を長い距離通ってくるため、青い光が途中で散乱されて失われ、残った赤や橙の光が届く。</p>
+</section>
+<section id="id16">
+<h3>大気のモデル<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>地球を半径 <span class="math notranslate nohighlight">\(R_E = 6360\)</span> km の球、大気の上端を半径 <span class="math notranslate nohighlight">\(R_A = 6420\)</span> km の球とする。粒子の密度は高さ <span class="math notranslate nohighlight">\(h\)</span> とともに指数関数的に減少するとし、レイリー散乱とミー散乱のそれぞれについて、海面での散乱係数 <span class="math notranslate nohighlight">\(\beta\)</span> とスケールハイト <span class="math notranslate nohighlight">\(H\)</span> （密度が <span class="math notranslate nohighlight">\(1/e\)</span> になる高さ）で表す。</p>
+<div class="math notranslate nohighlight">
+\[\beta_R(h) = \beta_R(0)\, e^{-h/H_R}, \qquad \beta_M(h) = \beta_M(0)\, e^{-h/H_M}\]</div>
+<p>サンプルでは、<span class="math notranslate nohighlight">\(\beta_R(0) = (5.8, 13.5, 33.1) \times 10^{-6}\ \text{m}^{-1}\)</span> （RGB）、<span class="math notranslate nohighlight">\(H_R = 8\)</span> km、<span class="math notranslate nohighlight">\(\beta_M(0) = 21 \times 10^{-6}\ \text{m}^{-1}\)</span>、<span class="math notranslate nohighlight">\(H_M = 1.2\)</span> km としている。</p>
+</section>
+<section id="id17">
+<h3>単一散乱の積分<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<p>視点から方向 <span class="math notranslate nohighlight">\(\hat{\mathbf{d}}\)</span> を見たときに届く光は、この章の前半で説明したボリュームレンダリング方程式と同じ形で書ける。視線上の各点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> で、太陽から <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> まで届いた光が散乱され、<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> から視点までの間で減衰する。</p>
+<div class="math notranslate nohighlight">
+\[L = \int_0^{t_{\max}} \bigl(\beta_R(h)\, P_R(\theta) + \beta_M(h)\, P_M(\theta)\bigr)\,
+    T(\text{太陽} \to \mathbf{p} \to \text{視点})\, E_{\text{sun}}\, dt\]</div>
+<p><span class="math notranslate nohighlight">\(P_R, P_M\)</span> はそれぞれの位相関数、<span class="math notranslate nohighlight">\(\theta\)</span> は視線と太陽の方向のなす角、<span class="math notranslate nohighlight">\(T\)</span> は太陽から <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> を経て視点に至る経路全体の透過率である。透過率は、経路上の光学的深さ（密度 × 距離の積分）から求める。</p>
+<div class="math notranslate nohighlight">
+\[T = \exp\Bigl(-\beta_R(0)\, D_R - 1.1\, \beta_M(0)\, D_M\Bigr)\]</div>
+<p><span class="math notranslate nohighlight">\(D_R, D_M\)</span> は、それぞれの密度（海面を 1 とする）を経路に沿って積分した値である。ミー散乱の係数に掛けている 1.1 は、エアロゾルによる吸収を含めた消散係数を散乱係数から近似するための係数である。</p>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">16_atmosphere.frag（抜粋）</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">57</span><span class="c1">// 視点 ro から方向 rd を見たときに届く、散乱された太陽光</span>
+<span class="linenos">58</span><span class="kt">vec3</span><span class="w"> </span><span class="n">skyRadiance</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sunDir</span><span class="p">)</span>
+<span class="linenos">59</span><span class="p">{</span>
+<span class="linenos">60</span><span class="w">    </span><span class="c1">// 大気の中を進む区間を求める。地面に当たる場合は地面まで</span>
+<span class="linenos">61</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">tEnd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">raySphere</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">ATMOSPHERE_RADIUS</span><span class="p">).</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">62</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">ground</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">raySphere</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">EARTH_RADIUS</span><span class="p">);</span>
+<span class="linenos">63</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ground</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">64</span><span class="w">        </span><span class="n">tEnd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ground</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">65</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">66</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">ds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tEnd</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">VIEW_SAMPLES</span><span class="p">);</span>
+<span class="linenos">67</span>
+<span class="linenos">68</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sumRayleigh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">69</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">sumMie</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">70</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">depthView</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span><span class="w">   </span><span class="c1">// 視点からサンプル点までの光学的深さ</span>
+<span class="linenos">71</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">VIEW_SAMPLES</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">72</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ds</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">73</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">density</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">densityAt</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ds</span><span class="p">;</span>
+<span class="linenos">74</span><span class="w">        </span><span class="n">depthView</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">density</span><span class="p">;</span>
+<span class="linenos">75</span><span class="w">        </span><span class="c1">// 太陽の光が地球に遮られる点は、散乱に寄与しない</span>
+<span class="linenos">76</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">raySphere</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">,</span><span class="w"> </span><span class="n">EARTH_RADIUS</span><span class="p">).</span><span class="n">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">77</span><span class="w">            </span><span class="k">continue</span><span class="p">;</span>
+<span class="linenos">78</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">79</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">depthSun</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opticalDepthToSun</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">80</span><span class="w">        </span><span class="c1">// 太陽 → サンプル点 → 視点 の経路の透過率 (ランベルト・ベールの法則)</span>
+<span class="linenos">81</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">depthView</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">depthSun</span><span class="p">;</span>
+<span class="linenos">82</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">tau</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BETA_RAYLEIGH</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">depth</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BETA_MIE</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">depth</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">83</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">tau</span><span class="p">);</span>
+<span class="linenos">84</span><span class="w">        </span><span class="n">sumRayleigh</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">density</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">85</span><span class="w">        </span><span class="n">sumMie</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">transmittance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">density</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">86</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">87</span>
+<span class="linenos">88</span><span class="w">    </span><span class="c1">// 位相関数: レイリー散乱は前後に対称、ミー散乱は前方に強い</span>
+<span class="linenos">89</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">mu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">sunDir</span><span class="p">);</span>
+<span class="linenos">90</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">phaseRayleigh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">16.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mu</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mu</span><span class="p">);</span>
+<span class="linenos">91</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">g2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MIE_G</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">MIE_G</span><span class="p">;</span>
+<span class="linenos">92</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">phaseMie</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">8.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">((</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">g2</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mu</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mu</span><span class="p">))</span><span class="w"> </span><span class="o">/</span>
+<span class="linenos">93</span><span class="w">                     </span><span class="p">((</span><span class="mf">2.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">g2</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">g2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">MIE_G</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mu</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">));</span>
+<span class="linenos">94</span>
+<span class="linenos">95</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SUN_INTENSITY</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">sumRayleigh</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BETA_RAYLEIGH</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">phaseRayleigh</span><span class="w"> </span><span class="o">+</span>
+<span class="linenos">96</span><span class="w">                            </span><span class="n">sumMie</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">BETA_MIE</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">phaseMie</span><span class="p">);</span>
+<span class="linenos">97</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>視線方向の積分では 16 点、各点から太陽の方向の積分では 8 点で密度を評価している。大気と地面の範囲は、レイと球の交点を解析的に求めて決める（関数 <code class="docutils literal notranslate"><span class="pre">raySphere</span></code>）。形状が単純な球なので、ここではスフィアトレーシングを使う必要がない。</p>
+<p>位相関数には、レイリー散乱に <span class="math notranslate nohighlight">\(P_R(\theta) = \frac{3}{16\pi}(1 + \cos^2\theta)\)</span> を、ミー散乱に Henyey-Greenstein 位相関数を改良した Cornette-Shanks の式を使っている。ミー散乱の <span class="math notranslate nohighlight">\(g = 0.76\)</span> は、太陽のまわりの明るいかさを作る。</p>
+<p>この単一散乱のモデルでは、一度散乱された光がもう一度散乱される多重散乱を無視している。そのため、日没後の空や、エアロゾルの多いかすんだ空は、実際より暗くなる。多重散乱まで含めて計算した結果を、あらかじめテクスチャに保存しておく方法（Bruneton and Neyret, 2008 など）が、ゲームなどで広く使われている。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="15_grid_traversal.html" class="btn btn-neutral float-left" title="第 15 章 グリッドの走査" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="17_path_tracing.html" class="btn btn-neutral float-right" title="第 17 章 パストレーシング" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

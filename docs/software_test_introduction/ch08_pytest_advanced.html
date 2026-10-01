@@ -1,0 +1,633 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8. pytest の活用 &mdash; ソフトウェアテスト入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=6ac444d3" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="9. テストダブル" href="ch09_test_double.html" />
+    <link rel="prev" title="7. pytest 入門" href="ch07_pytest_basics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ソフトウェアテスト入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 I 部 テストの基礎</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_what_is_testing.html">2. テストとは何か</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_classification.html">3. テストの分類</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_blackbox_design.html">4. ブラックボックステストの設計技法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_whitebox_design.html">5. ホワイトボックステストとカバレッジ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 II 部 Python によるテストの実践</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch06_unittest.html">6. unittest 入門</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_pytest_basics.html">7. pytest 入門</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">8. pytest の活用</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fixture">8.1 fixture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#conftest-py">8.2 conftest.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">8.3 後始末とスコープ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">8.4 パラメーター化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">8.5 状態遷移テストの実装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">8.6 マーカー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">8.7 組み込みの fixture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">8.8 まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_test_double.html">9. テストダブル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_testable_design.html">10. テストしやすい設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_integration.html">11. 結合テスト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_advanced_techniques.html">12. さまざまなテスト手法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_static_analysis.html">13. 静的テスト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_coverage.html">14. カバレッジの計測</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 III 部 テストの進め方</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch15_tdd.html">15. テスト駆動開発</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch16_good_tests.html">16. よいテストの書き方</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17_automation.html">17. テストの自動化と継続的インテグレーション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch18_test_management.html">18. テストの計画と管理</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_cheatsheet.html">付録 B 早見表</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_examples.html">付録 C サンプルコードの一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ソフトウェアテスト入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">8. pytest の活用</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pytest">
+<h1>8. pytest の活用<a class="headerlink" href="#pytest" title="Link to this heading"></a></h1>
+<p>この章では、テストの準備を部品化する fixture、同じテストを複数の入力で実行するパラメーター化、テストの扱いを変えるマーカーを学ぶ。あわせて、4 章で設計した送料計算と注文の状態遷移のテストケースを、テストコードとして実装する。</p>
+<section id="fixture">
+<h2>8.1 fixture<a class="headerlink" href="#fixture" title="Link to this heading"></a></h2>
+<p>7 章のテストでは、各テストの中でカートを作っていた。テストが増えると、同じ準備の処理があちこちに現れる。<a class="reference internal" href="appendix_a_glossary.html#term-fixture"><span class="xref std std-term">fixture</span></a> は、テストの準備（と後始末）を関数として定義し、複数のテストで再利用する仕組みである。</p>
+<p>fixture は、<code class="docutils literal notranslate"><span class="pre">&#64;pytest.fixture</span></code> を付けた関数として定義する。テスト関数の引数に fixture の関数名を書くと、pytest がその fixture を呼び出し、戻り値を引数として渡す。</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">ch08_pytest_advanced/conftest.py</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;ch08_pytest_advanced フォルダーのテストで共有する fixture.&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">shop.cart</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cart</span><span class="p">,</span> <span class="n">Item</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="linenos"> 9</span><span class="k">def</span><span class="w"> </span><span class="nf">apple</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Item</span><span class="p">:</span>
+<span class="linenos">10</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;単価 150 円の商品.&quot;&quot;&quot;</span>
+<span class="linenos">11</span>    <span class="k">return</span> <span class="n">Item</span><span class="p">(</span><span class="s2">&quot;りんご&quot;</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="linenos">15</span><span class="k">def</span><span class="w"> </span><span class="nf">cart</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Cart</span><span class="p">:</span>
+<span class="linenos">16</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;空のカート.&quot;&quot;&quot;</span>
+<span class="linenos">17</span>    <span class="k">return</span> <span class="n">Cart</span><span class="p">()</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="linenos">21</span><span class="k">def</span><span class="w"> </span><span class="nf">cart_with_apples</span><span class="p">(</span><span class="n">cart</span><span class="p">:</span> <span class="n">Cart</span><span class="p">,</span> <span class="n">apple</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cart</span><span class="p">:</span>
+<span class="linenos">22</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;りんごを 3 個入れたカート（fixture は別の fixture を利用できる）.&quot;&quot;&quot;</span>
+<span class="linenos">23</span>    <span class="n">cart</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">apple</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="linenos">24</span>    <span class="k">return</span> <span class="n">cart</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">ch08_pytest_advanced/test_cart_fixture.py</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;conftest.py の fixture を使って Cart をテストする.&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">from</span><span class="w"> </span><span class="nn">shop.cart</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cart</span><span class="p">,</span> <span class="n">Item</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="k">def</span><span class="w"> </span><span class="nf">test_new_cart_is_empty</span><span class="p">(</span><span class="n">cart</span><span class="p">:</span> <span class="n">Cart</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 7</span>    <span class="k">assert</span> <span class="n">cart</span><span class="o">.</span><span class="n">is_empty</span><span class="p">()</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="k">def</span><span class="w"> </span><span class="nf">test_subtotal</span><span class="p">(</span><span class="n">cart_with_apples</span><span class="p">:</span> <span class="n">Cart</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">11</span>    <span class="k">assert</span> <span class="n">cart_with_apples</span><span class="o">.</span><span class="n">subtotal</span><span class="p">()</span> <span class="o">==</span> <span class="mi">450</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="k">def</span><span class="w"> </span><span class="nf">test_remove</span><span class="p">(</span><span class="n">cart_with_apples</span><span class="p">:</span> <span class="n">Cart</span><span class="p">,</span> <span class="n">apple</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">15</span>    <span class="n">cart_with_apples</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">apple</span><span class="p">)</span>
+<span class="linenos">16</span>    <span class="k">assert</span> <span class="n">cart_with_apples</span><span class="o">.</span><span class="n">is_empty</span><span class="p">()</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="k">def</span><span class="w"> </span><span class="nf">test_fixture_is_created_for_each_test</span><span class="p">(</span><span class="n">cart_with_apples</span><span class="p">:</span> <span class="n">Cart</span><span class="p">,</span>
+<span class="linenos">20</span>                                          <span class="n">apple</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">21</span>    <span class="c1"># 前のテストで remove しても、このテストには影響しない</span>
+<span class="linenos">22</span>    <span class="k">assert</span> <span class="n">cart_with_apples</span><span class="o">.</span><span class="n">quantity_of</span><span class="p">(</span><span class="n">apple</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+</pre></div>
+</div>
+</div>
+<p>fixture の主な性質は次のとおりである。</p>
+<ul class="simple">
+<li><p><strong>引数の名前で指定する</strong>：<code class="docutils literal notranslate"><span class="pre">test_subtotal(cart_with_apples:</span> <span class="pre">Cart)</span></code> と書くと、<code class="docutils literal notranslate"><span class="pre">cart_with_apples</span></code> fixture の戻り値が渡される。</p></li>
+<li><p><strong>fixture は別の fixture を使える</strong>：<code class="docutils literal notranslate"><span class="pre">cart_with_apples</span></code>（conftest.py の 21 行目）は、引数で <code class="docutils literal notranslate"><span class="pre">cart</span></code> と <code class="docutils literal notranslate"><span class="pre">apple</span></code> を受け取っている。pytest は依存関係をたどり、必要な fixture を順に呼び出す。</p></li>
+<li><p><strong>テストごとに作り直される</strong>：既定では、fixture はテスト関数ごとに呼び出される。<code class="docutils literal notranslate"><span class="pre">test_remove</span></code> でカートからりんごを取り除いても、次の <code class="docutils literal notranslate"><span class="pre">test_fixture_is_created_for_each_test</span></code> には、りんごが 3 個入った新しいカートが渡される。</p></li>
+</ul>
+<p>fixture は、テストの準備を「名前の付いた部品」にする。テスト関数の引数を見れば、そのテストが何を前提にしているかが分かる。</p>
+</section>
+<section id="conftest-py">
+<h2>8.2 conftest.py<a class="headerlink" href="#conftest-py" title="Link to this heading"></a></h2>
+<p>fixture を <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> という名前のファイルに書くと、同じフォルダーとその下のフォルダーにあるすべてのテストファイルから、import せずに使える。前節の fixture も <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> に書いているため、<code class="docutils literal notranslate"><span class="pre">test_cart_fixture.py</span></code> は fixture を import していない。</p>
+<p>使える fixture の一覧は、<code class="docutils literal notranslate"><span class="pre">--fixtures</span></code> オプションで確かめられる。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>--fixtures<span class="w"> </span>ch08_pytest_advanced/test_cart_fixture.py
+</pre></div>
+</div>
+<p>出力の最後に、<code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> で定義した fixture が、docstring とともに表示される。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>----------------------- fixtures defined from conftest ------------------------
+cart -- ch08_pytest_advanced\conftest.py:15
+    空のカート.
+
+cart_with_apples -- ch08_pytest_advanced\conftest.py:21
+    りんごを 3 個入れたカート（fixture は別の fixture を利用できる）.
+
+apple -- ch08_pytest_advanced\conftest.py:9
+    単価 150 円の商品.
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h2>8.3 後始末とスコープ<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>fixture の中で <code class="docutils literal notranslate"><span class="pre">return</span></code> の代わりに <code class="docutils literal notranslate"><span class="pre">yield</span></code> を使うと、テストの後に後始末の処理を実行できる。<code class="docutils literal notranslate"><span class="pre">yield</span></code> より前が準備、後が後始末である。テストが失敗しても、後始末は実行される。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="linenos">2</span><span class="k">def</span><span class="w"> </span><span class="nf">connection</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">]:</span>
+<span class="linenos">3</span>    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>  <span class="c1"># 準備</span>
+<span class="linenos">4</span>    <span class="k">yield</span> <span class="n">conn</span>                          <span class="c1"># ここでテストが実行される</span>
+<span class="linenos">5</span>    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>                        <span class="c1"># 後始末</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">yield</span></code> を使う fixture の戻り値の型は、<code class="docutils literal notranslate"><span class="pre">collections.abc</span></code> の <code class="docutils literal notranslate"><span class="pre">Iterator</span></code> で表す。実際の例は 11 章で扱う。</p>
+<p>データベースの接続など、準備に時間がかかるものを、テストごとに作り直すと実行が遅くなる。<code class="docutils literal notranslate"><span class="pre">scope</span></code> 引数を指定すると、fixture を作り直す範囲を広げられる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>scope</p></th>
+<th class="head"><p>fixture を作り直す単位</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;function&quot;</span></code></p></td>
+<td><p>テスト関数ごと（既定）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;class&quot;</span></code></p></td>
+<td><p>テストクラスごと</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;module&quot;</span></code></p></td>
+<td><p>テストファイルごと</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;package&quot;</span></code></p></td>
+<td><p>パッケージ（フォルダー）ごと</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;session&quot;</span></code></p></td>
+<td><p>テストの実行全体で 1 回</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;module&quot;</span><span class="p">)</span>
+<span class="linenos">2</span><span class="k">def</span><span class="w"> </span><span class="nf">catalog</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Item</span><span class="p">]:</span>
+<span class="linenos">3</span>    <span class="k">return</span> <span class="n">load_catalog</span><span class="p">()</span>  <span class="c1"># 時間のかかる読み込みを、ファイルごとに 1 回だけ行う</span>
+</pre></div>
+</div>
+<p>スコープを広げた fixture は、複数のテストで同じオブジェクトを共有する。あるテストがそのオブジェクトの中身を変えると、後のテストの結果が変わってしまう。スコープを広げるのは、テストが中身を変更しないもの（読み取り専用のデータなど）に限るのが安全である。</p>
+</section>
+<section id="id2">
+<h2>8.4 パラメーター化<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>4 章の境界値分析では、同じ関数を異なる入力と期待値で何度も試すテストケースを設計した。これをテスト関数ごとに書くと、ほぼ同じコードが並ぶ。<code class="docutils literal notranslate"><span class="pre">&#64;pytest.mark.parametrize</span></code> を使うと、1 つのテスト関数を、入力と期待値の組ごとに繰り返し実行できる。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">ch08_pytest_advanced/test_shipping_table.py</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;4 章で設計した送料計算のテストケースを parametrize で実装する.&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">shop.shipping</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_shipping_fee</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span>
+<span class="linenos"> 9</span>    <span class="p">(</span><span class="s2">&quot;subtotal&quot;</span><span class="p">,</span> <span class="s2">&quot;expected&quot;</span><span class="p">),</span>
+<span class="linenos">10</span>    <span class="p">[</span>
+<span class="linenos">11</span>        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">),</span>     <span class="c1"># 有効な同値クラスの下限</span>
+<span class="linenos">12</span>        <span class="p">(</span><span class="mi">4999</span><span class="p">,</span> <span class="mi">500</span><span class="p">),</span>  <span class="c1"># 送料無料になる直前</span>
+<span class="linenos">13</span>        <span class="p">(</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>    <span class="c1"># 送料無料になる境界</span>
+<span class="linenos">14</span>    <span class="p">],</span>
+<span class="linenos">15</span><span class="p">)</span>
+<span class="linenos">16</span><span class="k">def</span><span class="w"> </span><span class="nf">test_boundary_for_regular_member</span><span class="p">(</span><span class="n">subtotal</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">17</span>    <span class="k">assert</span> <span class="n">calc_shipping_fee</span><span class="p">(</span><span class="n">subtotal</span><span class="p">,</span> <span class="n">is_premium</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="linenos">18</span>                             <span class="n">is_remote</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span>
+<span class="linenos">22</span>    <span class="p">(</span><span class="s2">&quot;subtotal&quot;</span><span class="p">,</span> <span class="s2">&quot;expected&quot;</span><span class="p">),</span>
+<span class="linenos">23</span>    <span class="p">[</span>
+<span class="linenos">24</span>        <span class="p">(</span><span class="mi">2999</span><span class="p">,</span> <span class="mi">500</span><span class="p">),</span>  <span class="c1"># 送料無料になる直前</span>
+<span class="linenos">25</span>        <span class="p">(</span><span class="mi">3000</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>    <span class="c1"># 送料無料になる境界</span>
+<span class="linenos">26</span>    <span class="p">],</span>
+<span class="linenos">27</span><span class="p">)</span>
+<span class="linenos">28</span><span class="k">def</span><span class="w"> </span><span class="nf">test_boundary_for_premium_member</span><span class="p">(</span><span class="n">subtotal</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">29</span>    <span class="k">assert</span> <span class="n">calc_shipping_fee</span><span class="p">(</span><span class="n">subtotal</span><span class="p">,</span> <span class="n">is_premium</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="linenos">30</span>                             <span class="n">is_remote</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="k">def</span><span class="w"> </span><span class="nf">test_negative_subtotal_raises_value_error</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">34</span>    <span class="c1"># 無効な同値クラスの上限（境界の直前）</span>
+<span class="linenos">35</span>    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="linenos">36</span>        <span class="n">calc_shipping_fee</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">is_premium</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_remote</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span><span class="c1"># デシジョンテーブルの 8 つの規則。id でテスト名に規則の番号を付ける</span>
+<span class="linenos">40</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span>
+<span class="linenos">41</span>    <span class="p">(</span><span class="s2">&quot;is_premium&quot;</span><span class="p">,</span> <span class="s2">&quot;subtotal&quot;</span><span class="p">,</span> <span class="s2">&quot;is_remote&quot;</span><span class="p">,</span> <span class="s2">&quot;expected&quot;</span><span class="p">),</span>
+<span class="linenos">42</span>    <span class="p">[</span>
+<span class="linenos">43</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="mi">4000</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rule1&quot;</span><span class="p">),</span>
+<span class="linenos">44</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="mi">4000</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mi">1500</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rule2&quot;</span><span class="p">),</span>
+<span class="linenos">45</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rule3&quot;</span><span class="p">),</span>
+<span class="linenos">46</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rule4&quot;</span><span class="p">),</span>
+<span class="linenos">47</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rule5&quot;</span><span class="p">),</span>
+<span class="linenos">48</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mi">1500</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rule6&quot;</span><span class="p">),</span>
+<span class="linenos">49</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="mi">4000</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rule7&quot;</span><span class="p">),</span>
+<span class="linenos">50</span>        <span class="n">pytest</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="mi">4000</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;rule8&quot;</span><span class="p">),</span>
+<span class="linenos">51</span>    <span class="p">],</span>
+<span class="linenos">52</span><span class="p">)</span>
+<span class="linenos">53</span><span class="k">def</span><span class="w"> </span><span class="nf">test_decision_table</span><span class="p">(</span><span class="n">is_premium</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">subtotal</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_remote</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="linenos">54</span>                        <span class="n">expected</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">55</span>    <span class="k">assert</span> <span class="n">calc_shipping_fee</span><span class="p">(</span><span class="n">subtotal</span><span class="p">,</span> <span class="n">is_premium</span><span class="p">,</span> <span class="n">is_remote</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">parametrize</span></code> の第 1 引数には引数の名前を、第 2 引数には値の組のリストを指定する（8～15 行目）。値の組は、4 章の境界値分析の表をそのまま写したものである。このように、テストケースの表とテストコードが 1 対 1 に対応していると、設計したテストケースが漏れなく実装されているかを確かめやすい。</p>
+<p>39～55 行目は、4.4 節のデシジョンテーブルの 8 つの規則の実装である。<code class="docutils literal notranslate"><span class="pre">pytest.param</span></code> の <code class="docutils literal notranslate"><span class="pre">id</span></code> 引数で、各テストに規則の番号を名前として付けている。<code class="docutils literal notranslate"><span class="pre">-v</span></code> オプションを付けて実行すると、値の組ごとに 1 つのテストとして表示される。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>-v<span class="w"> </span>ch08_pytest_advanced/test_shipping_table.py
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>collecting ... collected 14 items
+
+ch08_pytest_advanced/test_shipping_table.py::test_boundary_for_regular_member[0-500] PASSED [  7%]
+ch08_pytest_advanced/test_shipping_table.py::test_boundary_for_regular_member[4999-500] PASSED [ 14%]
+ch08_pytest_advanced/test_shipping_table.py::test_boundary_for_regular_member[5000-0] PASSED [ 21%]
+ch08_pytest_advanced/test_shipping_table.py::test_boundary_for_premium_member[2999-500] PASSED [ 28%]
+ch08_pytest_advanced/test_shipping_table.py::test_boundary_for_premium_member[3000-0] PASSED [ 35%]
+ch08_pytest_advanced/test_shipping_table.py::test_negative_subtotal_raises_value_error PASSED [ 42%]
+ch08_pytest_advanced/test_shipping_table.py::test_decision_table[rule1] PASSED [ 50%]
+ch08_pytest_advanced/test_shipping_table.py::test_decision_table[rule2] PASSED [ 57%]
+ch08_pytest_advanced/test_shipping_table.py::test_decision_table[rule3] PASSED [ 64%]
+ch08_pytest_advanced/test_shipping_table.py::test_decision_table[rule4] PASSED [ 71%]
+ch08_pytest_advanced/test_shipping_table.py::test_decision_table[rule5] PASSED [ 78%]
+ch08_pytest_advanced/test_shipping_table.py::test_decision_table[rule6] PASSED [ 85%]
+ch08_pytest_advanced/test_shipping_table.py::test_decision_table[rule7] PASSED [ 92%]
+ch08_pytest_advanced/test_shipping_table.py::test_decision_table[rule8] PASSED [100%]
+
+============================= 14 passed in 1.43s ==============================
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">id</span></code> を指定しない場合は、<code class="docutils literal notranslate"><span class="pre">[0-500]</span></code> のように値からテストの名前が作られる。どの値の組で失敗したかが名前から分かるため、1 つの関数の中でループを回して確かめるよりも、失敗の原因を特定しやすい。</p>
+</section>
+<section id="id3">
+<h2>8.5 状態遷移テストの実装<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>4.5 節の状態遷移テストも、パラメーター化で実装できる。状態遷移表の有効な遷移を辞書で表し、そこに含まれない状態と操作の組み合わせを、無効な遷移として自動で作っている。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">ch08_pytest_advanced/test_order_state.py</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;4 章で設計した注文の状態遷移テストを実装する.&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="kn">from</span><span class="w"> </span><span class="nn">shop.order</span><span class="w"> </span><span class="kn">import</span> <span class="n">InvalidTransitionError</span><span class="p">,</span> <span class="n">Order</span><span class="p">,</span> <span class="n">OrderStatus</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="n">ACTIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;pay&quot;</span><span class="p">,</span> <span class="s2">&quot;ship&quot;</span><span class="p">,</span> <span class="s2">&quot;deliver&quot;</span><span class="p">,</span> <span class="s2">&quot;cancel&quot;</span><span class="p">]</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="c1"># 状態遷移表の有効な遷移: (遷移前の状態, 操作) -&gt; 遷移後の状態</span>
+<span class="linenos">10</span><span class="n">VALID_TRANSITIONS</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">11</span>    <span class="p">(</span><span class="n">OrderStatus</span><span class="o">.</span><span class="n">RECEIVED</span><span class="p">,</span> <span class="s2">&quot;pay&quot;</span><span class="p">):</span> <span class="n">OrderStatus</span><span class="o">.</span><span class="n">PAID</span><span class="p">,</span>
+<span class="linenos">12</span>    <span class="p">(</span><span class="n">OrderStatus</span><span class="o">.</span><span class="n">PAID</span><span class="p">,</span> <span class="s2">&quot;ship&quot;</span><span class="p">):</span> <span class="n">OrderStatus</span><span class="o">.</span><span class="n">SHIPPED</span><span class="p">,</span>
+<span class="linenos">13</span>    <span class="p">(</span><span class="n">OrderStatus</span><span class="o">.</span><span class="n">SHIPPED</span><span class="p">,</span> <span class="s2">&quot;deliver&quot;</span><span class="p">):</span> <span class="n">OrderStatus</span><span class="o">.</span><span class="n">DELIVERED</span><span class="p">,</span>
+<span class="linenos">14</span>    <span class="p">(</span><span class="n">OrderStatus</span><span class="o">.</span><span class="n">RECEIVED</span><span class="p">,</span> <span class="s2">&quot;cancel&quot;</span><span class="p">):</span> <span class="n">OrderStatus</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+<span class="linenos">15</span>    <span class="p">(</span><span class="n">OrderStatus</span><span class="o">.</span><span class="n">PAID</span><span class="p">,</span> <span class="s2">&quot;cancel&quot;</span><span class="p">):</span> <span class="n">OrderStatus</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+<span class="linenos">16</span><span class="p">}</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="c1"># 状態遷移表で「－」（遷移なし）とした、残りのすべての組み合わせ</span>
+<span class="linenos">19</span><span class="n">INVALID_TRANSITIONS</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos">20</span>    <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+<span class="linenos">21</span>    <span class="k">for</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">OrderStatus</span>
+<span class="linenos">22</span>    <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">ACTIONS</span>
+<span class="linenos">23</span>    <span class="k">if</span> <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_TRANSITIONS</span>
+<span class="linenos">24</span><span class="p">]</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span><span class="c1"># 各状態に到達するための操作の列</span>
+<span class="linenos">27</span><span class="n">PATHS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">OrderStatus</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">28</span>    <span class="n">OrderStatus</span><span class="o">.</span><span class="n">RECEIVED</span><span class="p">:</span> <span class="p">[],</span>
+<span class="linenos">29</span>    <span class="n">OrderStatus</span><span class="o">.</span><span class="n">PAID</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pay&quot;</span><span class="p">],</span>
+<span class="linenos">30</span>    <span class="n">OrderStatus</span><span class="o">.</span><span class="n">SHIPPED</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pay&quot;</span><span class="p">,</span> <span class="s2">&quot;ship&quot;</span><span class="p">],</span>
+<span class="linenos">31</span>    <span class="n">OrderStatus</span><span class="o">.</span><span class="n">DELIVERED</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pay&quot;</span><span class="p">,</span> <span class="s2">&quot;ship&quot;</span><span class="p">,</span> <span class="s2">&quot;deliver&quot;</span><span class="p">],</span>
+<span class="linenos">32</span>    <span class="n">OrderStatus</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;cancel&quot;</span><span class="p">],</span>
+<span class="linenos">33</span><span class="p">}</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span><span class="k">def</span><span class="w"> </span><span class="nf">make_order</span><span class="p">(</span><span class="n">status</span><span class="p">:</span> <span class="n">OrderStatus</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Order</span><span class="p">:</span>
+<span class="linenos">37</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;指定した状態の注文を、正しい順序で操作して作る.&quot;&quot;&quot;</span>
+<span class="linenos">38</span>    <span class="n">order</span> <span class="o">=</span> <span class="n">Order</span><span class="p">()</span>
+<span class="linenos">39</span>    <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">PATHS</span><span class="p">[</span><span class="n">status</span><span class="p">]:</span>
+<span class="linenos">40</span>        <span class="nb">getattr</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">action</span><span class="p">)()</span>
+<span class="linenos">41</span>    <span class="k">assert</span> <span class="n">order</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">status</span>
+<span class="linenos">42</span>    <span class="k">return</span> <span class="n">order</span>
+<span class="linenos">43</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="k">def</span><span class="w"> </span><span class="nf">test_new_order_is_received</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">46</span>    <span class="k">assert</span> <span class="n">Order</span><span class="p">()</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">OrderStatus</span><span class="o">.</span><span class="n">RECEIVED</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span>
+<span class="linenos">49</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span>
+<span class="linenos">50</span>    <span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;action&quot;</span><span class="p">,</span> <span class="s2">&quot;expected&quot;</span><span class="p">),</span>
+<span class="linenos">51</span>    <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">VALID_TRANSITIONS</span><span class="o">.</span><span class="n">items</span><span class="p">()],</span>
+<span class="linenos">52</span><span class="p">)</span>
+<span class="linenos">53</span><span class="k">def</span><span class="w"> </span><span class="nf">test_valid_transition</span><span class="p">(</span><span class="n">status</span><span class="p">:</span> <span class="n">OrderStatus</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="linenos">54</span>                          <span class="n">expected</span><span class="p">:</span> <span class="n">OrderStatus</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">55</span>    <span class="n">order</span> <span class="o">=</span> <span class="n">make_order</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+<span class="linenos">56</span>    <span class="nb">getattr</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">action</span><span class="p">)()</span>
+<span class="linenos">57</span>    <span class="k">assert</span> <span class="n">order</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">expected</span>
+<span class="linenos">58</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">((</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;action&quot;</span><span class="p">),</span> <span class="n">INVALID_TRANSITIONS</span><span class="p">)</span>
+<span class="linenos">61</span><span class="k">def</span><span class="w"> </span><span class="nf">test_invalid_transition</span><span class="p">(</span><span class="n">status</span><span class="p">:</span> <span class="n">OrderStatus</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">62</span>    <span class="n">order</span> <span class="o">=</span> <span class="n">make_order</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+<span class="linenos">63</span>    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="n">InvalidTransitionError</span><span class="p">):</span>
+<span class="linenos">64</span>        <span class="nb">getattr</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">action</span><span class="p">)()</span>
+<span class="linenos">65</span>    <span class="k">assert</span> <span class="n">order</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">status</span>  <span class="c1"># 状態は変わらない</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">VALID_TRANSITIONS</span></code>（10～16 行目）は状態遷移表の 5 つの有効な遷移を、<code class="docutils literal notranslate"><span class="pre">INVALID_TRANSITIONS</span></code>（19～24 行目）は残りの 15 の無効な遷移を表す。無効な遷移のテストでは、例外が送出されることに加えて、状態が変わっていないこと（65 行目）も確かめている。</p>
+<p><code class="docutils literal notranslate"><span class="pre">make_order</span></code>（36～42 行目）は、指定した状態の注文を作る補助関数である。<code class="docutils literal notranslate"><span class="pre">Order</span></code> の <code class="docutils literal notranslate"><span class="pre">status</span></code> 属性に直接値を代入しても同じ状態を作れるが、正しい操作の順序で作ることで、実際の使われ方に近い状態でテストできる。</p>
+<p>このテストファイルは、有効な遷移 5 つ、無効な遷移 15 個、作成直後の状態の確認 1 つの、合わせて 21 のテストになる。表の 20 のマスをすべてテストしていることになり、4.5 節の 0 スイッチカバレッジも満たしている。</p>
+</section>
+<section id="id4">
+<h2>8.6 マーカー<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="appendix_a_glossary.html#term-54"><span class="xref std std-term">マーカー</span></a>は、テストに目印を付けて、扱いを変える仕組みである。主な組み込みのマーカーを次に示す。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">ch08_pytest_advanced/test_markers.py</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;マーカーでテストの扱いを変える.&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="linenos"> 4</span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s2">&quot;仕様が確定するまで実行しない&quot;</span><span class="p">)</span>
+<span class="linenos">10</span><span class="k">def</span><span class="w"> </span><span class="nf">test_not_ready</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">11</span>    <span class="k">assert</span> <span class="kc">False</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">!=</span> <span class="s2">&quot;win32&quot;</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Windows 専用の機能&quot;</span><span class="p">)</span>
+<span class="linenos">15</span><span class="k">def</span><span class="w"> </span><span class="nf">test_windows_only</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">16</span>    <span class="k">assert</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s2">&quot;win32&quot;</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">xfail</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s2">&quot;既知の欠陥: 四捨五入になっていない&quot;</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">20</span><span class="k">def</span><span class="w"> </span><span class="nf">test_known_bug</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">21</span>    <span class="c1"># round は偶数への丸めを行うため、四捨五入を期待すると失敗する</span>
+<span class="linenos">22</span>    <span class="k">assert</span> <span class="nb">round</span><span class="p">(</span><span class="mf">2.5</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">slow</span>
+<span class="linenos">26</span><span class="k">def</span><span class="w"> </span><span class="nf">test_slow_operation</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">27</span>    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="linenos">28</span>    <span class="k">assert</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span> <span class="o">==</span> <span class="mi">45</span>
+</pre></div>
+</div>
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>マーカー</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">skip</span></code></p></td>
+<td><p>テストを実行しない（スキップする）。<code class="docutils literal notranslate"><span class="pre">reason</span></code> に理由を書く。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">skipif</span></code></p></td>
+<td><p>条件が真のときにスキップする。特定の OS やバージョンでしか意味のないテストに使う。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xfail</span></code></p></td>
+<td><p>失敗することが分かっているテストに付ける。失敗しても全体の結果は失敗にならない。<code class="docutils literal notranslate"><span class="pre">strict=True</span></code> を指定すると、予想に反して成功したときに失敗として扱う。</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">xfail</span></code> は、欠陥が見つかったがすぐには修正しない場合に、その欠陥を記録しておくために使う。<code class="docutils literal notranslate"><span class="pre">strict=True</span></code> を指定しておくと、欠陥が修正されてテストが成功したときに気付けるため、マーカーを外し忘れることがない。</p>
+<p><code class="docutils literal notranslate"><span class="pre">-rsx</span></code> オプションを付けて実行すると、スキップしたテストと <code class="docutils literal notranslate"><span class="pre">xfail</span></code> のテストの理由が表示される。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>-rsx<span class="w"> </span>ch08_pytest_advanced/test_markers.py
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>collected 4 items
+
+ch08_pytest_advanced\test_markers.py s.x.                                [100%]
+
+=========================== short test summary info ===========================
+SKIPPED [1] ch08_pytest_advanced\test_markers.py:9: 仕様が確定するまで実行しない
+XFAIL ch08_pytest_advanced/test_markers.py::test_known_bug - 既知の欠陥: 四捨五入になっていない
+=================== 2 passed, 1 skipped, 1 xfailed in 2.00s ===================
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">s</span></code> はスキップ、<code class="docutils literal notranslate"><span class="pre">x</span></code> は予想どおりの失敗を表す。<code class="docutils literal notranslate"><span class="pre">test_windows_only</span></code> は Windows で実行したため、スキップされずに成功している。</p>
+<p><code class="docutils literal notranslate"><span class="pre">slow</span></code> のような独自のマーカーを付けると、<code class="docutils literal notranslate"><span class="pre">-m</span></code> オプションでテストを選んで実行できる。たとえば、時間のかかるテストを除いて実行するには次のようにする。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not slow&quot;</span><span class="w"> </span>ch08_pytest_advanced/test_markers.py
+</pre></div>
+</div>
+<p>独自のマーカーは、設定ファイルの <code class="docutils literal notranslate"><span class="pre">markers</span></code> に登録しておく（7.4 節の <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> の 26 行目）。本書のサンプルコードでは <code class="docutils literal notranslate"><span class="pre">addopts</span></code> に <code class="docutils literal notranslate"><span class="pre">--strict-markers</span></code> を指定しているため（同 25 行目）、登録していないマーカーを使うとエラーになる。マーカー名の打ち間違いで、意図したテストが選ばれなくなることを防げる。</p>
+</section>
+<section id="id5">
+<h2>8.7 組み込みの fixture<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>pytest には、よく使う準備の処理が fixture として組み込まれている。引数に名前を書くだけで使える。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">ch08_pytest_advanced/test_builtin_fixtures.py</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;pytest の組み込み fixture を使う.&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="linenos"> 4</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="k">def</span><span class="w"> </span><span class="nf">save_greeting</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">10</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;あいさつ文をファイルに書き込む.&quot;&quot;&quot;</span>
+<span class="linenos">11</span>    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;こんにちは、</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">さん</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="k">def</span><span class="w"> </span><span class="nf">print_total</span><span class="p">(</span><span class="n">prices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">15</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;合計金額を表示する.&quot;&quot;&quot;</span>
+<span class="linenos">16</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;合計: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span><span class="si">}</span><span class="s2"> 円&quot;</span><span class="p">)</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="k">def</span><span class="w"> </span><span class="nf">get_shop_name</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">20</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;環境変数 SHOP_NAME の値を返す（未設定なら既定の名前を返す）.&quot;&quot;&quot;</span>
+<span class="linenos">21</span>    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SHOP_NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;テスト商店&quot;</span><span class="p">)</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="k">def</span><span class="w"> </span><span class="nf">test_tmp_path</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">25</span>    <span class="c1"># tmp_path はテストごとに作られる一時フォルダー</span>
+<span class="linenos">26</span>    <span class="n">path</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">&quot;greeting.txt&quot;</span>
+<span class="linenos">27</span>    <span class="n">save_greeting</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;佐藤&quot;</span><span class="p">)</span>
+<span class="linenos">28</span>    <span class="k">assert</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;こんにちは、佐藤さん</span><span class="se">\n</span><span class="s2">&quot;</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="k">def</span><span class="w"> </span><span class="nf">test_capsys</span><span class="p">(</span><span class="n">capsys</span><span class="p">:</span> <span class="n">pytest</span><span class="o">.</span><span class="n">CaptureFixture</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">32</span>    <span class="n">print_total</span><span class="p">([</span><span class="mi">100</span><span class="p">,</span> <span class="mi">250</span><span class="p">])</span>
+<span class="linenos">33</span>    <span class="n">captured</span> <span class="o">=</span> <span class="n">capsys</span><span class="o">.</span><span class="n">readouterr</span><span class="p">()</span>
+<span class="linenos">34</span>    <span class="k">assert</span> <span class="n">captured</span><span class="o">.</span><span class="n">out</span> <span class="o">==</span> <span class="s2">&quot;合計: 350 円</span><span class="se">\n</span><span class="s2">&quot;</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span><span class="k">def</span><span class="w"> </span><span class="nf">test_monkeypatch_setenv</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">:</span> <span class="n">pytest</span><span class="o">.</span><span class="n">MonkeyPatch</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">38</span>    <span class="c1"># テストが終わると、環境変数は元に戻る</span>
+<span class="linenos">39</span>    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;SHOP_NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;サンプル堂&quot;</span><span class="p">)</span>
+<span class="linenos">40</span>    <span class="k">assert</span> <span class="n">get_shop_name</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;サンプル堂&quot;</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span>
+<span class="linenos">43</span><span class="k">def</span><span class="w"> </span><span class="nf">test_monkeypatch_delenv</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">:</span> <span class="n">pytest</span><span class="o">.</span><span class="n">MonkeyPatch</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">44</span>    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">delenv</span><span class="p">(</span><span class="s2">&quot;SHOP_NAME&quot;</span><span class="p">,</span> <span class="n">raising</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos">45</span>    <span class="k">assert</span> <span class="n">get_shop_name</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;テスト商店&quot;</span>
+</pre></div>
+</div>
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>fixture</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tmp_path</span></code></p></td>
+<td><p>テストごとに作られる一時フォルダーの <code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code>。ファイルを読み書きするテストで使う。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">capsys</span></code></p></td>
+<td><p>標準出力と標準エラー出力に書かれた内容を取り出す。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">monkeypatch</span></code></p></td>
+<td><p>環境変数、属性、辞書の要素などを一時的に書き換える。テストが終わると元に戻る。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">caplog</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">logging</span></code> で出力されたログを取り出す。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tmp_path_factory</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">session</span></code> スコープで一時フォルダーを作る。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">request</span></code></p></td>
+<td><p>実行中のテストの情報を取り出す。fixture の中で使う。</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">monkeypatch</span></code> は、テストが外部の状態（環境変数など）に依存する場合や、テスト対象の一部を差し替えたい場合に使う。テストの中で環境変数を <code class="docutils literal notranslate"><span class="pre">os.environ</span></code> に直接書き込むと、ほかのテストに影響が残るが、<code class="docutils literal notranslate"><span class="pre">monkeypatch</span></code> はテストの終了時に自動で元に戻す。差し替えについては、9 章のテストダブルで詳しく扱う。</p>
+</section>
+<section id="id6">
+<h2>8.8 まとめ<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>fixture は、テストの準備と後始末を再利用できる部品にする。テスト関数の引数の名前で指定する。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> に書いた fixture は、同じフォルダー以下のテストから import せずに使える。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yield</span></code> を使う fixture で後始末を書ける。スコープを広げるときは、テスト間の共有に注意する。</p></li>
+<li><p>パラメーター化を使うと、テストケースの表をそのままテストコードにできる。</p></li>
+<li><p>マーカーで、スキップ、予想される失敗、テストの選択を指定できる。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch07_pytest_basics.html" class="btn btn-neutral float-left" title="7. pytest 入門" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch09_test_double.html" class="btn btn-neutral float-right" title="9. テストダブル" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

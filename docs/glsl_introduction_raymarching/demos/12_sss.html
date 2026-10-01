@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12_sss.frag</title>
+<style>
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; }
+#error {
+  position: absolute; top: 0; left: 0; right: 0; margin: 0; padding: 1em;
+  color: #fff; background: rgba(160, 0, 0, 0.85);
+  font: 14px/1.4 monospace; white-space: pre-wrap; display: none;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<pre id="error"></pre>
+<script>
+"use strict";
+// [{name: "Buffer A" | "Image", source: GLSL, line: ファイル中の開始行}]
+const PASSES = [{"name": "Image", "source": "// 12_sss.frag\n// \u7b2c 12 \u7ae0: \u30b5\u30d6\u30b5\u30fc\u30d5\u30a7\u30b9\u30b9\u30ad\u30e3\u30c3\u30bf\u30ea\u30f3\u30b0\u306e\u8fd1\u4f3c\u3002\u7fe1\u7fe0\u306e\u3088\u3046\u306a\u534a\u900f\u660e\u306e\u7269\u4f53\u3092\n// \u5f8c\u308d\u304b\u3089\u7167\u3089\u3059\u3002\u5de6\u306f\u901a\u5e38\u306e\u62e1\u6563\u53cd\u5c04\u3060\u3051\u3001\u53f3\u306f\u30e9\u30c3\u30d7\u30e9\u30a4\u30c6\u30a3\u30f3\u30b0\u3068\u900f\u904e\u5149\u3092\u52a0\u3048\u305f\u3082\u306e\u3002\n\nconst int   MAX_STEPS = 128;\nconst float MAX_DIST  = 100.0;\nconst float SURF_DIST = 0.001;\n\n// \u5149\u6e90\u306f\u7269\u4f53\u306e\u5965 (\u30ab\u30e1\u30e9\u304b\u3089\u898b\u3066\u5411\u3053\u3046\u5074) \u306e\u659c\u3081\u4e0a\u306b\u3042\u308b\nconst vec3 LIGHT_DIR = normalize(vec3(-0.4, 0.5, -1.0));\nconst vec3 SUN_COLOR = vec3(1.6, 1.45, 1.25);\nconst vec3 SKY_COLOR = vec3(0.25, 0.3, 0.4);\n\n// \u7269\u4f53\u306e\u4e2d\u3067\u306e\u5149\u306e\u6e1b\u8870\u306e\u5f37\u3055 (\u6d88\u6563\u4fc2\u6570\u3001RGB \u3054\u3068)\u3002\u8d64\u307b\u3069\u6e1b\u8870\u3057\u3084\u3059\u3044\nconst vec3 SIGMA_T = vec3(3.0, 1.2, 1.6);\nconst float WRAP   = 0.4;    // \u30e9\u30c3\u30d7\u30e9\u30a4\u30c6\u30a3\u30f3\u30b0\u306e\u56de\u308a\u8fbc\u307f\u306e\u91cf\n\n// ---- \u30b7\u30fc\u30f3 --------------------------------------------------------------\n\nfloat sdSphere(vec3 p, float r)\n{\n    return length(p) - r;\n}\n\n// \u6955\u5186\u4f53\u306e SDF \u306e\u8fd1\u4f3c (\u8ddd\u96e2\u306e\u4e0b\u754c)\nfloat sdEllipsoid(vec3 p, vec3 r)\n{\n    float k0 = length(p / r);\n    float k1 = length(p / (r * r));\n    return k0 * (k0 - 1.0) / k1;\n}\n\nfloat sdTorus(vec3 p, vec2 t)\n{\n    vec2 q = vec2(length(p.xz) - t.x, p.y);\n    return length(q) - t.y;\n}\n\n// \u534a\u900f\u660e\u306e\u7269\u4f53\u3060\u3051\u306e SDF\u3002\u5de6\u304b\u3089\u3001\u539a\u3044\u7403\u3001\u8584\u3044\u8449\u3001\u4e2d\u304f\u3089\u3044\u306e\u592a\u3055\u306e\u8f2a\nfloat sdObjects(vec3 p)\n{\n    float d = sdSphere(p - vec3(-1.7, 0.9, 0.0), 0.9);\n    d = min(d, sdEllipsoid(p - vec3(0.0, 1.0, 0.0), vec3(0.7, 1.0, 0.08)));\n    vec3 q = p - vec3(1.7, 0.9, 0.0);\n    d = min(d, sdTorus(q.xzy, vec2(0.65, 0.22)));   // \u7acb\u3066\u305f\u8f2a\n    return d;\n}\n\n// \u623b\u308a\u5024\u306f (\u8ddd\u96e2, \u30de\u30c6\u30ea\u30a2\u30eb ID)\u30020: \u5730\u9762\u30011: \u534a\u900f\u660e\u306e\u7269\u4f53\nvec2 map(vec3 p)\n{\n    float objects = sdObjects(p);\n    return (p.y < objects) ? vec2(p.y, 0.0) : vec2(objects, 1.0);\n}\n\nvec2 raymarch(vec3 ro, vec3 rd)\n{\n    float t = 0.0;\n    for (int i = 0; i < MAX_STEPS; i++) {\n        vec2 h = map(ro + t * rd);\n        if (h.x < SURF_DIST) {\n            return vec2(t, h.y);\n        }\n        t += h.x;\n        if (t > MAX_DIST) {\n            break;\n        }\n    }\n    return vec2(t, -1.0);\n}\n\nvec3 calcNormal(vec3 p)\n{\n    const float h = 0.0005;\n    const vec2 k = vec2(1.0, -1.0);\n    return normalize(k.xyy * map(p + k.xyy * h).x +\n                     k.yyx * map(p + k.yyx * h).x +\n                     k.yxy * map(p + k.yxy * h).x +\n                     k.xxx * map(p + k.xxx * h).x);\n}\n\nfloat softShadow(vec3 ro, vec3 rd)\n{\n    float res = 1.0;\n    float t = 0.01;\n    for (int i = 0; i < 64 && t < 20.0; i++) {\n        float h = map(ro + t * rd).x;\n        res = min(res, 8.0 * h / t);\n        if (res < 0.001) {\n            break;\n        }\n        t += clamp(h, 0.01, 0.5);\n    }\n    return clamp(res, 0.0, 1.0);\n}\n\n// ---- \u30b5\u30d6\u30b5\u30fc\u30d5\u30a7\u30b9\u30b9\u30ad\u30e3\u30c3\u30bf\u30ea\u30f3\u30b0 --------------------------------------\n\n// \u7269\u4f53\u306e\u5185\u90e8\u3092\u5149\u6e90\u306e\u65b9\u5411\u306b\u9032\u307f\u3001\u51fa\u53e3\u307e\u3067\u306e\u8ddd\u96e2 (\u5149\u304c\u7269\u4f53\u306e\u4e2d\u3092\u901a\u308b\u9577\u3055) \u3092\u8fd4\u3059\u3002\n// \u5185\u90e8\u3067\u306f -sdObjects(p) \u304c\u8868\u9762\u307e\u3067\u306e\u8ddd\u96e2\u306b\u306a\u308b (\u7b2c 11 \u7ae0)\nfloat thicknessToLight(vec3 p, vec3 n)\n{\n    vec3 ro = p - n * 0.01;\n    float t = 0.0;\n    for (int i = 0; i < 64; i++) {\n        float h = -sdObjects(ro + t * LIGHT_DIR);\n        if (h < SURF_DIST || t > 4.0) {\n            break;\n        }\n        t += max(h, 0.01);\n    }\n    return t;\n}\n\nvec3 shade(vec3 p, vec3 rd, float mat, bool sss)\n{\n    vec3 n = calcNormal(p);\n    vec3 v = -rd;\n    vec3 albedo = (mat > 0.5) ? vec3(0.35, 0.75, 0.5) : vec3(0.3);\n    float shadow = softShadow(p + n * 0.01, LIGHT_DIR);\n    float nl = dot(n, LIGHT_DIR);\n    float sky = 0.5 + 0.5 * n.y;\n\n    if (!sss || mat < 0.5) {\n        // \u901a\u5e38\u306e\u62e1\u6563\u53cd\u5c04 (\u7b2c 5 \u7ae0)\n        float diffuse = max(nl, 0.0) * shadow;\n        return albedo * (SUN_COLOR * diffuse + SKY_COLOR * sky);\n    }\n\n    // \u30e9\u30c3\u30d7\u30e9\u30a4\u30c6\u30a3\u30f3\u30b0: \u5149\u306e\u5f53\u305f\u308b\u7bc4\u56f2\u3092\u88cf\u5074\u306b\u5c11\u3057\u56de\u308a\u8fbc\u307e\u305b\u308b\n    float wrapped = max((nl + WRAP) / (1.0 + WRAP), 0.0);\n    vec3 col = albedo * (SUN_COLOR * wrapped * mix(1.0, shadow, 0.5) +\n                         SKY_COLOR * sky);\n\n    // \u900f\u904e\u5149: \u7269\u4f53\u306e\u4e2d\u3092\u5149\u6e90\u307e\u3067\u901a\u308b\u9577\u3055\u3067\u6e1b\u8870\u3055\u305b\u308b (\u30e9\u30f3\u30d9\u30eb\u30c8\u30fb\u30d9\u30fc\u30eb\u306e\u6cd5\u5247)\n    vec3 transmittance = exp(-SIGMA_T * thicknessToLight(p, n));\n    // \u5149\u6e90\u3092\u6b63\u9762\u304b\u3089\u898b\u308b\u65b9\u5411\u307b\u3069\u5f37\u304f\u898b\u3048\u308b (\u524d\u65b9\u6563\u4e71)\n    float forward = 0.3 + 0.7 * pow(max(dot(v, -LIGHT_DIR), 0.0), 4.0);\n    col += albedo * SUN_COLOR * transmittance * forward;\n    return col;\n}\n\n// ---- \u30e1\u30a4\u30f3 --------------------------------------------------------------\n\nmat3 setCamera(vec3 ro, vec3 ta)\n{\n    vec3 cw = normalize(ta - ro);\n    vec3 cu = normalize(cross(cw, vec3(0.0, 1.0, 0.0)));\n    vec3 cv = cross(cu, cw);\n    return mat3(cu, cv, cw);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // \u753b\u9762\u306e\u5de6\u53f3\u306b\u3001\u540c\u3058\u69cb\u56f3\u306e\u753b\u50cf\u3092 1 \u3064\u305a\u3064\u4e26\u3079\u308b\n    vec2 halfSize = vec2(0.5 * iResolution.x, iResolution.y);\n    bool sss = fragCoord.x > halfSize.x;\n    vec2 local = vec2(mod(fragCoord.x, halfSize.x), fragCoord.y);\n    vec2 p = (2.0 * local - halfSize) / halfSize.y;\n\n    vec3 ro = vec3(0.0, 1.6, 6.5);\n    vec3 ta = vec3(0.0, 0.8, 0.0);\n    vec3 rd = setCamera(ro, ta) * normalize(vec3(p, 1.3));\n\n    vec3 col = SKY_COLOR;\n    vec2 hit = raymarch(ro, rd);\n    if (hit.y >= 0.0) {\n        col = shade(ro + hit.x * rd, rd, hit.y, sss);\n    }\n    col = pow(col, vec3(1.0 / 2.2));\n    col = mix(col, vec3(1.0), step(abs(fragCoord.x - halfSize.x), 1.0));\n    fragColor = vec4(col, 1.0);\n}\n", "line": 1, "common": "", "commonLine": 1}];
+
+const HEADER = [
+  "#version 300 es",
+  "precision highp float;",
+  "precision highp int;",
+  "uniform vec3 iResolution;",
+  "uniform float iTime;",
+  "uniform float iTimeDelta;",
+  "uniform int iFrame;",
+  "uniform vec4 iMouse;",
+  "uniform sampler2D iChannel0;",
+  "uniform vec3 iChannelResolution[4];",
+  "out vec4 shadertoyOutColor;"
+].join("\n");
+
+// Image のパスでは不透明度を 1 にする。Buffer A では 4 成分をそのまま残す
+function footer(passName) {
+  return [
+    "",
+    "void main() {",
+    "  mainImage(shadertoyOutColor, gl_FragCoord.xy);",
+    passName === "Image" ? "  shadertoyOutColor.a = 1.0;" : "",
+    "}"
+  ].join("\n");
+}
+
+const VERTEX_SOURCE = [
+  "#version 300 es",
+  "in vec2 position;",
+  "void main() { gl_Position = vec4(position, 0.0, 1.0); }"
+].join("\n");
+
+function showError(message) {
+  const element = document.getElementById("error");
+  element.textContent = message;
+  element.style.display = "block";
+  document.title = "ERROR: " + document.title;
+}
+
+function compile(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
+// パスのプログラムを作る。Common のコードがあれば先頭に加える。
+// #line でエラーの行番号をファイルの行番号に合わせる
+function createProgram(gl, pass) {
+  const program = gl.createProgram();
+  let source = HEADER;
+  if (pass.common) {
+    source += "\n#line " + pass.commonLine + "\n" + pass.common;
+  }
+  source += "\n#line " + pass.line + "\n" + pass.source + footer(pass.name);
+  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX_SOURCE));
+  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, source));
+  gl.bindAttribLocation(program, 0, "position");
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program));
+  }
+  const uniforms = {};
+  for (const name of ["iResolution", "iTime", "iTimeDelta", "iFrame",
+                      "iMouse", "iChannel0", "iChannelResolution"]) {
+    uniforms[name] = gl.getUniformLocation(program, name);
+  }
+  return {name: pass.name, program: program, uniforms: uniforms};
+}
+
+// URL のフラグメント (#t=2.5&frames=16 など) から数値のパラメーターを読む
+function hashParameter(name) {
+  const pattern = new RegExp("(?:^#|&)" + name + "=([0-9.]+)");
+  const match = pattern.exec(location.hash);
+  return match ? parseFloat(match[1]) : null;
+}
+
+function run() {
+  const canvas = document.getElementById("canvas");
+  const gl = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
+  if (!gl) {
+    showError("WebGL2 is not supported by this browser.");
+    return;
+  }
+
+  let passes;
+  try {
+    passes = PASSES.map((pass) => createProgram(gl, pass));
+  } catch (e) {
+    showError("Shader compile error:\n" + e.message);
+    return;
+  }
+  const bufferPass = passes.find((pass) => pass.name === "Buffer A");
+  const imagePass = passes.find((pass) => pass.name === "Image");
+
+  // 浮動小数点数のテクスチャへの描画に対応していなければ 8 ビットで代用する
+  const floatBuffer = gl.getExtension("EXT_color_buffer_float") !== null;
+
+  // 画面全体を覆う 2 つの三角形
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
+    [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  // Buffer A の描画先。前のフレームを読みながら次のフレームを書くため 2 枚使う
+  let targets = [];
+  function createTarget(width, height) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    if (floatBuffer) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0,
+                    gl.RGBA, gl.FLOAT, null);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0,
+                    gl.RGBA, gl.UNSIGNED_BYTE, null);
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const framebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                            gl.TEXTURE_2D, texture, 0);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return {texture: texture, framebuffer: framebuffer};
+  }
+
+  // iMouse: xy はドラッグ中の座標、zw はクリック位置 (離すと負)
+  const mouse = [0, 0, 0, 0];
+  let dragging = false;
+  function mousePosition(event) {
+    const rect = canvas.getBoundingClientRect();
+    const scale = canvas.width / rect.width;
+    return [(event.clientX - rect.left) * scale,
+            (rect.bottom - event.clientY) * scale];
+  }
+  canvas.addEventListener("mousedown", (event) => {
+    const [x, y] = mousePosition(event);
+    dragging = true;
+    mouse[0] = x; mouse[1] = y; mouse[2] = x; mouse[3] = y;
+  });
+  canvas.addEventListener("mousemove", (event) => {
+    if (!dragging) { return; }
+    const [x, y] = mousePosition(event);
+    mouse[0] = x; mouse[1] = y;
+  });
+  window.addEventListener("mouseup", () => {
+    dragging = false;
+    mouse[2] = -Math.abs(mouse[2]); mouse[3] = -Math.abs(mouse[3]);
+  });
+
+  function drawPass(pass, width, height, time, timeDelta, frame, channel) {
+    gl.useProgram(pass.program);
+    const u = pass.uniforms;
+    gl.uniform3f(u.iResolution, width, height, 1);
+    gl.uniform1f(u.iTime, time);
+    gl.uniform1f(u.iTimeDelta, timeDelta);
+    gl.uniform1i(u.iFrame, frame);
+    gl.uniform4fv(u.iMouse, mouse);
+    gl.uniform3fv(u.iChannelResolution,
+                  [width, height, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, channel);
+    gl.uniform1i(u.iChannel0, 0);
+    gl.viewport(0, 0, width, height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+
+  // 1 フレームを描画する
+  function renderFrame(time, timeDelta, frame) {
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.floor(canvas.clientWidth * ratio));
+    const height = Math.max(1, Math.floor(canvas.clientHeight * ratio));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      targets = [];
+    }
+    if (bufferPass && targets.length === 0) {
+      targets = [createTarget(width, height), createTarget(width, height)];
+    }
+    let latest = null;
+    if (bufferPass) {
+      // targets[0] (前のフレーム) を読み、targets[1] に書いてから入れ替える
+      gl.bindFramebuffer(gl.FRAMEBUFFER, targets[1].framebuffer);
+      drawPass(bufferPass, width, height, time, timeDelta, frame,
+               targets[0].texture);
+      targets.reverse();
+      latest = targets[0].texture;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    drawPass(imagePass, width, height, time, timeDelta, frame, latest);
+  }
+
+  const fixedTime = hashParameter("t");
+  const fixedFrame = hashParameter("frame");
+  const frameCount = hashParameter("frames");
+
+  if (frameCount !== null) {
+    // 指定したフレーム数だけを続けて描画して止める (撮影用)。
+    // 画面の大きさが変わったときは、最初から描画し直す
+    const renderFixedFrames = () => {
+      const time = fixedTime !== null ? fixedTime : 0;
+      targets = [];
+      for (let frame = 0; frame < frameCount; frame++) {
+        renderFrame(time, 1 / 60, frame);
+      }
+      gl.finish();
+    };
+    new ResizeObserver(renderFixedFrames).observe(canvas);
+    return;
+  }
+
+  const startTime = performance.now();
+  let previousTime = 0;
+  let frame = 0;
+  function loop(now) {
+    const time = fixedTime !== null ? fixedTime : (now - startTime) / 1000;
+    renderFrame(time, time - previousTime,
+                fixedFrame !== null ? fixedFrame : frame);
+    previousTime = time;
+    frame += 1;
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+run();
+</script>
+</body>
+</html>

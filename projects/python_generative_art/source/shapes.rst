@@ -18,11 +18,13 @@
 円のほかに、矩形と線分についても同様に距離関数を定義できる。矩形は、中心からの相対座標を各軸ごとに矩形の半径（半幅・半高さ）だけ縮めた上で、はみ出した分の長さ（外側にいる場合）と、はみ出していない分のうちもっとも浅い軸の距離（内側にいる場合）を組み合わせて求める。
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: sdf_circle
    :caption: examples/sdf.py の sdf_circle 関数
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: sdf_box
    :caption: examples/sdf.py の sdf_box 関数
@@ -30,6 +32,7 @@
 線分までの距離は、点から線分への垂線の足が線分の範囲に収まるように、内積を使ってパラメータ ``h`` を ``[0, 1]`` にクランプしてから求める。距離の値から ``thickness`` の分だけ引いて図形を外側に太らせる（オフセットする）と、線分の周囲 ``thickness`` 分までが「内側」として扱われるようになり、線分に太さを持たせたカプセル形状としても使える。
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: sdf_segment
    :caption: examples/sdf.py の sdf_segment 関数
@@ -52,16 +55,19 @@
    d_{\mathrm{subtraction}}(p) = \max(d_1(p), -d_2(p))
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: union
    :caption: examples/sdf.py の union 関数
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: intersection
    :caption: examples/sdf.py の intersection 関数
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: subtraction
    :caption: examples/sdf.py の subtraction 関数
@@ -79,6 +85,7 @@
 ここで :math:`k` はなめらかさの半径で、大きくするほど継ぎ目が広い範囲でなだらかにつながる。
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: smooth_union
    :caption: examples/sdf.py の smooth_union 関数
@@ -99,6 +106,7 @@
 距離関数の値そのものを画像にすると、図形の輪郭だけでなく、輪郭からの距離の分布まで可視化できる。境界付近の狭い帯の中だけ内側色と外側色をなめらかに混ぜれば、画素を増やさずに輪郭をアンチエイリアス処理できる。
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: render_fill
    :caption: examples/sdf.py の render_fill 関数
@@ -106,6 +114,7 @@
 一定間隔ごとに線を引けば、地図の等高線のような表現になる。距離を ``spacing`` で割った余りが 0 に近い場所ほど線を濃くすることで実現している。
 
 .. literalinclude:: ../examples/sdf.py
+   :linenos:
    :language: python
    :pyobject: render_isolines
    :caption: examples/sdf.py の render_isolines 関数
@@ -147,11 +156,13 @@ SDF は「座標を受け取って値を返す関数」であるため、:doc:`n
 5. 最小半径の円を置ける画素がなくなるか、指定した個数に達するまで、2-4 を繰り返す。
 
 .. literalinclude:: ../examples/circle_packing.py
+   :linenos:
    :language: python
    :pyobject: pack_circles
    :caption: examples/circle_packing.py の pack_circles 関数
 
 .. literalinclude:: ../examples/circle_packing.py
+   :linenos:
    :language: python
    :pyobject: canvas_distance
    :caption: examples/circle_packing.py の canvas_distance 関数
@@ -187,6 +198,7 @@ Bridson (2007) のアルゴリズムは、次の手順で点を追加してい�
 全ての既存点との距離を毎回総当たりで調べる方法は点数が :math:`n` のとき計算量が :math:`O(n^2)` になり点数が増えるにつれて遅くなるため、実装では「1 マスに点は高々 1 つしか入らない」大きさ（最小距離を :math:`\sqrt{2}` で割った値を 1 辺とする正方形）の格子に点を登録しておき、候補点の周囲 5×5 マス程度だけを調べることで高速化している。
 
 .. literalinclude:: ../examples/poisson_disk.py
+   :linenos:
    :language: python
    :pyobject: poisson_disk_sampling
    :caption: examples/poisson_disk.py の poisson_disk_sampling 関数
@@ -207,6 +219,7 @@ Bridson (2007) のアルゴリズムは、次の手順で点を追加してい�
 ここまでは「1 つの図形までの距離」を扱ってきたが、同じ考え方は「複数の点のうちどれが一番近いか」にも一般化できる。平面上に散らした複数の\ **種点**\ のそれぞれについて、その点がもっとも近い種点となる領域で塗り分けたものを\ **ボロノイ図**\ （Voronoi diagram）と呼ぶ。実装は単純で、各画素から全ての種点までの距離を求め、最小値を与えた種点の番号を採用するだけである。
 
 .. literalinclude:: ../examples/voronoi.py
+   :linenos:
    :language: python
    :pyobject: voronoi_regions
    :caption: examples/voronoi.py の voronoi_regions 関数
@@ -214,6 +227,7 @@ Bridson (2007) のアルゴリズムは、次の手順で点を追加してい�
 各領域に種点ごとの色を割り当てるとモザイク状の画像に、領域の境界線だけを描くと配線図のような画像になる。
 
 .. literalinclude:: ../examples/voronoi.py
+   :linenos:
    :language: python
    :pyobject: render_edges
    :caption: examples/voronoi.py の render_edges 関数
@@ -229,6 +243,7 @@ Bridson (2007) のアルゴリズムは、次の手順で点を追加してい�
 ボロノイ図で隣り合う（境界線を共有する）2 つの領域の種点どうしを線で結ぶと、その双対グラフである\ **ドロネー三角形分割**\ （Delaunay triangulation）が得られる。正式なドロネー三角形分割のアルゴリズムを実装する代わりに、ラスタ画像上で「隣接する画素の領域番号が異なる箇所」を総当たりで探すことで、隣接している種点のペアを求めている。
 
 .. literalinclude:: ../examples/voronoi.py
+   :linenos:
    :language: python
    :pyobject: adjacent_pairs
    :caption: examples/voronoi.py の adjacent_pairs 関数
@@ -257,6 +272,7 @@ Bridson (2007) のアルゴリズムは、次の手順で点を追加してい�
 - :math:`p = \infty`: **チェビシェフ距離**。``dx``・``dy`` のうち絶対値が大きい方だけで決まる距離（将棋の王が 1 手で到達できる範囲のイメージ）。
 
 .. literalinclude:: ../examples/voronoi.py
+   :linenos:
    :language: python
    :pyobject: minkowski_distance
    :caption: examples/voronoi.py の minkowski_distance 関数
@@ -292,16 +308,19 @@ Bridson (2007) のアルゴリズムは、次の手順で点を追加してい�
 前節の ``voronoi_regions`` は、全ての種点と全ての画素の組み合わせについての距離を一度に配列として持つため、種点が数千個になるとメモリが足りなくなる。そこで本節の実装では、画素を数行ずつに分けて、もっとも近い種点を求めている。重心は、領域番号ごとに座標の合計を求める ``np.bincount`` で計算する。
 
 .. literalinclude:: ../examples/lloyd.py
+   :linenos:
    :language: python
    :pyobject: nearest_seed
    :caption: examples/lloyd.py の nearest_seed 関数
 
 .. literalinclude:: ../examples/lloyd.py
+   :linenos:
    :language: python
    :pyobject: weighted_centroids
    :caption: examples/lloyd.py の weighted_centroids 関数
 
 .. literalinclude:: ../examples/lloyd.py
+   :linenos:
    :language: python
    :pyobject: lloyd_relaxation
    :caption: examples/lloyd.py の lloyd_relaxation 関数

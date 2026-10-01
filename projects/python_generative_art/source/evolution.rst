@@ -20,6 +20,7 @@
 個体（genome）を「三角形のリスト」として表現する。三角形はそれぞれ 3 頂点の座標と、RGBA の色（アルファ値を低めに抑えた半透明）を持つ。
 
 .. literalinclude:: ../examples/evolution.py
+   :linenos:
    :language: python
    :pyobject: random_triangle
    :caption: examples/evolution.py の random_triangle 関数
@@ -27,11 +28,13 @@
 個体を描画する際は、三角形ごとに画素が内部にあるかどうかを判定し、アルファ値で重みづけしながら白いキャンバスに重ね合わせる。内外判定には、3 辺それぞれについて「画素がその辺のどちら側にあるか」を表す符号付き面積（edge function）を使い、3 辺全てで符号がそろっている画素だけを内部とする。画素グリッド全体に対する 1 回の NumPy 演算で判定できるため、世代ごとに個体を描き直す本章の用途に向いている。
 
 .. literalinclude:: ../examples/evolution.py
+   :linenos:
    :language: python
    :pyobject: triangle_mask
    :caption: examples/evolution.py の triangle_mask 関数
 
 .. literalinclude:: ../examples/evolution.py
+   :linenos:
    :language: python
    :pyobject: render_genome
    :caption: examples/evolution.py の render_genome 関数
@@ -42,6 +45,7 @@
 外部の画像ファイルに頼らず、空のグラデーション・太陽・山という 3 種類の平坦な図形だけで目標画像を合成する。少数の三角形でも近似の様子が分かりやすい題材になっている。
 
 .. literalinclude:: ../examples/evolution.py
+   :linenos:
    :language: python
    :pyobject: make_target
    :caption: examples/evolution.py の make_target 関数
@@ -53,6 +57,7 @@
 適応度は、目標画像との平均二乗誤差（小さいほど良い）で測る。
 
 .. literalinclude:: ../examples/evolution.py
+   :linenos:
    :language: python
    :pyobject: fitness
    :caption: examples/evolution.py の fitness 関数
@@ -63,6 +68,7 @@
 集団（population）を持たず、「現在の 1 個体（親）」から変異させた「候補 1 個体（子）」だけを毎世代比較する、実装がもっとも単純な進化的アルゴリズムを **(1+1) 進化戦略**\ と呼ぶ（名前の「1+1」は、親 1 個体・子 1 個体という個体数の内訳を表す）。変異は、三角形を 1 枚追加・削除する、頂点を 1 つ少しずらす、色を少し変える、のいずれかをランダムに選んで行う。
 
 .. literalinclude:: ../examples/evolution.py
+   :linenos:
    :language: python
    :pyobject: mutate
    :caption: examples/evolution.py の mutate 関数
@@ -70,6 +76,7 @@
 変異させた個体を描画して適応度を測り、現在の個体より良くなっていれば採用し、そうでなければ棄てて元の個体に戻る、という選択を指定世代数だけ繰り返す。
 
 .. literalinclude:: ../examples/evolution.py
+   :linenos:
    :language: python
    :pyobject: evolve
    :caption: examples/evolution.py の evolve 関数

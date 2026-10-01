@@ -1,0 +1,587 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 20 章 実践：パストレーシングによる静物画 &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="付録 A サンプルコード一覧" href="appendix_examples.html" />
+    <link rel="prev" title="第 19 章 実践：ボクセルの都市の夜景" href="19_night_city.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_sdf.html">第 3 章 距離関数（SDF）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 20 章 実践：パストレーシングによる静物画</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">完成イメージ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">シーンの構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">経路の追跡の全体</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ggx">金属: GGX の重点サンプリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">ガラス: 反射と屈折の確率的な選択</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">翡翠: ランダムウォーク法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">内部での散乱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">出口での扱い</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">大理石の台</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">ロシアンルーレット</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">カメラと蓄積</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">デバッグ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">近似と限界</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">改造の案</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 20 章 実践：パストレーシングによる静物画</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 20 章 実践：パストレーシングによる静物画<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>この章では、大理石の台の上に、金の器、ガラスの球、翡翠の置物、メンガーのスポンジの置物を並べ、第 17 章のパストレーシングで静物画を描く。第 11 章と第 12 章では、反射・屈折・サブサーフェススキャッタリングを、1 回の描画で済む近似として扱った。この章では、これらをパストレーシングの経路の追跡に組み込み、物理的に計算し直す。近似と比べることで、どこが近似されていたのかも明らかになる。</p>
+<section id="id2">
+<h2>完成イメージ<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<figure class="align-center" id="id15">
+<img alt="大理石の台の上に、金の器、ガラスの球、翡翠の置物、メンガーのスポンジの置物が並ぶ。ガラスの球の下には光が集まって明るくなっている" src="_images/20_still_life.png" />
+<figcaption>
+<p><span class="caption-text">20_still_life.frag の実行結果（40 フレーム、1 ピクセルあたり 80 本の経路を蓄積したもの）</span><a class="headerlink" href="#id15" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/42d25d6e1d3c664bdc4b687fe2cce743/20_still_life.frag"><code class="xref download docutils literal notranslate"><span class="pre">20_still_life.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/20_still_life.html">ブラウザーで実行</a></p>
+<p>照明は、左上にある大きな長方形の照明（撮影用のソフトボックスに相当する）だけである。ガラスの球の下には、球で屈折した光が集まって明るくなるコースティクスが現れている。第 11 章の近似では表現できなかった効果である。</p>
+<p>このサンプルは計算量が大きく、1 枚の絵が収束するまでに時間がかかる。リアルタイムの作品ではなく、時間をかけて 1 枚の写実的な絵を作る、オフラインのレンダリングの例として読んでほしい。</p>
+</section>
+<section id="id3">
+<h2>シーンの構成<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 50.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>物体</p></th>
+<th class="head"><p>材質と技法</p></th>
+<th class="head"><p>関連する章</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>金の器</p></td>
+<td><p>金属。GGX の重点サンプリングと光源の直接サンプリング</p></td>
+<td><p>第 12 章、第 17 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>ガラスの球</p></td>
+<td><p>誘電体。反射と屈折をフレネル反射率で確率的に選ぶ</p></td>
+<td><p>第 11 章、第 17 章</p></td>
+</tr>
+<tr class="row-even"><td><p>翡翠の置物</p></td>
+<td><p>内部で散乱する媒質。ランダムウォーク法</p></td>
+<td><p>第 12 章、第 16 章、第 17 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>メンガーのスポンジの置物</p></td>
+<td><p>拡散反射</p></td>
+<td><p>第 13 章</p></td>
+</tr>
+<tr class="row-even"><td><p>大理石の台</p></td>
+<td><p>セルラーノイズの脈、拡散反射とつやの 2 つの成分</p></td>
+<td><p>第 10 章、第 12 章</p></td>
+</tr>
+<tr class="row-odd"><td><p>カメラ</p></td>
+<td><p>薄レンズによる被写界深度、フレーム間の蓄積</p></td>
+<td><p>第 17 章</p></td>
+</tr>
+</tbody>
+</table>
+<p>パスの構成は第 18 章と同じく、Common にシーンと経路の追跡を、Buffer A に蓄積を、Image に表示を置く。Buffer A と Image の処理は、第 17 章の 17_progressive.frag と同じである。</p>
+</section>
+<section id="id4">
+<h2>経路の追跡の全体<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>関数 <code class="docutils literal notranslate"><span class="pre">tracePath</span></code> は、第 17 章と同じくループとスループットで経路をたどる。各反射点では、材質に応じて次の方向を選び、スループットに重みを掛ける。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>材質</p></th>
+<th class="head"><p>次の方向の選び方</p></th>
+<th class="head"><p>光源の直接サンプリング</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>拡散反射</p></td>
+<td><p>コサイン重み付きの半球のサンプリング</p></td>
+<td><p>行う</p></td>
+</tr>
+<tr class="row-odd"><td><p>大理石のつや</p></td>
+<td><p>GGX の重点サンプリング（確率 0.2 で選ぶ）</p></td>
+<td><p>行わない</p></td>
+</tr>
+<tr class="row-even"><td><p>金属</p></td>
+<td><p>GGX の重点サンプリング</p></td>
+<td><p>行う</p></td>
+</tr>
+<tr class="row-odd"><td><p>ガラス</p></td>
+<td><p>反射か屈折をフレネル反射率で選ぶ</p></td>
+<td><p>行わない</p></td>
+</tr>
+<tr class="row-even"><td><p>翡翠</p></td>
+<td><p>表面での反射か、内部のランダムウォーク</p></td>
+<td><p>内部から出る点で行う</p></td>
+</tr>
+</tbody>
+</table>
+<p>第 17 章で述べたとおり、光源の直接サンプリング（NEE）を行った点の次の経路が照明に当たっても、その光を加えてはいけない。同じ光を 2 回数えることになるからである。一方、ガラスのように直接サンプリングを行わない材質では、経路が照明に当たったときに光を加える必要がある。これを、変数 <code class="docutils literal notranslate"><span class="pre">countEmission</span></code> で管理している。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">20_still_life.frag（抜粋）</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">372</span><span class="kt">vec3</span><span class="w"> </span><span class="n">tracePath</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos">373</span><span class="p">{</span>
+<span class="linenos">374</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">radiance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">375</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">376</span><span class="w">    </span><span class="c1">// 直前の反射で光源の直接サンプリングを行っていなければ、</span>
+<span class="linenos">377</span><span class="w">    </span><span class="c1">// 照明に当たったときにその光を加える (二重に数えないため)</span>
+<span class="linenos">378</span><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">countEmission</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="linenos">379</span>
+<span class="linenos">380</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">depth</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_DEPTH</span><span class="p">;</span><span class="w"> </span><span class="n">depth</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">381</span><span class="w">        </span><span class="kt">vec2</span><span class="w"> </span><span class="n">hit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">raymarch</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">rd</span><span class="p">);</span>
+<span class="linenos">382</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">383</span><span class="w">            </span><span class="n">radiance</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ENVIRONMENT</span><span class="p">;</span>
+<span class="linenos">384</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">385</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">386</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_LIGHT</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">387</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">countEmission</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">388</span><span class="w">                </span><span class="n">radiance</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">LIGHT_EMIT</span><span class="p">;</span>
+<span class="linenos">389</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">390</span><span class="w">            </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">391</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">392</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hit</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">393</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calcNormal</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">394</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">rd</span><span class="p">;</span>
+<span class="linenos">395</span><span class="w">        </span><span class="kt">vec3</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">baseColorOf</span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">);</span>
+<span class="linenos">396</span>
+<span class="linenos">397</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_GLASS</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">398</span><span class="w">            </span><span class="c1">// ---- ガラス: 反射と屈折をフレネル反射率で確率的に選ぶ ----</span>
+<span class="linenos">399</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.04</span><span class="p">)).</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">400</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">random</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">401</span><span class="w">                </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">402</span><span class="w">                </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">403</span><span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">404</span><span class="w">                </span><span class="c1">// 内部に入り、全反射を繰り返しながら出口を探す</span>
+<span class="linenos">405</span><span class="w">                </span><span class="kt">vec3</span><span class="w"> </span><span class="n">dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">refract</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">GLASS_IOR</span><span class="p">);</span>
+<span class="linenos">406</span><span class="w">                </span><span class="kt">vec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">407</span><span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">408</span><span class="w">                    </span><span class="n">q</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">marchInside</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">MAT_GLASS</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dir</span><span class="p">;</span>
+<span class="linenos">409</span><span class="w">                    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">nOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">objectNormal</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="n">MAT_GLASS</span><span class="p">);</span>
+<span class="linenos">410</span><span class="w">                    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">out_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">refract</span><span class="p">(</span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">nOut</span><span class="p">,</span><span class="w"> </span><span class="n">GLASS_IOR</span><span class="p">);</span>
+<span class="linenos">411</span><span class="w">                    </span><span class="kt">float</span><span class="w"> </span><span class="n">fi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="o">-</span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">nOut</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span>
+<span class="linenos">412</span><span class="w">                                              </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.04</span><span class="p">)).</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">413</span><span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">out_</span><span class="p">,</span><span class="w"> </span><span class="n">out_</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">random</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">fi</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">414</span><span class="w">                        </span><span class="n">dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">out_</span><span class="p">;</span>
+<span class="linenos">415</span><span class="w">                        </span><span class="n">q</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">nOut</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.004</span><span class="p">;</span>
+<span class="linenos">416</span><span class="w">                        </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">417</span><span class="w">                    </span><span class="p">}</span>
+<span class="linenos">418</span><span class="w">                    </span><span class="n">dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">nOut</span><span class="p">);</span><span class="w">   </span><span class="c1">// 内部での反射</span>
+<span class="linenos">419</span><span class="w">                    </span><span class="n">q</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">nOut</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">420</span><span class="w">                </span><span class="p">}</span>
+<span class="linenos">421</span><span class="w">                </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">q</span><span class="p">;</span>
+<span class="linenos">422</span><span class="w">                </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dir</span><span class="p">;</span>
+<span class="linenos">423</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">424</span><span class="w">            </span><span class="n">countEmission</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="linenos">425</span><span class="w">            </span><span class="k">continue</span><span class="p">;</span>
+<span class="linenos">426</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">427</span>
+<span class="linenos">428</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_JADE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">429</span><span class="w">            </span><span class="c1">// ---- 翡翠: 表面での反射か、内部に入ってランダムウォーク ----</span>
+<span class="linenos">430</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.035</span><span class="p">)).</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">431</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">random</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">432</span><span class="w">                </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">433</span><span class="w">                </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">434</span><span class="w">                </span><span class="n">countEmission</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="linenos">435</span><span class="w">                </span><span class="k">continue</span><span class="p">;</span>
+<span class="linenos">436</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">437</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">refract</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">JADE_IOR</span><span class="p">);</span>
+<span class="linenos">438</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">439</span><span class="w">            </span><span class="kt">bool</span><span class="w"> </span><span class="n">escaped</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="linenos">440</span><span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">441</span><span class="w">                </span><span class="c1">// 次の散乱までの距離を、指数分布からランダムに選ぶ</span>
+<span class="linenos">442</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">log</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">random</span><span class="p">(),</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">JADE_SIGMA_T</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<span class="linenos">443</span><span class="w">                </span><span class="kt">float</span><span class="w"> </span><span class="n">exitDist</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">marchInside</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">MAT_JADE</span><span class="p">);</span>
+<span class="linenos">444</span><span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">exitDist</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">445</span><span class="w">                    </span><span class="n">q</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dir</span><span class="p">;</span>
+<span class="linenos">446</span><span class="w">                    </span><span class="n">throughput</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">JADE_ALBEDO</span><span class="p">;</span><span class="w">          </span><span class="c1">// 散乱のたびに少し吸収される</span>
+<span class="linenos">447</span><span class="w">                    </span><span class="n">dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uniformSampleSphere</span><span class="p">();</span><span class="w">        </span><span class="c1">// 等方散乱</span>
+<span class="linenos">448</span><span class="w">                </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">449</span><span class="w">                    </span><span class="n">q</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">exitDist</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dir</span><span class="p">;</span>
+<span class="linenos">450</span><span class="w">                    </span><span class="n">escaped</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="linenos">451</span><span class="w">                    </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">452</span><span class="w">                </span><span class="p">}</span>
+<span class="linenos">453</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">454</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">escaped</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">455</span><span class="w">                </span><span class="k">break</span><span class="p">;</span><span class="w">                                  </span><span class="c1">// 内部で吸収された</span>
+<span class="linenos">456</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">457</span><span class="w">            </span><span class="c1">// 出口からは拡散的に (ランバート反射と同じ分布で) 出ていくとみなす。</span>
+<span class="linenos">458</span><span class="w">            </span><span class="c1">// そのため、拡散反射と同じく光源の直接サンプリングを使える</span>
+<span class="linenos">459</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">nOut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">objectNormal</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="n">MAT_JADE</span><span class="p">);</span>
+<span class="linenos">460</span><span class="w">            </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">nOut</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.004</span><span class="p">;</span>
+<span class="linenos">461</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">toLight</span><span class="p">;</span>
+<span class="linenos">462</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">light</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sampleLight</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="n">nOut</span><span class="p">,</span><span class="w"> </span><span class="n">toLight</span><span class="p">);</span>
+<span class="linenos">463</span><span class="w">            </span><span class="n">radiance</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">light</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">nOut</span><span class="p">,</span><span class="w"> </span><span class="n">toLight</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">PI</span><span class="p">;</span>
+<span class="linenos">464</span><span class="w">            </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cosineSampleHemisphere</span><span class="p">(</span><span class="n">nOut</span><span class="p">);</span>
+<span class="linenos">465</span><span class="w">            </span><span class="n">countEmission</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="linenos">466</span><span class="w">            </span><span class="k">continue</span><span class="p">;</span>
+<span class="linenos">467</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">468</span>
+<span class="linenos">469</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_GOLD</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">470</span><span class="w">            </span><span class="c1">// ---- 金属: GGX の重点サンプリングと光源の直接サンプリング ----</span>
+<span class="linenos">471</span><span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">roughness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.3</span><span class="p">;</span>
+<span class="linenos">472</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">toLight</span><span class="p">;</span>
+<span class="linenos">473</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">light</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sampleLight</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">toLight</span><span class="p">);</span>
+<span class="linenos">474</span><span class="w">            </span><span class="n">radiance</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">light</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">475</span><span class="w">                        </span><span class="n">specularBRDF</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">toLight</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="p">,</span><span class="w"> </span><span class="n">roughness</span><span class="p">);</span>
+<span class="linenos">476</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sampleGGX</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">roughness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">roughness</span><span class="p">);</span>
+<span class="linenos">477</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">);</span>
+<span class="linenos">478</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">l</span><span class="p">);</span>
+<span class="linenos">479</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">nl</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">480</span><span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">481</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">482</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">483</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">vh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">484</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">nh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">485</span><span class="w">            </span><span class="c1">// BRDF × cos / pdf = F × G × (v・h) / ((n・v)(n・h))</span>
+<span class="linenos">486</span><span class="w">            </span><span class="n">throughput</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">vh</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="p">)</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">487</span><span class="w">                          </span><span class="n">geometrySmith</span><span class="p">(</span><span class="n">nv</span><span class="p">,</span><span class="w"> </span><span class="n">nl</span><span class="p">,</span><span class="w"> </span><span class="n">roughness</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">vh</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">nv</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nh</span><span class="p">);</span>
+<span class="linenos">488</span><span class="w">            </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">489</span><span class="w">            </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">l</span><span class="p">;</span>
+<span class="linenos">490</span><span class="w">            </span><span class="n">countEmission</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="linenos">491</span><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_MARBLE</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">random</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0.2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">492</span><span class="w">            </span><span class="c1">// ---- 大理石のつや: 確率 0.2 で鏡面反射の成分を選ぶ ----</span>
+<span class="linenos">493</span><span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">roughness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.15</span><span class="p">;</span>
+<span class="linenos">494</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sampleGGX</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">roughness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">roughness</span><span class="p">);</span>
+<span class="linenos">495</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reflect</span><span class="p">(</span><span class="n">rd</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">);</span>
+<span class="linenos">496</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">l</span><span class="p">);</span>
+<span class="linenos">497</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">nl</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">498</span><span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">499</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">500</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">501</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">vh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">502</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">nh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">503</span><span class="w">            </span><span class="n">throughput</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">vh</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.04</span><span class="p">))</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">504</span><span class="w">                          </span><span class="n">geometrySmith</span><span class="p">(</span><span class="n">nv</span><span class="p">,</span><span class="w"> </span><span class="n">nl</span><span class="p">,</span><span class="w"> </span><span class="n">roughness</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">vh</span><span class="w"> </span><span class="o">/</span>
+<span class="linenos">505</span><span class="w">                          </span><span class="p">(</span><span class="n">nv</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nh</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">0.2</span><span class="p">;</span>
+<span class="linenos">506</span><span class="w">            </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">507</span><span class="w">            </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">l</span><span class="p">;</span>
+<span class="linenos">508</span><span class="w">            </span><span class="n">countEmission</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span><span class="w">   </span><span class="c1">// この成分は直接サンプリングで数えていない</span>
+<span class="linenos">509</span><span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">510</span><span class="w">            </span><span class="c1">// ---- 拡散反射: 光源の直接サンプリングとコサイン重み付きの方向選択 ----</span>
+<span class="linenos">511</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">diffuseProb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">hit</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MAT_MARBLE</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">0.8</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">512</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">toLight</span><span class="p">;</span>
+<span class="linenos">513</span><span class="w">            </span><span class="kt">vec3</span><span class="w"> </span><span class="n">light</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sampleLight</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">toLight</span><span class="p">);</span>
+<span class="linenos">514</span><span class="w">            </span><span class="n">radiance</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">throughput</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">light</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">PI</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">515</span><span class="w">                        </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">toLight</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">diffuseProb</span><span class="p">;</span>
+<span class="linenos">516</span><span class="w">            </span><span class="n">throughput</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">diffuseProb</span><span class="p">;</span>
+<span class="linenos">517</span><span class="w">            </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.002</span><span class="p">;</span>
+<span class="linenos">518</span><span class="w">            </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cosineSampleHemisphere</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">519</span><span class="w">            </span><span class="n">countEmission</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="linenos">520</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">521</span>
+<span class="linenos">522</span><span class="w">        </span><span class="c1">// ロシアンルーレット: 寄与の小さい経路を確率的に打ち切る (第 17 章)</span>
+<span class="linenos">523</span><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">depth</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">524</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">survive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">throughput</span><span class="p">.</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">throughput</span><span class="p">.</span><span class="n">g</span><span class="p">,</span>
+<span class="linenos">525</span><span class="w">                                                        </span><span class="n">throughput</span><span class="p">.</span><span class="n">b</span><span class="p">)),</span>
+<span class="linenos">526</span><span class="w">                                  </span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="mf">0.95</span><span class="p">);</span>
+<span class="linenos">527</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">random</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">survive</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">528</span><span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="linenos">529</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">530</span><span class="w">            </span><span class="n">throughput</span><span class="w"> </span><span class="o">/=</span><span class="w"> </span><span class="n">survive</span><span class="p">;</span>
+<span class="linenos">531</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">532</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">533</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">radiance</span><span class="p">;</span>
+<span class="linenos">534</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>ガラスの表面では直接サンプリングを行わない。ガラスの向こうにある照明は、屈折によって方向が変わるため、照明上の点に向かってまっすぐシャドウレイを飛ばしても、正しい寄与にならないからである。照明の光は、経路が屈折を経て偶然照明に当たったときにだけ加えられる。コースティクスの部分のノイズが減りにくいのはこのためである。</p>
+</section>
+<section id="ggx">
+<h2>金属: GGX の重点サンプリング<a class="headerlink" href="#ggx" title="Link to this heading"></a></h2>
+<p>金の器は、第 12 章の GGX の鏡面反射を持つ金属である。パストレーシングでは、BRDF の値を評価するだけでなく、BRDF の形に沿って次の方向を選ぶ（重点サンプリング）必要がある。</p>
+<p>GGX では、まずマイクロファセットの法線 <span class="math notranslate nohighlight">\(\hat{\mathbf{h}}\)</span> を、確率密度 <span class="math notranslate nohighlight">\(D(\hat{\mathbf{h}})\,(\hat{\mathbf{n}} \cdot \hat{\mathbf{h}})\)</span> に従って選ぶ。2 つの一様乱数 <span class="math notranslate nohighlight">\(u_1, u_2\)</span> から、次の式で選べる。</p>
+<div class="math notranslate nohighlight">
+\[\cos\theta_h = \sqrt{\frac{1 - u_1}{1 + (\alpha^2 - 1)\, u_1}}, \qquad \phi_h = 2\pi u_2\]</div>
+<p>選んだ <span class="math notranslate nohighlight">\(\hat{\mathbf{h}}\)</span> で視線を反射させた方向 <span class="math notranslate nohighlight">\(\hat{\mathbf{l}}\)</span> が、次の経路の方向になる。このときの <span class="math notranslate nohighlight">\(\hat{\mathbf{l}}\)</span> の確率密度は <span class="math notranslate nohighlight">\(p(\hat{\mathbf{l}}) = D\,(\hat{\mathbf{n}} \cdot \hat{\mathbf{h}}) / (4\,(\hat{\mathbf{v}} \cdot \hat{\mathbf{h}}))\)</span> である。BRDF に余弦を掛けた値をこの確率密度で割ると、<span class="math notranslate nohighlight">\(D\)</span> が打ち消され、スループットに掛ける重みは次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[\frac{f_{\text{spec}}\, (\hat{\mathbf{n}} \cdot \hat{\mathbf{l}})}{p(\hat{\mathbf{l}})}
+= \frac{F\, G\, (\hat{\mathbf{v}} \cdot \hat{\mathbf{h}})}
+       {(\hat{\mathbf{n}} \cdot \hat{\mathbf{v}})\,(\hat{\mathbf{n}} \cdot \hat{\mathbf{h}})}\]</div>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">20_still_life.frag（抜粋）</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">315</span><span class="c1">// GGX の分布に従ってマイクロファセットの法線 h を選ぶ (重点サンプリング)</span>
+<span class="linenos">316</span><span class="kt">vec3</span><span class="w"> </span><span class="n">sampleGGX</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
+<span class="linenos">317</span><span class="p">{</span>
+<span class="linenos">318</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">u1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">random</span><span class="p">();</span>
+<span class="linenos">319</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">phi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">random</span><span class="p">();</span>
+<span class="linenos">320</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">cosTheta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sqrt</span><span class="p">((</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">u1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">alpha</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">u1</span><span class="p">));</span>
+<span class="linenos">321</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sinTheta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sqrt</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">cosTheta</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cosTheta</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">322</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="linenos">323</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="linenos">324</span><span class="w">    </span><span class="n">basis</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+<span class="linenos">325</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">sinTheta</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sinTheta</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">+</span>
+<span class="linenos">326</span><span class="w">                     </span><span class="n">cosTheta</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">327</span><span class="p">}</span>
+<span class="linenos">328</span>
+<span class="linenos">329</span><span class="c1">// 鏡面反射の BRDF × cos の値 (光源の直接サンプリングで使う)</span>
+<span class="linenos">330</span><span class="kt">vec3</span><span class="w"> </span><span class="n">specularBRDF</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">l</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">f0</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">roughness</span><span class="p">)</span>
+<span class="linenos">331</span><span class="p">{</span>
+<span class="linenos">332</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">v</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">l</span><span class="p">);</span>
+<span class="linenos">333</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">nl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">l</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">334</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">335</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">roughness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">roughness</span><span class="p">;</span>
+<span class="linenos">336</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">distributionGGX</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">337</span><span class="w">           </span><span class="n">geometrySmith</span><span class="p">(</span><span class="n">nv</span><span class="p">,</span><span class="w"> </span><span class="n">nl</span><span class="p">,</span><span class="w"> </span><span class="n">roughness</span><span class="p">)</span><span class="w"> </span><span class="o">*</span>
+<span class="linenos">338</span><span class="w">           </span><span class="n">fresnelSchlick</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">),</span><span class="w"> </span><span class="n">f0</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nv</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">);</span>
+<span class="linenos">339</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>金属では、光源の直接サンプリングも行う。照明上の点を選び、その方向の BRDF の値（<code class="docutils literal notranslate"><span class="pre">specularBRDF</span></code>）を掛けて直接光を加える。このため、金属で反射した経路が照明に当たっても、その光は加えない。幾何減衰項の係数には、第 12 章の直接光用の値 <span class="math notranslate nohighlight">\(k = (r+1)^2/8\)</span> ではなく、間接光にも使える <span class="math notranslate nohighlight">\(k = \alpha/2\)</span> を使っている（Karis, 2013）。</p>
+</section>
+<section id="id5">
+<h2>ガラス: 反射と屈折の確率的な選択<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>第 11 章では、ガラスの表面で反射と屈折の両方を追跡できないため、反射の成分を空の色で近似した。パストレーシングでは、反射と屈折のどちらか一方を、フレネル反射率 <span class="math notranslate nohighlight">\(F\)</span> に等しい確率で選ぶ。反射を確率 <span class="math notranslate nohighlight">\(F\)</span> で、屈折を確率 <span class="math notranslate nohighlight">\(1 - F\)</span> で選ぶと、重み（<span class="math notranslate nohighlight">\(F\)</span> または <span class="math notranslate nohighlight">\(1 - F\)</span>）と選ぶ確率が打ち消し合うので、スループットは変わらない。多数の経路を平均すれば、反射と屈折の両方が正しい割合で含まれる。</p>
+<p>ガラスの内部に入った経路は、第 11 章と同じく SDF の符号を反転させて出口を探す。出口でもフレネル反射率に従って、外に出るか内部で反射するかを選ぶ。屈折できない角度（全反射）の場合は必ず内部で反射する。サンプルでは、内部での反射を最大 4 回まで追跡している。</p>
+<p>このように、反射と屈折を確率的に選ぶことで、ガラスに映り込む周囲の物体、ガラスを通して見える背景のゆがみ、ガラスが作るコースティクスが、すべて同じ仕組みで計算される。</p>
+</section>
+<section id="id6">
+<h2>翡翠: ランダムウォーク法<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<section id="id7">
+<h3>内部での散乱<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>翡翠の内部は、光を散乱する関与媒質（第 16 章）とみなす。表面から内部に入った光は、指数分布に従ってランダムな距離だけ進み、散乱して方向を変える。これを繰り返し、表面に達したら外に出る。この方法をランダムウォーク法と呼ぶ。</p>
+<p>消散係数 <span class="math notranslate nohighlight">\(\sigma_t\)</span> の一様な媒質の中で、光が散乱されずに距離 <span class="math notranslate nohighlight">\(s\)</span> 以上進む確率は <span class="math notranslate nohighlight">\(e^{-\sigma_t s}\)</span> である（第 16 章の透過率）。したがって、次に散乱されるまでの距離は、一様乱数 <span class="math notranslate nohighlight">\(u\)</span> から次の式で選べる。</p>
+<div class="math notranslate nohighlight">
+\[s = -\frac{\ln u}{\sigma_t}\]</div>
+<p>選んだ距離 <span class="math notranslate nohighlight">\(s\)</span> が表面までの距離より短ければ、その点で散乱が起こる。散乱のたびに、スループットに散乱アルベド（<span class="math notranslate nohighlight">\(\sigma_s / \sigma_t\)</span>、散乱されずに吸収される割合を除いたもの）を掛け、新しい方向を全方向から一様に選ぶ（等方散乱）。散乱アルベドを RGB ごとに変えると、内部を長く通った光ほど色が付き、翡翠らしい緑色になる。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">20_still_life.frag（抜粋）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">366</span><span class="c1">// 翡翠の内部での散乱 (ランダムウォーク法)。単位は 1 長さあたり</span>
+<span class="linenos">367</span><span class="k">const</span><span class="w"> </span><span class="kt">vec3</span><span class="w">  </span><span class="n">JADE_SIGMA_T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">9.0</span><span class="p">);</span><span class="w">                 </span><span class="c1">// 消散係数</span>
+<span class="linenos">368</span><span class="k">const</span><span class="w"> </span><span class="kt">vec3</span><span class="w">  </span><span class="n">JADE_ALBEDO</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.92</span><span class="p">,</span><span class="w"> </span><span class="mf">0.985</span><span class="p">,</span><span class="w"> </span><span class="mf">0.94</span><span class="p">);</span><span class="w">   </span><span class="c1">// 散乱アルベド (散乱 / 消散)</span>
+<span class="linenos">369</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">GLASS_IOR</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="mf">1.5</span><span class="p">;</span>
+<span class="linenos">370</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">JADE_IOR</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="mf">1.45</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id8">
+<h3>出口での扱い<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>表面に達した経路は、外に出る。厳密には、出口でも屈折とフレネル反射を考える必要があるが、内部で多数回散乱した光は方向がほぼ一様になっているので、出口からはランバート反射と同じ分布で出ていくものとして近似している。この近似により、出口の点でも拡散反射と同じく光源の直接サンプリングを使え、ノイズが大きく減る。</p>
+<p>第 12 章の近似（光源の方向の厚みによる透過光）と比べると、ランダムウォーク法では、光が内部で曲がった経路を通って光源から直接見えない部分にも回り込む様子や、薄い耳の部分が明るく透ける様子が、特別な処理なしに得られる。その代わり、1 本の経路の計算量が大きく、収束にも時間がかかる。</p>
+</section>
+</section>
+<section id="id9">
+<h2>大理石の台<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>大理石の模様は、第 10 章のセルラーノイズの <span class="math notranslate nohighlight">\(F_2 - F_1\)</span> が 0 に近い場所を、細い脈として描いたものである。座標を少しゆがめてから評価し、脈が直線的になりすぎないようにしている。</p>
+<p>大理石の表面には、拡散反射に加えて、磨かれた表面のつや（鏡面反射）がある。2 つの成分を同時に追跡することはできないので、確率 0.2 でつやの成分を、確率 0.8 で拡散反射の成分を選ぶ。選んだ成分の重みを、選んだ確率で割ることで、平均すると両方の成分が正しく含まれる。</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">20_still_life.frag（抜粋）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">250</span><span class="c1">// 大理石の模様: ボロノイの境界 (第 10 章) を細い脈として描く</span>
+<span class="linenos">251</span><span class="kt">float</span><span class="w"> </span><span class="n">marbleVeins</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">xz</span><span class="p">)</span>
+<span class="linenos">252</span><span class="p">{</span>
+<span class="linenos">253</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="mf">3.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="p">.</span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">xz</span><span class="p">.</span><span class="n">x</span><span class="p">));</span>
+<span class="linenos">254</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">255</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fract</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="linenos">256</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">f1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8.0</span><span class="p">;</span>
+<span class="linenos">257</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">f2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">8.0</span><span class="p">;</span>
+<span class="linenos">258</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">259</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">260</span><span class="w">            </span><span class="kt">vec2</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="kt">float</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="kt">float</span><span class="p">(</span><span class="n">j</span><span class="p">));</span>
+<span class="linenos">261</span><span class="w">            </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">g</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hash22</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">g</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f</span><span class="p">);</span>
+<span class="linenos">262</span><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">f1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">263</span><span class="w">                </span><span class="n">f2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f1</span><span class="p">;</span>
+<span class="linenos">264</span><span class="w">                </span><span class="n">f1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">265</span><span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">d</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">f2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">266</span><span class="w">                </span><span class="n">f2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">267</span><span class="w">            </span><span class="p">}</span>
+<span class="linenos">268</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">269</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">270</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">smoothstep</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="n">f2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f1</span><span class="p">);</span>
+<span class="linenos">271</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id10">
+<h2>ロシアンルーレット<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>経路の反射の回数が増えると、スループットは小さくなり、その経路の寄与も小さくなる。そのような経路を最後まで追跡するのは無駄が多い。そこで、4 回目以降の反射では、スループットの最大の成分に比例する確率で経路を続け、それ以外は打ち切る。続けた経路のスループットを、続けた確率で割ることで、打ち切った経路の分の寄与が補われ、平均すると結果は偏らない。第 17 章では、最大の反射回数で打ち切るとわずかに暗くなることを述べたが、ロシアンルーレットを使えばこの偏りを小さくしつつ、計算量を減らせる。</p>
+</section>
+<section id="id11">
+<h2>カメラと蓄積<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>カメラは第 17 章の薄レンズモデルで、ガラスの球にピントを合わせている。奥の翡翠の置物とメンガーのスポンジの置物は、わずかにぼける。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">20_still_life.frag（抜粋）</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">542</span><span class="kt">void</span><span class="w"> </span><span class="n">cameraRay</span><span class="p">(</span><span class="kt">vec2</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ro</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">rd</span><span class="p">)</span>
+<span class="linenos">543</span><span class="p">{</span>
+<span class="linenos">544</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">eye</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="mf">4.8</span><span class="p">);</span>
+<span class="linenos">545</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.45</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">546</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">forward</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">target</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">eye</span><span class="p">);</span>
+<span class="linenos">547</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">right</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">cross</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)));</span>
+<span class="linenos">548</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cross</span><span class="p">(</span><span class="n">right</span><span class="p">,</span><span class="w"> </span><span class="n">forward</span><span class="p">);</span>
+<span class="linenos">549</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">right</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">up</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">FOCAL</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">forward</span><span class="p">);</span>
+<span class="linenos">550</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">focusPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eye</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dir</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">FOCUS_DISTANCE</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">forward</span><span class="p">));</span>
+<span class="linenos">551</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">APERTURE</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sqrt</span><span class="p">(</span><span class="n">random</span><span class="p">());</span>
+<span class="linenos">552</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">phi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">random</span><span class="p">();</span>
+<span class="linenos">553</span><span class="w">    </span><span class="n">ro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eye</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">right</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">up</span><span class="p">);</span>
+<span class="linenos">554</span><span class="w">    </span><span class="n">rd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalize</span><span class="p">(</span><span class="n">focusPoint</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ro</span><span class="p">);</span>
+<span class="linenos">555</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p>1 フレームでは 1 ピクセルあたり 2 本の経路しか追跡しないので、最初はノイズが多いが、フレームを重ねるごとに滑らかになっていく。図は 40 フレーム（1 ピクセルあたり 80 本）を蓄積したもので、まだ翡翠の内部やコースティクスの部分にノイズが残っている。ブラウザーで実行すると、時間とともにノイズが減っていく様子を確認できる。</p>
+</section>
+<section id="id12">
+<h2>デバッグ<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<p>パストレーシングでは、結果が収束するまで時間がかかるので、形状や材質の割り当ての誤りを見つけにくい。デバッグ版では、最初に当たった点のベースカラー、法線、材質を、経路を追跡せずに直接表示する。これらは 1 フレームで確定するので、すぐに確認できる。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/fbbd38e39ee2d22a954043f082ebd94f/20_still_life_debug.frag"><code class="xref download docutils literal notranslate"><span class="pre">20_still_life_debug.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/20_still_life_debug.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id21">
+<img alt="画面が 4 分割され、パストレーシングの結果、ベースカラー、法線、材質の色分けが並んでいる" src="_images/20_still_life_debug.png" />
+<figcaption>
+<p><span class="caption-text">20_still_life_debug.frag の実行結果。左上がパストレーシング、右上がベースカラー、左下が法線、右下が材質の色分けである。</span><a class="headerlink" href="#id21" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id13">
+<h2>近似と限界<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<p>このサンプルは、物理的に正しい計算を目指しているが、次の近似を含んでいる。</p>
+<ul class="simple">
+<li><p>フレネル反射率に Schlick の近似を使っている。また、屈折率の波長による違い（分散）は無視しているので、ガラスの球は虹色にならない。</p></li>
+<li><p>翡翠の内部の散乱は等方散乱とし、出口での屈折を省略している。</p></li>
+<li><p>光源の直接サンプリングと BRDF に基づく方向の選択を、多重重点サンプリング（第 17 章）で組み合わせていない。そのため、つやの強い大理石に映る照明などは、ノイズが減りにくい。</p></li>
+<li><p>ガラスを通した照明の光（コースティクス）は、経路が偶然照明に当たったときにしか数えられないため、収束が遅い。双方向パストレーシングやフォトンマッピングなどの手法を使うと効率よく計算できる。</p></li>
+</ul>
+</section>
+<section id="id14">
+<h2>改造の案<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>金の器の粗さを変え、鏡のような器や、つや消しの器にする。</p></li>
+<li><p>翡翠の散乱アルベドと消散係数を変え、蝋や牛乳のような材質にする。</p></li>
+<li><p>第 14 章の 4 次元の超立方体の断面を、ガラスの材質で置く。</p></li>
+<li><p>照明の大きさを小さくし、影がくっきりした絵と、ノイズの減り方の違いを比べる。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="19_night_city.html" class="btn btn-neutral float-left" title="第 19 章 実践：ボクセルの都市の夜景" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="appendix_examples.html" class="btn btn-neutral float-right" title="付録 A サンプルコード一覧" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,196 @@
+// 06_shadow.frag
+// 第 6 章: 影。画面の左半分はハードシャドウ、右半分はソフトシャドウ。
+
+const int   MAX_STEPS = 128;
+const float MAX_DIST  = 100.0;
+const float SURF_DIST = 0.001;
+
+const vec3 LIGHT_DIR = normalize(vec3(0.6, 0.7, 0.4));  // 光源の方向 (表面から光源へ)
+const vec3 SUN_COLOR = vec3(1.3, 1.2, 1.0);             // 平行光源の放射輝度
+const vec3 SKY_COLOR = vec3(0.3, 0.4, 0.55);            // 天空光 (環境光) の放射輝度
+
+// ---- SDF ----------------------------------------------------------------
+
+float sdSphere(vec3 p, float r)
+{
+    return length(p) - r;
+}
+
+float sdBox(vec3 p, vec3 b)
+{
+    vec3 q = abs(p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+float sdTorus(vec3 p, vec2 t)
+{
+    vec2 q = vec2(length(p.xz) - t.x, p.y);
+    return length(q) - t.y;
+}
+
+float sdPlane(vec3 p, float h)
+{
+    return p.y - h;
+}
+
+// ---- シーン --------------------------------------------------------------
+
+// マテリアル ID
+const float MAT_GROUND = 1.0;
+const float MAT_SPHERE = 2.0;
+const float MAT_TORUS  = 3.0;
+const float MAT_BOX    = 4.0;
+
+// (距離, マテリアル ID) の組のうち、距離が小さい方を返す
+vec2 opU(vec2 a, vec2 b)
+{
+    return (a.x < b.x) ? a : b;
+}
+
+vec2 map(vec3 p)
+{
+    vec2 res = vec2(sdPlane(p, 0.0), MAT_GROUND);
+    res = opU(res, vec2(sdSphere(p - vec3(-1.6, 1.0, 0.0), 1.0), MAT_SPHERE));
+    res = opU(res, vec2(sdTorus(p - vec3(1.2, 0.3, 0.8), vec2(0.8, 0.3)),
+                        MAT_TORUS));
+    res = opU(res, vec2(sdBox(p - vec3(0.8, 0.6, -1.5), vec3(0.6)), MAT_BOX));
+    return res;
+}
+
+// ---- レイマーチング ------------------------------------------------------
+
+// 戻り値は (t, マテリアル ID)。当たらなければマテリアル ID は -1.0
+vec2 raymarch(vec3 ro, vec3 rd)
+{
+    float t = 0.0;
+    for (int i = 0; i < MAX_STEPS; i++) {
+        vec2 h = map(ro + t * rd);
+        if (h.x < SURF_DIST) {
+            return vec2(t, h.y);
+        }
+        t += h.x;
+        if (t > MAX_DIST) {
+            break;
+        }
+    }
+    return vec2(t, -1.0);
+}
+
+// 四面体の 4 頂点方向の差分から法線を求める
+vec3 calcNormal(vec3 p)
+{
+    const float h = 0.0005;
+    const vec2 k = vec2(1.0, -1.0);
+    return normalize(k.xyy * map(p + k.xyy * h).x +
+                     k.yyx * map(p + k.yyx * h).x +
+                     k.yxy * map(p + k.yxy * h).x +
+                     k.xxx * map(p + k.xxx * h).x);
+}
+
+// マテリアル ID から拡散反射率 (アルベド) を決める
+vec3 albedoOf(float mat, vec3 p)
+{
+    if (mat == MAT_GROUND) {
+        // 1 辺 1 の市松模様
+        float checker = mod(floor(p.x) + floor(p.z), 2.0);
+        return mix(vec3(0.25), vec3(0.45), checker);
+    }
+    if (mat == MAT_SPHERE) {
+        return vec3(0.7, 0.15, 0.1);
+    }
+    if (mat == MAT_TORUS) {
+        return vec3(0.15, 0.45, 0.7);
+    }
+    return vec3(0.7, 0.6, 0.2);
+}
+
+// ---- 影 ------------------------------------------------------------------
+
+// ハードシャドウ: 光源の方向へのレイが何かに当たれば 0、当たらなければ 1
+float hardShadow(vec3 ro, vec3 rd, float tmin, float tmax)
+{
+    float t = tmin;
+    for (int i = 0; i < 128 && t < tmax; i++) {
+        float h = map(ro + t * rd).x;
+        if (h < SURF_DIST) {
+            return 0.0;
+        }
+        t += h;
+    }
+    return 1.0;
+}
+
+// ソフトシャドウ: レイが物体をかすめた度合い k * h / t から半影を近似する
+float softShadow(vec3 ro, vec3 rd, float tmin, float tmax, float k)
+{
+    float res = 1.0;
+    float t = tmin;
+    for (int i = 0; i < 128 && t < tmax; i++) {
+        float h = map(ro + t * rd).x;
+        res = min(res, k * h / t);
+        if (res < 0.001) {
+            break;
+        }
+        t += clamp(h, 0.01, 0.5);
+    }
+    res = clamp(res, 0.0, 1.0);
+    return res * res * (3.0 - 2.0 * res);  // smoothstep と同じ補間で滑らかにする
+}
+
+// ---- 照明 ----------------------------------------------------------------
+
+vec3 shade(vec3 p, vec3 rd, float mat, bool soft)
+{
+    vec3 n = calcNormal(p);
+    vec3 v = -rd;
+    vec3 h = normalize(LIGHT_DIR + v);
+    vec3 albedo = albedoOf(mat, p);
+
+    // 自己交差を避けるため、表面から法線方向に少し離した点を始点にする
+    vec3 origin = p + n * 0.01;
+    float shadow = soft ? softShadow(origin, LIGHT_DIR, 0.01, 20.0, 8.0)
+                        : hardShadow(origin, LIGHT_DIR, 0.01, 20.0);
+
+    float diffuse = max(dot(n, LIGHT_DIR), 0.0) * shadow;
+    float specular = pow(max(dot(n, h), 0.0), 32.0) * diffuse;
+    float sky = 0.5 + 0.5 * n.y;
+
+    vec3 col = albedo * (SUN_COLOR * diffuse + SKY_COLOR * sky);
+    col += SUN_COLOR * specular * 0.5;
+    return col;
+}
+
+// ---- メイン --------------------------------------------------------------
+
+// カメラ位置 ro から注視点 ta を向くカメラ行列
+mat3 setCamera(vec3 ro, vec3 ta)
+{
+    vec3 cw = normalize(ta - ro);
+    vec3 cu = normalize(cross(cw, vec3(0.0, 1.0, 0.0)));
+    vec3 cv = cross(cu, cw);
+    return mat3(cu, cv, cw);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+    vec2 p = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
+    bool soft = fragCoord.x > 0.5 * iResolution.x;
+
+    vec3 ro = vec3(0.0, 3.0, 6.0);
+    vec3 ta = vec3(0.0, 0.5, 0.0);
+    vec3 rd = setCamera(ro, ta) * normalize(vec3(p, 2.0));
+
+    vec3 col = SKY_COLOR;                  // 背景は天空の色
+    vec2 hit = raymarch(ro, rd);
+    if (hit.y > 0.0) {
+        col = shade(ro + hit.x * rd, rd, hit.y, soft);
+    }
+
+    // 線形な放射輝度をディスプレイ用の値に変換する (ガンマ補正)
+    col = pow(col, vec3(1.0 / 2.2));
+
+    // 画面中央に境界線を引く
+    col = mix(col, vec3(1.0),
+              step(abs(fragCoord.x - 0.5 * iResolution.x), 1.0));
+    fragColor = vec4(col, 1.0);
+}

@@ -12,6 +12,7 @@
 Python では、``def`` キーワードを使って関数を定義します。処理の結果を呼び出し元に返したい場合は、``return`` 文を使用します。
 
 .. code-block:: python
+   :linenos:
 
    def celsius_to_fahrenheit(celsius):
        return celsius * 9 / 5 + 32
@@ -22,6 +23,7 @@ Python では、``def`` キーワードを使って関数を定義します。�
 引数と戻り値には、次のように型ヒントを付けることもできます。型ヒントを付けることで、関数がどのような値を受け取り、どのような値を返すのかが明確になります。
 
 .. code-block:: python
+   :linenos:
 
    def celsius_to_fahrenheit(celsius: float) -> float:
        return celsius * 9 / 5 + 32
@@ -32,6 +34,7 @@ docstring（関数の説明文）
 関数の定義の直後に、三重引用符（``"""``）で囲んだ文字列を書くことがあります。これを docstring（ドキュメンテーション文字列）と呼び、その関数が何をするものかを説明するために使用します。
 
 .. code-block:: python
+   :linenos:
 
    def celsius_to_fahrenheit(celsius: float) -> float:
        """摂氏温度を華氏温度に変換して返します。"""
@@ -40,6 +43,7 @@ docstring（関数の説明文）
 docstring は、``#`` で書くコメントとは異なり、``関数名.__doc__`` として実行時に取得したり、``help(関数名)`` で内容を表示したりできます。docstring は関数だけでなく、ファイルの先頭やクラスの定義の直後にも書けます。
 
 .. code-block:: python
+   :linenos:
 
    """このファイル全体の説明を書きます。"""
 
@@ -51,6 +55,7 @@ pass 文
 Python では、``if`` 文や関数、クラスの本体を空にすることはできず、必ず何らかの文を書く必要があります。処理の内容をまだ決めていない場合の仮置きとして、何も処理を行わない ``pass`` 文を使用できます。
 
 .. code-block:: python
+   :linenos:
 
    def not_implemented_yet() -> None:
        pass  # TODO: 後で処理を実装する
@@ -63,6 +68,7 @@ Python では、``if`` 文や関数、クラスの本体を空にすることは
 引数にあらかじめ値を設定しておくと、呼び出し時にその引数を省略できます。これをデフォルト引数と呼びます。
 
 .. code-block:: python
+   :linenos:
 
    def introduce(name: str, age: int = 20) -> str:
        return "私は " + name + " です。年齢は " + str(age) + " 歳です。"
@@ -76,6 +82,7 @@ None を使ったオプション引数
 第 4 章で説明した ``str | None`` のような型ヒントは、値が指定されないかもしれない引数のデフォルト値として ``None`` を使いたい場合によく使われます。
 
 .. code-block:: python
+   :linenos:
 
    def greet(name: str, nickname: str | None = None) -> str:
        if nickname is None:
@@ -93,6 +100,7 @@ None を使ったオプション引数
 引数の数があらかじめ決まっていない場合は、``*`` を付けた可変長引数を使用します。可変長引数は、関数の内部ではタプルとして扱われます。
 
 .. code-block:: python
+   :linenos:
 
    def total(*numbers: int) -> int:
        return sum(numbers)
@@ -105,6 +113,7 @@ None を使ったオプション引数
 キーワード引数の数があらかじめ決まっていない場合は、``**`` を付けた可変長のキーワード引数を使用します。可変長のキーワード引数は、関数の内部では辞書として扱われます。
 
 .. code-block:: python
+   :linenos:
 
    def show_profile(**info: str) -> dict[str, str]:
        return info
@@ -118,6 +127,7 @@ None を使ったオプション引数
 ``lambda`` を使うと、名前を付けずに、その場限りの小さな関数（無名関数）を作成できます。``lambda 引数: 式`` という形式で書き、式を評価した結果がそのまま戻り値になります。
 
 .. code-block:: python
+   :linenos:
 
    add_one = lambda number: number + 1
    print(add_one(5))  # 6
@@ -125,6 +135,7 @@ None を使ったオプション引数
 上記は、次の関数定義と同じ処理です。
 
 .. code-block:: python
+   :linenos:
 
    def add_one(number: int) -> int:
        return number + 1

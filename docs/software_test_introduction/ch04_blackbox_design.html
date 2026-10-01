@@ -1,0 +1,636 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. ブラックボックステストの設計技法 &mdash; ソフトウェアテスト入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=6ac444d3" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=2871b0cb"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="5. ホワイトボックステストとカバレッジ" href="ch05_whitebox_design.html" />
+    <link rel="prev" title="3. テストの分類" href="ch03_classification.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ソフトウェアテスト入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">第 I 部 テストの基礎</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_what_is_testing.html">2. テストとは何か</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_classification.html">3. テストの分類</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">4. ブラックボックステストの設計技法</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">4.1 題材の仕様</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">4.2 同値分割</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">4.3 境界値分析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">4.4 デシジョンテーブル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">4.5 状態遷移テスト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">4.6 組み合わせテスト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">4.7 エラー推測</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">4.8 技法の選び方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">4.9 まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_whitebox_design.html">5. ホワイトボックステストとカバレッジ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 II 部 Python によるテストの実践</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch06_unittest.html">6. unittest 入門</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_pytest_basics.html">7. pytest 入門</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_pytest_advanced.html">8. pytest の活用</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_test_double.html">9. テストダブル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_testable_design.html">10. テストしやすい設計</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_integration.html">11. 結合テスト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_advanced_techniques.html">12. さまざまなテスト手法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_static_analysis.html">13. 静的テスト</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_coverage.html">14. カバレッジの計測</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">第 III 部 テストの進め方</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch15_tdd.html">15. テスト駆動開発</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch16_good_tests.html">16. よいテストの書き方</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17_automation.html">17. テストの自動化と継続的インテグレーション</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch18_test_management.html">18. テストの計画と管理</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_glossary.html">付録 A 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_cheatsheet.html">付録 B 早見表</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_examples.html">付録 C サンプルコードの一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_d_references.html">付録 D 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ソフトウェアテスト入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">4. ブラックボックステストの設計技法</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>4. ブラックボックステストの設計技法<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>2 章で見たとおり、すべての入力を試すことはできない。そこで、少ない数で欠陥を見つけやすいテストケースを選ぶ必要がある。この章では、仕様に基づいてテストケースを選ぶ代表的な技法を、題材の送料計算と注文の状態管理を使って説明する。ここで設計したテストケースは、8 章で pytest のテストコードとして実装する。</p>
+<section id="id2">
+<h2>4.1 題材の仕様<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>送料計算の関数 <code class="docutils literal notranslate"><span class="pre">calc_shipping_fee</span></code> の仕様は次のとおりである。</p>
+<ul class="simple">
+<li><p>引数は、注文金額（円、整数）、プレミアム会員かどうか、配送先が離島かどうかの 3 つである。</p></li>
+<li><p>注文金額が負の場合は、エラー（<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>）とする。</p></li>
+<li><p>基本送料は 500 円である。</p></li>
+<li><p>一般会員は注文金額が 5,000 円以上、プレミアム会員は 3,000 円以上のとき、基本送料が無料になる。</p></li>
+<li><p>配送先が離島の場合は、基本送料が無料かどうかにかかわらず、1,000 円を加算する。</p></li>
+</ul>
+<p>この仕様を実装したコードは次のとおりである。ブラックボックステストではコードを見ずにテストケースを設計するが、参考のために示しておく。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">shop/shipping.py</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;送料を計算する.&quot;&quot;&quot;</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="n">BASE_FEE</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="linenos"> 4</span><span class="sd">&quot;&quot;&quot;基本送料（円）.&quot;&quot;&quot;</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="n">REMOTE_SURCHARGE</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="linenos"> 7</span><span class="sd">&quot;&quot;&quot;離島への配送で加算する料金（円）.&quot;&quot;&quot;</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="n">FREE_THRESHOLD</span> <span class="o">=</span> <span class="mi">5000</span>
+<span class="linenos">10</span><span class="sd">&quot;&quot;&quot;一般会員の送料無料となる注文金額（円）.&quot;&quot;&quot;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="n">MEMBER_FREE_THRESHOLD</span> <span class="o">=</span> <span class="mi">3000</span>
+<span class="linenos">13</span><span class="sd">&quot;&quot;&quot;プレミアム会員の送料無料となる注文金額（円）.&quot;&quot;&quot;</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="k">def</span><span class="w"> </span><span class="nf">calc_shipping_fee</span><span class="p">(</span><span class="n">subtotal</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_premium</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="linenos">17</span>                      <span class="n">is_remote</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">18</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;注文金額と条件から送料を求める.</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="sd">    Args:</span>
+<span class="linenos">21</span><span class="sd">        subtotal: 注文金額（円）。0 以上とする。</span>
+<span class="linenos">22</span><span class="sd">        is_premium: プレミアム会員なら True。</span>
+<span class="linenos">23</span><span class="sd">        is_remote: 配送先が離島なら True。</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="sd">    Returns:</span>
+<span class="linenos">26</span><span class="sd">        送料（円）。</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="sd">    Raises:</span>
+<span class="linenos">29</span><span class="sd">        ValueError: 注文金額が負の場合。</span>
+<span class="linenos">30</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">31</span>    <span class="k">if</span> <span class="n">subtotal</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">32</span>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;注文金額が負です: </span><span class="si">{</span><span class="n">subtotal</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">33</span>    <span class="n">threshold</span> <span class="o">=</span> <span class="n">MEMBER_FREE_THRESHOLD</span> <span class="k">if</span> <span class="n">is_premium</span> <span class="k">else</span> <span class="n">FREE_THRESHOLD</span>
+<span class="linenos">34</span>    <span class="n">fee</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">subtotal</span> <span class="o">&gt;=</span> <span class="n">threshold</span> <span class="k">else</span> <span class="n">BASE_FEE</span>
+<span class="linenos">35</span>    <span class="k">if</span> <span class="n">is_remote</span><span class="p">:</span>
+<span class="linenos">36</span>        <span class="n">fee</span> <span class="o">+=</span> <span class="n">REMOTE_SURCHARGE</span>
+<span class="linenos">37</span>    <span class="k">return</span> <span class="n">fee</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id3">
+<h2>4.2 同値分割<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="appendix_a_glossary.html#term-43"><span class="xref std std-term">同値分割</span></a>は、入力の範囲を、プログラムが同じように扱うと考えられるグループ（<a class="reference internal" href="appendix_a_glossary.html#term-42"><span class="xref std std-term">同値クラス</span></a>）に分け、各グループから代表の値を 1 つずつ選ぶ技法である。同じ同値クラスの値は同じように処理されるはずなので、1 つの値で試せばそのクラス全体を試したとみなす。</p>
+<p>一般会員で配送先が離島でない場合、注文金額は次の 3 つの同値クラスに分けられる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>同値クラス</p></th>
+<th class="head"><p>範囲</p></th>
+<th class="head"><p>期待結果</p></th>
+<th class="head"><p>代表値の例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>無効（負の金額）</p></td>
+<td><p>0 未満</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ValueError</span></code></p></td>
+<td><p>-100</p></td>
+</tr>
+<tr class="row-odd"><td><p>有効（送料あり）</p></td>
+<td><p>0 以上 5,000 未満</p></td>
+<td><p>500 円</p></td>
+<td><p>2,000</p></td>
+</tr>
+<tr class="row-even"><td><p>有効（送料無料）</p></td>
+<td><p>5,000 以上</p></td>
+<td><p>0 円</p></td>
+<td><p>8,000</p></td>
+</tr>
+</tbody>
+</table>
+<p>仕様で受け付けないとされる入力の範囲を<a class="reference internal" href="appendix_a_glossary.html#term-56"><span class="xref std std-term">無効同値クラス</span></a>、受け付ける入力の範囲を<a class="reference internal" href="appendix_a_glossary.html#term-60"><span class="xref std std-term">有効同値クラス</span></a>と呼ぶ。無効同値クラスのテストを忘れると、不正な入力を与えたときの動作が確かめられないまま残る。</p>
+<p>同値分割は、無数にある入力を少数のクラスにまとめることで、テストケースの数を大きく減らす。ただし、クラスの分け方を誤ると、見落としが生じる。クラスの分け方は仕様から導くものであり、仕様が曖昧であれば、その点を仕様の作成者に確認する必要がある。</p>
+</section>
+<section id="id4">
+<h2>4.3 境界値分析<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>欠陥は、同値クラスの境界に集中しやすい。2 章で例に挙げた <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> と <code class="docutils literal notranslate"><span class="pre">&gt;</span></code> の書き間違いは、その典型である。<a class="reference internal" href="appendix_a_glossary.html#term-9"><span class="xref std std-term">境界値分析</span></a>は、同値クラスの境界の値と、それに隣接する値をテストケースとして選ぶ技法である。</p>
+<p>一般会員の注文金額の境界は、無効と有効の間（0 の前後）と、送料ありと送料無料の間（5,000 の前後）の 2 か所にある。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 20.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>境界</p></th>
+<th class="head"><p>値</p></th>
+<th class="head"><p>期待結果</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>無効と有効の境界</p></td>
+<td><p>-1</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ValueError</span></code></p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>0</p></td>
+<td><p>500 円</p></td>
+</tr>
+<tr class="row-even"><td><p>送料ありと送料無料の境界</p></td>
+<td><p>4,999</p></td>
+<td><p>500 円</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>5,000</p></td>
+<td><p>0 円</p></td>
+</tr>
+</tbody>
+</table>
+<p>プレミアム会員についても、同様に 2,999 と 3,000 を選ぶ。</p>
+<p>このように、境界を挟む 2 つの値を選ぶ方法を 2 値境界値分析と呼ぶ。境界の値とその両隣の 3 つの値を選ぶ 3 値境界値分析もある。3 値の場合、送料無料の境界では 4,999、5,000、5,001 の 3 つを選ぶ。</p>
+<p>境界値分析のテストケースで、2 章の欠陥（<code class="docutils literal notranslate"><span class="pre">subtotal</span> <span class="pre">&gt;</span> <span class="pre">5000</span></code>）を見つけられるかを確かめてみる。注文金額 5,000 円では、正しいコードは 0 円を、欠陥のあるコードは 500 円を返すため、故障が起きて欠陥が見つかる。一方、同値分割の代表値（2,000 と 8,000）では、どちらのコードも同じ結果を返すため、この欠陥は見つからない。同値分割と境界値分析は組み合わせて使うのが基本である。</p>
+</section>
+<section id="id5">
+<h2>4.4 デシジョンテーブル<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>送料は、会員の種類、注文金額、配送先の 3 つの条件の組み合わせで決まる。このように、複数の条件の組み合わせで結果が決まる場合は、<a class="reference internal" href="appendix_a_glossary.html#term-33"><span class="xref std std-term">デシジョンテーブル</span></a>（決定表）を使って組み合わせを漏れなく洗い出す。</p>
+<p>デシジョンテーブルは、上半分に条件、下半分に動作を並べ、列ごとに 1 つの組み合わせ（規則）を表す。Y は条件が成り立つこと、N は成り立たないこと、X はその動作を行うことを表す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 36.0%" />
+<col style="width: 8.0%" />
+<col style="width: 8.0%" />
+<col style="width: 8.0%" />
+<col style="width: 8.0%" />
+<col style="width: 8.0%" />
+<col style="width: 8.0%" />
+<col style="width: 8.0%" />
+<col style="width: 8.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head stub"><p>規則</p></th>
+<th class="head"><p>1</p></th>
+<th class="head"><p>2</p></th>
+<th class="head"><p>3</p></th>
+<th class="head"><p>4</p></th>
+<th class="head"><p>5</p></th>
+<th class="head"><p>6</p></th>
+<th class="head"><p>7</p></th>
+<th class="head"><p>8</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><th class="stub"><p>プレミアム会員である</p></th>
+<td><p>N</p></td>
+<td><p>N</p></td>
+<td><p>N</p></td>
+<td><p>N</p></td>
+<td><p>Y</p></td>
+<td><p>Y</p></td>
+<td><p>Y</p></td>
+<td><p>Y</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>注文金額が送料無料の基準以上</p></th>
+<td><p>N</p></td>
+<td><p>N</p></td>
+<td><p>Y</p></td>
+<td><p>Y</p></td>
+<td><p>N</p></td>
+<td><p>N</p></td>
+<td><p>Y</p></td>
+<td><p>Y</p></td>
+</tr>
+<tr class="row-even"><th class="stub"><p>配送先が離島である</p></th>
+<td><p>N</p></td>
+<td><p>Y</p></td>
+<td><p>N</p></td>
+<td><p>Y</p></td>
+<td><p>N</p></td>
+<td><p>Y</p></td>
+<td><p>N</p></td>
+<td><p>Y</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>基本送料 500 円を課す</p></th>
+<td><p>X</p></td>
+<td><p>X</p></td>
+<td></td>
+<td></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><th class="stub"><p>離島料金 1,000 円を加算する</p></th>
+<td></td>
+<td><p>X</p></td>
+<td></td>
+<td><p>X</p></td>
+<td></td>
+<td><p>X</p></td>
+<td></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>送料（円）</p></th>
+<td><p>500</p></td>
+<td><p>1,500</p></td>
+<td><p>0</p></td>
+<td><p>1,000</p></td>
+<td><p>500</p></td>
+<td><p>1,500</p></td>
+<td><p>0</p></td>
+<td><p>1,000</p></td>
+</tr>
+</tbody>
+</table>
+<p>条件が 3 つあり、それぞれ Y と N の 2 通りであるため、規則は <span class="math notranslate nohighlight">\(2^3 = 8\)</span> 通りになる。各規則から 1 つずつテストケースを作る。たとえば規則 2 は、一般会員、注文金額 4,000 円（基準の 5,000 円未満）、離島の組み合わせで、期待結果は 1,500 円である。</p>
+<p>デシジョンテーブルを作ると、仕様の漏れにも気付きやすくなる。たとえば、「送料無料のときも離島料金はかかるのか」という点は、規則 4 と規則 8 の列を埋めようとしたときに初めて問題になる。仕様にこの点が書かれていなければ、仕様の作成者に確認する。</p>
+<p>条件の数が増えると、規則の数は <span class="math notranslate nohighlight">\(2^n\)</span> で増える。結果に影響しない条件がある規則をまとめて表を簡単にしたり、4.6 節の組み合わせテストを使ったりして、テストケースの数を抑える。</p>
+</section>
+<section id="id6">
+<h2>4.5 状態遷移テスト<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>注文は、「受付済み」から「支払い済み」「発送済み」へと状態が変わり、同じ操作でも状態によって結果が異なる。たとえば、取り消しは発送前ならできるが、発送後はできない。このように、状態によって振る舞いが変わる対象には、<a class="reference internal" href="appendix_a_glossary.html#term-24"><span class="xref std std-term">状態遷移テスト</span></a>を使う。</p>
+<p>注文の状態と操作の関係を、状態遷移図で表すと次のようになる。</p>
+<figure class="align-default" id="id12">
+<div class="graphviz"><object data="_images/graphviz-893cb8f3d08bca585b73ef26ea2b3c9b847c5f21.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph order {
+    rankdir=LR;
+    node [shape=box, style=&quot;rounded,filled&quot;, fillcolor=&quot;#e8f0fe&quot;];
+    start [shape=point, width=0.15];
+    received  [label=&quot;受付済み&quot;];
+    paid      [label=&quot;支払い済み&quot;];
+    shipped   [label=&quot;発送済み&quot;];
+    delivered [label=&quot;配達完了&quot;, fillcolor=&quot;#e6f4ea&quot;];
+    cancelled [label=&quot;キャンセル&quot;, fillcolor=&quot;#fde2e1&quot;];
+
+    start -&gt; received [label=&quot;注文&quot;];
+    received -&gt; paid [label=&quot;pay&quot;];
+    paid -&gt; shipped [label=&quot;ship&quot;];
+    shipped -&gt; delivered [label=&quot;deliver&quot;];
+    received -&gt; cancelled [label=&quot;cancel&quot;];
+    paid -&gt; cancelled [label=&quot;cancel&quot;];
+}</p></object></div>
+<figcaption>
+<p><span class="caption-text">注文の状態遷移図</span><a class="headerlink" href="#id12" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>状態遷移図は、有効な遷移を見やすく表せる。一方、「どの状態でどの操作が許されないか」は図から読み取りにくい。そこで、状態と操作のすべての組み合わせを表にした状態遷移表を作る。「－」は、その状態ではその操作ができない（エラーになる）ことを表す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head stub"><p>状態 ＼ 操作</p></th>
+<th class="head"><p>pay</p></th>
+<th class="head"><p>ship</p></th>
+<th class="head"><p>deliver</p></th>
+<th class="head"><p>cancel</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><th class="stub"><p>受付済み</p></th>
+<td><p>支払い済み</p></td>
+<td><p>－</p></td>
+<td><p>－</p></td>
+<td><p>キャンセル</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>支払い済み</p></th>
+<td><p>－</p></td>
+<td><p>発送済み</p></td>
+<td><p>－</p></td>
+<td><p>キャンセル</p></td>
+</tr>
+<tr class="row-even"><th class="stub"><p>発送済み</p></th>
+<td><p>－</p></td>
+<td><p>－</p></td>
+<td><p>配達完了</p></td>
+<td><p>－</p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>配達完了</p></th>
+<td><p>－</p></td>
+<td><p>－</p></td>
+<td><p>－</p></td>
+<td><p>－</p></td>
+</tr>
+<tr class="row-even"><th class="stub"><p>キャンセル</p></th>
+<td><p>－</p></td>
+<td><p>－</p></td>
+<td><p>－</p></td>
+<td><p>－</p></td>
+</tr>
+</tbody>
+</table>
+<p>状態遷移テストでは、次の 2 種類のテストケースを作る。</p>
+<ul class="simple">
+<li><p>有効な遷移のテスト：表で遷移先が書かれた 5 つのマスについて、操作の後に正しい状態になることを確かめる。すべての有効な遷移を 1 回ずつ通すことを、0 スイッチカバレッジと呼ぶ。</p></li>
+<li><p>無効な遷移のテスト：表で「－」の 15 のマスについて、操作がエラーになり、状態が変わらないことを確かめる。</p></li>
+</ul>
+<p>無効な遷移のテストは忘れられやすいが、「発送済みの注文を取り消せてしまう」といった深刻な欠陥を見つけるために重要である。</p>
+<p>有効な遷移を 2 回続けた組み合わせ（「受付済み→支払い済み→発送済み」など）をすべて通すことを 1 スイッチカバレッジと呼ぶ。状態の組み合わせによって振る舞いが変わる場合は、このような連続した遷移もテストする。</p>
+</section>
+<section id="id7">
+<h2>4.6 組み合わせテスト<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>入力の項目が多いと、すべての組み合わせを試すことは難しい。たとえば、注文の画面に次の 4 つの項目があるとする。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>項目</p></th>
+<th class="head"><p>値</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>決済方法</p></td>
+<td><p>クレジットカード、銀行振込、代金引換</p></td>
+</tr>
+<tr class="row-odd"><td><p>配送方法</p></td>
+<td><p>通常、速達</p></td>
+</tr>
+<tr class="row-even"><td><p>会員の種類</p></td>
+<td><p>一般、プレミアム</p></td>
+</tr>
+<tr class="row-odd"><td><p>端末</p></td>
+<td><p>PC、スマートフォン</p></td>
+</tr>
+</tbody>
+</table>
+<p>すべての組み合わせは <span class="math notranslate nohighlight">\(3 \times 2 \times 2 \times 2 = 24\)</span> 通りである。項目や値が増えれば、組み合わせの数はさらに急速に増える。</p>
+<p>経験上、多くの欠陥は 1 つの項目の値か、2 つの項目の値の組み合わせによって引き起こされる。そこで、任意の 2 項目について、値のすべての組み合わせが少なくとも 1 回は現れるようにテストケースを選ぶ。これを<a class="reference internal" href="appendix_a_glossary.html#term-52"><span class="xref std std-term">ペアワイズテスト</span></a>（オールペア法）と呼ぶ。上の例では、次の 6 通りで、すべての 2 項目の組み合わせを網羅できる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 10.0%" />
+<col style="width: 30.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>No.</p></th>
+<th class="head"><p>決済方法</p></th>
+<th class="head"><p>配送方法</p></th>
+<th class="head"><p>会員の種類</p></th>
+<th class="head"><p>端末</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>クレジットカード</p></td>
+<td><p>通常</p></td>
+<td><p>一般</p></td>
+<td><p>PC</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>クレジットカード</p></td>
+<td><p>速達</p></td>
+<td><p>プレミアム</p></td>
+<td><p>スマートフォン</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>銀行振込</p></td>
+<td><p>通常</p></td>
+<td><p>プレミアム</p></td>
+<td><p>PC</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>銀行振込</p></td>
+<td><p>速達</p></td>
+<td><p>一般</p></td>
+<td><p>スマートフォン</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>代金引換</p></td>
+<td><p>通常</p></td>
+<td><p>一般</p></td>
+<td><p>スマートフォン</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>代金引換</p></td>
+<td><p>速達</p></td>
+<td><p>プレミアム</p></td>
+<td><p>PC</p></td>
+</tr>
+</tbody>
+</table>
+<p>たとえば、決済方法と端末の組み合わせは 6 通りあり、いずれも表のどこかに現れる。配送方法と会員の種類の 4 通りの組み合わせも、すべて現れる。</p>
+<p>ペアワイズテストは、3 つ以上の項目の特定の組み合わせでだけ起きる欠陥を見逃す可能性がある。重要な組み合わせは、個別にテストケースとして追加する。項目が多い場合の組み合わせ表は手作業では作りにくいため、専用のツールを使うことが多い。</p>
+</section>
+<section id="id8">
+<h2>4.7 エラー推測<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="appendix_a_glossary.html#term-4"><span class="xref std std-term">エラー推測</span></a>は、経験や知識から欠陥が潜んでいそうな入力を推測してテストする、経験ベースの技法である。体系的な技法で作ったテストケースに加えて使う。よく試される入力の例を次に示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>分類</p></th>
+<th class="head"><p>入力の例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>数値</p></td>
+<td><p>0、負の数、非常に大きな数、小数、浮動小数点の誤差が出る値（0.1 + 0.2 など）</p></td>
+</tr>
+<tr class="row-odd"><td><p>文字列</p></td>
+<td><p>空文字列、空白だけの文字列、非常に長い文字列、全角文字、絵文字、改行やタブを含む文字列</p></td>
+</tr>
+<tr class="row-even"><td><p>コレクション</p></td>
+<td><p>空のリスト、要素が 1 つだけのリスト、重複する要素</p></td>
+</tr>
+<tr class="row-odd"><td><p>日付と時刻</p></td>
+<td><p>月末、うるう年の 2 月 29 日、年の変わり目、タイムゾーンの違い</p></td>
+</tr>
+<tr class="row-even"><td><p>欠けた値</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code>、必須の項目がない入力、存在しないファイル</p></td>
+</tr>
+<tr class="row-odd"><td><p>操作</p></td>
+<td><p>同じ操作の 2 回続けての実行、操作の途中での中断</p></td>
+</tr>
+</tbody>
+</table>
+<p>チームで過去に見つかった欠陥の記録は、エラー推測の貴重な材料になる。見つかった欠陥の傾向をチェックリストにまとめておくと、個人の経験に頼らずにエラー推測を行える。</p>
+</section>
+<section id="id9">
+<h2>4.8 技法の選び方<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>ここまでの技法は、対象の性質に応じて使い分け、組み合わせて使う。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>対象の性質</p></th>
+<th class="head"><p>適した技法</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>入力が範囲で区切られる</p></td>
+<td><p>同値分割と境界値分析</p></td>
+</tr>
+<tr class="row-odd"><td><p>複数の条件の組み合わせで結果が決まる</p></td>
+<td><p>デシジョンテーブル</p></td>
+</tr>
+<tr class="row-even"><td><p>状態によって振る舞いが変わる</p></td>
+<td><p>状態遷移テスト</p></td>
+</tr>
+<tr class="row-odd"><td><p>入力の項目が多く、組み合わせが膨大</p></td>
+<td><p>ペアワイズテスト</p></td>
+</tr>
+<tr class="row-even"><td><p>上記の技法で作ったテストケースを補う</p></td>
+<td><p>エラー推測</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id10">
+<h2>4.9 まとめ<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>同値分割は、入力を同じように扱われるクラスに分け、各クラスから代表値を選ぶ。無効同値クラスも忘れずにテストする。</p></li>
+<li><p>境界値分析は、欠陥が集中しやすい境界とその隣の値を選ぶ。</p></li>
+<li><p>デシジョンテーブルは、条件の組み合わせを漏れなく洗い出し、仕様の漏れにも気付かせる。</p></li>
+<li><p>状態遷移テストでは、有効な遷移と無効な遷移の両方をテストする。</p></li>
+<li><p>ペアワイズテストは、2 項目の組み合わせを網羅しながらテストケースの数を抑える。</p></li>
+<li><p>エラー推測は、経験に基づいて体系的な技法を補う。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch03_classification.html" class="btn btn-neutral float-left" title="3. テストの分類" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch05_whitebox_design.html" class="btn btn-neutral float-right" title="5. ホワイトボックステストとカバレッジ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10_cellular.frag</title>
+<style>
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; }
+#error {
+  position: absolute; top: 0; left: 0; right: 0; margin: 0; padding: 1em;
+  color: #fff; background: rgba(160, 0, 0, 0.85);
+  font: 14px/1.4 monospace; white-space: pre-wrap; display: none;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<pre id="error"></pre>
+<script>
+"use strict";
+// [{name: "Buffer A" | "Image", source: GLSL, line: ファイル中の開始行}]
+const PASSES = [{"name": "Image", "source": "// 10_cellular.frag\n// \u7b2c 10 \u7ae0: \u30bb\u30eb\u30e9\u30fc\u30ce\u30a4\u30ba (Worley \u30ce\u30a4\u30ba) \u3068\u30df\u30f3\u30b3\u30d5\u30b9\u30ad\u30fc\u8ddd\u96e2\u3002\u753b\u9762\u3092 6 \u3064\u306b\u5206\u3051\u3001\u6b21\u306e\u9806\u306b\u8868\u793a\u3059\u308b\u3002\n//   \u4e0a\u6bb5: F1 (\u6700\u3082\u8fd1\u3044\u70b9\u307e\u3067\u306e\u8ddd\u96e2)\u3001F2 (2 \u756a\u76ee\u306b\u8fd1\u3044\u70b9\u307e\u3067\u306e\u8ddd\u96e2)\u3001F2 - F1\n//   \u4e0b\u6bb5: \u30dc\u30ed\u30ce\u30a4\u306e\u5883\u754c\u307e\u3067\u306e\u8ddd\u96e2\u3001\u30de\u30f3\u30cf\u30c3\u30bf\u30f3\u8ddd\u96e2 (p = 1) \u306e\u30bb\u30eb\u3001\u30c1\u30a7\u30d3\u30b7\u30a7\u30d5\u8ddd\u96e2 (p = \u221e) \u306e\u30bb\u30eb\n// \u5404\u30bb\u30eb\u306e\u70b9\u306f\u3001\u6642\u9593\u3068\u3068\u3082\u306b\u3086\u3063\u304f\u308a\u52d5\u304b\u3057\u3066\u3044\u308b\u3002\n\n// ---- \u30cf\u30c3\u30b7\u30e5 (\u7b2c 10 \u7ae0) -------------------------------------------------\n\nuint pcgHash(uint v)\n{\n    uint state = v * 747796405u + 2891336453u;\n    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;\n    return (word >> 22u) ^ word;\n}\n\n// \u6574\u6570\u306e\u683c\u5b50\u70b9 p \u306b\u30010 \u4ee5\u4e0a 1 \u672a\u6e80\u306e\u4e71\u6570\u3092 2 \u3064\u5272\u308a\u5f53\u3066\u308b\nvec2 hash22(vec2 p)\n{\n    uvec2 q = uvec2(ivec2(p));\n    uint h = pcgHash(q.x + pcgHash(q.y));\n    return vec2(float(h), float(pcgHash(h))) / 4294967296.0;\n}\n\n// ---- \u8ddd\u96e2\u306e\u6e2c\u308a\u65b9 --------------------------------------------------------\n\nconst int METRIC_EUCLIDEAN = 0;   // p = 2 (\u30e6\u30fc\u30af\u30ea\u30c3\u30c9\u8ddd\u96e2)\nconst int METRIC_MANHATTAN = 1;   // p = 1 (\u30de\u30f3\u30cf\u30c3\u30bf\u30f3\u8ddd\u96e2)\nconst int METRIC_CHEBYSHEV = 2;   // p = \u221e (\u30c1\u30a7\u30d3\u30b7\u30a7\u30d5\u8ddd\u96e2)\n\n// \u30df\u30f3\u30b3\u30d5\u30b9\u30ad\u30fc\u8ddd\u96e2\u306e\u4ee3\u8868\u7684\u306a 3 \u3064\nfloat distanceOf(vec2 d, int metric)\n{\n    if (metric == METRIC_MANHATTAN) {\n        return abs(d.x) + abs(d.y);\n    }\n    if (metric == METRIC_CHEBYSHEV) {\n        return max(abs(d.x), abs(d.y));\n    }\n    return length(d);\n}\n\n// ---- \u30bb\u30eb\u30e9\u30fc\u30ce\u30a4\u30ba ------------------------------------------------------\n\n// \u683c\u5b50\u306e\u30bb\u30eb cell \u306b\u7f6e\u304f\u70b9\u306e\u4f4d\u7f6e (\u30bb\u30eb\u5185\u306e\u5ea7\u6a19 0\u301c1)\u3002\u6642\u9593\u3068\u3068\u3082\u306b\u52d5\u304b\u3059\nvec2 featurePoint(vec2 cell)\n{\n    vec2 h = hash22(cell);\n    return 0.5 + 0.4 * sin(0.5 * iTime + 6.2831853 * h);\n}\n\n// \u70b9 x \u306e\u307e\u308f\u308a 3 \u00d7 3 \u306e\u30bb\u30eb\u306e\u70b9\u3092\u8abf\u3079\u3001(F1, F2, \u6700\u3082\u8fd1\u3044\u70b9\u306e\u30bb\u30eb\u306e\u4e71\u6570) \u3092\u8fd4\u3059\nvec3 cellular(vec2 x, int metric)\n{\n    vec2 n = floor(x);\n    vec2 f = fract(x);\n    float f1 = 8.0;\n    float f2 = 8.0;\n    float id = 0.0;\n    for (int j = -1; j <= 1; j++) {\n        for (int i = -1; i <= 1; i++) {\n            vec2 g = vec2(float(i), float(j));\n            vec2 r = g + featurePoint(n + g) - f;   // x \u304b\u3089\u70b9\u3078\u306e\u30d9\u30af\u30c8\u30eb\n            float d = distanceOf(r, metric);\n            if (d < f1) {\n                f2 = f1;\n                f1 = d;\n                id = hash22(n + g + 31.0).x;\n            } else if (d < f2) {\n                f2 = d;\n            }\n        }\n    }\n    return vec3(f1, f2, id);\n}\n\n// \u30dc\u30ed\u30ce\u30a4\u306e\u5883\u754c\u307e\u3067\u306e\u30e6\u30fc\u30af\u30ea\u30c3\u30c9\u8ddd\u96e2 (Quilez \u306e\u65b9\u6cd5)\u3002\n// 1 \u56de\u76ee\u306e\u63a2\u7d22\u3067\u6700\u3082\u8fd1\u3044\u70b9\u3092\u6c42\u3081\u30012 \u56de\u76ee\u306e\u63a2\u7d22\u3067\u305d\u306e\u70b9\u3068\u4ed6\u306e\u70b9\u306e\u5782\u76f4\u4e8c\u7b49\u5206\u7dda\u307e\u3067\u306e\u8ddd\u96e2\u306e\u6700\u5c0f\u5024\u3092\u3068\u308b\nfloat voronoiBorder(vec2 x)\n{\n    vec2 n = floor(x);\n    vec2 f = fract(x);\n\n    // 1 \u56de\u76ee: \u6700\u3082\u8fd1\u3044\u70b9\n    vec2 nearestCell = vec2(0.0);\n    vec2 nearest = vec2(0.0);   // x \u304b\u3089\u6700\u3082\u8fd1\u3044\u70b9\u3078\u306e\u30d9\u30af\u30c8\u30eb\n    float best = 8.0;\n    for (int j = -1; j <= 1; j++) {\n        for (int i = -1; i <= 1; i++) {\n            vec2 g = vec2(float(i), float(j));\n            vec2 r = g + featurePoint(n + g) - f;\n            float d = dot(r, r);\n            if (d < best) {\n                best = d;\n                nearest = r;\n                nearestCell = g;\n            }\n        }\n    }\n\n    // 2 \u56de\u76ee: \u6700\u3082\u8fd1\u3044\u70b9\u3068\u3001\u305d\u306e\u5468\u56f2 5 \u00d7 5 \u306e\u70b9\u3068\u306e\u5883\u754c\u307e\u3067\u306e\u8ddd\u96e2\n    float border = 8.0;\n    for (int j = -2; j <= 2; j++) {\n        for (int i = -2; i <= 2; i++) {\n            vec2 g = nearestCell + vec2(float(i), float(j));\n            vec2 r = g + featurePoint(n + g) - f;\n            vec2 diff = r - nearest;\n            if (dot(diff, diff) > 1e-6) {\n                // 2 \u70b9\u306e\u4e2d\u70b9\u304b\u3089\u30012 \u70b9\u3092\u7d50\u3076\u65b9\u5411\u306b\u6e2c\u3063\u305f\u8ddd\u96e2\n                border = min(border, dot(0.5 * (nearest + r), normalize(diff)));\n            }\n        }\n    }\n    return border;\n}\n\n// ---- \u30e1\u30a4\u30f3 --------------------------------------------------------------\n\nvec3 cellColor(float id)\n{\n    return 0.55 + 0.4 * cos(6.2831853 * (id + vec3(0.0, 0.33, 0.67)));\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 grid = vec2(3.0, 2.0);\n    vec2 uv = fragCoord / iResolution.xy;\n    vec2 cell = floor(uv * grid);\n    int index = int(cell.x) + 3 * int(1.0 - cell.y);   // \u5de6\u4e0a\u304b\u3089 0, 1, 2, ...\n\n    vec2 local = fract(uv * grid);\n    float aspect = (iResolution.x / grid.x) / (iResolution.y / grid.y);\n    vec2 p = 5.0 * local * vec2(aspect, 1.0);   // \u7e26\u65b9\u5411\u306b\u683c\u5b50 5 \u500b\u5206\n\n    vec3 col;\n    if (index == 0) {\n        col = vec3(cellular(p, METRIC_EUCLIDEAN).x);\n    } else if (index == 1) {\n        col = vec3(0.7 * cellular(p, METRIC_EUCLIDEAN).y);\n    } else if (index == 2) {\n        vec3 c = cellular(p, METRIC_EUCLIDEAN);\n        col = vec3(2.0 * (c.y - c.x));\n    } else if (index == 3) {\n        // \u5883\u754c\u307e\u3067\u306e\u8ddd\u96e2: \u7b49\u9593\u9694\u306e\u7e1e\u3068\u3001\u5e45\u4e00\u5b9a\u306e\u5883\u754c\u7dda\n        float d = voronoiBorder(p);\n        col = vec3(0.3 + 0.2 * cos(40.0 * d));\n        col = mix(vec3(1.0, 0.8, 0.3), col, smoothstep(0.02, 0.04, d));\n    } else {\n        // \u30df\u30f3\u30b3\u30d5\u30b9\u30ad\u30fc\u8ddd\u96e2\u3092\u5909\u3048\u305f\u30bb\u30eb\u3002\u5883\u754c\u7dda\u306f F2 - F1 \u3067\u8fd1\u4f3c\u3059\u308b\n        int metric = (index == 4) ? METRIC_MANHATTAN : METRIC_CHEBYSHEV;\n        vec3 c = cellular(p, metric);\n        col = cellColor(c.z) * (0.6 + 0.4 * (1.0 - c.x));\n        col *= smoothstep(0.02, 0.06, c.y - c.x);\n    }\n\n    // \u9818\u57df\u306e\u5883\u754c\u7dda\n    vec2 border = step(vec2(0.005), local) * step(local, vec2(0.995));\n    col *= border.x * border.y;\n    fragColor = vec4(clamp(col, 0.0, 1.0), 1.0);\n}\n", "line": 1, "common": "", "commonLine": 1}];
+
+const HEADER = [
+  "#version 300 es",
+  "precision highp float;",
+  "precision highp int;",
+  "uniform vec3 iResolution;",
+  "uniform float iTime;",
+  "uniform float iTimeDelta;",
+  "uniform int iFrame;",
+  "uniform vec4 iMouse;",
+  "uniform sampler2D iChannel0;",
+  "uniform vec3 iChannelResolution[4];",
+  "out vec4 shadertoyOutColor;"
+].join("\n");
+
+// Image のパスでは不透明度を 1 にする。Buffer A では 4 成分をそのまま残す
+function footer(passName) {
+  return [
+    "",
+    "void main() {",
+    "  mainImage(shadertoyOutColor, gl_FragCoord.xy);",
+    passName === "Image" ? "  shadertoyOutColor.a = 1.0;" : "",
+    "}"
+  ].join("\n");
+}
+
+const VERTEX_SOURCE = [
+  "#version 300 es",
+  "in vec2 position;",
+  "void main() { gl_Position = vec4(position, 0.0, 1.0); }"
+].join("\n");
+
+function showError(message) {
+  const element = document.getElementById("error");
+  element.textContent = message;
+  element.style.display = "block";
+  document.title = "ERROR: " + document.title;
+}
+
+function compile(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
+// パスのプログラムを作る。Common のコードがあれば先頭に加える。
+// #line でエラーの行番号をファイルの行番号に合わせる
+function createProgram(gl, pass) {
+  const program = gl.createProgram();
+  let source = HEADER;
+  if (pass.common) {
+    source += "\n#line " + pass.commonLine + "\n" + pass.common;
+  }
+  source += "\n#line " + pass.line + "\n" + pass.source + footer(pass.name);
+  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX_SOURCE));
+  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, source));
+  gl.bindAttribLocation(program, 0, "position");
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program));
+  }
+  const uniforms = {};
+  for (const name of ["iResolution", "iTime", "iTimeDelta", "iFrame",
+                      "iMouse", "iChannel0", "iChannelResolution"]) {
+    uniforms[name] = gl.getUniformLocation(program, name);
+  }
+  return {name: pass.name, program: program, uniforms: uniforms};
+}
+
+// URL のフラグメント (#t=2.5&frames=16 など) から数値のパラメーターを読む
+function hashParameter(name) {
+  const pattern = new RegExp("(?:^#|&)" + name + "=([0-9.]+)");
+  const match = pattern.exec(location.hash);
+  return match ? parseFloat(match[1]) : null;
+}
+
+function run() {
+  const canvas = document.getElementById("canvas");
+  const gl = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
+  if (!gl) {
+    showError("WebGL2 is not supported by this browser.");
+    return;
+  }
+
+  let passes;
+  try {
+    passes = PASSES.map((pass) => createProgram(gl, pass));
+  } catch (e) {
+    showError("Shader compile error:\n" + e.message);
+    return;
+  }
+  const bufferPass = passes.find((pass) => pass.name === "Buffer A");
+  const imagePass = passes.find((pass) => pass.name === "Image");
+
+  // 浮動小数点数のテクスチャへの描画に対応していなければ 8 ビットで代用する
+  const floatBuffer = gl.getExtension("EXT_color_buffer_float") !== null;
+
+  // 画面全体を覆う 2 つの三角形
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
+    [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  // Buffer A の描画先。前のフレームを読みながら次のフレームを書くため 2 枚使う
+  let targets = [];
+  function createTarget(width, height) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    if (floatBuffer) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0,
+                    gl.RGBA, gl.FLOAT, null);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0,
+                    gl.RGBA, gl.UNSIGNED_BYTE, null);
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const framebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                            gl.TEXTURE_2D, texture, 0);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return {texture: texture, framebuffer: framebuffer};
+  }
+
+  // iMouse: xy はドラッグ中の座標、zw はクリック位置 (離すと負)
+  const mouse = [0, 0, 0, 0];
+  let dragging = false;
+  function mousePosition(event) {
+    const rect = canvas.getBoundingClientRect();
+    const scale = canvas.width / rect.width;
+    return [(event.clientX - rect.left) * scale,
+            (rect.bottom - event.clientY) * scale];
+  }
+  canvas.addEventListener("mousedown", (event) => {
+    const [x, y] = mousePosition(event);
+    dragging = true;
+    mouse[0] = x; mouse[1] = y; mouse[2] = x; mouse[3] = y;
+  });
+  canvas.addEventListener("mousemove", (event) => {
+    if (!dragging) { return; }
+    const [x, y] = mousePosition(event);
+    mouse[0] = x; mouse[1] = y;
+  });
+  window.addEventListener("mouseup", () => {
+    dragging = false;
+    mouse[2] = -Math.abs(mouse[2]); mouse[3] = -Math.abs(mouse[3]);
+  });
+
+  function drawPass(pass, width, height, time, timeDelta, frame, channel) {
+    gl.useProgram(pass.program);
+    const u = pass.uniforms;
+    gl.uniform3f(u.iResolution, width, height, 1);
+    gl.uniform1f(u.iTime, time);
+    gl.uniform1f(u.iTimeDelta, timeDelta);
+    gl.uniform1i(u.iFrame, frame);
+    gl.uniform4fv(u.iMouse, mouse);
+    gl.uniform3fv(u.iChannelResolution,
+                  [width, height, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, channel);
+    gl.uniform1i(u.iChannel0, 0);
+    gl.viewport(0, 0, width, height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+
+  // 1 フレームを描画する
+  function renderFrame(time, timeDelta, frame) {
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.floor(canvas.clientWidth * ratio));
+    const height = Math.max(1, Math.floor(canvas.clientHeight * ratio));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      targets = [];
+    }
+    if (bufferPass && targets.length === 0) {
+      targets = [createTarget(width, height), createTarget(width, height)];
+    }
+    let latest = null;
+    if (bufferPass) {
+      // targets[0] (前のフレーム) を読み、targets[1] に書いてから入れ替える
+      gl.bindFramebuffer(gl.FRAMEBUFFER, targets[1].framebuffer);
+      drawPass(bufferPass, width, height, time, timeDelta, frame,
+               targets[0].texture);
+      targets.reverse();
+      latest = targets[0].texture;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    drawPass(imagePass, width, height, time, timeDelta, frame, latest);
+  }
+
+  const fixedTime = hashParameter("t");
+  const fixedFrame = hashParameter("frame");
+  const frameCount = hashParameter("frames");
+
+  if (frameCount !== null) {
+    // 指定したフレーム数だけを続けて描画して止める (撮影用)。
+    // 画面の大きさが変わったときは、最初から描画し直す
+    const renderFixedFrames = () => {
+      const time = fixedTime !== null ? fixedTime : 0;
+      targets = [];
+      for (let frame = 0; frame < frameCount; frame++) {
+        renderFrame(time, 1 / 60, frame);
+      }
+      gl.finish();
+    };
+    new ResizeObserver(renderFixedFrames).observe(canvas);
+    return;
+  }
+
+  const startTime = performance.now();
+  let previousTime = 0;
+  let frame = 0;
+  function loop(now) {
+    const time = fixedTime !== null ? fixedTime : (now - startTime) / 1000;
+    renderFrame(time, time - previousTime,
+                fixedFrame !== null ? fixedFrame : frame);
+    previousTime = time;
+    frame += 1;
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+run();
+</script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 3 章 距離関数（SDF） &mdash; GLSL によるレイマーチング入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7ccb7449" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 4 章 形状の合成と変形" href="04_operations.html" />
+    <link rel="prev" title="第 2 章 レイマーチングの原理" href="02_principle.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            GLSL によるレイマーチング入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_glsl_basics.html">第 1 章 GLSL とフラグメントシェーダーの基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_principle.html">第 2 章 レイマーチングの原理</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 3 章 距離関数（SDF）</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">球</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">平面</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">箱</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">角丸の箱</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">トーラス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">円柱</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">カプセル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">シーンへの配置</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sdf-sdf">厳密な SDF と近似的な SDF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sdf-3">2 次元の SDF から 3 次元の形状を作る</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="04_operations.html">第 4 章 形状の合成と変形</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_lighting.html">第 5 章 照明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_shadow_ao.html">第 6 章 影と AO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_camera.html">第 7 章 カメラと演出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_practice.html">第 8 章 実践：シーンを組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化とデバッグ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">発展編</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="10_noise.html">第 10 章 ハッシュとノイズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_reflection_refraction.html">第 11 章 反射と屈折</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_materials.html">第 12 章 物理ベースの材質</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_fractal.html">第 13 章 フラクタル</a></li>
+<li class="toctree-l1"><a class="reference internal" href="14_four_dimensions.html">第 14 章 4 次元の形状</a></li>
+<li class="toctree-l1"><a class="reference internal" href="15_grid_traversal.html">第 15 章 グリッドの走査</a></li>
+<li class="toctree-l1"><a class="reference internal" href="16_volume.html">第 16 章 ボリュームレンダリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="17_path_tracing.html">第 17 章 パストレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="18_landscape.html">第 18 章 実践：夕暮れの風景を描く</a></li>
+<li class="toctree-l1"><a class="reference internal" href="19_night_city.html">第 19 章 実践：ボクセルの都市の夜景</a></li>
+<li class="toctree-l1"><a class="reference internal" href="20_still_life.html">第 20 章 実践：パストレーシングによる静物画</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">付録 A サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">付録 B 参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">付録 C 用語集</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">GLSL によるレイマーチング入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 3 章 距離関数（SDF）</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sdf">
+<h1>第 3 章 距離関数（SDF）<a class="headerlink" href="#sdf" title="Link to this heading"></a></h1>
+<p>この章では、基本的な形状の SDF とその導出を示す。SDF を導出するときは、形状の対称性を利用して問題を簡単な場合に帰着させることが多い。ここで示す形状は、次の章で組み合わせて複雑な形状を作るための部品になる。</p>
+<p>以降のコードでは、形状の中心を原点に置いた SDF を示す。形状を別の位置に置く方法は第 4 章で説明する。</p>
+<p>次のサンプルは、この章で扱う基本形状を平面の上に並べたものである。陰影の計算（関数 <code class="docutils literal notranslate"><span class="pre">calcNormal</span></code> と <code class="docutils literal notranslate"><span class="pre">shade</span></code>）は第 5 章で説明する。</p>
+<p class="example-links"><a class="reference download internal" download="" href="_downloads/717c933ca389532a78b07cb97e1409ba/03_primitives.frag"><code class="xref download docutils literal notranslate"><span class="pre">03_primitives.frag</span> <span class="pre">をダウンロード</span></code></a> ｜ <a class="reference external" href="demos/03_primitives.html">ブラウザーで実行</a></p>
+<figure class="align-center" id="id9">
+<img alt="平面の上に、球、箱、角丸の箱、トーラス、円柱、カプセルが並んでいる" src="_images/03_primitives.png" />
+<figcaption>
+<p><span class="caption-text">03_primitives.frag の実行結果。奥の列は左から球、箱、角丸の箱、手前の列は左からトーラス、円柱、カプセルである。</span><a class="headerlink" href="#id9" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<section id="id1">
+<h2>球<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>中心が原点、半径が <span class="math notranslate nohighlight">\(r\)</span> の球の SDF は、第 1 章の円と同じ形の式になる。</p>
+<div class="math notranslate nohighlight">
+\[f(\mathbf{p}) = |\mathbf{p}| - r\]</div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">11</span><span class="c1">// 球: 中心は原点、半径 r</span>
+<span class="linenos">12</span><span class="kt">float</span><span class="w"> </span><span class="n">sdSphere</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="p">)</span>
+<span class="linenos">13</span><span class="p">{</span>
+<span class="linenos">14</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<span class="linenos">15</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h2>平面<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>単位法線ベクトル <span class="math notranslate nohighlight">\(\hat{\mathbf{n}}\)</span> を持ち、原点からの符号付き距離が <span class="math notranslate nohighlight">\(h\)</span> の平面の SDF は次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[f(\mathbf{p}) = \mathbf{p} \cdot \hat{\mathbf{n}} - h\]</div>
+<p>サンプルでは、水平な地面として <span class="math notranslate nohighlight">\(\hat{\mathbf{n}} = (0, 1, 0)\)</span> の場合だけを使う。このとき <span class="math notranslate nohighlight">\(f(\mathbf{p}) = p_y - h\)</span> となり、平面より下が内側になる。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">53</span><span class="c1">// 平面: y = h</span>
+<span class="linenos">54</span><span class="kt">float</span><span class="w"> </span><span class="n">sdPlane</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="p">)</span>
+<span class="linenos">55</span><span class="p">{</span>
+<span class="linenos">56</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">h</span><span class="p">;</span>
+<span class="linenos">57</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>箱<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>中心が原点で、各軸方向の半分の長さが <span class="math notranslate nohighlight">\(\mathbf{b} = (b_x, b_y, b_z)\)</span> の箱を考える。箱は 3 つの座標平面について対称なので、<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> を <span class="math notranslate nohighlight">\(|\mathbf{p}| = (|p_x|, |p_y|, |p_z|)\)</span> に置き換えても距離は変わらない。そこで第 1 象限（すべての成分が 0 以上の領域）だけを考え、次のベクトルを定義する。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{q} = |\mathbf{p}| - \mathbf{b}\]</div>
+<p><span class="math notranslate nohighlight">\(q_x &gt; 0\)</span> は、点が箱の <span class="math notranslate nohighlight">\(x\)</span> 方向の面より外にあることを意味する。</p>
+<ul class="simple">
+<li><p>箱の外側（<span class="math notranslate nohighlight">\(\mathbf{q}\)</span> のいずれかの成分が正）では、最も近い点は面、辺、頂点のいずれかにある。どの場合も、距離は <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> の正の成分だけを残したベクトルの長さ <span class="math notranslate nohighlight">\(|\max(\mathbf{q}, \mathbf{0})|\)</span> になる。</p></li>
+<li><p>箱の内側（<span class="math notranslate nohighlight">\(\mathbf{q}\)</span> のすべての成分が負）では、最も近い面までの距離に負の符号を付けた値 <span class="math notranslate nohighlight">\(\max(q_x, q_y, q_z)\)</span> になる。</p></li>
+</ul>
+<p>2 つの場合を 1 つの式にまとめると、次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[f(\mathbf{p}) = |\max(\mathbf{q}, \mathbf{0})| + \min\bigl(\max(q_x, q_y, q_z),\ 0\bigr)\]</div>
+<p>外側では第 2 項が 0 に、内側では第 1 項が 0 になるので、場合分けが不要になる。この式は、箱の内側でも外側でも厳密な距離を与える。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">17</span><span class="c1">// 箱: 中心は原点、各軸方向の半分の長さ b</span>
+<span class="linenos">18</span><span class="kt">float</span><span class="w"> </span><span class="n">sdBox</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">b</span><span class="p">)</span>
+<span class="linenos">19</span><span class="p">{</span>
+<span class="linenos">20</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="linenos">21</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">q</span><span class="p">.</span><span class="n">z</span><span class="p">)),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">22</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2>角丸の箱<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>SDF から定数 <span class="math notranslate nohighlight">\(r\)</span> を引くと、ゼロ等値面が外側に <span class="math notranslate nohighlight">\(r\)</span> だけ移動する。すなわち、元の形状を半径 <span class="math notranslate nohighlight">\(r\)</span> だけ膨らませた形状になる。このとき、元の形状の角や辺は半径 <span class="math notranslate nohighlight">\(r\)</span> で丸められる。この操作を「丸め」と呼ぶ。</p>
+<p>外形の大きさを変えずに角を丸めるには、あらかじめ箱を <span class="math notranslate nohighlight">\(r\)</span> だけ小さくしてから丸める。</p>
+<div class="math notranslate nohighlight">
+\[f(\mathbf{p}) = f_{\text{box}}(\mathbf{p};\ \mathbf{b} - r) - r\]</div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">24</span><span class="c1">// 角丸の箱: 外形の半分の長さ b、角の丸みの半径 r</span>
+<span class="linenos">25</span><span class="kt">float</span><span class="w"> </span><span class="n">sdRoundBox</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="p">)</span>
+<span class="linenos">26</span><span class="p">{</span>
+<span class="linenos">27</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sdBox</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">r</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<span class="linenos">28</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h2>トーラス<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p><span class="math notranslate nohighlight">\(xz\)</span> 平面上にある半径 <span class="math notranslate nohighlight">\(R\)</span> の円を中心線とし、太さ（管の半径）が <span class="math notranslate nohighlight">\(r\)</span> のトーラスを考える。トーラスは <span class="math notranslate nohighlight">\(y\)</span> 軸まわりの回転体なので、点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> を回転軸からの距離 <span class="math notranslate nohighlight">\(\sqrt{p_x^2 + p_z^2}\)</span> と高さ <span class="math notranslate nohighlight">\(p_y\)</span> の 2 次元の問題に帰着できる。この 2 次元の断面では、トーラスは中心 <span class="math notranslate nohighlight">\((R, 0)\)</span>、半径 <span class="math notranslate nohighlight">\(r\)</span> の円になる。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{q} = \Bigl(\sqrt{p_x^2 + p_z^2} - R,\ p_y\Bigr), \qquad
+f(\mathbf{p}) = |\mathbf{q}| - r\]</div>
+<p>サンプルでは、<span class="math notranslate nohighlight">\(R\)</span> を <code class="docutils literal notranslate"><span class="pre">t.x</span></code>、<span class="math notranslate nohighlight">\(r\)</span> を <code class="docutils literal notranslate"><span class="pre">t.y</span></code> として渡す。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">30</span><span class="c1">// トーラス: xz 平面上の半径 t.x の円のまわりの半径 t.y の管</span>
+<span class="linenos">31</span><span class="kt">float</span><span class="w"> </span><span class="n">sdTorus</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec2</span><span class="w"> </span><span class="n">t</span><span class="p">)</span>
+<span class="linenos">32</span><span class="p">{</span>
+<span class="linenos">33</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">34</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">35</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h2>円柱<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p><span class="math notranslate nohighlight">\(y\)</span> 軸を中心軸とし、半径 <span class="math notranslate nohighlight">\(r\)</span>、高さの半分が <span class="math notranslate nohighlight">\(h\)</span> の円柱も回転体である。断面は幅 <span class="math notranslate nohighlight">\(2r\)</span>、高さ <span class="math notranslate nohighlight">\(2h\)</span> の長方形になるので、2 次元の箱の SDF をそのまま使える。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{q} = \Bigl(\sqrt{p_x^2 + p_z^2},\ |p_y|\Bigr) - (r, h), \qquad
+f(\mathbf{p}) = |\max(\mathbf{q}, \mathbf{0})| + \min\bigl(\max(q_x, q_y),\ 0\bigr)\]</div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">37</span><span class="c1">// 円柱: y 軸が中心軸、半径 r、高さの半分 h</span>
+<span class="linenos">38</span><span class="kt">float</span><span class="w"> </span><span class="n">sdCylinder</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="p">)</span>
+<span class="linenos">39</span><span class="p">{</span>
+<span class="linenos">40</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="kt">vec2</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">),</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">);</span>
+<span class="linenos">41</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">.</span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">42</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h2>カプセル<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>カプセルは、線分 <span class="math notranslate nohighlight">\(\overline{\mathbf{a}\mathbf{b}}\)</span> から距離 <span class="math notranslate nohighlight">\(r\)</span> 以内にある点の集合である。まず線分上で <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> に最も近い点を求める。線分上の点を <span class="math notranslate nohighlight">\(\mathbf{a} + h(\mathbf{b} - \mathbf{a})\)</span> （<span class="math notranslate nohighlight">\(0 \le h \le 1\)</span>）と表すと、最も近い点のパラメーターは次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[h = \operatorname{clamp}\left(\frac{(\mathbf{p} - \mathbf{a}) \cdot (\mathbf{b} - \mathbf{a})}{|\mathbf{b} - \mathbf{a}|^2},\ 0,\ 1\right)\]</div>
+<p>clamp を外した値は、<span class="math notranslate nohighlight">\(\mathbf{p}\)</span> を直線 <span class="math notranslate nohighlight">\(\mathbf{a}\mathbf{b}\)</span> に正射影した点のパラメーターである。これを区間 <span class="math notranslate nohighlight">\([0, 1]\)</span> に制限すると、線分の外側に射影された場合は端点が選ばれる。線分までの距離から <span class="math notranslate nohighlight">\(r\)</span> を引いたものがカプセルの SDF になる。</p>
+<div class="math notranslate nohighlight">
+\[f(\mathbf{p}) = \bigl|(\mathbf{p} - \mathbf{a}) - h(\mathbf{b} - \mathbf{a})\bigr| - r\]</div>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">44</span><span class="c1">// カプセル: 線分 ab から半径 r 以内の領域</span>
+<span class="linenos">45</span><span class="kt">float</span><span class="w"> </span><span class="n">sdCapsule</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">r</span><span class="p">)</span>
+<span class="linenos">46</span><span class="p">{</span>
+<span class="linenos">47</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">pa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="linenos">48</span><span class="w">    </span><span class="kt">vec3</span><span class="w"> </span><span class="n">ba</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="linenos">49</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clamp</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">pa</span><span class="p">,</span><span class="w"> </span><span class="n">ba</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">dot</span><span class="p">(</span><span class="n">ba</span><span class="p">,</span><span class="w"> </span><span class="n">ba</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+<span class="linenos">50</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">pa</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ba</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">h</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+<span class="linenos">51</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h2>シーンへの配置<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p>各形状を配置したシーン全体の SDF は、各形状の SDF の最小値として求める。最小値をとる操作の意味は第 4 章で説明する。形状を配置する位置 <span class="math notranslate nohighlight">\(\mathbf{c}\)</span> は、SDF の引数を <span class="math notranslate nohighlight">\(\mathbf{p} - \mathbf{c}\)</span> とすることで指定している。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">61</span><span class="kt">float</span><span class="w"> </span><span class="n">map</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">62</span><span class="p">{</span>
+<span class="linenos">63</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sdPlane</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="linenos">64</span><span class="w">    </span><span class="c1">// 奥の列</span>
+<span class="linenos">65</span><span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdSphere</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1.5</span><span class="p">),</span><span class="w"> </span><span class="mf">0.8</span><span class="p">));</span>
+<span class="linenos">66</span><span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdBox</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1.5</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.7</span><span class="p">)));</span>
+<span class="linenos">67</span><span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdRoundBox</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">2.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mf">1.5</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.7</span><span class="p">),</span><span class="w"> </span><span class="mf">0.2</span><span class="p">));</span>
+<span class="linenos">68</span><span class="w">    </span><span class="c1">// 手前の列</span>
+<span class="linenos">69</span><span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdTorus</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">),</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">0.25</span><span class="p">)));</span>
+<span class="linenos">70</span><span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdCylinder</span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">),</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">));</span>
+<span class="linenos">71</span><span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">sdCapsule</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">),</span><span class="w"> </span><span class="kt">vec3</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.2</span><span class="p">,</span><span class="w"> </span><span class="mf">1.5</span><span class="p">),</span><span class="w"> </span><span class="mf">0.4</span><span class="p">));</span>
+<span class="linenos">72</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="linenos">73</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="sdf-sdf">
+<h2>厳密な SDF と近似的な SDF<a class="headerlink" href="#sdf-sdf" title="Link to this heading"></a></h2>
+<p>この章で示した SDF は、いずれも形状の内側でも外側でも厳密な距離を返す。しかし、楕円体のように厳密な距離を閉じた式で表せない形状も多い。また、第 4 章で扱う合成や変形を施すと、厳密な距離ではなくなることがある。</p>
+<p>第 2 章で述べたとおり、スフィアトレーシングで使う関数は、真の距離以下の値（距離の下界）を返せば十分である。厳密な SDF に比べて反復回数は増えるが、表面を通り過ぎることはない。ただし、第 6 章で扱うソフトシャドウとアンビエントオクルージョンは SDF の値の大きさを利用するため、SDF が厳密な距離から大きく外れると結果の品質が下がる。</p>
+<p>実用上は、関数が次の条件を満たしているかを意識するとよい。</p>
+<ul class="simple">
+<li><p>ゼロ等値面が目的の形状の表面と一致する。</p></li>
+<li><p>表面の外側で正、内側で負の値を返す。</p></li>
+<li><p>値が真の距離を超えない（リプシッツ定数が 1 以下である）。</p></li>
+</ul>
+</section>
+<section id="sdf-3">
+<h2>2 次元の SDF から 3 次元の形状を作る<a class="headerlink" href="#sdf-3" title="Link to this heading"></a></h2>
+<p>トーラスと円柱の導出で見たように、回転体の SDF は断面の 2 次元の SDF から作れる。一般に、2 次元の SDF <span class="math notranslate nohighlight">\(f_{2}\)</span> を <span class="math notranslate nohighlight">\(y\)</span> 軸まわりに回転させた形状（軸から <span class="math notranslate nohighlight">\(o\)</span> だけ離す）の SDF は次のようになる。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">// 2 次元の SDF sdf2d を y 軸まわりに回転させる。o は回転軸からの距離</span>
+<span class="linenos">2</span><span class="kt">float</span><span class="w"> </span><span class="n">opRevolution</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">o</span><span class="p">)</span>
+<span class="linenos">3</span><span class="p">{</span>
+<span class="linenos">4</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xz</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">o</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+<span class="linenos">5</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sdf2d</span><span class="p">(</span><span class="n">q</span><span class="p">);</span>
+<span class="linenos">6</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>また、<span class="math notranslate nohighlight">\(xy\)</span> 平面上の 2 次元の SDF を <span class="math notranslate nohighlight">\(z\)</span> 方向に厚さ <span class="math notranslate nohighlight">\(2h\)</span> だけ押し出した形状（押し出し）の SDF は、2 次元の箱と同じ考え方で次のように書ける。</p>
+<div class="highlight-glsl notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">// 2 次元の SDF sdf2d を z 方向に厚さ 2h だけ押し出す</span>
+<span class="linenos">2</span><span class="kt">float</span><span class="w"> </span><span class="n">opExtrusion</span><span class="p">(</span><span class="kt">vec3</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">h</span><span class="p">)</span>
+<span class="linenos">3</span><span class="p">{</span>
+<span class="linenos">4</span><span class="w">    </span><span class="kt">vec2</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">vec2</span><span class="p">(</span><span class="n">sdf2d</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">xy</span><span class="p">),</span><span class="w"> </span><span class="n">abs</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">z</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">h</span><span class="p">);</span>
+<span class="linenos">5</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">min</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">w</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">.</span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">max</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">));</span>
+<span class="linenos">6</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>どちらの操作も、2 次元の SDF が厳密であれば、得られる 3 次元の SDF も厳密になる。2 次元の SDF については参考文献の Quilez による記事に多くの例がある。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="02_principle.html" class="btn btn-neutral float-left" title="第 2 章 レイマーチングの原理" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="04_operations.html" class="btn btn-neutral float-right" title="第 4 章 形状の合成と変形" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

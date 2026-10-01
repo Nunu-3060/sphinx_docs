@@ -7,6 +7,7 @@
 ひまわりの種やパイナップルの実、松かさの鱗片は、中心から一定の角度ずつ回転しながら外側へ広がる螺旋状に並んでいる。この配置は\ **フィロタキシス**\ （phyllotaxis、葉序）と呼ばれ、「1 点ずつ一定の角度だけ回転し、中心からの距離を少しずつ広げる」という単純な規則を繰り返すだけで再現できる。距離を点の番号の平方根に比例させるのは、外側にいくほど点の間隔が間延びしないよう、単位面積あたりの点の密度をほぼ一定に保つためである。
 
 .. literalinclude:: ../examples/phyllotaxis.py
+   :linenos:
    :language: python
    :pyobject: phyllotaxis_points
    :caption: examples/phyllotaxis.py の phyllotaxis_points 関数
@@ -14,6 +15,7 @@
 回転角に何を使うかで模様の印象は大きく変わる。黄金比 :math:`\varphi = (1+\sqrt{5})/2` から作られる\ **黄金角** :math:`2\pi/\varphi^2`\ （およそ 137.5 度）を使うと、どの点も他の点とほとんど重ならず、隙間なく詰まった自然な螺旋になる。
 
 .. literalinclude:: ../examples/phyllotaxis.py
+   :linenos:
    :language: python
    :pyobject: metallic_angle
    :caption: examples/phyllotaxis.py の metallic_angle 関数
@@ -43,6 +45,7 @@
    r = a \, e^{b \theta}
 
 .. literalinclude:: ../examples/polar_curves.py
+   :linenos:
    :language: python
    :pyobject: logarithmic_spiral_points
    :caption: examples/polar_curves.py の logarithmic_spiral_points 関数
@@ -50,6 +53,7 @@
 成長率 :math:`b` を、4 分の 1 回転（90 度）ごとに黄金比 :math:`\varphi` 倍に広がるように選ぶと、オウムガイの殻の断面としてよく紹介される、いわゆる\ **黄金螺旋**\ になる（実際のオウムガイの成長率は種や個体差があり黄金比からずれることが多く、この対応は近似的な通説として広まったものである点には注意）。
 
 .. literalinclude:: ../examples/polar_curves.py
+   :linenos:
    :language: python
    :pyobject: golden_spiral_b
    :caption: examples/polar_curves.py の golden_spiral_b 関数
@@ -65,6 +69,7 @@
    r = a + b\theta
 
 .. literalinclude:: ../examples/polar_curves.py
+   :linenos:
    :language: python
    :pyobject: archimedean_spiral_points
    :caption: examples/polar_curves.py の archimedean_spiral_points 関数
@@ -80,6 +85,7 @@
    r = \frac{a}{\theta}
 
 .. literalinclude:: ../examples/polar_curves.py
+   :linenos:
    :language: python
    :pyobject: hyperbolic_spiral_points
    :caption: examples/polar_curves.py の hyperbolic_spiral_points 関数
@@ -104,6 +110,7 @@
    y = r(1 - \cos t)
 
 .. literalinclude:: ../examples/spirograph.py
+   :linenos:
    :language: python
    :pyobject: cycloid_points
    :caption: examples/spirograph.py の cycloid_points 関数
@@ -115,11 +122,13 @@
 直線の代わりに、固定した円の内側・外側を転がる円を考えると、いわゆる「スピログラフ」のおもちゃと同じ模様が描ける。転がる円の中心からペン先までの距離 :math:`d` を、転がる円の半径そのものではなく自由なパラメータにしておくと、尖った星形から輪が連なるループ状まで多様な模様を作れる（この一般化はハイポトロコイド／エピトロコイドと呼ばれる）。
 
 .. literalinclude:: ../examples/spirograph.py
+   :linenos:
    :language: python
    :pyobject: hypotrochoid_points
    :caption: examples/spirograph.py の hypotrochoid_points 関数
 
 .. literalinclude:: ../examples/spirograph.py
+   :linenos:
    :language: python
    :pyobject: epitrochoid_points
    :caption: examples/spirograph.py の epitrochoid_points 関数
@@ -146,6 +155,7 @@ x 軸・y 軸それぞれに周波数の異なる正弦振動を与えると、�
    x = \sin(f_x t + \phi), \quad y = \sin(f_y t)
 
 .. literalinclude:: ../examples/lissajous.py
+   :linenos:
    :language: python
    :pyobject: lissajous_points
    :caption: examples/lissajous.py の lissajous_points 関数
@@ -157,6 +167,7 @@ x 軸・y 軸それぞれに周波数の異なる正弦振動を与えると、�
 振幅が時間とともに指数的に減衰する効果を加えると、実際に 2 つの振り子を直交させてペン先の軌跡を記録する「ハーモノグラフ」という装置と同じ軌跡が再現できる。周波数をわずかに整数比からずらす（例えば 3 ではなく 3.01 にする）と、実際の振り子が持つわずかな誤差を模した、渦を巻きながら中心に収束していくより有機的な軌跡になる。
 
 .. literalinclude:: ../examples/lissajous.py
+   :linenos:
    :language: python
    :pyobject: harmonograph_points
    :caption: examples/lissajous.py の harmonograph_points 関数
@@ -175,6 +186,7 @@ x 軸・y 軸それぞれに周波数の異なる正弦振動を与えると、�
    r = \cos(k\theta)
 
 .. literalinclude:: ../examples/polar_curves.py
+   :linenos:
    :language: python
    :pyobject: rose_curve_points
    :caption: examples/polar_curves.py の rose_curve_points 関数
@@ -204,6 +216,7 @@ x 軸・y 軸それぞれに周波数の異なる正弦振動を与えると、�
 対称性の次数 :math:`m` は花びらや角の数を、指数 :math:`n_1, n_2, n_3` は輪郭の丸み・尖り具合を決める。:math:`a, b` は横方向・縦方向それぞれの伸び率で、既定値の 1 のままなら円対称、値を変えれば横長・縦長に引き伸ばした輪郭になる（本節の作例ではいずれも 1 のまま使う）。指数を全て :math:`n_1=n_2=n_3=2` にすると :math:`m` の値によらず :math:`\cos^2+\sin^2=1` が恒等的に成り立つため厳密に半径 1 の円になる（:math:`m` は角の数ではなく角速度を変えるだけなので、この恒等式には影響しない）。:math:`m=4` のまま 3 つの指数をそろえて大きくしていくと、角の丸い正方形である超楕円（squircle）を経て正方形に近づく。もとは植物の葉や貝殻、珪藻の殻など自然界の輪郭を少数のパラメータで統一的に表現する目的で考案された式だが、パラメータの組み合わせ次第で人工的な幾何学模様も自在に作れる。
 
 .. literalinclude:: ../examples/polar_curves.py
+   :linenos:
    :language: python
    :pyobject: superformula_points
    :caption: examples/polar_curves.py の superformula_points 関数
@@ -236,6 +249,7 @@ x 軸・y 軸それぞれに周波数の異なる正弦振動を与えると、�
 実装では、全ての :math:`t` についての計算をまとめて NumPy の配列演算で行っている。
 
 .. literalinclude:: ../examples/bezier.py
+   :linenos:
    :language: python
    :pyobject: de_casteljau
    :caption: examples/bezier.py の de_casteljau 関数
@@ -259,11 +273,13 @@ x 軸・y 軸それぞれに周波数の異なる正弦振動を与えると、�
 隣り合う区間は、共有する点で接線が一致するため、折れ目なくつながる。変換した後は、先ほどの ``de_casteljau`` で区間ごとに点を求めて並べればよい。
 
 .. literalinclude:: ../examples/bezier.py
+   :linenos:
    :language: python
    :pyobject: catmull_rom_to_bezier
    :caption: examples/bezier.py の catmull_rom_to_bezier 関数
 
 .. literalinclude:: ../examples/bezier.py
+   :linenos:
    :language: python
    :pyobject: sample_bezier_segments
    :caption: examples/bezier.py の sample_bezier_segments 関数
@@ -271,6 +287,7 @@ x 軸・y 軸それぞれに周波数の異なる正弦振動を与えると、�
 例として、円周上に等間隔で置いた 9 個の点の半径をランダムに伸び縮みさせ、直線で結んだもの（左）と、Catmull-Rom スプラインで結んだもの（右）を比べる。同じ点を通っていても、スプラインでは角が取れ、有機的な塊（ブロブ）になる。:doc:`shapes`\ の SDF によるブロブは輪郭全体をノイズで歪めていたが、こちらは曲線が通る点を直接指定できるため、形を思い通りに制御しやすい。
 
 .. literalinclude:: ../examples/bezier.py
+   :linenos:
    :language: python
    :pyobject: random_blob_points
    :caption: examples/bezier.py の random_blob_points 関数
@@ -286,6 +303,7 @@ x 軸・y 軸それぞれに周波数の異なる正弦振動を与えると、�
 多数の 3 次ベジェ曲線を少しずつ変えながら重ねると、髪や草のような線の束を描ける。各曲線の内側の制御点を横にずらす量を、曲線の番号に対する正弦波で決めると、隣り合う曲線どうしが似た形になり、全体として波打つ流れが生まれる。:doc:`noise`\ のフローフィールドも流れる線の束を作るが、あちらはベクトル場に沿って線を少しずつ伸ばすのに対し、こちらは 1 本ずつの形を制御点で決める点が異なる。
 
 .. literalinclude:: ../examples/bezier.py
+   :linenos:
    :language: python
    :pyobject: render_strands
    :caption: examples/bezier.py の render_strands 関数

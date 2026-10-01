@@ -11,6 +11,7 @@ Python・NumPy・Pillow・matplotlib 自体の使い方には立ち入らず、�
 本資料のサンプルコードでは、簡潔さを優先してピクセル座標を直接扱っている箇所も多いが（:doc:`noise`\ のノイズ画像など）、複数の解像度で書き出したい作品や、印刷用に大きな解像度が必要になる作品では、正規化座標を採用する価値がある。
 
 .. code-block:: python
+   :linenos:
 
    def to_pixel(u: float, v: float, width: int, height: int) -> tuple[int, int]:
        """正規化座標 (u, v) （それぞれ0〜1）をピクセル座標に変換する。"""
@@ -26,6 +27,7 @@ Python・NumPy・Pillow・matplotlib 自体の使い方には立ち入らず、�
 ``np.random.seed`` のようにグローバルな乱数状態を書き換える方式は、モジュールをまたいで暗黙の状態を共有してしまうため、複数の作品や複数のパーティクル群を同時に扱うコードでは思わぬ干渉が起きやすい。``np.random.default_rng(seed)`` でジェネレータのインスタンスを明示的に作り、それを関数の引数として持ち回す方式のほうが、「このシードでこのジェネレータから生成した」という対応関係がコード上に残り、再現性・独立性の両面で扱いやすい。
 
 .. code-block:: python
+   :linenos:
 
    import numpy as np
 
@@ -90,11 +92,13 @@ Python・NumPy・Pillow・matplotlib 自体の使い方には立ち入らず、�
      - smoothstep と同様の形で、両端で 1 階・2 階微分がともに 0 になる。
 
 .. literalinclude:: ../examples/easing.py
+   :linenos:
    :language: python
    :pyobject: smoothstep
    :caption: examples/easing.py の smoothstep 関数
 
 .. literalinclude:: ../examples/easing.py
+   :linenos:
    :language: python
    :pyobject: smootherstep
    :caption: examples/easing.py の smootherstep 関数
@@ -108,6 +112,7 @@ Python・NumPy・Pillow・matplotlib 自体の使い方には立ち入らず、�
 イージング関数は、UI やアニメーションで「動きの緩急」を付けるための道具として知られているが、本資料で扱う静止画でも、補間の割合 ``t`` を空間上の位置と見なせばそのまま使える。例えば、同じ 2 色の間のグラデーションを、イージング関数だけを変えて補間すると、色の変化が画像のどこに集中するかが変わる（上から linear・ease-in・ease-out・smoothstep・smootherstep の順）。
 
 .. literalinclude:: ../examples/easing.py
+   :linenos:
    :language: python
    :pyobject: render_eased_gradient
    :caption: examples/easing.py の render_eased_gradient 関数
@@ -119,6 +124,7 @@ Python・NumPy・Pillow・matplotlib 自体の使い方には立ち入らず、�
 同様に、図形を並べる間隔をイージング関数で決めれば、間隔の疎密で奥行きや集中を表現できる。次の 2 枚は、同心円の半径を等間隔の ``t`` から求めたもの（左、linear）と、ease-in に通してから求めたもの（右）である。ease-in では中心付近の円が密に、外側の円が疎になり、中心に向かって吸い込まれるような印象になる。
 
 .. literalinclude:: ../examples/easing.py
+   :linenos:
    :language: python
    :pyobject: render_eased_rings
    :caption: examples/easing.py の render_eased_rings 関数
@@ -157,6 +163,7 @@ Python・NumPy・Pillow・matplotlib 自体の使い方には立ち入らず、�
 Pillow は複数の画像をアニメーション GIF として保存できるため、追加のライブラリなしで書き出せる。
 
 .. literalinclude:: ../examples/animation.py
+   :linenos:
    :language: python
    :pyobject: save_gif
    :caption: examples/animation.py の save_gif 関数
@@ -164,6 +171,7 @@ Pillow は複数の画像をアニメーション GIF として保存できる�
 「状態を更新する」例として、:doc:`automata`\ のライフゲームの ``simulate_life`` が返す履歴を、1 世代ずつフレームにする。静止画の作例では同じ履歴を 1 枚に重ね合わせていたが、ここでは時間方向に並べる。
 
 .. literalinclude:: ../examples/animation.py
+   :linenos:
    :language: python
    :pyobject: life_frames
    :caption: examples/animation.py の life_frames 関数
@@ -175,6 +183,7 @@ Pillow は複数の画像をアニメーション GIF として保存できる�
 「時刻をパラメータとして渡す」例として、:doc:`spirals`\ のリサージュ曲線の位相 :math:`\phi` を :math:`2\pi t` として 1 周期分動かす。位相は :math:`2\pi` を周期とするため、最後のフレームの次に最初のフレームへ戻っても変化がつながる。
 
 .. literalinclude:: ../examples/animation.py
+   :linenos:
    :language: python
    :pyobject: lissajous_loop_frames
    :caption: examples/animation.py の lissajous_loop_frames 関数
