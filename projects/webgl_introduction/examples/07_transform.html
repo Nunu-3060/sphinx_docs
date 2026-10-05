@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>07 平行移動・回転・拡大縮小</title>
+<style>
+  body { margin: 16px; font-family: sans-serif; background: #f4f4f4; color: #222; }
+  canvas { display: block; background: #000; max-width: 100%; }
+  #error { color: #b00; white-space: pre-wrap; }
+  .controls { margin: 8px 0; }
+  .controls label { margin-right: 12px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<h1>07 平行移動・回転・拡大縮小</h1>
+<p>同じ平行移動行列 T、回転行列 R、拡大縮小行列 S を使い、掛ける順番だけを変えた 2 つの矢印を描画します。橙色はモデル行列 T × R × S（その場で回転してから移動）、青色は R × T × S（移動してから原点のまわりを回転）です。</p>
+<pre id="error" hidden></pre>
+<canvas id="canvas" width="640" height="480"></canvas>
+<div class="controls">
+  <label>平行移動 x: <input type="range" id="translate" min="0" max="3" step="0.1" value="2"></label>
+  <label>拡大率: <input type="range" id="scale" min="0.3" max="2" step="0.1" value="1"></label>
+  <label><input type="checkbox" id="animate" checked> 回転させる</label>
+</div>
+
+<script>
+"use strict";
+
+// ---- シェーダー ----
+const VERTEX_SHADER_SOURCE = `#version 300 es
+layout(location = 0) in vec2 a_position;
+
+// 投影行列 × モデル行列 を JavaScript 側で計算して渡す
+uniform mat4 u_matrix;
+
+void main() {
+  gl_Position = u_matrix * vec4(a_position, 0.0, 1.0);
+}
+`;
+
+const FRAGMENT_SHADER_SOURCE = `#version 300 es
+precision mediump float;
+
+uniform vec4 u_color;
+out vec4 outColor;
+
+void main() {
+  outColor = u_color;
+}
+`;
+
+// ---- 共通の補助関数 ----
+function showError(message) {
+  const element = document.getElementById("error");
+  element.textContent += message + "\n";
+  element.hidden = false;
+}
+
+function createShader(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(shader);
+    gl.deleteShader(shader);
+    throw new Error("シェーダーのコンパイルに失敗しました。\n" + log);
+  }
+  return shader;
+}
+
+function createProgram(gl, vertexSource, fragmentSource) {
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+  const program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+  gl.deleteShader(vertexShader);
+  gl.deleteShader(fragmentShader);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const log = gl.getProgramInfoLog(program);
+    gl.deleteProgram(program);
+    throw new Error("プログラムのリンクに失敗しました。\n" + log);
+  }
+  return program;
+}
+
+// プログラム内の uniform 変数の location を名前で引けるオブジェクトにまとめる
+function getUniformLocations(gl, program, names) {
+  const locations = {};
+  for (const name of names) {
+    locations[name] = gl.getUniformLocation(program, name);
+  }
+  return locations;
+}
+
+// ---- ベクトルと行列（06_matrix_test.html から、このサンプルで使う関数のみ抜粋） ----
+// 行列は列優先の Float32Array(16)、ベクトルは配列 [x, y, z]（第 6 章を参照）
+const mat4 = {
+  identity() {
+    return new Float32Array([
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    ]);
+  },
+
+  // a × b を返す。点に適用すると、先に b、次に a の変換を行うことになる
+  multiply(a, b) {
+    const out = new Float32Array(16);
+    for (let col = 0; col < 4; col++) {
+      for (let row = 0; row < 4; row++) {
+        let sum = 0;
+        for (let k = 0; k < 4; k++) {
+          sum += a[k * 4 + row] * b[col * 4 + k];
+        }
+        out[col * 4 + row] = sum;
+      }
+    }
+    return out;
+  },
+
+  // 列優先で格納しているので、ソースコード上では 1 行が行列の 1 列に当たる
+  translation(tx, ty, tz) {
+    return new Float32Array([
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      tx, ty, tz, 1,
+    ]);
+  },
+
+  scaling(sx, sy, sz) {
+    return new Float32Array([
+      sx, 0, 0, 0,
+      0, sy, 0, 0,
+      0, 0, sz, 0,
+      0, 0, 0, 1,
+    ]);
+  },
+
+  rotationZ(angle) {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return new Float32Array([
+      c, s, 0, 0,
+      -s, c, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    ]);
+  },
+
+  // 正射影行列: 直方体 [left, right] × [bottom, top] × [-near, -far] を NDC に写す
+  ortho(left, right, bottom, top, near, far) {
+    const lr = 1 / (right - left);
+    const bt = 1 / (top - bottom);
+    const nf = 1 / (near - far);
+    return new Float32Array([
+      2 * lr, 0, 0, 0,
+      0, 2 * bt, 0, 0,
+      0, 0, 2 * nf, 0,
+      -(right + left) * lr, -(top + bottom) * bt, (far + near) * nf, 1,
+    ]);
+  },
+};
+
+// 2 次元の頂点配列から VAO を作る
+function createVao2D(gl, positions) {
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.bindVertexArray(null);
+  return { vao, count: positions.length / 2 };
+}
+
+// ---- メイン処理 ----
+function main() {
+  const canvas = document.getElementById("canvas");
+  const gl = canvas.getContext("webgl2");
+  if (!gl) {
+    showError("このブラウザーは WebGL 2.0 に対応していません。");
+    canvas.hidden = true;
+    return;
+  }
+
+  const program = createProgram(gl, VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE);
+  const uniforms = getUniformLocations(gl, program, ["u_matrix", "u_color"]);
+
+  // +x 方向を向いた矢印（原点が矢印の中心）
+  const arrow = createVao2D(gl, [
+    -0.6, -0.15,  0.2, -0.15,  0.2, 0.15,   // 軸（三角形 2 つ）
+    -0.6, -0.15,  0.2, 0.15,  -0.6, 0.15,
+     0.2, -0.4,   0.7, 0.0,    0.2, 0.4,    // 矢じり
+  ]);
+  // x 軸と y 軸、および目盛り（1 単位ごと）
+  const axisLines = [-4, 0, 4, 0, 0, -3, 0, 3];
+  for (let i = -3; i <= 3; i++) {
+    axisLines.push(i, -0.08, i, 0.08);
+  }
+  const axes = createVao2D(gl, axisLines);
+
+  // canvas の縦横比 4:3 に合わせ、x は -4 から 4、y は -3 から 3 の範囲を表示する
+  const projection = mat4.ortho(-4, 4, -3, 3, -1, 1);
+
+  let angle = 0;
+  let previousTime = null;
+
+  function render(time) {
+    const deltaTime = previousTime === null ? 0 : (time - previousTime) / 1000;
+    previousTime = time;
+    if (document.getElementById("animate").checked) {
+      angle += deltaTime * Math.PI / 4;  // 8 秒で 1 回転
+    }
+
+    const tx = Number(document.getElementById("translate").value);
+    const s = Number(document.getElementById("scale").value);
+    const T = mat4.translation(tx, 0, 0);
+    const R = mat4.rotationZ(angle);
+    const S = mat4.scaling(s, s, 1);
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0.1, 0.1, 0.1, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+
+    // 座標軸
+    gl.uniformMatrix4fv(uniforms.u_matrix, false, projection);
+    gl.uniform4f(uniforms.u_color, 0.5, 0.5, 0.5, 1.0);
+    gl.bindVertexArray(axes.vao);
+    gl.drawArrays(gl.LINES, 0, axes.count);
+
+    gl.bindVertexArray(arrow.vao);
+    // 橙色: T × R × S（右から順に、拡大縮小 → 回転 → 平行移動）
+    const modelA = mat4.multiply(T, mat4.multiply(R, S));
+    gl.uniformMatrix4fv(uniforms.u_matrix, false, mat4.multiply(projection, modelA));
+    gl.uniform4f(uniforms.u_color, 1.0, 0.6, 0.2, 1.0);
+    gl.drawArrays(gl.TRIANGLES, 0, arrow.count);
+
+    // 青色: R × T × S（拡大縮小 → 平行移動 → 回転）
+    const modelB = mat4.multiply(R, mat4.multiply(T, S));
+    gl.uniformMatrix4fv(uniforms.u_matrix, false, mat4.multiply(projection, modelB));
+    gl.uniform4f(uniforms.u_color, 0.3, 0.6, 1.0, 1.0);
+    gl.drawArrays(gl.TRIANGLES, 0, arrow.count);
+
+    gl.bindVertexArray(null);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
+
+try {
+  main();
+} catch (error) {
+  showError(error.message);
+}
+</script>
+</body>
+</html>

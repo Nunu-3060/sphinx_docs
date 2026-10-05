@@ -1,0 +1,344 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3 次元のラスタライズ &mdash; コンピューターグラフィックス入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=4ecef777" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=35a8b989"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="ライティングとシェーディング" href="shading.html" />
+    <link rel="prev" title="座標変換と投影" href="transform.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンピューターグラフィックス入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">CG の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image.html">デジタル画像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster2d.html">2 次元の図形のラスタライズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="math.html">ベクトルと行列</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transform.html">座標変換と投影</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">3 次元のラスタライズ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">三角形メッシュ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">描画の流れ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">背面カリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#z">Z バッファー法による隠面消去</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">透視補正補間</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">クリッピング</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="shading.html">ライティングとシェーディング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="texture.html">テクスチャマッピング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raytracing.html">レイトレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gpu.html">GPU とリアルタイム CG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンピューターグラフィックス入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">3 次元のラスタライズ</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>3 次元のラスタライズ<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本章では、<a class="reference internal" href="raster2d.html"><span class="doc">2 次元の図形のラスタライズ</span></a>の三角形のラスタライズと、<a class="reference internal" href="transform.html"><span class="doc">座標変換と投影</span></a>の座標変換を組み合わせて、3 次元の物体を描くレンダラーを作る。複数の物体が重なるときに手前のものだけを描く方法（隠面消去）と、透視投影で属性を正しく補間する方法も説明する。</p>
+<p>本章のコードは <code class="docutils literal notranslate"><span class="pre">renderer.py</span></code> にある。</p>
+<section id="id2">
+<h2>三角形メッシュ<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>3 次元の物体の表面は、多数の三角形をつなぎ合わせたもので表す。これを三角形メッシュ（ポリゴンメッシュ）という。三角形メッシュは、次の 2 つの配列で表すのが一般的である。</p>
+<ul class="simple">
+<li><p>頂点の配列: 頂点ごとの属性（位置、法線、テクスチャ座標など）を並べたもの</p></li>
+<li><p>面の配列: 三角形ごとに、3 つの頂点の番号を並べたもの</p></li>
+</ul>
+<p>隣り合う三角形は頂点を共有するので、頂点の番号で面を表すと、同じ座標を何度も記録せずに済む。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">36</span><span class="nd">@dataclass</span>
+<span class="linenos">37</span><span class="k">class</span><span class="w"> </span><span class="nc">Mesh</span><span class="p">:</span>
+<span class="linenos">38</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;三角形のメッシュ。</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span><span class="sd">    positions、normals、uvs は頂点ごとの属性で、行の数は頂点の数に等しい。</span>
+<span class="linenos">41</span><span class="sd">    faces は三角形ごとに 3 つの頂点の番号を並べたもので、外側から見て</span>
+<span class="linenos">42</span><span class="sd">    反時計回りの順に並べる。</span>
+<span class="linenos">43</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span>    <span class="n">positions</span><span class="p">:</span> <span class="n">FloatArray</span>  <span class="c1"># (頂点の数, 3)</span>
+<span class="linenos">46</span>    <span class="n">normals</span><span class="p">:</span> <span class="n">FloatArray</span>    <span class="c1"># (頂点の数, 3)</span>
+<span class="linenos">47</span>    <span class="n">uvs</span><span class="p">:</span> <span class="n">FloatArray</span>        <span class="c1"># (頂点の数, 2)</span>
+<span class="linenos">48</span>    <span class="n">faces</span><span class="p">:</span> <span class="n">IntArray</span>        <span class="c1"># (三角形の数, 3)</span>
+</pre></div>
+</div>
+<p>面の頂点は、物体の外側から見て反時計回りに並べる。この順序で、三角形の表と裏を区別する。</p>
+<p>1 つの頂点が持てる法線は 1 つだけである。立方体の角の頂点は 3 つの面に属するが、面ごとに法線の向きが異なる。そのため、立方体は面ごとに専用の頂点を持たせ、24 個（6 面 × 4 頂点）の頂点で表す。一方、球のように表面がなめらかな物体では、隣り合う三角形で頂点を共有し、頂点の法線を表面の本来の向きに合わせる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 84</span><span class="k">def</span><span class="w"> </span><span class="nf">make_sphere</span><span class="p">(</span><span class="n">n_lon</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">48</span><span class="p">,</span> <span class="n">n_lat</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mesh</span><span class="p">:</span>
+<span class="linenos"> 85</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;半径 1 の球を、経線 n_lon 本、緯線 n_lat 本で区切って作る(UV 球)。&quot;&quot;&quot;</span>
+<span class="linenos"> 86</span>    <span class="n">lon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">n_lon</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 87</span>    <span class="n">lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">n_lat</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos"> 88</span>    <span class="n">lon_grid</span><span class="p">,</span> <span class="n">lat_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">)</span>
+<span class="linenos"> 89</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lat_grid</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lon_grid</span><span class="p">)</span>
+<span class="linenos"> 90</span>    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat_grid</span><span class="p">)</span>
+<span class="linenos"> 91</span>    <span class="n">z</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lat_grid</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lon_grid</span><span class="p">)</span>
+<span class="linenos"> 92</span>    <span class="n">positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="linenos"> 93</span>    <span class="n">u</span> <span class="o">=</span> <span class="n">lon_grid</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+<span class="linenos"> 94</span>    <span class="n">v</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">lat_grid</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+<span class="linenos"> 95</span>    <span class="n">uvs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span>    <span class="n">faces</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 98</span>    <span class="n">row</span> <span class="o">=</span> <span class="n">n_lon</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="linenos"> 99</span>    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lat</span><span class="p">):</span>
+<span class="linenos">100</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_lon</span><span class="p">):</span>
+<span class="linenos">101</span>            <span class="n">a</span> <span class="o">=</span> <span class="n">j</span> <span class="o">*</span> <span class="n">row</span> <span class="o">+</span> <span class="n">i</span>          <span class="c1"># 左上</span>
+<span class="linenos">102</span>            <span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">row</span>              <span class="c1"># 左下</span>
+<span class="linenos">103</span>            <span class="c1"># 極に接する四角形は三角形に縮退するので、1 つだけ作る。</span>
+<span class="linenos">104</span>            <span class="k">if</span> <span class="n">j</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">105</span>                <span class="n">faces</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="linenos">106</span>            <span class="k">if</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n_lat</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+<span class="linenos">107</span>                <span class="n">faces</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="linenos">108</span>    <span class="c1"># 球の中心は原点なので、位置ベクトルがそのまま法線になる。</span>
+<span class="linenos">109</span>    <span class="k">return</span> <span class="n">Mesh</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">positions</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">uvs</span><span class="p">,</span>
+<span class="linenos">110</span>                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>描画の流れ<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>本資料のレンダラーは、次の順に処理を行う。</p>
+<ol class="arabic simple">
+<li><p>頂点の処理: 全ての頂点の座標に MVP 行列を掛け、クリップ座標に変換する。続いて透視除算とビューポート変換を行い、スクリーン座標を求める。</p></li>
+<li><p>三角形ごとの処理: 裏を向いた三角形を捨てる（背面カリング）。</p></li>
+<li><p>ラスタライズ: 三角形が覆う画素を求め、頂点の属性を補間する。</p></li>
+<li><p>深度テスト: 画素ごとに、すでに描かれている面より手前にあるかを調べ、手前にある場合だけ書き込む（Z バッファー法）。</p></li>
+<li><p>シェーディング: 書き込まれた属性から、画素の色を計算する。</p></li>
+</ol>
+<p>1 から 4 を行うのが <code class="docutils literal notranslate"><span class="pre">draw_mesh()</span></code> で、結果をフレームバッファーに書き込む。フレームバッファーは、画素ごとの深度と、画素ごとに補間した属性を格納する配列の集まりである。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">147</span><span class="k">class</span><span class="w"> </span><span class="nc">FrameBuffer</span><span class="p">:</span>
+<span class="linenos">148</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;描画結果を書き込む画像の集まり。</span>
+<span class="linenos">149</span>
+<span class="linenos">150</span><span class="sd">    depth は各画素の深度(正規化デバイス座標の z、小さいほど手前)で、</span>
+<span class="linenos">151</span><span class="sd">    何も描かれていない画素は無限大である。attributes には、画素ごとに</span>
+<span class="linenos">152</span><span class="sd">    補間した頂点の属性を名前ごとに格納する。</span>
+<span class="linenos">153</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">154</span>
+<span class="linenos">155</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="linenos">156</span>                 <span class="n">channels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">157</span>        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+<span class="linenos">158</span>        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+<span class="linenos">159</span>        <span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">:</span> <span class="n">FloatArray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+<span class="linenos">160</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">FloatArray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">161</span>            <span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">channels</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="linenos">162</span>        <span class="p">}</span>
+<span class="linenos">163</span>
+<span class="linenos">164</span>    <span class="nd">@property</span>
+<span class="linenos">165</span>    <span class="k">def</span><span class="w"> </span><span class="nf">covered</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoolArray</span><span class="p">:</span>
+<span class="linenos">166</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;何かが描かれた画素で True となる配列。&quot;&quot;&quot;</span>
+<span class="linenos">167</span>        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>5 のシェーディングは、<a class="reference internal" href="shading.html"><span class="doc">ライティングとシェーディング</span></a>と<a class="reference internal" href="texture.html"><span class="doc">テクスチャマッピング</span></a>で、フレームバッファーの属性を使って画像全体の色をまとめて計算する。このように、先に全ての物体の可視性を確定させ、後から見えている画素だけの色を計算する方法を、遅延シェーディング（ディファードシェーディング）という。GPU の標準的な描画では、ラスタライズした画素ごとにすぐ色を計算するが、計算の内容は同じである。</p>
+<p><code class="docutils literal notranslate"><span class="pre">draw_mesh()</span></code> の全体は次のとおりである。<a class="reference internal" href="raster2d.html"><span class="doc">2 次元の図形のラスタライズ</span></a>の <code class="docutils literal notranslate"><span class="pre">rasterize_triangle()</span></code> で 1 画素ずつ行っていた判定を、三角形を囲む長方形の画素について NumPy の配列演算でまとめて行っている。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">176</span><span class="k">def</span><span class="w"> </span><span class="nf">draw_mesh</span><span class="p">(</span><span class="n">fb</span><span class="p">:</span> <span class="n">FrameBuffer</span><span class="p">,</span> <span class="n">mvp</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Mesh</span><span class="p">,</span>
+<span class="linenos">177</span>              <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">FloatArray</span><span class="p">],</span> <span class="n">cull_back</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="linenos">178</span>              <span class="n">perspective_correct</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">179</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;メッシュを描き、深度と属性をフレームバッファーに書き込む。</span>
+<span class="linenos">180</span>
+<span class="linenos">181</span><span class="sd">    mvp はモデル、ビュー、投影の変換を掛け合わせた行列である。</span>
+<span class="linenos">182</span><span class="sd">    attributes には頂点ごとの属性を、fb の attributes と同じ名前で渡す。</span>
+<span class="linenos">183</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">184</span>    <span class="n">clip</span> <span class="o">=</span> <span class="n">to_clip</span><span class="p">(</span><span class="n">mvp</span><span class="p">,</span> <span class="n">mesh</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
+<span class="linenos">185</span>    <span class="n">w</span> <span class="o">=</span> <span class="n">clip</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="linenos">186</span>    <span class="c1"># 透視除算とビューポート変換(y 軸は下向き)。</span>
+<span class="linenos">187</span>    <span class="n">sx</span> <span class="o">=</span> <span class="p">(</span><span class="n">clip</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">w</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">fb</span><span class="o">.</span><span class="n">width</span>
+<span class="linenos">188</span>    <span class="n">sy</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">clip</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">w</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">fb</span><span class="o">.</span><span class="n">height</span>
+<span class="linenos">189</span>    <span class="n">sz</span> <span class="o">=</span> <span class="n">clip</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">w</span>
+<span class="linenos">190</span>
+<span class="linenos">191</span>    <span class="k">for</span> <span class="n">i0</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="ow">in</span> <span class="n">mesh</span><span class="o">.</span><span class="n">faces</span><span class="p">:</span>
+<span class="linenos">192</span>        <span class="c1"># 簡略化のため、カメラの近くの面(ニアクリップ面)より手前に頂点が</span>
+<span class="linenos">193</span>        <span class="c1"># ある三角形は、切り取らずに丸ごと捨てる。</span>
+<span class="linenos">194</span>        <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">w</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">w</span><span class="p">[</span><span class="n">i2</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mf">0.0</span> <span class="ow">or</span> \
+<span class="linenos">195</span>                <span class="nb">min</span><span class="p">(</span><span class="n">sz</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">sz</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sz</span><span class="p">[</span><span class="n">i2</span><span class="p">])</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">:</span>
+<span class="linenos">196</span>            <span class="k">continue</span>
+<span class="linenos">197</span>        <span class="n">area</span> <span class="o">=</span> <span class="n">edge_function</span><span class="p">(</span><span class="n">sx</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">sx</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span>
+<span class="linenos">198</span>                             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sx</span><span class="p">[</span><span class="n">i2</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sy</span><span class="p">[</span><span class="n">i2</span><span class="p">]))</span>
+<span class="linenos">199</span>        <span class="k">if</span> <span class="n">area</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+<span class="linenos">200</span>            <span class="k">continue</span>
+<span class="linenos">201</span>        <span class="c1"># 画面の y 軸は下向きなので、表を向いた(反時計回りの)三角形は</span>
+<span class="linenos">202</span>        <span class="c1"># 画面上では時計回りになり、area が負になる。</span>
+<span class="linenos">203</span>        <span class="k">if</span> <span class="n">cull_back</span> <span class="ow">and</span> <span class="n">area</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+<span class="linenos">204</span>            <span class="k">continue</span>
+<span class="linenos">205</span>
+<span class="linenos">206</span>        <span class="c1"># 三角形を囲む長方形の画素の中心の座標を作る。</span>
+<span class="linenos">207</span>        <span class="n">x_min</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">sx</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">sx</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sx</span><span class="p">[</span><span class="n">i2</span><span class="p">]))),</span> <span class="mi">0</span><span class="p">)</span>
+<span class="linenos">208</span>        <span class="n">x_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">sx</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">sx</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sx</span><span class="p">[</span><span class="n">i2</span><span class="p">]))),</span> <span class="n">fb</span><span class="o">.</span><span class="n">width</span><span class="p">)</span>
+<span class="linenos">209</span>        <span class="n">y_min</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">sy</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i2</span><span class="p">]))),</span> <span class="mi">0</span><span class="p">)</span>
+<span class="linenos">210</span>        <span class="n">y_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">sy</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i2</span><span class="p">]))),</span> <span class="n">fb</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+<span class="linenos">211</span>        <span class="k">if</span> <span class="n">x_min</span> <span class="o">&gt;=</span> <span class="n">x_max</span> <span class="ow">or</span> <span class="n">y_min</span> <span class="o">&gt;=</span> <span class="n">y_max</span><span class="p">:</span>
+<span class="linenos">212</span>            <span class="k">continue</span>
+<span class="linenos">213</span>        <span class="n">px</span><span class="p">,</span> <span class="n">py</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="linenos">214</span>                             <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="linenos">215</span>
+<span class="linenos">216</span>        <span class="c1"># 重心座標を求め、三角形の内側の画素を選ぶ。</span>
+<span class="linenos">217</span>        <span class="n">b0</span> <span class="o">=</span> <span class="n">edge_function</span><span class="p">(</span><span class="n">sx</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sx</span><span class="p">[</span><span class="n">i2</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i2</span><span class="p">],</span> <span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">)</span> <span class="o">/</span> <span class="n">area</span>
+<span class="linenos">218</span>        <span class="n">b1</span> <span class="o">=</span> <span class="n">edge_function</span><span class="p">(</span><span class="n">sx</span><span class="p">[</span><span class="n">i2</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i2</span><span class="p">],</span> <span class="n">sx</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">)</span> <span class="o">/</span> <span class="n">area</span>
+<span class="linenos">219</span>        <span class="n">b2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">b0</span> <span class="o">-</span> <span class="n">b1</span>
+<span class="linenos">220</span>        <span class="n">inside</span> <span class="o">=</span> <span class="p">(</span><span class="n">b0</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">b1</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">b2</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span>
+<span class="linenos">221</span>
+<span class="linenos">222</span>        <span class="c1"># 深度テスト: すでに書かれている深度より手前の画素だけを残す。</span>
+<span class="linenos">223</span>        <span class="n">z</span> <span class="o">=</span> <span class="n">b0</span> <span class="o">*</span> <span class="n">sz</span><span class="p">[</span><span class="n">i0</span><span class="p">]</span> <span class="o">+</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">sz</span><span class="p">[</span><span class="n">i1</span><span class="p">]</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">*</span> <span class="n">sz</span><span class="p">[</span><span class="n">i2</span><span class="p">]</span>
+<span class="linenos">224</span>        <span class="n">region</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">))</span>
+<span class="linenos">225</span>        <span class="n">passed</span> <span class="o">=</span> <span class="n">inside</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">z</span> <span class="o">&lt;</span> <span class="n">fb</span><span class="o">.</span><span class="n">depth</span><span class="p">[</span><span class="n">region</span><span class="p">])</span>
+<span class="linenos">226</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">passed</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+<span class="linenos">227</span>            <span class="k">continue</span>
+<span class="linenos">228</span>        <span class="n">fb</span><span class="o">.</span><span class="n">depth</span><span class="p">[</span><span class="n">region</span><span class="p">][</span><span class="n">passed</span><span class="p">]</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">passed</span><span class="p">]</span>
+<span class="linenos">229</span>
+<span class="linenos">230</span>        <span class="c1"># 属性の補間に使う重み。透視補正では各頂点の 1 / w を掛けて</span>
+<span class="linenos">231</span>        <span class="c1"># 補間し、最後に重みの合計で割る。</span>
+<span class="linenos">232</span>        <span class="k">if</span> <span class="n">perspective_correct</span><span class="p">:</span>
+<span class="linenos">233</span>            <span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span> <span class="o">=</span> <span class="n">b0</span> <span class="o">/</span> <span class="n">w</span><span class="p">[</span><span class="n">i0</span><span class="p">],</span> <span class="n">b1</span> <span class="o">/</span> <span class="n">w</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">b2</span> <span class="o">/</span> <span class="n">w</span><span class="p">[</span><span class="n">i2</span><span class="p">]</span>
+<span class="linenos">234</span>            <span class="n">total</span> <span class="o">=</span> <span class="n">q0</span> <span class="o">+</span> <span class="n">q1</span> <span class="o">+</span> <span class="n">q2</span>
+<span class="linenos">235</span>            <span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span> <span class="o">=</span> <span class="n">q0</span> <span class="o">/</span> <span class="n">total</span><span class="p">,</span> <span class="n">q1</span> <span class="o">/</span> <span class="n">total</span><span class="p">,</span> <span class="n">q2</span> <span class="o">/</span> <span class="n">total</span>
+<span class="linenos">236</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos">237</span>            <span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span> <span class="o">=</span> <span class="n">b0</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">b2</span>
+<span class="linenos">238</span>        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="linenos">239</span>            <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">q0</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">values</span><span class="p">[</span><span class="n">i0</span><span class="p">]</span> <span class="o">+</span> <span class="n">q1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">values</span><span class="p">[</span><span class="n">i1</span><span class="p">]</span>
+<span class="linenos">240</span>                     <span class="o">+</span> <span class="n">q2</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">values</span><span class="p">[</span><span class="n">i2</span><span class="p">])</span>
+<span class="linenos">241</span>            <span class="n">fb</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">region</span><span class="p">][</span><span class="n">passed</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">passed</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>以降の節では、このコードの要素を順に説明する。</p>
+</section>
+<section id="id4">
+<h2>背面カリング<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>閉じた物体（中身の詰まった物体）では、裏を向いた面は必ず表を向いた面の陰に隠れる。そのため、裏を向いた三角形は描かずに捨ててよい。これを背面カリングという。描く三角形の数がおよそ半分になるので、処理が速くなる。</p>
+<p>三角形の表と裏は、スクリーン座標での頂点の並び順で判定できる。外側から見て反時計回りに並べた三角形は、カメラから表が見えていれば画面上でも反時計回りに、裏が見えていれば時計回りに並ぶ。並び順は、<a class="reference internal" href="raster2d.html"><span class="doc">2 次元の図形のラスタライズ</span></a>のエッジ関数で求めた三角形の符号付きの面積で分かる。ただし、スクリーン座標は y 軸が下向きなので、y 軸が上向きの場合と符号が逆になる。<code class="docutils literal notranslate"><span class="pre">draw_mesh()</span></code> では、<code class="docutils literal notranslate"><span class="pre">area</span></code> が正の三角形を裏向きとして捨てている。</p>
+<p>背面カリングは、閉じていない物体（1 枚の板など）では使えない。そのため、<code class="docutils literal notranslate"><span class="pre">draw_mesh()</span></code> では引数 <code class="docutils literal notranslate"><span class="pre">cull_back</span></code> で無効にできるようにしている。</p>
+</section>
+<section id="z">
+<h2>Z バッファー法による隠面消去<a class="headerlink" href="#z" title="Link to this heading"></a></h2>
+<p>複数の三角形が同じ画素に重なるとき、最も手前の三角形だけを描く必要がある。これを隠面消去という。</p>
+<p>単純な方法は、カメラから遠い三角形から順に描き、手前の三角形で上書きすることである。これを画家のアルゴリズムという。しかし、この方法では、三角形の並べ替えに時間がかかるうえ、互いに交差する三角形や、互いに覆い合う三角形を正しく描けない。</p>
+<p>Z バッファー法は、画素ごとに「これまでに描いた面のうち最も手前のものの深度」を記録しておく方法である。深度を記録する配列を、Z バッファー（深度バッファー）という。</p>
+<ol class="arabic simple">
+<li><p>描画を始める前に、Z バッファーの全ての画素を無限遠（本資料では <code class="docutils literal notranslate"><span class="pre">np.inf</span></code>）で初期化する。</p></li>
+<li><p>三角形をラスタライズするとき、画素ごとに深度を補間する。</p></li>
+<li><p>補間した深度が Z バッファーの値より小さい（手前にある）場合だけ、その画素の色と属性を書き込み、Z バッファーも更新する。</p></li>
+</ol>
+<p>三角形を描く順序によらず、正しい結果が得られる。<a class="reference internal" href="#fig-depth"><span class="std std-numref">図 11</span></a> は、互いに交差する立方体と球を描いた結果と、Z バッファーに書き込まれた深度を濃淡で表したもの（手前ほど明るい）である。立方体と球が交わる部分も正しく描かれている。</p>
+<figure class="align-default" id="id7">
+<span id="fig-depth"></span><img alt="交差する立方体と球を描いた画像と、その深度を濃淡で表した画像" src="_images/depth.png" />
+<figcaption>
+<p><span class="caption-number">図 11 </span><span class="caption-text">描画結果（左）と Z バッファーの深度（右、手前ほど明るい）</span><a class="headerlink" href="#id7" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p><code class="docutils literal notranslate"><span class="pre">draw_mesh()</span></code> では、深度として正規化デバイス座標の z を使っている。<a class="reference internal" href="transform.html"><span class="doc">座標変換と投影</span></a>の透視投影の行列から分かるとおり、この値はカメラからの奥行き <span class="math notranslate nohighlight">\(d\)</span> に対して <span class="math notranslate nohighlight">\(1/d\)</span> の 1 次式で変化する。近い範囲では細かく、遠い範囲では粗く変化するので、遠くで重なった 2 つの面の前後を判定できず、描画がちらつくことがある。これを Z ファイティングという。ニアクリップ面の距離 <span class="math notranslate nohighlight">\(n\)</span> をむやみに小さくしないことが、基本的な対策である。</p>
+</section>
+<section id="id5">
+<h2>透視補正補間<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>画面上の重心座標は、3 次元の空間での重心座標とは一致しない。透視投影では、奥にある部分ほど画面上で縮んで写るからである。そのため、<a class="reference internal" href="raster2d.html"><span class="doc">2 次元の図形のラスタライズ</span></a>と同じように画面上の重心座標で属性を補間すると、奥行きの方向に属性がゆがむ。</p>
+<p>正しく補間するには、各頂点の属性 <span class="math notranslate nohighlight">\(a_i\)</span> をその頂点のクリップ座標の <span class="math notranslate nohighlight">\(w_i\)</span>（透視投影ではカメラからの奥行き）で割った値と、<span class="math notranslate nohighlight">\(1 / w_i\)</span> を、それぞれ画面上の重心座標 <span class="math notranslate nohighlight">\(b_i\)</span> で補間し、最後に割り算をする。</p>
+<div class="math notranslate nohighlight">
+\[a = \frac{\displaystyle \sum_{i=0}^{2} b_i \frac{a_i}{w_i}}{\displaystyle \sum_{i=0}^{2} b_i \frac{1}{w_i}}\]</div>
+<p><span class="math notranslate nohighlight">\(a_i / w_i\)</span> と <span class="math notranslate nohighlight">\(1 / w_i\)</span> は、画面上で線形に変化する量なので、画面上の重心座標で正しく補間できる。これを透視補正補間という。<code class="docutils literal notranslate"><span class="pre">draw_mesh()</span></code> の <code class="docutils literal notranslate"><span class="pre">perspective_correct</span></code> が真の場合の処理が、この式に当たる。なお、深度として使う正規化デバイス座標の z は、もともと画面上で線形に変化する量なので、補正せずに補間してよい。</p>
+<p><a class="reference internal" href="#fig-perspective-correct"><span class="std std-numref">図 12</span></a> は、2 つの三角形でできた床に市松模様を描いたものである。左の図は透視補正をせずに補間したもので、模様が三角形の対角線で折れ曲がり、奥行きの間隔も不自然である。右の図は透視補正補間を行ったもので、模様が正しく描かれている。</p>
+<figure class="align-default" id="id8">
+<span id="fig-perspective-correct"></span><img alt="透視補正をしない場合とした場合の、市松模様の床" src="_images/perspective_correct.png" />
+<figcaption>
+<p><span class="caption-number">図 12 </span><span class="caption-text">透視補正なし（左）と透視補正あり（右）</span><a class="headerlink" href="#id8" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>GPU は、頂点の属性を自動的に透視補正して補間する。</p>
+</section>
+<section id="id6">
+<h2>クリッピング<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>カメラの後ろにある頂点は <span class="math notranslate nohighlight">\(w \le 0\)</span> となり、透視除算の結果が意味を持たなくなる。そのため、正しくは、クリップ座標で三角形をニアクリップ面で切り取り、見える部分だけを新しい三角形として描く。これをクリッピングという。画面の上下左右からはみ出す部分も、同様に切り取る場合がある。</p>
+<p>本資料のレンダラーでは、簡単のため、ニアクリップ面より手前に頂点がある三角形を丸ごと捨てている。そのため、カメラのすぐ近くを通る大きな三角形は描かれない。<a class="reference internal" href="texture.html"><span class="doc">テクスチャマッピング</span></a>の床の図では、この制約を避けるため、床をカメラの少し前から奥に向かって広げている。画面の上下左右へのはみ出しは、ラスタライズする範囲を画面の内側に限ることで処理している。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="transform.html" class="btn btn-neutral float-left" title="座標変換と投影" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="shading.html" class="btn btn-neutral float-right" title="ライティングとシェーディング" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,392 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>座標変換と投影 &mdash; コンピューターグラフィックス入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=4ecef777" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=35a8b989"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="3 次元のラスタライズ" href="rasterization.html" />
+    <link rel="prev" title="ベクトルと行列" href="math.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンピューターグラフィックス入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">CG の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image.html">デジタル画像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster2d.html">2 次元の図形のラスタライズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="math.html">ベクトルと行列</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">座標変換と投影</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">2 次元の基本的な変換</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">変換の合成と順序</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">3 次元の変換</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">座標系の流れ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">ビュー変換</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">投影変換</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">平行投影</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">透視投影</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">ビューポート変換</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">法線の変換</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rasterization.html">3 次元のラスタライズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shading.html">ライティングとシェーディング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="texture.html">テクスチャマッピング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raytracing.html">レイトレーシング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gpu.html">GPU とリアルタイム CG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンピューターグラフィックス入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">座標変換と投影</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>座標変換と投影<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>3 次元の物体を画面に描くには、物体の頂点の座標を、いくつかの座標系を経由して画面上の画素の座標に変換する。本章では、物体を動かす変換、カメラから見た座標への変換、3 次元を 2 次元に写す投影を、<a class="reference internal" href="math.html"><span class="doc">ベクトルと行列</span></a>で説明した 4 × 4 の行列で表す。</p>
+<p>本章のコードは <code class="docutils literal notranslate"><span class="pre">transform.py</span></code> にある。</p>
+<section id="id2">
+<h2>2 次元の基本的な変換<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>まず、考え方を 2 次元で確かめる。2 次元の点 <span class="math notranslate nohighlight">\((x, y)\)</span> を同次座標 <span class="math notranslate nohighlight">\((x, y, 1)\)</span> で表すと、拡大縮小、回転、平行移動は、それぞれ次の 3 × 3 の行列で表せる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>変換</p></th>
+<th class="head"><p>行列</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>拡大縮小</p></td>
+<td><p><span class="math notranslate nohighlight">\(\begin{pmatrix} s_x &amp; 0 &amp; 0 \\ 0 &amp; s_y &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}\)</span></p></td>
+<td><p>原点を中心に、x 方向に <span class="math notranslate nohighlight">\(s_x\)</span> 倍、y 方向に <span class="math notranslate nohighlight">\(s_y\)</span> 倍する。</p></td>
+</tr>
+<tr class="row-odd"><td><p>回転</p></td>
+<td><p><span class="math notranslate nohighlight">\(\begin{pmatrix} \cos \theta &amp; -\sin \theta &amp; 0 \\ \sin \theta &amp; \cos \theta &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{pmatrix}\)</span></p></td>
+<td><p>原点を中心に、反時計回りに <span class="math notranslate nohighlight">\(\theta\)</span> だけ回転する。</p></td>
+</tr>
+<tr class="row-even"><td><p>平行移動</p></td>
+<td><p><span class="math notranslate nohighlight">\(\begin{pmatrix} 1 &amp; 0 &amp; t_x \\ 0 &amp; 1 &amp; t_y \\ 0 &amp; 0 &amp; 1 \end{pmatrix}\)</span></p></td>
+<td><p>x 方向に <span class="math notranslate nohighlight">\(t_x\)</span>、y 方向に <span class="math notranslate nohighlight">\(t_y\)</span> だけ移動する。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">33</span><span class="k">def</span><span class="w"> </span><span class="nf">rotate_2d</span><span class="p">(</span><span class="n">degrees</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">34</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;原点を中心に反時計回りに回転する行列。&quot;&quot;&quot;</span>
+<span class="linenos">35</span>    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">degrees</span><span class="p">)</span>
+<span class="linenos">36</span>    <span class="n">c</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="linenos">37</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+<span class="linenos">38</span>        <span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">39</span>        <span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">40</span>        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+<span class="linenos">41</span>    <span class="p">])</span>
+</pre></div>
+</div>
+<section id="id3">
+<h3>変換の合成と順序<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>複数の変換は、行列の積で 1 つにまとめられる。ただし、<a class="reference internal" href="math.html"><span class="doc">ベクトルと行列</span></a>で見たとおり、行列の積は順序を入れ替えると結果が変わる。<a class="reference internal" href="#fig-transform-order"><span class="std std-numref">図 9</span></a> は、原点に置いた家の形（灰色の輪郭）に、45 度の回転と x 方向への 1.5 の平行移動を、異なる順序で行った結果（青）である。</p>
+<figure class="align-default" id="id12">
+<span id="fig-transform-order"></span><img alt="回転してから平行移動した家の形と、平行移動してから回転した家の形" src="_images/transform_order.png" />
+<figcaption>
+<p><span class="caption-number">図 9 </span><span class="caption-text">回転してから平行移動した結果（左、<span class="math notranslate nohighlight">\(TR\)</span>）と、平行移動してから回転した結果（右、<span class="math notranslate nohighlight">\(RT\)</span>）</span><a class="headerlink" href="#id12" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">210</span><span class="k">def</span><span class="w"> </span><span class="nf">transform_order_figure</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">211</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;回転と平行移動を掛ける順序を変えた 2 つの結果を並べる。</span>
+<span class="linenos">212</span>
+<span class="linenos">213</span><span class="sd">    左: 先に 45 度回転し、次に x 方向に 1.5 平行移動する(T @ R)。</span>
+<span class="linenos">214</span><span class="sd">    右: 先に x 方向に 1.5 平行移動し、次に 45 度回転する(R @ T)。</span>
+<span class="linenos">215</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">216</span>    <span class="n">r</span> <span class="o">=</span> <span class="n">rotate_2d</span><span class="p">(</span><span class="mf">45.0</span><span class="p">)</span>
+<span class="linenos">217</span>    <span class="n">t</span> <span class="o">=</span> <span class="n">translate_2d</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<span class="linenos">218</span>    <span class="k">return</span> <span class="n">hstack</span><span class="p">([</span><span class="n">house_panel</span><span class="p">(</span><span class="n">t</span> <span class="o">@</span> <span class="n">r</span><span class="p">),</span> <span class="n">house_panel</span><span class="p">(</span><span class="n">r</span> <span class="o">@</span> <span class="n">t</span><span class="p">)])</span>
+</pre></div>
+</div>
+<p>左の図では、家はその場で回転してから右に移動している。右の図では、家は先に右に移動し、その後に原点を中心に回転したため、斜め上に移動している。回転と拡大縮小は常に原点を中心に行われるので、物体をその場で回転させたい場合は、物体の中心が原点にある状態で回転してから、目的の位置に平行移動する。つまり、変換の行列は <span class="math notranslate nohighlight">\(T R S\)</span>（拡大縮小 <span class="math notranslate nohighlight">\(S\)</span>、回転 <span class="math notranslate nohighlight">\(R\)</span>、平行移動 <span class="math notranslate nohighlight">\(T\)</span> の順に行う）の形にするのが基本である。</p>
+</section>
+</section>
+<section id="id4">
+<h2>3 次元の変換<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>3 次元でも考え方は同じで、4 × 4 の行列を使う。拡大縮小と平行移動は、2 次元の行列に z の成分を加えたものになる。回転は、どの軸のまわりに回転するかによって行列が異なる。たとえば、y 軸のまわりの回転の行列は次のとおりである。</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}R_y(\theta) =
+\begin{pmatrix}
+\cos \theta &amp; 0 &amp; \sin \theta &amp; 0 \\
+0 &amp; 1 &amp; 0 &amp; 0 \\
+-\sin \theta &amp; 0 &amp; \cos \theta &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 1
+\end{pmatrix}\end{split}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">87</span><span class="k">def</span><span class="w"> </span><span class="nf">rotate_y</span><span class="p">(</span><span class="n">degrees</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">88</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;y 軸のまわりの回転の行列(y 軸の正の向きから見て反時計回り)。&quot;&quot;&quot;</span>
+<span class="linenos">89</span>    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">degrees</span><span class="p">)</span>
+<span class="linenos">90</span>    <span class="n">c</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="linenos">91</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+<span class="linenos">92</span>        <span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">93</span>        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">94</span>        <span class="p">[</span><span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">95</span>        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+<span class="linenos">96</span>    <span class="p">])</span>
+</pre></div>
+</div>
+<p>任意の向きへの回転は、x 軸、y 軸、z 軸のまわりの回転を組み合わせて表せる。ただし、3 つの角度で回転を表す方法（オイラー角）には、組み合わせによって回転の自由度が 1 つ失われる問題（ジンバルロック）がある。そのため、ゲームエンジンなどでは、回転を四元数（クォータニオン）で表すことが多い。</p>
+</section>
+<section id="id5">
+<h2>座標系の流れ<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>3 次元の頂点が画面上の画素の位置になるまでに、座標は次の座標系を順に経由する。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 40.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>座標系</p></th>
+<th class="head"><p>意味</p></th>
+<th class="head"><p>次の座標系への変換</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>モデル座標</p></td>
+<td><p>物体ごとに決めた座標系。物体の中心を原点にすることが多い。</p></td>
+<td><p>モデル変換（<span class="math notranslate nohighlight">\(M\)</span>）</p></td>
+</tr>
+<tr class="row-odd"><td><p>ワールド座標</p></td>
+<td><p>場面全体で共通の座標系。</p></td>
+<td><p>ビュー変換（<span class="math notranslate nohighlight">\(V\)</span>）</p></td>
+</tr>
+<tr class="row-even"><td><p>カメラ座標</p></td>
+<td><p>カメラを原点とし、カメラが -z 方向を向く座標系。</p></td>
+<td><p>投影変換（<span class="math notranslate nohighlight">\(P\)</span>）</p></td>
+</tr>
+<tr class="row-odd"><td><p>クリップ座標</p></td>
+<td><p>投影変換の結果の同次座標 <span class="math notranslate nohighlight">\((x, y, z, w)\)</span>。画面の外にはみ出す部分の切り取り（クリッピング）をこの座標系で行う。</p></td>
+<td><p>透視除算（<span class="math notranslate nohighlight">\(w\)</span> で割る）</p></td>
+</tr>
+<tr class="row-even"><td><p>正規化デバイス座標（NDC）</p></td>
+<td><p>画面に映る範囲が、x、y、z のいずれも -1 から 1 になる座標系。</p></td>
+<td><p>ビューポート変換</p></td>
+</tr>
+<tr class="row-odd"><td><p>スクリーン座標</p></td>
+<td><p>画素を単位とする画面上の座標。</p></td>
+<td><p>（ラスタライズ）</p></td>
+</tr>
+</tbody>
+</table>
+<p>モデル変換、ビュー変換、投影変換は、掛け合わせて 1 つの行列 <span class="math notranslate nohighlight">\(PVM\)</span> にまとめられる。この行列を MVP 行列ということがある。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">151</span><span class="k">def</span><span class="w"> </span><span class="nf">to_clip</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">152</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;(N, 3) の点に 4 × 4 の行列を掛け、(N, 4) の同次座標を返す。&quot;&quot;&quot;</span>
+<span class="linenos">153</span>    <span class="n">homogeneous</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">points</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">),</span> <span class="mi">1</span><span class="p">))])</span>
+<span class="linenos">154</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">((</span><span class="n">matrix</span> <span class="o">@</span> <span class="n">homogeneous</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h2>ビュー変換<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>ビュー変換は、ワールド座標をカメラ座標に変換する。カメラの位置 <span class="math notranslate nohighlight">\(\mathbf{e}\)</span>、注視する点 <span class="math notranslate nohighlight">\(\mathbf{t}\)</span>、カメラの上の向きの目安 <span class="math notranslate nohighlight">\(\mathbf{u}\)</span> を与えて、次のようにカメラの 3 つの軸を求める。</p>
+<ol class="arabic simple">
+<li><p>前方: <span class="math notranslate nohighlight">\(\mathbf{f} = \mathrm{normalize}(\mathbf{t} - \mathbf{e})\)</span></p></li>
+<li><p>右: <span class="math notranslate nohighlight">\(\mathbf{r} = \mathrm{normalize}(\mathbf{f} \times \mathbf{u})\)</span></p></li>
+<li><p>上: <span class="math notranslate nohighlight">\(\mathbf{u}' = \mathbf{r} \times \mathbf{f}\)</span></p></li>
+</ol>
+<p>ビュー変換は、カメラの位置を原点に移す平行移動と、カメラの 3 つの軸をそれぞれ x 軸、y 軸、-z 軸に重ねる回転を組み合わせたものになる。回転の行列は、3 つの軸のベクトルを行として並べるだけで作れる。3 つの軸が互いに直交する単位ベクトルなので、その逆行列が転置行列に等しいからである。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 99</span><span class="k">def</span><span class="w"> </span><span class="nf">look_at</span><span class="p">(</span><span class="n">eye</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span>
+<span class="linenos">100</span>            <span class="n">up</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">101</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ビュー変換の行列。ワールド座標をカメラ座標に変換する。</span>
+<span class="linenos">102</span>
+<span class="linenos">103</span><span class="sd">    カメラを eye に置き、target の方向に向ける。up はカメラの上の向きの</span>
+<span class="linenos">104</span><span class="sd">    目安である。カメラ座標では、カメラは原点にあって -z 方向を向き、</span>
+<span class="linenos">105</span><span class="sd">    上が +y、右が +x になる。</span>
+<span class="linenos">106</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">107</span>    <span class="n">forward</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="n">eye</span><span class="p">)</span>          <span class="c1"># カメラの前方</span>
+<span class="linenos">108</span>    <span class="n">right</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span> <span class="n">up</span><span class="p">))</span>   <span class="c1"># カメラの右</span>
+<span class="linenos">109</span>    <span class="n">true_up</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">forward</span><span class="p">)</span>         <span class="c1"># カメラの上</span>
+<span class="linenos">110</span>    <span class="n">rotation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="linenos">111</span>    <span class="n">rotation</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">right</span>
+<span class="linenos">112</span>    <span class="n">rotation</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">true_up</span>
+<span class="linenos">113</span>    <span class="n">rotation</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">forward</span>
+<span class="linenos">114</span>    <span class="k">return</span> <span class="n">rotation</span> <span class="o">@</span> <span class="n">translate</span><span class="p">(</span><span class="o">-</span><span class="n">eye</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">eye</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">eye</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>物体を動かす代わりにカメラを動かしても、画面に映る結果は同じである。ビュー変換は、カメラを動かす変換の逆変換になっている。</p>
+</section>
+<section id="id7">
+<h2>投影変換<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>投影変換は、3 次元の空間のうち画面に映る範囲を、正規化デバイス座標の -1 から 1 の立方体に写す。投影の方法には、平行投影と透視投影がある。</p>
+<section id="id8">
+<h3>平行投影<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>平行投影は、カメラ座標の x、y をそのまま画面上の位置にする方法である。奥にある物体も手前にある物体も同じ大きさに見える。設計図、CAD、2 次元のゲームなどで使われる。</p>
+</section>
+<section id="id9">
+<h3>透視投影<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>透視投影は、遠くの物体ほど小さく写す方法である。人間の目やカメラと同じ見え方になる。カメラ座標の点 <span class="math notranslate nohighlight">\((x, y, z)\)</span> を、カメラから距離 1 の位置にあるスクリーンに写すと、相似な三角形の関係から、スクリーン上の位置は <span class="math notranslate nohighlight">\((x / (-z), y / (-z))\)</span> になる（カメラは -z 方向を向いているので、見える範囲では <span class="math notranslate nohighlight">\(z &lt; 0\)</span> である）。</p>
+<p>この「<span class="math notranslate nohighlight">\(-z\)</span> で割る」処理は、行列の掛け算だけでは表せない。そこで、投影変換の行列で <span class="math notranslate nohighlight">\(w = -z\)</span> となるようにしておき、後で透視除算として <span class="math notranslate nohighlight">\(w\)</span> で割る。縦方向の視野角を <span class="math notranslate nohighlight">\(\theta\)</span>、画面の縦横比（幅 / 高さ）を <span class="math notranslate nohighlight">\(a\)</span>、カメラから見える範囲の手前の距離（ニアクリップ面）を <span class="math notranslate nohighlight">\(n\)</span>、奥の距離（ファークリップ面）を <span class="math notranslate nohighlight">\(f\)</span> とすると、透視投影の行列は次のとおりである。</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}P =
+\begin{pmatrix}
+\dfrac{s}{a} &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; s &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; \dfrac{f + n}{n - f} &amp; \dfrac{2 f n}{n - f} \\
+0 &amp; 0 &amp; -1 &amp; 0
+\end{pmatrix},
+\quad s = \frac{1}{\tan(\theta / 2)}\end{split}\]</div>
+<p>3 行目は、透視除算の後の z が、カメラからの距離 <span class="math notranslate nohighlight">\(n\)</span> で -1、<span class="math notranslate nohighlight">\(f\)</span> で 1 になるように決めたものである。この z は、<a class="reference internal" href="rasterization.html"><span class="doc">3 次元のラスタライズ</span></a>で物体の前後関係を判定するために使う。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">117</span><span class="k">def</span><span class="w"> </span><span class="nf">perspective</span><span class="p">(</span><span class="n">fovy_degrees</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">aspect</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">near</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">118</span>                <span class="n">far</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">119</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;透視投影の行列。</span>
+<span class="linenos">120</span>
+<span class="linenos">121</span><span class="sd">    fovy_degrees は縦方向の視野角、aspect は画面の幅 / 高さである。</span>
+<span class="linenos">122</span><span class="sd">    カメラから near から far までの範囲が、正規化デバイス座標の</span>
+<span class="linenos">123</span><span class="sd">    z = -1 から 1 に対応する。</span>
+<span class="linenos">124</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">125</span>    <span class="n">s</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">fovy_degrees</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="linenos">126</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+<span class="linenos">127</span>        <span class="p">[</span><span class="n">s</span> <span class="o">/</span> <span class="n">aspect</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">128</span>        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">129</span>        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="p">(</span><span class="n">far</span> <span class="o">+</span> <span class="n">near</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">near</span> <span class="o">-</span> <span class="n">far</span><span class="p">),</span>
+<span class="linenos">130</span>         <span class="mf">2.0</span> <span class="o">*</span> <span class="n">far</span> <span class="o">*</span> <span class="n">near</span> <span class="o">/</span> <span class="p">(</span><span class="n">near</span> <span class="o">-</span> <span class="n">far</span><span class="p">)],</span>
+<span class="linenos">131</span>        <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="linenos">132</span>    <span class="p">])</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#fig-projection"><span class="std std-numref">図 10</span></a> は、奥に向かって並べた同じ大きさの 3 つの立方体を、平行投影と透視投影で描いたものである。透視投影では、奥の立方体ほど小さく写り、平行な辺が奥で 1 点に近づいていく。</p>
+<figure class="align-default" id="id13">
+<span id="fig-projection"></span><img alt="同じ大きさの 3 つの立方体を、平行投影と透視投影で描いた線画" src="_images/projection.png" />
+<figcaption>
+<p><span class="caption-number">図 10 </span><span class="caption-text">平行投影（左）と透視投影（右）</span><a class="headerlink" href="#id13" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+<section id="id10">
+<h2>ビューポート変換<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>最後に、透視除算で得た正規化デバイス座標を、画素を単位とするスクリーン座標に変換する。正規化デバイス座標の x、y は -1 から 1 の範囲で、y 軸は上向きである。一方、画像の座標は左上が原点で、y 軸は下向きである。そのため、y の符号を反転する。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">157</span><span class="k">def</span><span class="w"> </span><span class="nf">to_screen</span><span class="p">(</span><span class="n">clip</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">158</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;同次座標を w で割り(透視除算)、画面の画素の座標に変換する。</span>
+<span class="linenos">159</span>
+<span class="linenos">160</span><span class="sd">    戻り値は (N, 3) の配列で、各行は (x, y, z) である。x と y は画素の</span>
+<span class="linenos">161</span><span class="sd">    座標(y 軸は下向き)、z は正規化デバイス座標の z(-1 から 1)である。</span>
+<span class="linenos">162</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">163</span>    <span class="n">ndc</span> <span class="o">=</span> <span class="n">clip</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="n">clip</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+<span class="linenos">164</span>    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">ndc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">width</span>
+<span class="linenos">165</span>    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">ndc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">height</span>
+<span class="linenos">166</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ndc</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id11">
+<h2>法線の変換<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>面の法線のような向きのベクトルは、頂点の座標と同じ行列では正しく変換できない場合がある。たとえば、物体を x 方向にだけ 2 倍に引き伸ばすと、斜めの面の傾きが変わる。このとき、法線にも同じ拡大縮小を掛けると、法線は面に垂直でなくなる。</p>
+<p>法線を正しく変換するには、モデル変換の左上の 3 × 3 の部分 <span class="math notranslate nohighlight">\(M_3\)</span> の逆行列の転置 <span class="math notranslate nohighlight">\((M_3^{-1})^{\mathsf{T}}\)</span> を掛ける。回転だけ、または全ての方向に同じ倍率の拡大縮小だけを含む変換であれば、<span class="math notranslate nohighlight">\((M_3^{-1})^{\mathsf{T}}\)</span> は <span class="math notranslate nohighlight">\(M_3\)</span> の定数倍になるので、正規化すれば同じ結果になる。本資料のレンダラーでは、次の関数で法線を変換する。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">244</span><span class="k">def</span><span class="w"> </span><span class="nf">transform_normals</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">normals</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">245</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;モデル変換に合わせて法線を変換する。</span>
+<span class="linenos">246</span>
+<span class="linenos">247</span><span class="sd">    法線には、モデル変換の左上 3 × 3 の逆行列の転置を掛ける。</span>
+<span class="linenos">248</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">249</span>    <span class="n">normal_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">model</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="linenos">250</span>    <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">normal_matrix</span> <span class="o">@</span> <span class="n">normals</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="linenos">251</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="math.html" class="btn btn-neutral float-left" title="ベクトルと行列" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rasterization.html" class="btn btn-neutral float-right" title="3 次元のラスタライズ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

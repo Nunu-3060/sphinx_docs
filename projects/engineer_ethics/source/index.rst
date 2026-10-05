@@ -37,13 +37,13 @@
    * - 第 4 章
      - 事例
      - 歴史的な事故・不正の分析
-   * - 第 5〜9 章
+   * - 第 5〜10 章
      - 実務
-     - 品質と安全、セキュリティ、プライバシー、知的財産、AI
-   * - 第 10〜11 章
+     - 品質と安全、セキュリティ、プライバシー、知的財産、利用者の尊重、AI
+   * - 第 11〜12 章
      - 組織と法令
      - 組織の中での振る舞い方、関連する法令
-   * - 第 12〜13 章
+   * - 第 13〜14 章
      - 実践
      - 演習問題、チェックリスト
 
@@ -71,11 +71,12 @@
    06_security
    07_privacy
    08_intellectual_property
-   09_ai_ethics
-   10_organization
-   11_laws
-   12_exercises
-   13_checklist
+   09_user_respect
+   10_ai_ethics
+   11_organization
+   12_laws
+   13_exercises
+   14_checklist
 
 .. toctree::
    :maxdepth: 1

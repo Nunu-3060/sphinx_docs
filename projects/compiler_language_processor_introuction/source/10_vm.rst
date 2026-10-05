@@ -1,0 +1,309 @@
+################################################################
+第 10 章 コード生成と仮想マシン
+################################################################
+
+:term:`コード生成`\ は、プログラムを実際に実行できる形式に変換する段階です。この章では、Tiny のプログラムを\ :term:`バイトコード`\ に変換するコード生成器（``tiny_bytecode.py``）と、それを実行する\ :term:`仮想マシン`\ （``tiny_vm.py``）を作ります。CPython や Java の処理系と同じ方式です。
+
+コード生成の対象
+================================================================
+
+コード生成で出力する形式（目的コード）には、いくつかの選択肢があります。
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 45 30
+
+   * - 目的コード
+     - 特徴
+     - 例
+   * - 機械語
+     - CPU が直接実行するので最も速いが、CPU ごとにバックエンドが必要
+     - GCC、Clang、rustc
+   * - 仮想マシンのバイトコード
+     - 仮想マシンさえ移植すればどこでも動くが、機械語より遅い
+     - CPython、Java、Lua
+   * - 他の高水準言語
+     - 既存の処理系を利用できる
+     - TypeScript から JavaScript、Nim から C
+
+本書では、仮想マシンのバイトコードを生成します。仮想マシンを Python で書けるので、ここまでの章と同じく Python だけで完結し、実行結果を確かめやすいからです。機械語を生成する場合に特有の問題（レジスタ割り当てなど）は\ :doc:`第 11 章 <11_runtime>`\ で扱います。
+
+スタックマシンとレジスタマシン
+================================================================
+
+仮想マシンの設計には、大きく 2 つの方式があります。
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 40 40
+
+   * -
+     - スタックマシン
+     - レジスタマシン
+   * - 被演算子の場所
+     - 値のスタックの上部
+     - 命令で指定したレジスタ
+   * - ``a + b * c`` の命令列
+     - ``LOAD a; LOAD b; LOAD c; MUL; ADD``
+     - ``MUL r3, r1, r2; ADD r4, r0, r3``
+   * - 長所
+     - 命令が短く、コード生成が簡単
+     - 命令の数が少ない
+   * - 例
+     - CPython、Java（JVM）、WebAssembly
+     - Lua 5、Android の Dalvik
+
+:term:`スタックマシン`\ では、命令は被演算子をスタックから取り出し、結果をスタックに積みます。式の構文木を帰りがけ順（子を先に、親を後に）にたどって命令を出力するだけで正しい命令列になるため、コード生成がとても簡単です。本書の仮想マシンもスタックマシンにします。
+
+命令セットの設計
+================================================================
+
+命令は「命令の種類」と「整数の引数」の組 ``(Op, int)`` で表します。引数の意味は命令によって異なり、定数表の番号、局所変数の番号、ジャンプ先の番地などを表します。
+
+.. literalinclude:: ../examples/tiny_bytecode.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: Op
+   :caption: tiny_bytecode.py（命令の種類）
+
+関数ごとのコンパイル結果は ``CodeObject`` にまとめます。命令列のほか、命令が参照する定数の表、引数と局所変数の数を持ちます。CPython の関数オブジェクトが持つ ``__code__``\ （コードオブジェクト）も、同じような情報を持っています。
+
+.. literalinclude:: ../examples/tiny_bytecode.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: CodeObject
+   :caption: tiny_bytecode.py（コードオブジェクト）
+
+バイトコードの生成
+================================================================
+
+局所変数のスロット
+----------------------------------------------------------------
+
+木構造インタプリタでは、変数を名前で探していました。バイトコードでは、コンパイル時に各局所変数に番号（スロット）を割り当て、実行時は番号で直接アクセスします。引数は 0 番から順にスロットを割り当て、``let`` で宣言した変数にはその次の番号を割り当てます。ブロックを抜けたら、そのブロックで宣言した変数のスロットは再利用します。
+
+.. literalinclude:: ../examples/tiny_bytecode.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: FunctionCompiler.compile_block
+   :caption: tiny_bytecode.py（ブロックとスロットの再利用）
+
+式の生成
+----------------------------------------------------------------
+
+``compile_expr`` は「式の値を計算してスタックに 1 つ積む」命令列を生成します。二項演算なら、左辺の命令列、右辺の命令列、演算の命令を順に出力します。
+
+.. literalinclude:: ../examples/tiny_bytecode.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: FunctionCompiler.compile_expr
+   :caption: tiny_bytecode.py（式の生成）
+
+``&&`` には ``JUMP_IF_FALSE_OR_POP`` 命令を使います。左辺が偽ならその値（``false``）をスタックに残したまま右辺を飛び越し、真なら左辺の値を捨てて右辺を評価します。どちらの場合も、最後にスタックには式の値が 1 つ残ります。
+
+制御構文とバックパッチ
+----------------------------------------------------------------
+
+``if`` 文や ``while`` 文では、前に進むジャンプ命令を出力する時点では、飛び先の番地がまだ決まっていません。そこで、とりあえず飛び先を 0 にしてジャンプ命令を出力し、その番地を覚えておきます。飛び先の命令を出力する直前に、覚えておいた命令の飛び先を書き換えます（``patch``）。この技法を\ :term:`バックパッチ`\ と呼びます。
+
+.. literalinclude:: ../examples/tiny_bytecode.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: FunctionCompiler.patch
+   :caption: tiny_bytecode.py（バックパッチ）
+
+.. literalinclude:: ../examples/tiny_bytecode.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :start-at: case A.If(cond, then_body, else_body):
+   :end-before: case A.Return(value):
+   :caption: tiny_bytecode.py（if 文と while 文の生成）
+
+``while`` 文の末尾から条件の判定に戻るジャンプは後ろ向きなので、飛び先の番地（``start``）は出力の時点で分かっています。
+
+逆アセンブル
+================================================================
+
+生成したバイトコードを人が読める形で表示する逆アセンブラも用意しました。関数 ``sum`` のバイトコードを表示してみます。
+
+.. code-block:: console
+   :linenos:
+
+   $ python tiny.py bytecode programs/sum.tiny
+   function sum: params=1 locals=3
+      0  CONST                 0 (0)
+      1  STORE                 1 (s)
+      2  CONST                 1 (1)
+      3  STORE                 2 (i)
+      4  LOAD                  2 (i)
+      5  LOAD                  0 (n)
+      6  LE
+      7  JUMP_IF_FALSE        17
+      8  LOAD                  1 (s)
+      9  LOAD                  2 (i)
+     10  ADD
+     11  STORE                 1 (s)
+     12  LOAD                  2 (i)
+     13  CONST                 1 (1)
+     14  ADD
+     15  STORE                 2 (i)
+     16  JUMP                  4
+     17  LOAD                  1 (s)
+     18  RETURN
+
+   function main: params=0 locals=0
+      0  CONST                 0 (10)
+      1  CALL                  0 (sum)
+      2  PRINT                 1
+      3  POP
+      4  CONST                 1 (None)
+      5  RETURN
+
+左から番地、命令、引数で、括弧内は引数が指す定数や変数の名前です。4 番地から 16 番地までが ``while`` ループで、7 番地の ``JUMP_IF_FALSE`` の飛び先 17 がバックパッチで書き込まれています。``main`` の末尾の ``CONST None`` と ``RETURN`` は、値を返さない関数の終わりに自動的に追加したものです。``None`` は Tiny の値ではなく「値なし」を表す内部の値です。
+
+仮想マシンの実装
+================================================================
+
+値スタックとフレーム
+----------------------------------------------------------------
+
+本書の仮想マシンは、すべての関数呼び出しで 1 本の値スタックを共有します。関数を呼び出すと、呼び出し元が積んだ引数の位置をそのまま局所変数の先頭とし、残りの局所変数の領域を確保します。局所変数の先頭位置を\ :term:`ベースポインタ`\ （``bp``）と呼び、局所変数 ``k`` 番は ``stack[bp + k]`` にあります。
+
+.. graphviz::
+   :caption: main から sum(10) を呼び出したときの値スタック（下が底）
+
+   digraph stack {
+     node [shape=record, fontname="monospace"];
+     stack [label="{<top> 計算途中の値 ... | i | s | <bp> n = 10（引数） | ... | main の計算途中の値}"];
+     frame [label="{sum のフレーム | pc | <bp> bp}"];
+     frame:bp -> stack:bp;
+   }
+
+関数呼び出し 1 回分の情報（実行中のコード、次に実行する番地 ``pc``、ベースポインタ ``bp``）を\ :term:`スタックフレーム`\ と呼び、フレームのリストで呼び出しの入れ子を管理します。
+
+.. literalinclude:: ../examples/tiny_vm.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :lines: 30-58
+   :caption: tiny_vm.py（フレームと関数の呼び出し）
+
+命令の実行ループ
+----------------------------------------------------------------
+
+仮想マシンの中心は、命令を 1 つ取り出しては実行することを繰り返すループです。これを命令の\ :term:`ディスパッチ`\ ループと呼びます。
+
+.. literalinclude:: ../examples/tiny_vm.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: VM.execute
+   :caption: tiny_vm.py（命令の実行ループ）
+
+``CALL`` 命令は新しいフレームを積み、実行中のコードを呼び出し先に切り替えます。``RETURN`` 命令は戻り値を取り出し、引数と局所変数をスタックから捨て、フレームを降ろして呼び出し元に戻ります。そして戻り値をスタックに積みます。Python の再帰呼び出しを使っていないので、Tiny の関数呼び出しの深さは Python の再帰の上限に制限されません（本書の実装では ``MAX_FRAMES`` で上限を設けています）。
+
+性能の比較
+================================================================
+
+``tiny_vm.py`` を引数なしで実行すると、``fib(22)`` の計算にかかった時間を、木構造インタプリタと仮想マシンで比べます。
+
+.. code-block:: console
+   :linenos:
+
+   $ python tiny_vm.py
+   17711
+   木構造インタプリタ: 0.84 秒
+   17711
+   仮想マシン:         0.64 秒
+
+筆者の環境（Python 3.14）では、仮想マシンのほうが 2 割から 3 割ほど速くなりました。変数の名前による探索がスロット番号によるアクセスに変わったことや、再帰的な評価の呼び出しがなくなったことが効いています。ただし、差はそれほど大きくありません。仮想マシンも Python で書かれているため、命令 1 つの実行にも ``match`` 文による分岐やリストの操作など多くの処理がかかるからです。C 言語で書かれた実用的な処理系では、木構造インタプリタと仮想マシンの差はより大きくなります。
+
+ディスパッチの高速化
+----------------------------------------------------------------
+
+仮想マシンの性能は、命令のディスパッチの効率に大きく左右されます。代表的な高速化の手法を挙げます。
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - 手法
+     - 内容
+   * - スレッデッドコード
+     - ``switch`` 文の代わりに、各命令の処理の末尾から次の命令の処理へ直接ジャンプする（CPython は C コンパイラの拡張機能 computed goto でこれを行っている）
+   * - スーパー命令
+     - よく連続して現れる命令の組を 1 つの命令にまとめ、ディスパッチの回数を減らす（CPython 3.14 の ``LOAD_FAST_BORROW_LOAD_FAST_BORROW`` など）
+   * - 特殊化
+     - 実行時に観測した型に応じて、命令をより特殊で高速な命令に書き換える（CPython 3.11 以降の特殊化適応型インタプリタ [PEP659]_）
+   * - レジスタマシン化
+     - スタックへの積み降ろしを減らし、命令の数を減らす
+
+Python の dis モジュール
+================================================================
+
+CPython のバイトコードは ``dis`` モジュールで逆アセンブルできます。Tiny の ``sum`` と同じ処理を Python で書いて、バイトコードを見てみましょう。
+
+.. code-block:: python
+   :linenos:
+
+   import dis
+
+
+   def total(n):
+       s = 0
+       i = 1
+       while i <= n:
+           s = s + i
+           i = i + 1
+       return s
+
+
+   dis.dis(total)
+
+Python 3.14 では次のように表示されます。バイトコードは Python のバージョンによって異なります。
+
+.. code-block:: text
+   :linenos:
+
+     4           RESUME                   0
+
+     5           LOAD_SMALL_INT           0
+                 STORE_FAST               1 (s)
+
+     6           LOAD_SMALL_INT           1
+                 STORE_FAST               2 (i)
+
+     7   L1:     LOAD_FAST_BORROW_LOAD_FAST_BORROW 32 (i, n)
+                 COMPARE_OP              58 (bool(<=))
+                 POP_JUMP_IF_FALSE       20 (to L2)
+                 NOT_TAKEN
+
+     8           LOAD_FAST_BORROW_LOAD_FAST_BORROW 18 (s, i)
+                 BINARY_OP                0 (+)
+                 STORE_FAST               1 (s)
+
+     9           LOAD_FAST_BORROW         2 (i)
+                 LOAD_SMALL_INT           1
+                 BINARY_OP                0 (+)
+                 STORE_FAST               2 (i)
+                 JUMP_BACKWARD           25 (to L1)
+
+    10   L2:     LOAD_FAST_BORROW         1 (s)
+                 RETURN_VALUE
+
+Tiny のバイトコードとよく似ていることが分かります。``STORE_FAST`` と ``LOAD_FAST_BORROW`` が局所変数のスロット番号でのアクセス、``POP_JUMP_IF_FALSE`` と ``JUMP_BACKWARD`` がループの分岐です。``LOAD_FAST_BORROW_LOAD_FAST_BORROW`` は 2 つの局所変数を一度に積むスーパー命令です。左端の数字はソースコードの行番号で、CPython はエラーの報告のために命令と行番号の対応表を持っています。
+
+まとめ
+================================================================
+
+* スタックマシンでは、構文木を帰りがけ順にたどって命令を出力するだけでコードを生成できます。
+* 局所変数にはコンパイル時にスロット番号を割り当て、実行時は番号でアクセスします。
+* 前に進むジャンプの飛び先は、バックパッチで後から書き込みます。
+* 仮想マシンは値スタックとスタックフレームを持ち、命令を 1 つずつディスパッチして実行します。
+* 仮想マシンの性能はディスパッチの効率に左右され、スレッデッドコードや特殊化などの高速化の手法があります。

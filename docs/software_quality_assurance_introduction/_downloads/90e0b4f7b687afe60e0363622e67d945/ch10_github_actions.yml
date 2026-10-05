@@ -1,0 +1,30 @@
+# 第 10 章のサンプル: GitHub Actions のワークフロー定義です。
+# 実際に使う場合は .github/workflows/quality.yml として配置します。
+name: quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install nox
+        run: python -m pip install nox==2026.8.17
+      - name: Run quality checks
+        run: nox
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.python-version }}
+          path: reports/junit.xml

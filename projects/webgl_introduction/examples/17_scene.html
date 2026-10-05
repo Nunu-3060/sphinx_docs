@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>17 総合演習</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: sans-serif; background: #000; }
+  /* canvas をウィンドウ全体に広げる。描画バッファーの大きさは JavaScript で合わせる */
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  #error { position: absolute; top: 0; left: 0; margin: 8px; color: #f66; white-space: pre-wrap; }
+  #hud { position: absolute; top: 8px; left: 8px; padding: 8px 12px; color: #eee;
+         background: rgba(0, 0, 0, 0.6); border-radius: 4px; font-size: 14px; line-height: 1.6; }
+  #hud label { white-space: nowrap; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="hud">
+  <b>17 総合演習</b><br>
+  左ドラッグ: 回転 ／ 右ドラッグまたは Shift + ドラッグ: 移動 ／ ホイール: 拡大・縮小 ／ R: 初期状態に戻す<br>
+  クリック: 物体を選択<br>
+  <label><input type="checkbox" id="animate" checked> アニメーション</label>
+  <label><input type="checkbox" id="pointLight" checked> 点光源</label><br>
+  選択中: <span id="selected">なし</span>
+</div>
+<pre id="error" hidden></pre>
+
+<script>
+"use strict";
+
+// ---- シェーダー ----
+// 通常の描画: テクスチャの色に、平行光源と点光源による Blinn-Phong のライティングを適用する
+const SCENE_VS = `#version 300 es
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+layout(location = 2) in vec2 a_uv;
+
+uniform mat4 u_model;
+uniform mat4 u_viewProjection;
+uniform mat3 u_normalMatrix;
+uniform float u_uvScale;
+
+out vec3 v_worldPosition;
+out vec3 v_worldNormal;
+out vec2 v_uv;
+
+void main() {
+  vec4 worldPosition = u_model * vec4(a_position, 1.0);
+  v_worldPosition = worldPosition.xyz;
+  v_worldNormal = u_normalMatrix * a_normal;
+  v_uv = a_uv * u_uvScale;
+  gl_Position = u_viewProjection * worldPosition;
+}
+`;
+
+const SCENE_FS = `#version 300 es
+precision highp float;
+
+uniform sampler2D u_texture;
+uniform vec3 u_tint;             // テクスチャに掛ける色
+uniform vec3 u_cameraPosition;
+uniform vec3 u_lightDirection;   // 平行光源: 表面から光源へ向かう方向
+uniform vec3 u_pointPosition;
+uniform vec3 u_pointColor;       // 点光源を消すときは 0
+uniform bool u_emissive;         // 光源の表示用: ライティングをしない
+uniform bool u_highlight;        // 選択中の物体を明るくする
+
+in vec3 v_worldPosition;
+in vec3 v_worldNormal;
+in vec2 v_uv;
+out vec4 outColor;
+
+vec3 shade(vec3 N, vec3 V, vec3 L, vec3 lightColor, vec3 baseColor) {
+  float diffuse = max(dot(N, L), 0.0);
+  vec3 H = normalize(L + V);
+  float specular = diffuse > 0.0 ? pow(max(dot(N, H), 0.0), 48.0) * 0.4 : 0.0;
+  return lightColor * (diffuse * baseColor + specular);
+}
+
+void main() {
+  vec3 baseColor = texture(u_texture, v_uv).rgb * u_tint;
+  vec3 color;
+  if (u_emissive) {
+    color = u_tint;
+  } else {
+    vec3 N = normalize(v_worldNormal);
+    vec3 V = normalize(u_cameraPosition - v_worldPosition);
+    color = 0.15 * baseColor;  // 環境光
+    color += shade(N, V, u_lightDirection, vec3(0.7), baseColor);
+    vec3 toLight = u_pointPosition - v_worldPosition;
+    float distance = length(toLight);
+    float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.04 * distance * distance);
+    color += shade(N, V, toLight / distance, u_pointColor, baseColor) * attenuation;
+  }
+  if (u_highlight) {
+    color = mix(color, vec3(1.0, 0.9, 0.2), 0.35);
+  }
+  outColor = vec4(color, 1.0);
+}
+`;
+
+// ピッキング用: 物体ごとに固有の色（ID を色に変換したもの）で塗りつぶす
+const PICK_VS = `#version 300 es
+layout(location = 0) in vec3 a_position;
+
+uniform mat4 u_model;
+uniform mat4 u_viewProjection;
+
+void main() {
+  gl_Position = u_viewProjection * u_model * vec4(a_position, 1.0);
+}
+`;
+
+const PICK_FS = `#version 300 es
+precision mediump float;
+
+uniform vec4 u_idColor;
+out vec4 outColor;
+
+void main() {
+  outColor = u_idColor;
+}
+`;
+
+// ---- 頂点データ ----
+// python gen_vertices.py cube で生成（頂点数 24、三角形数 12）
+const CUBE = {
+  positions: new Float32Array([
+    0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5,
+    -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5,
+    -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5,
+    -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5,
+    -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
+    0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5,
+  ]),
+  colors: new Float32Array([
+    0.9, 0.3, 0.3, 0.9, 0.3, 0.3, 0.9, 0.3, 0.3, 0.9, 0.3, 0.3,
+    0.3, 0.85, 0.85, 0.3, 0.85, 0.85, 0.3, 0.85, 0.85, 0.3, 0.85, 0.85,
+    0.35, 0.8, 0.35, 0.35, 0.8, 0.35, 0.35, 0.8, 0.35, 0.35, 0.8, 0.35,
+    0.85, 0.35, 0.85, 0.85, 0.35, 0.85, 0.85, 0.35, 0.85, 0.85, 0.35, 0.85,
+    0.35, 0.45, 0.9, 0.35, 0.45, 0.9, 0.35, 0.45, 0.9, 0.35, 0.45, 0.9,
+    0.9, 0.85, 0.3, 0.9, 0.85, 0.3, 0.9, 0.85, 0.3, 0.9, 0.85, 0.3,
+  ]),
+  normals: new Float32Array([
+    1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+    -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+    0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+    0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+    0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+    0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
+  ]),
+  uvs: new Float32Array([
+    0, 0, 1, 0, 1, 1, 0, 1,
+    0, 0, 1, 0, 1, 1, 0, 1,
+    0, 0, 1, 0, 1, 1, 0, 1,
+    0, 0, 1, 0, 1, 1, 0, 1,
+    0, 0, 1, 0, 1, 1, 0, 1,
+    0, 0, 1, 0, 1, 1, 0, 1,
+  ]),
+  indices: new Uint16Array([
+    0, 1, 2, 0, 2, 3,
+    4, 5, 6, 4, 6, 7,
+    8, 9, 10, 8, 10, 11,
+    12, 13, 14, 12, 14, 15,
+    16, 17, 18, 16, 18, 19,
+    20, 21, 22, 20, 22, 23,
+  ]),
+};
+
+// ---- 共通の補助関数 ----
+function showError(message) {
+  const element = document.getElementById("error");
+  element.textContent += message + "\n";
+  element.hidden = false;
+}
+
+function createShader(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(shader);
+    gl.deleteShader(shader);
+    throw new Error("シェーダーのコンパイルに失敗しました。\n" + log);
+  }
+  return shader;
+}
+
+function createProgram(gl, vertexSource, fragmentSource) {
+  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+  const program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+  gl.deleteShader(vertexShader);
+  gl.deleteShader(fragmentShader);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const log = gl.getProgramInfoLog(program);
+    gl.deleteProgram(program);
+    throw new Error("プログラムのリンクに失敗しました。\n" + log);
+  }
+  return program;
+}
+
+// プログラム内の uniform 変数の location を名前で引けるオブジェクトにまとめる
+function getUniformLocations(gl, program, names) {
+  const locations = {};
+  for (const name of names) {
+    locations[name] = gl.getUniformLocation(program, name);
+  }
+  return locations;
+}
+
+// メッシュの頂点属性を属性ごとに別のバッファーへ転送し、VAO にまとめる。
+// locations は { positions: 0, normals: 1 } のように、属性名と location の対応を表す
+function createMeshVao(gl, mesh, locations) {
+  const sizes = { positions: 3, colors: 3, normals: 3, uvs: 2 };
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  for (const [name, location] of Object.entries(locations)) {
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, mesh[name], gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(location);
+    gl.vertexAttribPointer(location, sizes[name], gl.FLOAT, false, 0, 0);
+  }
+  const indexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
+  gl.bindVertexArray(null);
+  return { vao, indexCount: mesh.indices.length };
+}
+
+// 球の頂点データを作る（gen_vertices.py の make_sphere と同じ手順）
+function createSphere(radius, segments, rings) {
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
+  for (let i = 0; i <= rings; i++) {
+    const theta = Math.PI * i / rings;  // 北極 0 → 南極 π
+    for (let j = 0; j <= segments; j++) {
+      const phi = 2 * Math.PI * j / segments;
+      const nx = Math.sin(theta) * Math.sin(phi);
+      const ny = Math.cos(theta);
+      const nz = Math.sin(theta) * Math.cos(phi);
+      positions.push(nx * radius, ny * radius, nz * radius);
+      normals.push(nx, ny, nz);
+      uvs.push(j / segments, 1 - i / rings);
+    }
+  }
+  for (let i = 0; i < rings; i++) {
+    for (let j = 0; j < segments; j++) {
+      const a = i * (segments + 1) + j;  // 左上
+      const b = a + segments + 1;        // 左下
+      indices.push(a, b, a + 1, a + 1, b, b + 1);
+    }
+  }
+  return {
+    positions: new Float32Array(positions),
+    normals: new Float32Array(normals),
+    uvs: new Float32Array(uvs),
+    indices: new Uint16Array(indices),
+  };
+}
+
+// 画像を読み込む。読み込みに失敗した場合は reject する
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`画像 ${url} を読み込めませんでした。`));
+    image.src = url;
+  });
+}
+
+// 画像からテクスチャを作り、ミップマップを生成する
+function createTexture(gl, image) {
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  // 画像は上の行から、テクスチャ座標は下（v = 0）から並ぶので、上下を反転して転送する
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  try {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  } catch (error) {
+    // file:// で開いた場合など、画像の出どころ（オリジン）が異なると SecurityError になる
+    throw new Error("テクスチャに画像を転送できませんでした。HTML ファイルを直接開いている場合は、" +
+      "serve.py で HTTP サーバーを起動し、http://localhost:8000/ から開いてください。\n" + error.message);
+  }
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  return texture;
+}
+
+// ---- ベクトルと行列（06_matrix_test.html から、このサンプルで使う関数のみ抜粋） ----
+// 行列は列優先の Float32Array(16)、ベクトルは配列 [x, y, z]（第 6 章を参照）
+const vec3 = {
+  subtract(a, b) {
+    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  },
+  dot(a, b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  },
+  cross(a, b) {
+    return [
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0],
+    ];
+  },
+  length(a) {
+    return Math.hypot(a[0], a[1], a[2]);
+  },
+  normalize(a) {
+    const len = vec3.length(a);
+    return len > 0 ? [a[0] / len, a[1] / len, a[2] / len] : [0, 0, 0];
+  },
+};
+
+const mat4 = {
+  identity() {
+    return new Float32Array([
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    ]);
+  },
+
+  // a × b を返す。点に適用すると、先に b、次に a の変換を行うことになる
+  multiply(a, b) {
+    const out = new Float32Array(16);
+    for (let col = 0; col < 4; col++) {
+      for (let row = 0; row < 4; row++) {
+        let sum = 0;
+        for (let k = 0; k < 4; k++) {
+          sum += a[k * 4 + row] * b[col * 4 + k];
+        }
+        out[col * 4 + row] = sum;
+      }
+    }
+    return out;
+  },
+
+  // 列優先で格納しているので、ソースコード上では 1 行が行列の 1 列に当たる
+  translation(tx, ty, tz) {
+    return new Float32Array([
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      tx, ty, tz, 1,
+    ]);
+  },
+
+  scaling(sx, sy, sz) {
+    return new Float32Array([
+      sx, 0, 0, 0,
+      0, sy, 0, 0,
+      0, 0, sz, 0,
+      0, 0, 0, 1,
+    ]);
+  },
+
+  // 各軸まわりの回転（角度はラジアン。軸の正の方向から見て反時計回りが正）
+  rotationX(angle) {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return new Float32Array([
+      1, 0, 0, 0,
+      0, c, s, 0,
+      0, -s, c, 0,
+      0, 0, 0, 1,
+    ]);
+  },
+
+  rotationY(angle) {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return new Float32Array([
+      c, 0, -s, 0,
+      0, 1, 0, 0,
+      s, 0, c, 0,
+      0, 0, 0, 1,
+    ]);
+  },
+
+  // ビュー行列: 視点 eye から注視点 target を見るカメラ。up はカメラの上方向の目安
+  lookAt(eye, target, up) {
+    const z = vec3.normalize(vec3.subtract(eye, target));  // カメラの後ろ向き
+    const x = vec3.normalize(vec3.cross(up, z));            // カメラの右向き
+    const y = vec3.cross(z, x);                             // カメラの上向き
+    return new Float32Array([
+      x[0], y[0], z[0], 0,
+      x[1], y[1], z[1], 0,
+      x[2], y[2], z[2], 0,
+      -vec3.dot(x, eye), -vec3.dot(y, eye), -vec3.dot(z, eye), 1,
+    ]);
+  },
+
+  // 透視投影行列: fovY は縦方向の視野角（ラジアン）、aspect は幅 / 高さ
+  perspective(fovY, aspect, near, far) {
+    const f = 1 / Math.tan(fovY / 2);
+    const nf = 1 / (near - far);
+    return new Float32Array([
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (far + near) * nf, -1,
+      0, 0, 2 * far * near * nf, 0,
+    ]);
+  },
+
+  // 法線行列: m の左上 3 × 3 の逆行列の転置（長さ 9 の Float32Array、列優先）
+  normalMatrix(m) {
+    const a00 = m[0], a10 = m[1], a20 = m[2];
+    const a01 = m[4], a11 = m[5], a21 = m[6];
+    const a02 = m[8], a12 = m[9], a22 = m[10];
+    // 余因子（cofactor）
+    const c00 = a11 * a22 - a12 * a21;
+    const c01 = a12 * a20 - a10 * a22;
+    const c02 = a10 * a21 - a11 * a20;
+    const c10 = a02 * a21 - a01 * a22;
+    const c11 = a00 * a22 - a02 * a20;
+    const c12 = a01 * a20 - a00 * a21;
+    const c20 = a01 * a12 - a02 * a11;
+    const c21 = a02 * a10 - a00 * a12;
+    const c22 = a00 * a11 - a01 * a10;
+    const det = a00 * c00 + a01 * c01 + a02 * c02;
+    // 逆行列の転置 = 余因子行列 / 行列式
+    const d = 1 / det;
+    return new Float32Array([
+      c00 * d, c10 * d, c20 * d,
+      c01 * d, c11 * d, c21 * d,
+      c02 * d, c12 * d, c22 * d,
+    ]);
+  },
+};
+
+// ---- マウスとキーボードによるカメラ操作（第 11 章） ----
+// 注視点 target のまわりを、距離 distance、方位角 yaw、仰角 pitch で回るカメラ
+function createOrbitCamera(canvas, initial) {
+  const camera = { ...initial, target: [...initial.target] };
+  let dragging = null;  // ドラッグ中のボタンと直前のポインター位置
+
+  canvas.addEventListener("pointerdown", (event) => {
+    dragging = { button: event.button, shift: event.shiftKey, x: event.clientX, y: event.clientY,
+                 startX: event.clientX, startY: event.clientY };
+    canvas.setPointerCapture(event.pointerId);  // canvas の外に出てもイベントを受け取る
+  });
+  canvas.addEventListener("pointermove", (event) => {
+    if (!dragging) {
+      return;
+    }
+    const dx = event.clientX - dragging.x;
+    const dy = event.clientY - dragging.y;
+    dragging.x = event.clientX;
+    dragging.y = event.clientY;
+    if (dragging.button === 2 || dragging.shift) {
+      // 右ドラッグまたは Shift + ドラッグ: 注視点を画面と平行に移動する
+      const scale = camera.distance * 0.0015;
+      const right = [Math.cos(camera.yaw), 0, -Math.sin(camera.yaw)];
+      camera.target[0] -= right[0] * dx * scale;
+      camera.target[2] -= right[2] * dx * scale;
+      camera.target[1] += dy * scale;
+    } else {
+      // 左ドラッグ: 注視点のまわりを回る
+      camera.yaw -= dx * 0.01;
+      camera.pitch += dy * 0.01;
+    }
+    clampCamera(camera);
+  });
+  canvas.addEventListener("pointerup", () => {
+    dragging = null;
+  });
+  // 右クリックのメニューを表示しない
+  canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+  // ホイール: 近づく・遠ざかる
+  canvas.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    camera.distance *= Math.exp(event.deltaY * 0.001);
+    clampCamera(camera);
+  }, { passive: false });
+  // キーボード: 矢印キーで回転、+ / - で拡大・縮小、R で初期状態に戻す
+  window.addEventListener("keydown", (event) => {
+    const step = 0.05;
+    switch (event.key) {
+      case "ArrowLeft": camera.yaw += step; break;
+      case "ArrowRight": camera.yaw -= step; break;
+      case "ArrowUp": camera.pitch += step; break;
+      case "ArrowDown": camera.pitch -= step; break;
+      case "+": case ";": camera.distance *= 0.9; break;
+      case "-": camera.distance /= 0.9; break;
+      case "r": case "R": Object.assign(camera, { ...initial, target: [...initial.target] }); break;
+      default: return;
+    }
+    event.preventDefault();
+    clampCamera(camera);
+  });
+  return camera;
+}
+
+// 真上・真下を越えないように仰角を制限し、距離も一定の範囲に収める
+function clampCamera(camera) {
+  const limit = Math.PI / 2 - 0.01;
+  camera.pitch = Math.min(limit, Math.max(-limit, camera.pitch));
+  camera.distance = Math.min(50, Math.max(1, camera.distance));
+}
+
+// カメラの状態から視点の位置を求める
+function cameraEye(camera) {
+  const cosPitch = Math.cos(camera.pitch);
+  return [
+    camera.target[0] + camera.distance * cosPitch * Math.sin(camera.yaw),
+    camera.target[1] + camera.distance * Math.sin(camera.pitch),
+    camera.target[2] + camera.distance * cosPitch * Math.cos(camera.yaw),
+  ];
+}
+
+// ---- canvas の大きさを表示サイズに合わせる（第 11 章） ----
+// CSS 上の表示サイズ × devicePixelRatio を描画バッファーの大きさにする。
+// 大きさが変わったときは true を返す
+function resizeCanvasToDisplaySize(canvas) {
+  const ratio = window.devicePixelRatio || 1;
+  const width = Math.round(canvas.clientWidth * ratio);
+  const height = Math.round(canvas.clientHeight * ratio);
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+    return true;
+  }
+  return false;
+}
+
+// 床: y = 0 の平面上の正方形（1 辺 size）
+function createPlane(size) {
+  const h = size / 2;
+  return {
+    positions: new Float32Array([-h, 0, h,  h, 0, h,  h, 0, -h,  -h, 0, -h]),
+    normals: new Float32Array([0, 1, 0,  0, 1, 0,  0, 1, 0,  0, 1, 0]),
+    uvs: new Float32Array([0, 0,  1, 0,  1, 1,  0, 1]),
+    indices: new Uint16Array([0, 1, 2,  0, 2, 3]),
+  };
+}
+
+// ---- ピッキング（第 11 章、第 12 章） ----
+// 物体の番号 id（1 以上）を RGB の 3 バイトに分けて色にする。0（黒）は「何もない」を表す
+function idToColor(id) {
+  return [(id & 0xff) / 255, ((id >> 8) & 0xff) / 255, ((id >> 16) & 0xff) / 255, 1];
+}
+
+function colorToId(pixel) {
+  return pixel[0] | (pixel[1] << 8) | (pixel[2] << 16);
+}
+
+// ピッキング用のフレームバッファー（色と深度はどちらもレンダーバッファー）
+function createPickingTarget(gl, width, height) {
+  const colorBuffer = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, colorBuffer);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.RGBA8, width, height);
+  const depthBuffer = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, width, height);
+  const framebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, colorBuffer);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  if (status !== gl.FRAMEBUFFER_COMPLETE) {
+    throw new Error(`フレームバッファーが不完全です（状態: 0x${status.toString(16)}）`);
+  }
+  return {
+    framebuffer, width, height,
+    dispose() {
+      gl.deleteFramebuffer(framebuffer);
+      gl.deleteRenderbuffer(colorBuffer);
+      gl.deleteRenderbuffer(depthBuffer);
+    },
+  };
+}
+
+// ---- メイン処理 ----
+async function main() {
+  const canvas = document.getElementById("canvas");
+  const gl = canvas.getContext("webgl2");
+  if (!gl) {
+    showError("このブラウザーは WebGL 2.0 に対応していません。");
+    canvas.hidden = true;
+    return;
+  }
+
+  const sceneProgram = createProgram(gl, SCENE_VS, SCENE_FS);
+  const sceneUniforms = getUniformLocations(gl, sceneProgram, [
+    "u_model", "u_viewProjection", "u_normalMatrix", "u_uvScale", "u_texture", "u_tint",
+    "u_cameraPosition", "u_lightDirection", "u_pointPosition", "u_pointColor",
+    "u_emissive", "u_highlight",
+  ]);
+  const pickProgram = createProgram(gl, PICK_VS, PICK_FS);
+  const pickUniforms = getUniformLocations(gl, pickProgram, ["u_model", "u_viewProjection", "u_idColor"]);
+
+  const attributes = { positions: 0, normals: 1, uvs: 2 };
+  const meshes = {
+    cube: createMeshVao(gl, CUBE, attributes),
+    sphere: createMeshVao(gl, createSphere(0.5, 32, 16), attributes),
+    floor: createMeshVao(gl, createPlane(16), attributes),
+    lamp: createMeshVao(gl, createSphere(0.08, 12, 6), attributes),
+  };
+
+  const [checkerImage, uvGridImage] = await Promise.all([
+    loadImage("assets/checker.png"),
+    loadImage("assets/uvgrid.png"),
+  ]);
+  const textures = {
+    checker: createTexture(gl, checkerImage),
+    uvgrid: createTexture(gl, uvGridImage),
+  };
+
+  // シーンに置く物体。model(t) は時刻 t（秒）におけるモデル行列を返す
+  const objects = [
+    { name: "床", mesh: "floor", texture: "checker", tint: [0.8, 0.8, 0.8], uvScale: 8,
+      model: () => mat4.identity() },
+    { name: "回転する立方体", mesh: "cube", texture: "uvgrid", tint: [1, 1, 1], uvScale: 1,
+      model: (t) => mat4.multiply(mat4.translation(0, 0.8, 0),
+        mat4.multiply(mat4.rotationY(t * 0.6), mat4.rotationX(t * 0.4))) },
+    { name: "左の立方体", mesh: "cube", texture: "checker", tint: [0.9, 0.5, 0.4], uvScale: 1,
+      model: () => mat4.multiply(mat4.translation(-2.5, 0.75, -1), mat4.scaling(1.5, 1.5, 1.5)) },
+    { name: "右奥の立方体", mesh: "cube", texture: "checker", tint: [0.4, 0.6, 0.9], uvScale: 2,
+      model: () => mat4.multiply(mat4.translation(2.5, 1, -2.5),
+        mat4.multiply(mat4.rotationY(0.6), mat4.scaling(1, 2, 1))) },
+    { name: "手前の球", mesh: "sphere", texture: "uvgrid", tint: [1, 1, 1], uvScale: 1,
+      model: (t) => mat4.multiply(mat4.translation(1.8, 0.5, 1.5), mat4.rotationY(t * 0.5)) },
+    { name: "弾む球", mesh: "sphere", texture: "checker", tint: [0.5, 0.9, 0.5], uvScale: 2,
+      model: (t) => mat4.translation(-1.5, 0.5 + Math.abs(Math.sin(t * 2)) * 1.2, 2) },
+  ];
+
+  gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.CULL_FACE);
+
+  const camera = createOrbitCamera(canvas, { target: [0, 0.5, 0], distance: 10, yaw: 0.5, pitch: 0.45 });
+  const lightDirection = vec3.normalize([0.3, 1.0, 0.5]);
+  let pickingTarget = null;
+  let selectedId = 0;  // 選択中の物体の番号（objects の添字 + 1）。0 は選択なし
+  let sceneTime = 0;
+  let previousTime = null;
+  let viewProjection = null;
+  let modelMatrices = [];
+
+  // ---- クリックで物体を選択する ----
+  let pointerDownAt = null;
+  canvas.addEventListener("pointerdown", (event) => {
+    pointerDownAt = [event.clientX, event.clientY];
+  });
+  canvas.addEventListener("pointerup", (event) => {
+    if (!pointerDownAt || event.button !== 0) {
+      return;
+    }
+    // ほとんど動かさずに離した場合だけクリックとみなす（ドラッグによる回転と区別する）
+    const moved = Math.hypot(event.clientX - pointerDownAt[0], event.clientY - pointerDownAt[1]);
+    pointerDownAt = null;
+    if (moved < 5) {
+      const rect = canvas.getBoundingClientRect();
+      // CSS ピクセルを描画バッファーのピクセルに変換する。y 軸の向きが逆なので反転する
+      const x = Math.floor((event.clientX - rect.left) * canvas.width / rect.width);
+      const y = Math.floor(canvas.height - (event.clientY - rect.top) * canvas.height / rect.height - 1);
+      selectedId = pick(x, y);
+      document.getElementById("selected").textContent =
+        selectedId > 0 ? objects[selectedId - 1].name : "なし";
+    }
+  });
+
+  // ピッキング用のフレームバッファーに ID の色で描画し、(x, y) のピクセルを読み取る
+  function pick(x, y) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, pickingTarget.framebuffer);
+    gl.viewport(0, 0, pickingTarget.width, pickingTarget.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(pickProgram);
+    gl.uniformMatrix4fv(pickUniforms.u_viewProjection, false, viewProjection);
+    objects.forEach((object, i) => {
+      gl.uniformMatrix4fv(pickUniforms.u_model, false, modelMatrices[i]);
+      gl.uniform4fv(pickUniforms.u_idColor, idToColor(i + 1));
+      const mesh = meshes[object.mesh];
+      gl.bindVertexArray(mesh.vao);
+      gl.drawElements(gl.TRIANGLES, mesh.indexCount, gl.UNSIGNED_SHORT, 0);
+    });
+    gl.bindVertexArray(null);
+    const pixel = new Uint8Array(4);
+    gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return colorToId(pixel);
+  }
+
+  function render(time) {
+    const deltaTime = previousTime === null ? 0 : (time - previousTime) / 1000;
+    previousTime = time;
+    if (document.getElementById("animate").checked) {
+      sceneTime += deltaTime;
+    }
+
+    // canvas の大きさが変わったら、ピッキング用のフレームバッファーも作り直す
+    if (resizeCanvasToDisplaySize(canvas) || !pickingTarget) {
+      if (pickingTarget) {
+        pickingTarget.dispose();
+      }
+      pickingTarget = createPickingTarget(gl, canvas.width, canvas.height);
+    }
+
+    const eye = cameraEye(camera);
+    const projection = mat4.perspective(Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
+    viewProjection = mat4.multiply(projection, mat4.lookAt(eye, camera.target, [0, 1, 0]));
+    modelMatrices = objects.map((object) => object.model(sceneTime));
+    const pointOn = document.getElementById("pointLight").checked;
+    const pointPosition = [Math.cos(sceneTime * 0.7) * 3, 2.2, Math.sin(sceneTime * 0.7) * 3];
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0.55, 0.7, 0.85, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(sceneProgram);
+    gl.uniformMatrix4fv(sceneUniforms.u_viewProjection, false, viewProjection);
+    gl.uniform3fv(sceneUniforms.u_cameraPosition, eye);
+    gl.uniform3fv(sceneUniforms.u_lightDirection, lightDirection);
+    gl.uniform3fv(sceneUniforms.u_pointPosition, pointPosition);
+    gl.uniform3fv(sceneUniforms.u_pointColor, pointOn ? [1.0, 0.85, 0.6] : [0, 0, 0]);
+    gl.uniform1i(sceneUniforms.u_texture, 0);
+    gl.activeTexture(gl.TEXTURE0);
+
+    function draw(mesh, model, texture, tint, uvScale, emissive, highlight) {
+      gl.uniformMatrix4fv(sceneUniforms.u_model, false, model);
+      gl.uniformMatrix3fv(sceneUniforms.u_normalMatrix, false, mat4.normalMatrix(model));
+      gl.uniform1f(sceneUniforms.u_uvScale, uvScale);
+      gl.uniform3fv(sceneUniforms.u_tint, tint);
+      gl.uniform1i(sceneUniforms.u_emissive, emissive ? 1 : 0);
+      gl.uniform1i(sceneUniforms.u_highlight, highlight ? 1 : 0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.bindVertexArray(mesh.vao);
+      gl.drawElements(gl.TRIANGLES, mesh.indexCount, gl.UNSIGNED_SHORT, 0);
+    }
+
+    objects.forEach((object, i) => {
+      draw(meshes[object.mesh], modelMatrices[i], textures[object.texture],
+        object.tint, object.uvScale, false, selectedId === i + 1);
+    });
+    if (pointOn) {
+      draw(meshes.lamp, mat4.translation(...pointPosition), textures.checker,
+        [1.0, 0.95, 0.8], 1, true, false);
+    }
+    gl.bindVertexArray(null);
+
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
+
+main().catch((error) => showError(error.message));
+</script>
+</body>
+</html>

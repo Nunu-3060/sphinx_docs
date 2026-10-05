@@ -1,0 +1,393 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>レイトレーシング &mdash; コンピューターグラフィックス入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=4ecef777" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=35a8b989"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="GPU とリアルタイム CG" href="gpu.html" />
+    <link rel="prev" title="テクスチャマッピング" href="texture.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンピューターグラフィックス入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">CG の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image.html">デジタル画像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster2d.html">2 次元の図形のラスタライズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="math.html">ベクトルと行列</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transform.html">座標変換と投影</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rasterization.html">3 次元のラスタライズ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shading.html">ライティングとシェーディング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="texture.html">テクスチャマッピング</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">レイトレーシング</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">レイトレーシングの考え方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">カメラからのレイの生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">交差判定</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">球との交差判定</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">平面との交差判定</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">三角形との交差判定</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">最も近い交点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">影と反射</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">レンダリング方程式とパストレーシング</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gpu.html">GPU とリアルタイム CG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンピューターグラフィックス入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">レイトレーシング</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>レイトレーシング<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>ここまでの章では、物体を画面に投影して塗るラスタライズ法で画像を描いた。本章では、もう 1 つの方法であるレイトレーシング法を実装する。レイトレーシング法は、影、反射、屈折のように、光が物体の間を行き来する現象を自然に表現できる。</p>
+<p>本章のコードは <code class="docutils literal notranslate"><span class="pre">raytracer.py</span></code> にある。全ての画素のレイを NumPy の配列にまとめ、交差判定と照明の計算を一度に行う。</p>
+<section id="id2">
+<h2>レイトレーシングの考え方<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>現実の世界では、光源から出た光が物体の表面で反射を繰り返し、その一部が目に届く。しかし、光源から出る光のうち目に届くのはごく一部なので、光源から光を追いかけるのは無駄が多い。</p>
+<p>そこで、レイトレーシング法では、光の経路を逆にたどる。カメラから各画素を通る半直線（レイ）を飛ばし、最初に当たる物体を探す。当たった点の色は、その点から光源やほかの物体に向けてさらにレイを飛ばして求める。</p>
+<p>レイは、始点 <span class="math notranslate nohighlight">\(\mathbf{o}\)</span> と単位ベクトルの向き <span class="math notranslate nohighlight">\(\mathbf{d}\)</span> を使って、次の式で表される。<span class="math notranslate nohighlight">\(t\)</span> はレイの始点からの距離である。</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{p}(t) = \mathbf{o} + t \mathbf{d} \quad (t &gt; 0)\]</div>
+</section>
+<section id="id3">
+<h2>カメラからのレイの生成<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>カメラからのレイは、カメラの位置を始点とし、カメラの前方の距離 1 の位置に置いたスクリーン上の各画素の中心に向かう向きとする。スクリーンの大きさは、<a class="reference internal" href="transform.html"><span class="doc">座標変換と投影</span></a>の透視投影と同じく、視野角と画面の縦横比から決める。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">144</span><span class="k">def</span><span class="w"> </span><span class="nf">camera_rays</span><span class="p">(</span><span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eye</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span>
+<span class="linenos">145</span>                <span class="n">target</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">fovy_degrees</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">146</span>                <span class="n">jitter</span><span class="p">:</span> <span class="n">FloatArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos">147</span>                <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">FloatArray</span><span class="p">,</span> <span class="n">FloatArray</span><span class="p">]:</span>
+<span class="linenos">148</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;カメラから各画素の中心を通るレイの始点と向きを作る。</span>
+<span class="linenos">149</span>
+<span class="linenos">150</span><span class="sd">    jitter に (高さ × 幅, 2) の 0 から 1 の値を渡すと、画素の中心ではなく</span>
+<span class="linenos">151</span><span class="sd">    画素の中のその位置を通るレイを作る。</span>
+<span class="linenos">152</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">153</span>    <span class="n">forward</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">target</span> <span class="o">-</span> <span class="n">eye</span><span class="p">)</span>
+<span class="linenos">154</span>    <span class="n">right</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])))</span>
+<span class="linenos">155</span>    <span class="n">up</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">forward</span><span class="p">)</span>
+<span class="linenos">156</span>    <span class="n">half_h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">fovy_degrees</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="linenos">157</span>    <span class="n">half_w</span> <span class="o">=</span> <span class="n">half_h</span> <span class="o">*</span> <span class="n">width</span> <span class="o">/</span> <span class="n">height</span>
+<span class="linenos">158</span>
+<span class="linenos">159</span>    <span class="n">ys</span><span class="p">,</span> <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">height</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">width</span><span class="p">]</span>
+<span class="linenos">160</span>    <span class="n">offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">)</span> <span class="k">if</span> <span class="n">jitter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">jitter</span>
+<span class="linenos">161</span>    <span class="n">px</span> <span class="o">=</span> <span class="n">xs</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="o">+</span> <span class="n">offset</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="linenos">162</span>    <span class="n">py</span> <span class="o">=</span> <span class="n">ys</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="o">+</span> <span class="n">offset</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="linenos">163</span>    <span class="c1"># 画素の座標を、カメラの前方 1 の距離にあるスクリーン上の座標に変換する。</span>
+<span class="linenos">164</span>    <span class="n">sx</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">px</span> <span class="o">/</span> <span class="n">width</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">half_w</span>
+<span class="linenos">165</span>    <span class="n">sy</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">py</span> <span class="o">/</span> <span class="n">height</span><span class="p">)</span> <span class="o">*</span> <span class="n">half_h</span>
+<span class="linenos">166</span>    <span class="n">dirs</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">forward</span> <span class="o">+</span> <span class="n">sx</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">right</span> <span class="o">+</span> <span class="n">sy</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">up</span><span class="p">)</span>
+<span class="linenos">167</span>    <span class="n">origins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">eye</span><span class="p">,</span> <span class="n">dirs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="linenos">168</span>    <span class="k">return</span> <span class="n">origins</span><span class="p">,</span> <span class="n">dirs</span>
+</pre></div>
+</div>
+<p>透視投影の行列は使っていないが、レイが 1 点（カメラの位置）から放射状に広がるので、遠くの物体ほど小さく写る。</p>
+</section>
+<section id="id4">
+<h2>交差判定<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>レイトレーシング法の中心的な処理は、レイと物体が交わるかを調べ、交わる場合はその距離 <span class="math notranslate nohighlight">\(t\)</span> を求めることである。これを交差判定という。</p>
+<section id="id5">
+<h3>球との交差判定<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>中心 <span class="math notranslate nohighlight">\(\mathbf{c}\)</span>、半径 <span class="math notranslate nohighlight">\(r\)</span> の球の表面の点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> は、<span class="math notranslate nohighlight">\(|\mathbf{p} - \mathbf{c}|^2 = r^2\)</span> を満たす。この式にレイの式を代入し、<span class="math notranslate nohighlight">\(|\mathbf{d}| = 1\)</span> を使って整理すると、<span class="math notranslate nohighlight">\(t\)</span> の 2 次方程式になる。</p>
+<div class="math notranslate nohighlight">
+\[t^2 + 2bt + c' = 0, \quad
+b = (\mathbf{o} - \mathbf{c}) \cdot \mathbf{d}, \quad
+c' = |\mathbf{o} - \mathbf{c}|^2 - r^2\]</div>
+<p>判別式 <span class="math notranslate nohighlight">\(b^2 - c'\)</span> が負であれば、レイは球と交わらない。0 以上であれば、<span class="math notranslate nohighlight">\(t = -b \pm \sqrt{b^2 - c'}\)</span> の 2 つの解のうち、正で小さいほうが最初に交わる点までの距離である。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">45</span>    <span class="k">def</span><span class="w"> </span><span class="nf">intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origins</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">dirs</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">46</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;各レイが球と最初に交わる距離 t を返す。交わらなければ無限大。</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span><span class="sd">        レイ上の点 o + t d を球の式 |p - c|^2 = r^2 に代入した、t の 2 次</span>
+<span class="linenos">49</span><span class="sd">        方程式を解く。d は長さ 1 なので、t^2 の係数は 1 になる。</span>
+<span class="linenos">50</span><span class="sd">        &quot;&quot;&quot;</span>
+<span class="linenos">51</span>        <span class="n">oc</span> <span class="o">=</span> <span class="n">origins</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+<span class="linenos">52</span>        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">oc</span> <span class="o">*</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">53</span>        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">oc</span> <span class="o">*</span> <span class="n">oc</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">**</span> <span class="mi">2</span>
+<span class="linenos">54</span>        <span class="n">disc</span> <span class="o">=</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span> <span class="o">-</span> <span class="n">c</span>
+<span class="linenos">55</span>        <span class="n">sqrt_disc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">disc</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+<span class="linenos">56</span>        <span class="n">t_near</span> <span class="o">=</span> <span class="o">-</span><span class="n">b</span> <span class="o">-</span> <span class="n">sqrt_disc</span>
+<span class="linenos">57</span>        <span class="n">t_far</span> <span class="o">=</span> <span class="o">-</span><span class="n">b</span> <span class="o">+</span> <span class="n">sqrt_disc</span>
+<span class="linenos">58</span>        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">t_near</span> <span class="o">&gt;</span> <span class="n">EPSILON</span><span class="p">,</span> <span class="n">t_near</span><span class="p">,</span> <span class="n">t_far</span><span class="p">)</span>
+<span class="linenos">59</span>        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">disc</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">t</span> <span class="o">&gt;</span> <span class="n">EPSILON</span><span class="p">),</span> <span class="n">t</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>交点で新しいレイを飛ばすとき、計算の誤差によって、交点が面のわずかに内側に入ることがある。すると、新しいレイがその面自身と交わってしまい、表面に黒い斑点が現れる。これを防ぐため、<span class="math notranslate nohighlight">\(t\)</span> がごく小さな値 <code class="docutils literal notranslate"><span class="pre">EPSILON</span></code> 以下の交点は無視している。</p>
+</section>
+<section id="id6">
+<h3>平面との交差判定<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>点 <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> を通り、法線が <span class="math notranslate nohighlight">\(\mathbf{n}\)</span> の平面上の点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> は、<span class="math notranslate nohighlight">\((\mathbf{p} - \mathbf{q}) \cdot \mathbf{n} = 0\)</span> を満たす。レイの式を代入すると、<span class="math notranslate nohighlight">\(t = (\mathbf{q} - \mathbf{o}) \cdot \mathbf{n} / (\mathbf{d} \cdot \mathbf{n})\)</span> が得られる。<span class="math notranslate nohighlight">\(\mathbf{d} \cdot \mathbf{n} = 0\)</span> のときは、レイが平面と平行なので交わらない。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">74</span>    <span class="k">def</span><span class="w"> </span><span class="nf">intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origins</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">dirs</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">75</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;各レイが平面と交わる距離 t を返す。交わらなければ無限大。&quot;&quot;&quot;</span>
+<span class="linenos">76</span>        <span class="n">denom</span> <span class="o">=</span> <span class="n">dirs</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">normal</span>
+<span class="linenos">77</span>        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+<span class="linenos">78</span>            <span class="n">t</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">point</span> <span class="o">-</span> <span class="n">origins</span><span class="p">)</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">normal</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+<span class="linenos">79</span>        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">denom</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-9</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">t</span> <span class="o">&gt;</span> <span class="n">EPSILON</span><span class="p">),</span> <span class="n">t</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h3>三角形との交差判定<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>三角形メッシュをレイトレーシング法で描くには、レイと三角形の交差判定が必要である。三角形の内部の点は、<a class="reference internal" href="raster2d.html"><span class="doc">2 次元の図形のラスタライズ</span></a>の重心座標を使って <span class="math notranslate nohighlight">\(\mathbf{v}_0 + u(\mathbf{v}_1 - \mathbf{v}_0) + v(\mathbf{v}_2 - \mathbf{v}_0)\)</span> と表せる。これをレイの式と等しいとおくと、<span class="math notranslate nohighlight">\(t\)</span>、<span class="math notranslate nohighlight">\(u\)</span>、<span class="math notranslate nohighlight">\(v\)</span> の 3 元連立 1 次方程式になる。メラー-トランボアの方法は、この方程式を外積と内積を使って効率よく解く方法である。<span class="math notranslate nohighlight">\(u \ge 0\)</span>、<span class="math notranslate nohighlight">\(v \ge 0\)</span>、<span class="math notranslate nohighlight">\(u + v \le 1\)</span> であれば、交点は三角形の内側にある。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">100</span>    <span class="k">def</span><span class="w"> </span><span class="nf">intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origins</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">dirs</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">101</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;メラー-トランボアの方法で、三角形と交わる距離 t を返す。</span>
+<span class="linenos">102</span>
+<span class="linenos">103</span><span class="sd">        交点を o + t d = v0 + u (v1 - v0) + v (v2 - v0) と表し、t、u、v の</span>
+<span class="linenos">104</span><span class="sd">        連立 1 次方程式をクラメルの公式で解く。u &gt;= 0、v &gt;= 0、u + v &lt;= 1</span>
+<span class="linenos">105</span><span class="sd">        なら交点は三角形の内側にある。</span>
+<span class="linenos">106</span><span class="sd">        &quot;&quot;&quot;</span>
+<span class="linenos">107</span>        <span class="n">e1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">v0</span>
+<span class="linenos">108</span>        <span class="n">e2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">v0</span>
+<span class="linenos">109</span>        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span>
+<span class="linenos">110</span>        <span class="n">det</span> <span class="o">=</span> <span class="n">p</span> <span class="o">@</span> <span class="n">e1</span>
+<span class="linenos">111</span>        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+<span class="linenos">112</span>            <span class="n">inv_det</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">det</span>
+<span class="linenos">113</span>            <span class="n">s</span> <span class="o">=</span> <span class="n">origins</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">v0</span>
+<span class="linenos">114</span>            <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s</span> <span class="o">*</span> <span class="n">p</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">inv_det</span>
+<span class="linenos">115</span>            <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e1</span><span class="p">)</span>
+<span class="linenos">116</span>            <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dirs</span> <span class="o">*</span> <span class="n">q</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">inv_det</span>
+<span class="linenos">117</span>            <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">@</span> <span class="n">e2</span><span class="p">)</span> <span class="o">*</span> <span class="n">inv_det</span>
+<span class="linenos">118</span>        <span class="n">hit</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">det</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-9</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">u</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">v</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span>
+<span class="linenos">119</span>               <span class="o">&amp;</span> <span class="p">(</span><span class="n">u</span> <span class="o">+</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">t</span> <span class="o">&gt;</span> <span class="n">EPSILON</span><span class="p">))</span>
+<span class="linenos">120</span>        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hit</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h3>最も近い交点<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>場面に複数の物体がある場合は、全ての物体との交差判定を行い、最も距離 <span class="math notranslate nohighlight">\(t\)</span> が小さい物体を選ぶ。これは、ラスタライズ法の Z バッファー法による隠面消去と同じ役割を果たす。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">171</span><span class="k">def</span><span class="w"> </span><span class="nf">closest_hit</span><span class="p">(</span><span class="n">scene</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Shape</span><span class="p">],</span> <span class="n">origins</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span>
+<span class="linenos">172</span>                <span class="n">dirs</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">FloatArray</span><span class="p">,</span> <span class="n">FloatArray</span><span class="p">]:</span>
+<span class="linenos">173</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;各レイが最初に当たる物体の番号と距離を返す。</span>
+<span class="linenos">174</span>
+<span class="linenos">175</span><span class="sd">    どの物体にも当たらないレイは、番号が -1、距離が無限大になる。</span>
+<span class="linenos">176</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">177</span>    <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">shape</span><span class="o">.</span><span class="n">intersect</span><span class="p">(</span><span class="n">origins</span><span class="p">,</span> <span class="n">dirs</span><span class="p">)</span> <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">scene</span><span class="p">])</span>
+<span class="linenos">178</span>    <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">179</span>    <span class="n">t</span> <span class="o">=</span> <span class="n">distances</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dirs</span><span class="p">))]</span>
+<span class="linenos">180</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">index</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">t</span>
+</pre></div>
+</div>
+<p>このコードは、全てのレイについて全ての物体との交差判定を行う。物体の数が増えると計算量はそれに比例して増えるので、実用的なレイトレーサーでは、物体を階層的な箱で囲むデータ構造（BVH、バウンディングボリューム階層）を使って、交わる可能性のない物体の判定を省く。</p>
+</section>
+</section>
+<section id="id9">
+<h2>影と反射<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>レイトレーシング法では、交点からさらにレイを飛ばすことで、影と反射を簡単に表現できる。</p>
+<ul class="simple">
+<li><p>影: 交点から光源の向きにレイ（シャドウレイ）を飛ばす。途中で物体に当たれば、その点は影の中にあるので、光源からの光（拡散反射と鏡面反射）を加えない。</p></li>
+<li><p>反射: 交点から、視線を鏡のように反射させた向きにレイを飛ばし、その先に見える色を混ぜる。反射した先でもさらに反射が起こりうるので、この処理は再帰的になる。</p></li>
+</ul>
+<p>向き <span class="math notranslate nohighlight">\(\mathbf{d}\)</span> を、法線 <span class="math notranslate nohighlight">\(\mathbf{n}\)</span> の面で反射させた向きは <span class="math notranslate nohighlight">\(\mathbf{d} - 2(\mathbf{d} \cdot \mathbf{n})\mathbf{n}\)</span> である。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">191</span><span class="k">def</span><span class="w"> </span><span class="nf">reflect</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">192</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;向き d を、法線 n の面で鏡のように反射させた向きを返す。&quot;&quot;&quot;</span>
+<span class="linenos">193</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">dot</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>交点の色の計算には、<a class="reference internal" href="shading.html"><span class="doc">ライティングとシェーディング</span></a>の <code class="docutils literal notranslate"><span class="pre">lambert()</span></code> と <code class="docutils literal notranslate"><span class="pre">blinn_phong()</span></code> をそのまま使う。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">210</span><span class="k">def</span><span class="w"> </span><span class="nf">trace</span><span class="p">(</span><span class="n">scene</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Shape</span><span class="p">],</span> <span class="n">origins</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">dirs</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span>
+<span class="linenos">211</span>          <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">shadows</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">212</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;レイの色(線形な値)を求める。</span>
+<span class="linenos">213</span>
+<span class="linenos">214</span><span class="sd">    鏡面反射する物体に当たったレイは、depth が 0 になるまで反射の向きに</span>
+<span class="linenos">215</span><span class="sd">    レイを飛ばし直し、その色を混ぜる(再帰的なレイトレーシング)。</span>
+<span class="linenos">216</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">217</span>    <span class="n">color</span> <span class="o">=</span> <span class="n">sky</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+<span class="linenos">218</span>    <span class="n">index</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">closest_hit</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">origins</span><span class="p">,</span> <span class="n">dirs</span><span class="p">)</span>
+<span class="linenos">219</span>    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">shape</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+<span class="linenos">220</span>        <span class="n">hit</span> <span class="o">=</span> <span class="n">index</span> <span class="o">==</span> <span class="n">k</span>
+<span class="linenos">221</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">hit</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+<span class="linenos">222</span>            <span class="k">continue</span>
+<span class="linenos">223</span>        <span class="n">o</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">origins</span><span class="p">[</span><span class="n">hit</span><span class="p">],</span> <span class="n">dirs</span><span class="p">[</span><span class="n">hit</span><span class="p">]</span>
+<span class="linenos">224</span>        <span class="n">points</span> <span class="o">=</span> <span class="n">o</span> <span class="o">+</span> <span class="n">t</span><span class="p">[</span><span class="n">hit</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">d</span>
+<span class="linenos">225</span>        <span class="n">normals</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">normal_at</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+<span class="linenos">226</span>        <span class="n">albedo</span> <span class="o">=</span> <span class="n">base_color</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">points</span><span class="p">)</span>
+<span class="linenos">227</span>
+<span class="linenos">228</span>        <span class="c1"># 影: 光源の方向がさえぎられていれば、直接光を当てない。</span>
+<span class="linenos">229</span>        <span class="n">light</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+<span class="linenos">230</span>        <span class="k">if</span> <span class="n">shadows</span><span class="p">:</span>
+<span class="linenos">231</span>            <span class="n">light</span><span class="p">[</span><span class="n">in_shadow</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">LIGHT_DIR</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="linenos">232</span>        <span class="n">diffuse</span> <span class="o">=</span> <span class="n">lambert</span><span class="p">(</span><span class="n">normals</span><span class="p">,</span> <span class="n">LIGHT_DIR</span><span class="p">)</span>
+<span class="linenos">233</span>        <span class="n">specular</span> <span class="o">=</span> <span class="n">blinn_phong</span><span class="p">(</span><span class="n">normals</span><span class="p">,</span> <span class="n">LIGHT_DIR</span><span class="p">,</span> <span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="mf">64.0</span><span class="p">)</span>
+<span class="linenos">234</span>        <span class="n">local</span> <span class="o">=</span> <span class="p">(</span><span class="n">albedo</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.12</span> <span class="o">+</span> <span class="mf">0.88</span> <span class="o">*</span> <span class="n">diffuse</span> <span class="o">*</span> <span class="n">light</span><span class="p">)</span>
+<span class="linenos">235</span>                 <span class="o">+</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">specular</span> <span class="o">*</span> <span class="n">light</span><span class="p">)</span>
+<span class="linenos">236</span>
+<span class="linenos">237</span>        <span class="n">r</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">surface</span><span class="o">.</span><span class="n">reflectivity</span>
+<span class="linenos">238</span>        <span class="k">if</span> <span class="n">r</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">239</span>            <span class="n">reflected</span> <span class="o">=</span> <span class="n">trace</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">reflect</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">normals</span><span class="p">),</span>
+<span class="linenos">240</span>                              <span class="n">depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">shadows</span><span class="p">)</span>
+<span class="linenos">241</span>            <span class="n">local</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">r</span><span class="p">)</span> <span class="o">*</span> <span class="n">local</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">reflected</span>
+<span class="linenos">242</span>        <span class="n">color</span><span class="p">[</span><span class="n">hit</span><span class="p">]</span> <span class="o">=</span> <span class="n">local</span>
+<span class="linenos">243</span>    <span class="k">return</span> <span class="n">color</span>
+</pre></div>
+</div>
+<p>反射の回数には上限（<code class="docutils literal notranslate"><span class="pre">depth</span></code>）を設けている。2 枚の鏡を向かい合わせたような場面では、反射が無限に続くからである。</p>
+<p><a class="reference internal" href="#fig-raytrace"><span class="std std-numref">図 19</span></a> は、市松模様の床に、3 つの球と、4 枚の三角形でできた四角錐を置いた場面である。左は影も反射もない画像で、物体が床から浮いているように見える。中は影を加えた画像で、物体と床の位置関係が分かるようになる。右は、中央の球と床に反射を加えた画像である。中央の球には周りの景色が映り込み、床にも物体がうっすらと映っている。</p>
+<figure class="align-default" id="id11">
+<span id="fig-raytrace"></span><img alt="影も反射もない画像、影を加えた画像、影と反射を加えた画像" src="_images/raytrace.png" />
+<figcaption>
+<p><span class="caption-number">図 19 </span><span class="caption-text">影も反射もなし（左）、影を追加（中）、影と反射を追加（右）</span><a class="headerlink" href="#id11" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>ラスタライズ法で影や反射を表現するには、<a class="reference internal" href="texture.html"><span class="doc">テクスチャマッピング</span></a>で紹介したシャドウマップや環境マップのように、別途画像を描いておく工夫が必要になる。一方、レイトレーシング法では、レイを 1 本追加するだけで済む。</p>
+<p>屈折も、同じように表現できる。ガラスや水のような透明な物体では、交点からスネルの法則にしたがって曲がる向きに、レイを飛ばせばよい。</p>
+</section>
+<section id="id10">
+<h2>レンダリング方程式とパストレーシング<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>ここまでのレイトレーシングでは、光源から直接届く光と、鏡のような反射だけを扱った。しかし、現実には、拡散反射する表面も周りに光を放ち、ほかの物体を照らしている。白い壁の近くに赤い物を置くと、壁がうっすら赤く色づくのはこのためである。物体の間で何度も反射してから届く光を間接光といい、直接光と間接光の両方を考慮した照明の計算を、大域照明（グローバルイルミネーション）という。</p>
+<p>表面上の点 <span class="math notranslate nohighlight">\(\mathbf{x}\)</span> から向き <span class="math notranslate nohighlight">\(\omega_o\)</span> に出ていく光の強さ（放射輝度）<span class="math notranslate nohighlight">\(L_o\)</span> は、次のレンダリング方程式で表される。</p>
+<div class="math notranslate nohighlight">
+\[L_o(\mathbf{x}, \omega_o) = L_e(\mathbf{x}, \omega_o)
++ \int_{\Omega} f_r(\mathbf{x}, \omega_i, \omega_o)\, L_i(\mathbf{x}, \omega_i)\, (\mathbf{n} \cdot \omega_i)\, d\omega_i\]</div>
+<p><span class="math notranslate nohighlight">\(L_e\)</span> は点 <span class="math notranslate nohighlight">\(\mathbf{x}\)</span> 自身が発する光、<span class="math notranslate nohighlight">\(f_r\)</span> は<a class="reference internal" href="shading.html"><span class="doc">ライティングとシェーディング</span></a>で触れた BRDF、<span class="math notranslate nohighlight">\(L_i\)</span> は向き <span class="math notranslate nohighlight">\(\omega_i\)</span> から届く光、<span class="math notranslate nohighlight">\(\Omega\)</span> は法線 <span class="math notranslate nohighlight">\(\mathbf{n}\)</span> の側の半球である。右辺の積分は「あらゆる向きから届く光のうち、<span class="math notranslate nohighlight">\(\omega_o\)</span> の向きに反射される分の合計」を表す。<span class="math notranslate nohighlight">\(L_i\)</span> は、別の点から出ていく <span class="math notranslate nohighlight">\(L_o\)</span> そのものなので、この式は再帰的になっている。</p>
+<p>この積分を解析的に解くことは一般にできない。パストレーシングは、この積分をモンテカルロ法（乱数を使った数値積分）で推定する方法である。</p>
+<ol class="arabic simple">
+<li><p>カメラからレイを飛ばし、物体に当たったら、反射する向きを乱数で 1 つ選んでレイを続ける。</p></li>
+<li><p>これを、レイが光源（本資料の例では空）に届くか、反射の回数が上限に達するまで繰り返す。</p></li>
+<li><p>光源に届いたら、その光の強さに、それまでの反射で掛かった係数の積を掛けた値を、その経路の推定値とする。</p></li>
+<li><p>1 つの画素について、多数の経路の推定値を平均する。</p></li>
+</ol>
+<p>拡散反射の向きを、<span class="math notranslate nohighlight">\(\mathbf{n} \cdot \omega_i\)</span> に比例する確率で選ぶと、ランバート反射では係数が表面の色 <span class="math notranslate nohighlight">\(k_d\)</span> だけになり、計算が簡単になる。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">311</span><span class="k">def</span><span class="w"> </span><span class="nf">path_trace</span><span class="p">(</span><span class="n">scene</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Shape</span><span class="p">],</span> <span class="n">origins</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">dirs</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span>
+<span class="linenos">312</span>               <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span> <span class="n">bounces</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="linenos">313</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;拡散反射する物体だけの場面で、空を光源としてレイの色を推定する。</span>
+<span class="linenos">314</span>
+<span class="linenos">315</span><span class="sd">    物体に当たるたびに、反射する向きを乱数で 1 つ選んでレイを続ける。</span>
+<span class="linenos">316</span><span class="sd">    cos に比例する確率で向きを選ぶと、ランバート反射では「これまでの</span>
+<span class="linenos">317</span><span class="sd">    反射率の積(throughput)」を掛けていくだけで済む。</span>
+<span class="linenos">318</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">319</span>    <span class="n">color</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+<span class="linenos">320</span>    <span class="n">throughput</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+<span class="linenos">321</span>    <span class="n">alive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dirs</span><span class="p">))</span>
+<span class="linenos">322</span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bounces</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">323</span>        <span class="n">index</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">closest_hit</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">origins</span><span class="p">,</span> <span class="n">dirs</span><span class="p">)</span>
+<span class="linenos">324</span>        <span class="n">missed</span> <span class="o">=</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span>
+<span class="linenos">325</span>        <span class="c1"># 空に抜けたレイは、空の明るさを持ち帰って終わる。</span>
+<span class="linenos">326</span>        <span class="n">color</span><span class="p">[</span><span class="n">alive</span><span class="p">[</span><span class="n">missed</span><span class="p">]]</span> <span class="o">=</span> <span class="n">throughput</span><span class="p">[</span><span class="n">missed</span><span class="p">]</span> <span class="o">*</span> <span class="n">dome</span><span class="p">(</span><span class="n">dirs</span><span class="p">[</span><span class="n">missed</span><span class="p">])</span>
+<span class="linenos">327</span>        <span class="n">keep</span> <span class="o">=</span> <span class="o">~</span><span class="n">missed</span>
+<span class="linenos">328</span>        <span class="n">alive</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">alive</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">index</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+<span class="linenos">329</span>        <span class="n">origins</span><span class="p">,</span> <span class="n">dirs</span> <span class="o">=</span> <span class="n">origins</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">dirs</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+<span class="linenos">330</span>        <span class="n">throughput</span> <span class="o">=</span> <span class="n">throughput</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+<span class="linenos">331</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alive</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">332</span>            <span class="k">break</span>
+<span class="linenos">333</span>        <span class="n">points</span> <span class="o">=</span> <span class="n">origins</span> <span class="o">+</span> <span class="n">t</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">dirs</span>
+<span class="linenos">334</span>        <span class="n">normals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+<span class="linenos">335</span>        <span class="n">albedo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+<span class="linenos">336</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">shape</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scene</span><span class="p">):</span>
+<span class="linenos">337</span>            <span class="n">hit</span> <span class="o">=</span> <span class="n">index</span> <span class="o">==</span> <span class="n">k</span>
+<span class="linenos">338</span>            <span class="k">if</span> <span class="n">hit</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+<span class="linenos">339</span>                <span class="n">normals</span><span class="p">[</span><span class="n">hit</span><span class="p">]</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">normal_at</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="n">hit</span><span class="p">])</span>
+<span class="linenos">340</span>                <span class="n">albedo</span><span class="p">[</span><span class="n">hit</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_color</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">points</span><span class="p">[</span><span class="n">hit</span><span class="p">])</span>
+<span class="linenos">341</span>        <span class="c1"># 裏側から当たった場合は、法線を反転して表側として扱う。</span>
+<span class="linenos">342</span>        <span class="n">normals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">normals</span><span class="p">,</span> <span class="n">dirs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">normals</span><span class="p">,</span> <span class="n">normals</span><span class="p">)</span>
+<span class="linenos">343</span>        <span class="n">throughput</span> <span class="o">=</span> <span class="n">throughput</span> <span class="o">*</span> <span class="n">albedo</span>
+<span class="linenos">344</span>        <span class="n">origins</span> <span class="o">=</span> <span class="n">points</span>
+<span class="linenos">345</span>        <span class="n">dirs</span> <span class="o">=</span> <span class="n">cosine_sample</span><span class="p">(</span><span class="n">normals</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+<span class="linenos">346</span>    <span class="k">return</span> <span class="n">color</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#fig-pathtrace"><span class="std std-numref">図 20</span></a> は、空を光源として、拡散反射する 2 つの球と床をパストレーシングで描いたものである。1 画素あたりの経路の数（サンプル数）を、左から 1、16、128 と増やしている。サンプル数が少ないとノイズが目立つが、増やすほど推定の誤差が減り、なめらかな画像になる。白い球の左側が赤い球に照らされてうっすら赤く色づいていることや、物体と床が接する部分が暗くなっていることが分かる。これらは、直接光だけを扱う照明モデルでは表現できない。</p>
+<figure class="align-default" id="id12">
+<span id="fig-pathtrace"></span><img alt="サンプル数 1、16、128 でパストレーシングした 2 つの球の画像" src="_images/pathtrace.png" />
+<figcaption>
+<p><span class="caption-number">図 20 </span><span class="caption-text">1 画素あたりのサンプル数 1（左）、16（中）、128（右）</span><a class="headerlink" href="#id12" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>モンテカルロ法の誤差（ノイズの標準偏差）は、サンプル数の平方根に反比例する。ノイズを半分にするには、4 倍のサンプル数が必要になる。そのため、実用的なレンダラーでは、光源の方向を重点的に調べる重点的サンプリングや、少ないサンプル数の画像からノイズを取り除くデノイザーを組み合わせて、計算時間を短くしている。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="texture.html" class="btn btn-neutral float-left" title="テクスチャマッピング" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gpu.html" class="btn btn-neutral float-right" title="GPU とリアルタイム CG" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

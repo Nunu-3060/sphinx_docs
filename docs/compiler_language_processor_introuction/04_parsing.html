@@ -1,0 +1,523 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 4 章 構文解析 &mdash; コンパイラ・言語処理系入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=01529632" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 5 章 抽象構文木と Tiny の構文解析器" href="05_ast.html" />
+    <link rel="prev" title="第 3 章 字句解析" href="03_lexer.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンパイラ・言語処理系入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_overview.html">第 1 章 言語処理系の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_language.html">第 2 章 題材言語 Tiny の定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_lexer.html">第 3 章 字句解析</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 4 章 構文解析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">文脈自由文法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">曖昧な文法と優先順位</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">再帰下降構文解析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">左再帰の除去</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">電卓の実装</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pratt">Pratt 構文解析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ll-lr">LL 構文解析と LR 構文解析</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">エラー回復</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="05_ast.html">第 5 章 抽象構文木と Tiny の構文解析器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_semantic.html">第 6 章 意味解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_interpreter.html">第 7 章 インタプリタ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_ir.html">第 8 章 中間表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_vm.html">第 10 章 コード生成と仮想マシン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_runtime.html">第 11 章 実行時環境とネイティブコード生成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_advanced.html">第 12 章 発展的な話題</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_examples.html">付録 A サンプルコード</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_glossary.html">付録 B 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_references.html">付録 C 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンパイラ・言語処理系入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 4 章 構文解析</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 4 章 構文解析<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p><a class="reference internal" href="appendix_b_glossary.html#term-19"><span class="xref std std-term">構文解析</span></a>は、トークンの列が文法に合っているかを調べ、プログラムの構造を木の形で明らかにする段階です。この章では、文法を記述する文脈自由文法と、代表的な構文解析の手法を説明します。題材には、Tiny の文法の一部である算術式を使います。Tiny 全体の構文解析器は<a class="reference internal" href="05_ast.html"><span class="doc">第 5 章</span></a>で作ります。</p>
+<section id="id2">
+<h2>文脈自由文法<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>プログラミング言語の文法は、ふつう<a class="reference internal" href="appendix_b_glossary.html#term-61"><span class="xref std std-term">文脈自由文法</span></a>で記述します。文脈自由文法は、次の 4 つの要素からなります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>要素</p></th>
+<th class="head"><p>説明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>終端記号</p></td>
+<td><p>文法の最小単位で、構文解析ではトークンがこれにあたる（<code class="docutils literal notranslate"><span class="pre">INT</span></code>、<code class="docutils literal notranslate"><span class="pre">+</span></code> など）</p></td>
+</tr>
+<tr class="row-odd"><td><p>非終端記号</p></td>
+<td><p>終端記号の並びに展開される記号（<code class="docutils literal notranslate"><span class="pre">expr</span></code>、<code class="docutils literal notranslate"><span class="pre">term</span></code> など）</p></td>
+</tr>
+<tr class="row-even"><td><p>生成規則</p></td>
+<td><p>非終端記号をどのような記号の並びに展開できるかを表す規則</p></td>
+</tr>
+<tr class="row-odd"><td><p>開始記号</p></td>
+<td><p>展開を始める非終端記号</p></td>
+</tr>
+</tbody>
+</table>
+<p>整数の四則演算からなる式の文法は、次のように書けます。<code class="docutils literal notranslate"><span class="pre">|</span></code> は「または」を表します。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">算術式の文法（左再帰あり）</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>expr   = expr &quot;+&quot; term | expr &quot;-&quot; term | term ;
+<span class="linenos">2</span>term   = term &quot;*&quot; factor | term &quot;/&quot; factor | factor ;
+<span class="linenos">3</span>factor = INT | &quot;(&quot; expr &quot;)&quot; ;
+</pre></div>
+</div>
+</div>
+<p>開始記号 <code class="docutils literal notranslate"><span class="pre">expr</span></code> から始めて、生成規則に従って非終端記号を置き換えていく操作を<a class="reference internal" href="appendix_b_glossary.html#term-54"><span class="xref std std-term">導出</span></a>と呼びます。<code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span></code> は次のように導出できます。各段階で、最も左にある非終端記号を置き換えています。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>expr =&gt; expr + term
+<span class="linenos">2</span>     =&gt; term + term
+<span class="linenos">3</span>     =&gt; factor + term
+<span class="linenos">4</span>     =&gt; 1 + term
+<span class="linenos">5</span>     =&gt; 1 + term * factor
+<span class="linenos">6</span>     =&gt; 1 + factor * factor
+<span class="linenos">7</span>     =&gt; 1 + 2 * factor
+<span class="linenos">8</span>     =&gt; 1 + 2 * 3
+</pre></div>
+</div>
+<p>導出の過程を木で表したものを<a class="reference internal" href="appendix_b_glossary.html#term-21"><span class="xref std std-term">構文木</span></a>（具象構文木）と呼びます。</p>
+<figure class="align-default" id="id12">
+<div class="graphviz"><object data="_images/graphviz-3a0d7e052c6aa87c21898166eec0d1db45eefe5a.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph tree {
+  node [shape=plaintext, fontname=&quot;monospace&quot;];
+  e1 [label=&quot;expr&quot;]; e2 [label=&quot;expr&quot;]; plus [label=&quot;+&quot;];
+  t1 [label=&quot;term&quot;]; t2 [label=&quot;term&quot;]; f1 [label=&quot;factor&quot;];
+  n1 [label=&quot;1&quot;]; t3 [label=&quot;term&quot;]; star [label=&quot;*&quot;];
+  f2 [label=&quot;factor&quot;]; f3 [label=&quot;factor&quot;]; n2 [label=&quot;2&quot;]; n3 [label=&quot;3&quot;];
+  e1 -&gt; e2; e1 -&gt; plus; e1 -&gt; t2;
+  e2 -&gt; t1; t1 -&gt; f1; f1 -&gt; n1;
+  t2 -&gt; t3; t2 -&gt; star; t2 -&gt; f3;
+  t3 -&gt; f2; f2 -&gt; n2; f3 -&gt; n3;
+}</p></object></div>
+<figcaption>
+<p><span class="caption-text">「1 + 2 * 3」の構文木</span><a class="headerlink" href="#id12" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>木の葉を左から読むと元の式になります。<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span></code> が 1 つの部分木（<code class="docutils literal notranslate"><span class="pre">term</span></code>）にまとまっており、掛け算が先に計算されるという構造が木の形で表現されています。</p>
+</section>
+<section id="id3">
+<h2>曖昧な文法と優先順位<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>同じ式の文法を、次のように書くこともできます。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">曖昧な文法</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>expr = expr &quot;+&quot; expr | expr &quot;*&quot; expr | INT ;
+</pre></div>
+</div>
+</div>
+<p>この文法では、<code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span></code> に対して 2 種類の構文木を作れます。</p>
+<figure class="align-default" id="id14">
+<div class="graphviz"><object data="_images/graphviz-19e53a7a3d3b10e610e0bb2366f52048d30ec48b.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph ambiguous {
+  node [shape=plaintext, fontname=&quot;monospace&quot;];
+  subgraph cluster_a {
+    label=&quot;(a) 1 + (2 * 3)&quot;; fontname=&quot;sans-serif&quot;;
+    a1 [label=&quot;expr&quot;]; a2 [label=&quot;expr&quot;]; a3 [label=&quot;+&quot;]; a4 [label=&quot;expr&quot;];
+    a5 [label=&quot;1&quot;]; a6 [label=&quot;expr&quot;]; a7 [label=&quot;*&quot;]; a8 [label=&quot;expr&quot;];
+    a9 [label=&quot;2&quot;]; a10 [label=&quot;3&quot;];
+    a1 -&gt; a2; a1 -&gt; a3; a1 -&gt; a4; a2 -&gt; a5;
+    a4 -&gt; a6; a4 -&gt; a7; a4 -&gt; a8; a6 -&gt; a9; a8 -&gt; a10;
+  }
+  subgraph cluster_b {
+    label=&quot;(b) (1 + 2) * 3&quot;; fontname=&quot;sans-serif&quot;;
+    b1 [label=&quot;expr&quot;]; b2 [label=&quot;expr&quot;]; b3 [label=&quot;*&quot;]; b4 [label=&quot;expr&quot;];
+    b5 [label=&quot;expr&quot;]; b6 [label=&quot;+&quot;]; b7 [label=&quot;expr&quot;]; b8 [label=&quot;3&quot;];
+    b9 [label=&quot;1&quot;]; b10 [label=&quot;2&quot;];
+    b1 -&gt; b2; b1 -&gt; b3; b1 -&gt; b4; b2 -&gt; b5; b2 -&gt; b6; b2 -&gt; b7;
+    b4 -&gt; b8; b5 -&gt; b9; b7 -&gt; b10;
+  }
+}</p></object></div>
+<figcaption>
+<p><span class="caption-text">曖昧な文法から作れる 2 つの構文木</span><a class="headerlink" href="#id14" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>1 つの文に対して複数の構文木を作れる文法を<a class="reference internal" href="appendix_b_glossary.html#term-1"><span class="xref std std-term">曖昧な文法</span></a>と呼びます。構文木によって計算結果が変わるので、曖昧さは解消しなければなりません。解消の方法は 2 つあります。</p>
+<ul class="simple">
+<li><p>文法を書き換える：前節の文法のように、優先順位ごとに非終端記号を分けます（<code class="docutils literal notranslate"><span class="pre">expr</span></code> は足し算、<code class="docutils literal notranslate"><span class="pre">term</span></code> は掛け算）。強く結び付く演算子ほど、木の下のほうに現れるようにします。</p></li>
+<li><p>構文解析器に規則を与える：文法は曖昧なままにして、「<code class="docutils literal notranslate"><span class="pre">*</span></code> は <code class="docutils literal notranslate"><span class="pre">+</span></code> より優先する」「<code class="docutils literal notranslate"><span class="pre">-</span></code> は左結合」という規則を構文解析器に別途与えます。後で説明する Pratt 構文解析や、yacc 系の構文解析器生成系はこの方法を使います。</p></li>
+</ul>
+<p>結合性も同様です。<code class="docutils literal notranslate"><span class="pre">10</span> <span class="pre">-</span> <span class="pre">4</span> <span class="pre">-</span> <span class="pre">3</span></code> を <code class="docutils literal notranslate"><span class="pre">(10</span> <span class="pre">-</span> <span class="pre">4)</span> <span class="pre">-</span> <span class="pre">3</span></code> と解釈する左結合の演算子は、<code class="docutils literal notranslate"><span class="pre">expr</span> <span class="pre">=</span> <span class="pre">expr</span> <span class="pre">&quot;-&quot;</span> <span class="pre">term</span></code> のように左側に再帰する規則で表します。</p>
+</section>
+<section id="id4">
+<h2>再帰下降構文解析<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="appendix_b_glossary.html#term-26"><span class="xref std std-term">再帰下降構文解析</span></a>は、非終端記号ごとに 1 つの関数を用意し、生成規則をそのまま関数の処理として書き下す手法です。手で書きやすく、エラーメッセージも工夫しやすいため、GCC や Clang、Go、Rust など多くの実用的なコンパイラが採用しています。</p>
+<section id="id5">
+<h3>左再帰の除去<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>前節の文法をそのまま関数にすると、問題が起きます。<code class="docutils literal notranslate"><span class="pre">expr</span> <span class="pre">=</span> <span class="pre">expr</span> <span class="pre">&quot;+&quot;</span> <span class="pre">term</span></code> を関数にすると、<code class="docutils literal notranslate"><span class="pre">expr</span></code> の処理が最初に <code class="docutils literal notranslate"><span class="pre">expr</span></code> を呼び出すため、トークンを 1 つも読まずに無限に再帰してしまいます。このように規則の先頭に自分自身が現れることを<a class="reference internal" href="appendix_b_glossary.html#term-58"><span class="xref std std-term">左再帰</span></a>と呼びます。</p>
+<p>左再帰は、EBNF の繰り返しを使って書き換えると除去できます。<code class="docutils literal notranslate"><span class="pre">expr</span> <span class="pre">=</span> <span class="pre">expr</span> <span class="pre">&quot;+&quot;</span> <span class="pre">term</span> <span class="pre">|</span> <span class="pre">term</span></code> は「<code class="docutils literal notranslate"><span class="pre">term</span></code> の後に <code class="docutils literal notranslate"><span class="pre">&quot;+&quot;</span> <span class="pre">term</span></code> が 0 回以上続く」という意味なので、次のように書けます。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">算術式の文法（繰り返しで表現）</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>expr   = term { ( &quot;+&quot; | &quot;-&quot; ) term } ;
+<span class="linenos">2</span>term   = factor { ( &quot;*&quot; | &quot;/&quot; | &quot;%&quot; ) factor } ;
+<span class="linenos">3</span>factor = &quot;-&quot; factor | INT | &quot;(&quot; expr &quot;)&quot; ;
+</pre></div>
+</div>
+</div>
+<p>繰り返しはループで処理し、ループの中で左側の値に右側の値を順に組み合わせていけば、左結合の計算になります。</p>
+</section>
+<section id="id6">
+<h3>電卓の実装<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>この文法に従って、算術式を計算する電卓を作ります（<code class="docutils literal notranslate"><span class="pre">calc_rd.py</span></code>）。字句解析には第 3 章の字句解析器をそのまま使います。構文解析をしながら値を計算するので、構文木は作りません。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">calc_rd.py（非終端記号に対応するメソッド）</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">43</span>    <span class="k">def</span><span class="w"> </span><span class="nf">expr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">44</span>        <span class="c1"># expr = term { (&quot;+&quot; | &quot;-&quot;) term }</span>
+<span class="linenos">45</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term</span><span class="p">()</span>
+<span class="linenos">46</span>        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">PLUS</span><span class="p">,</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">MINUS</span><span class="p">):</span>
+<span class="linenos">47</span>            <span class="n">op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span><span class="o">.</span><span class="n">kind</span>
+<span class="linenos">48</span>            <span class="n">right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">term</span><span class="p">()</span>
+<span class="linenos">49</span>            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="o">+</span> <span class="n">right</span> <span class="k">if</span> <span class="n">op</span> <span class="ow">is</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">PLUS</span> <span class="k">else</span> <span class="n">value</span> <span class="o">-</span> <span class="n">right</span>
+<span class="linenos">50</span>        <span class="k">return</span> <span class="n">value</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span>    <span class="k">def</span><span class="w"> </span><span class="nf">term</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">53</span>        <span class="c1"># term = factor { (&quot;*&quot; | &quot;/&quot; | &quot;%&quot;) factor }</span>
+<span class="linenos">54</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor</span><span class="p">()</span>
+<span class="linenos">55</span>        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">STAR</span><span class="p">,</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">SLASH</span><span class="p">,</span>
+<span class="linenos">56</span>                                   <span class="n">TokenKind</span><span class="o">.</span><span class="n">PERCENT</span><span class="p">):</span>
+<span class="linenos">57</span>            <span class="n">op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span><span class="o">.</span><span class="n">kind</span>
+<span class="linenos">58</span>            <span class="n">right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor</span><span class="p">()</span>
+<span class="linenos">59</span>            <span class="k">if</span> <span class="n">op</span> <span class="ow">is</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">STAR</span><span class="p">:</span>
+<span class="linenos">60</span>                <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="o">*</span> <span class="n">right</span>
+<span class="linenos">61</span>            <span class="k">elif</span> <span class="n">op</span> <span class="ow">is</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">SLASH</span><span class="p">:</span>
+<span class="linenos">62</span>                <span class="n">value</span> <span class="o">=</span> <span class="n">int_div</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
+<span class="linenos">63</span>            <span class="k">else</span><span class="p">:</span>
+<span class="linenos">64</span>                <span class="n">value</span> <span class="o">=</span> <span class="n">int_mod</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
+<span class="linenos">65</span>        <span class="k">return</span> <span class="n">value</span>
+<span class="linenos">66</span>
+<span class="linenos">67</span>    <span class="k">def</span><span class="w"> </span><span class="nf">factor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">68</span>        <span class="c1"># factor = &quot;-&quot; factor | INT | &quot;(&quot; expr &quot;)&quot;</span>
+<span class="linenos">69</span>        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span>
+<span class="linenos">70</span>        <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">MINUS</span><span class="p">:</span>
+<span class="linenos">71</span>            <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">72</span>            <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">factor</span><span class="p">()</span>
+<span class="linenos">73</span>        <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">INT</span><span class="p">:</span>
+<span class="linenos">74</span>            <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">75</span>            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="linenos">76</span>            <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">value</span>
+<span class="linenos">77</span>        <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">LPAREN</span><span class="p">:</span>
+<span class="linenos">78</span>            <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">79</span>            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">()</span>
+<span class="linenos">80</span>            <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RPAREN</span><span class="p">)</span>
+<span class="linenos">81</span>            <span class="k">return</span> <span class="n">value</span>
+<span class="linenos">82</span>        <span class="k">raise</span> <span class="n">TinyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;式が必要ですが </span><span class="si">{</span><span class="n">token</span><span class="o">.</span><span class="n">text</span><span class="si">!r}</span><span class="s2"> があります&quot;</span><span class="p">,</span>
+<span class="linenos">83</span>                        <span class="n">token</span><span class="o">.</span><span class="n">line</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">column</span><span class="p">)</span>
+<span class="linenos">84</span>
+<span class="linenos">85</span>
+</pre></div>
+</div>
+</div>
+<p>各メソッドは、次に読むトークン（<code class="docutils literal notranslate"><span class="pre">self.peek()</span></code>）を 1 つだけ見て、どの規則を使うかを決めています。たとえば <code class="docutils literal notranslate"><span class="pre">factor</span></code> は、次のトークンが <code class="docutils literal notranslate"><span class="pre">-</span></code> なら単項演算子、<code class="docutils literal notranslate"><span class="pre">INT</span></code> なら整数、<code class="docutils literal notranslate"><span class="pre">(</span></code> なら括弧で囲まれた式と判断します。このように、次のトークンを 1 つ見るだけで使う規則を決められる文法を LL(1) 文法と呼びます。空になりうる規則がない場合、各規則が最初に読みうるトークンの集合（FIRST 集合）が、選択肢の間で重ならないことが LL(1) 文法の条件です（空になりうる規則があるときは、その後に続きうるトークンの集合 FOLLOW も考慮します）。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>calc_rd.py
+<span class="linenos">2</span><span class="go">1 + 2 * 3 = 7</span>
+<span class="linenos">3</span><span class="gp gp-VirtualEnv">(1 + 2)</span> <span class="go">* 3 = 9</span>
+<span class="linenos">4</span><span class="go">10 - 4 - 3 = 3</span>
+<span class="linenos">5</span><span class="go">-7 / 2 = -3</span>
+<span class="linenos">6</span><span class="go">2 * (3 + 4) % 5 = 4</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">10</span> <span class="pre">-</span> <span class="pre">4</span> <span class="pre">-</span> <span class="pre">3</span></code> が左結合で <code class="docutils literal notranslate"><span class="pre">3</span></code> になり、<code class="docutils literal notranslate"><span class="pre">-7</span> <span class="pre">/</span> <span class="pre">2</span></code> が 0 に向かって切り捨てて <code class="docutils literal notranslate"><span class="pre">-3</span></code> になっていることが分かります。</p>
+</section>
+</section>
+<section id="pratt">
+<h2>Pratt 構文解析<a class="headerlink" href="#pratt" title="Link to this heading"></a></h2>
+<p>再帰下降構文解析では、優先順位の段階ごとに関数が必要です。Tiny の文法では、<code class="docutils literal notranslate"><span class="pre">or_expr</span></code> から <code class="docutils literal notranslate"><span class="pre">mul_expr</span></code> まで、二項演算子の優先順位ごとに 6 つの規則がほとんど同じ形で並んでおり、そのまま関数にすると 6 つの似た関数ができます。<a class="reference internal" href="appendix_b_glossary.html#term-Pratt"><span class="xref std std-term">Pratt 構文解析</span></a>（演算子順位構文解析の一種）を使うと、これを 1 つの関数と演算子の表にまとめられます <a class="reference internal" href="appendix_c_references.html#pratt1973" id="id7"><span>[Pratt1973]</span></a>。</p>
+<p>Pratt 構文解析では、各二項演算子に左右 2 つの<a class="reference internal" href="appendix_b_glossary.html#term-16"><span class="xref std std-term">結合力</span></a>を与えます。結合力が大きいほど、その演算子は被演算子と強く結び付きます。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">calc_pratt.py（演算子の結合力）</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">13</span><span class="n">BINARY_POWER</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TokenKind</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">14</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">OR</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+<span class="linenos">15</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">AND</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+<span class="linenos">16</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">EQ</span><span class="p">:</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+<span class="linenos">17</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">NE</span><span class="p">:</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+<span class="linenos">18</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">LT</span><span class="p">:</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+<span class="linenos">19</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">LE</span><span class="p">:</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+<span class="linenos">20</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">GT</span><span class="p">:</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+<span class="linenos">21</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">GE</span><span class="p">:</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+<span class="linenos">22</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">PLUS</span><span class="p">:</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+<span class="linenos">23</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">MINUS</span><span class="p">:</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+<span class="linenos">24</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">STAR</span><span class="p">:</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+<span class="linenos">25</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">SLASH</span><span class="p">:</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+<span class="linenos">26</span>    <span class="n">TokenKind</span><span class="o">.</span><span class="n">PERCENT</span><span class="p">:</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+<span class="linenos">27</span><span class="p">}</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="n">PREFIX_POWER</span> <span class="o">=</span> <span class="mi">13</span>  <span class="c1"># 単項演算子 - と ! の結合力</span>
+</pre></div>
+</div>
+</div>
+<p>解析の中心は <code class="docutils literal notranslate"><span class="pre">expr(min_power)</span></code> です。まず被演算子（数値、括弧で囲まれた式、単項演算子の式）を 1 つ読み、続く二項演算子の左の結合力が <code class="docutils literal notranslate"><span class="pre">min_power</span></code> 以上である間、その演算子を取り込みます。演算子の右側は、右の結合力を <code class="docutils literal notranslate"><span class="pre">min_power</span></code> として再帰的に解析します。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">calc_pratt.py（Pratt 構文解析の中心部分）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">53</span>    <span class="k">def</span><span class="w"> </span><span class="nf">expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_power</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">54</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;結合力が min_power 以上の演算子だけを取り込んで式を解析する。&quot;&quot;&quot;</span>
+<span class="linenos">55</span>        <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">()</span>
+<span class="linenos">56</span>        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="linenos">57</span>            <span class="n">op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span>
+<span class="linenos">58</span>            <span class="n">power</span> <span class="o">=</span> <span class="n">BINARY_POWER</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
+<span class="linenos">59</span>            <span class="k">if</span> <span class="n">power</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_power</span><span class="p">:</span>
+<span class="linenos">60</span>                <span class="k">return</span> <span class="n">left</span>
+<span class="linenos">61</span>            <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">62</span>            <span class="n">right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">(</span><span class="n">power</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="linenos">63</span>            <span class="n">left</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">left</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">right</span><span class="si">}</span><span class="s2">)&quot;</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span></code> を解析する様子を追ってみます。</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">expr(0)</span></code> が <code class="docutils literal notranslate"><span class="pre">1</span></code> を読みます。次の <code class="docutils literal notranslate"><span class="pre">+</span></code> の左の結合力 9 は 0 以上なので取り込み、右側を <code class="docutils literal notranslate"><span class="pre">expr(10)</span></code> で解析します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">expr(10)</span></code> が <code class="docutils literal notranslate"><span class="pre">2</span></code> を読みます。次の <code class="docutils literal notranslate"><span class="pre">*</span></code> の左の結合力 11 は 10 以上なので取り込み、右側を <code class="docutils literal notranslate"><span class="pre">expr(12)</span></code> で解析します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">expr(12)</span></code> が <code class="docutils literal notranslate"><span class="pre">3</span></code> を読みます。次はファイルの終わりなので、<code class="docutils literal notranslate"><span class="pre">3</span></code> を返します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">expr(10)</span></code> は <code class="docutils literal notranslate"><span class="pre">(*</span> <span class="pre">2</span> <span class="pre">3)</span></code> を作り、ファイルの終わりなので返します。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">expr(0)</span></code> は <code class="docutils literal notranslate"><span class="pre">(+</span> <span class="pre">1</span> <span class="pre">(*</span> <span class="pre">2</span> <span class="pre">3))</span></code> を作ります。</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">-</span> <span class="pre">b</span> <span class="pre">-</span> <span class="pre">c</span></code> では、<code class="docutils literal notranslate"><span class="pre">expr(10)</span></code> が <code class="docutils literal notranslate"><span class="pre">b</span></code> を読んだ後、次の <code class="docutils literal notranslate"><span class="pre">-</span></code> の左の結合力 9 が 10 より小さいので取り込まずに返ります。その結果、先に <code class="docutils literal notranslate"><span class="pre">(-</span> <span class="pre">a</span> <span class="pre">b)</span></code> が作られ、左結合になります。右の結合力を左の結合力より 1 大きくすることで左結合を表しているわけです。逆に右の結合力を左より小さくすると、右結合の演算子になります。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>calc_pratt.py
+<span class="linenos">2</span><span class="go">1 + 2 * 3              =&gt; (+ 1 (* 2 3))</span>
+<span class="linenos">3</span><span class="go">a - b - c              =&gt; (- (- a b) c)</span>
+<span class="linenos">4</span><span class="go">-x * y                 =&gt; (* (- x) y)</span>
+<span class="linenos">5</span><span class="go">a &lt; b &amp;&amp; b &lt; c || !d   =&gt; (|| (&amp;&amp; (&lt; a b) (&lt; b c)) (! d))</span>
+<span class="linenos">6</span><span class="gp gp-VirtualEnv">(1 + 2)</span> <span class="go">* 3            =&gt; (* (+ 1 2) 3)</span>
+</pre></div>
+</div>
+</section>
+<section id="ll-lr">
+<h2>LL 構文解析と LR 構文解析<a class="headerlink" href="#ll-lr" title="Link to this heading"></a></h2>
+<p>構文解析の手法は、構文木を作る方向によって大きく 2 つに分類できます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"><p>LL 構文解析（下向き）</p></th>
+<th class="head"><p>LR 構文解析（上向き）</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>木を作る方向</p></td>
+<td><p>根（開始記号）から葉に向かって作る</p></td>
+<td><p>葉（トークン）から根に向かって作る</p></td>
+</tr>
+<tr class="row-odd"><td><p>代表的な手法</p></td>
+<td><p>再帰下降構文解析、LL(1) 構文解析</p></td>
+<td><p>LALR(1) 構文解析</p></td>
+</tr>
+<tr class="row-even"><td><p>扱える文法</p></td>
+<td><p>左再帰を扱えない</p></td>
+<td><p>LL より広い範囲の文法を扱える</p></td>
+</tr>
+<tr class="row-odd"><td><p>主な実装方法</p></td>
+<td><p>手書き、ANTLR などの生成系</p></td>
+<td><p>yacc、Bison などの生成系</p></td>
+</tr>
+</tbody>
+</table>
+<p>LR 構文解析は、トークンをスタックに積む「シフト」と、スタックの上部が生成規則の右辺と一致したらそれを左辺の非終端記号に置き換える「還元」を繰り返して構文木を作ります。次の文法で <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span></code> を解析する様子を示します（<code class="docutils literal notranslate"><span class="pre">$</span></code> は入力の終わりを表します）。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>E = E &quot;+&quot; T | T ;
+<span class="linenos">2</span>T = T &quot;*&quot; F | F ;
+<span class="linenos">3</span>F = INT ;
+</pre></div>
+</div>
+<table class="docutils align-default" id="id19">
+<caption><span class="caption-text">LR 構文解析の動作</span><a class="headerlink" href="#id19" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 30.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>スタック</p></th>
+<th class="head"><p>残りの入力</p></th>
+<th class="head"><p>動作</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>（空）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>シフト</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>還元 F = INT</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">F</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>還元 T = F</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">T</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>還元 E = T</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>シフト</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>シフト</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">2</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>還元 F = INT</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">F</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>還元 T = F</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">T</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>シフト（次が <code class="docutils literal notranslate"><span class="pre">*</span></code> なので E = E + T では還元しない）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">T</span> <span class="pre">*</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">3</span> <span class="pre">$</span></code></p></td>
+<td><p>シフト</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">T</span> <span class="pre">*</span> <span class="pre">3</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$</span></code></p></td>
+<td><p>還元 F = INT</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">T</span> <span class="pre">*</span> <span class="pre">F</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$</span></code></p></td>
+<td><p>還元 T = T * F</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">T</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$</span></code></p></td>
+<td><p>還元 E = E + T</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">E</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$</span></code></p></td>
+<td><p>受理</p></td>
+</tr>
+</tbody>
+</table>
+<p>スタックが <code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">T</span></code> で残りの入力が <code class="docutils literal notranslate"><span class="pre">*</span> <span class="pre">3</span> <span class="pre">$</span></code> の行では、スタックの上部 <code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">+</span> <span class="pre">T</span></code> が規則 <code class="docutils literal notranslate"><span class="pre">E</span> <span class="pre">=</span> <span class="pre">E</span> <span class="pre">&quot;+&quot;</span> <span class="pre">T</span></code> の右辺と一致していますが、次のトークンが <code class="docutils literal notranslate"><span class="pre">*</span></code> なので還元せずにシフトしています。どの状況でシフトし、どの状況で還元するかは、文法から機械的に作った表（構文解析表）に従って決めます。表を手で作るのは大変なので、LR 構文解析器はふつう<a class="reference internal" href="appendix_b_glossary.html#term-20"><span class="xref std std-term">構文解析器生成系</span></a>で生成します。</p>
+<p>もう 1 つの重要な手法に、PEG（Parsing Expression Grammar）に基づく構文解析があります。PEG では選択肢 <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">|</span> <span class="pre">b</span></code> を「まず <code class="docutils literal notranslate"><span class="pre">a</span></code> を試し、失敗したら <code class="docutils literal notranslate"><span class="pre">b</span></code> を試す」と解釈するため、文法が曖昧になりません。CPython は Python 3.9 から PEG に基づく構文解析器を使っています <a class="reference internal" href="appendix_c_references.html#pep617" id="id8"><span>[PEP617]</span></a>。</p>
+</section>
+<section id="id9">
+<h2>エラー回復<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>構文エラーを見つけたとき、最初のエラーで処理を止めるのではなく、解析を続けて複数のエラーをまとめて報告できると便利です。これを<a class="reference internal" href="appendix_b_glossary.html#term-5"><span class="xref std std-term">エラー回復</span></a>と呼びます。最も簡単な方法は、エラーを見つけたら文の区切り（<code class="docutils literal notranslate"><span class="pre">;</span></code> や <code class="docutils literal notranslate"><span class="pre">}</span></code>）や文の先頭になるキーワード（<code class="docutils literal notranslate"><span class="pre">let</span></code> や <code class="docutils literal notranslate"><span class="pre">if</span></code>）までトークンを読み飛ばし、そこから解析を再開する方法です。これをパニックモードと呼びます。Tiny の構文解析器では、<a class="reference internal" href="05_ast.html"><span class="doc">第 5 章</span></a>でこの方法を実装します。</p>
+</section>
+<section id="id10">
+<h2>まとめ<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>プログラミング言語の文法は文脈自由文法で記述し、文の構造は構文木で表されます。</p></li>
+<li><p>曖昧な文法は、優先順位ごとに規則を分けるか、構文解析器に優先順位と結合性の規則を与えて解消します。</p></li>
+<li><p>再帰下降構文解析は、非終端記号ごとの関数で文法を書き下す手法で、左再帰は繰り返しに書き換えて除去します。</p></li>
+<li><p>Pratt 構文解析は、演算子の結合力の表を使って、式を 1 つの関数で解析します。</p></li>
+<li><p>LR 構文解析はシフトと還元によって上向きに構文木を作り、構文解析器生成系で生成するのが一般的です。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="03_lexer.html" class="btn btn-neutral float-left" title="第 3 章 字句解析" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="05_ast.html" class="btn btn-neutral float-right" title="第 5 章 抽象構文木と Tiny の構文解析器" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

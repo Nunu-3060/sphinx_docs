@@ -28,13 +28,16 @@
      - :doc:`06_security`
    * - ``fairness_check.py``
      - 選考結果の公平性の指標の計算
-     - :doc:`09_ai_ethics`
+     - :doc:`10_ai_ethics`
    * - ``pseudonymize.py``
      - HMAC による識別子の仮名化
      - :doc:`07_privacy`
    * - ``license_report.py``
      - インストール済みパッケージのライセンスの一覧表示
      - :doc:`08_intellectual_property`
+   * - ``contrast_check.py``
+     - 文字色と背景色のコントラスト比の判定
+     - :doc:`09_user_respect`
 
 個人情報のマスキング
 --------------------
@@ -87,5 +90,14 @@ SQL インジェクションの比較
 ダウンロード：:download:`license_report.py <../examples/license_report.py>`
 
 .. literalinclude:: ../examples/license_report.py
+   :language: python
+   :linenos:
+
+コントラスト比の判定
+--------------------
+
+ダウンロード：:download:`contrast_check.py <../examples/contrast_check.py>`
+
+.. literalinclude:: ../examples/contrast_check.py
    :language: python
    :linenos:

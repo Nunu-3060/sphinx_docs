@@ -1,0 +1,935 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5. アルゴリズムと計算量 &mdash; 計算機科学入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="6. 計算理論" href="ch06_theory_of_computation.html" />
+    <link rel="prev" title="4. データ構造" href="ch04_data_structures.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            計算機科学入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">はじめに</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">はじめに</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_data_representation.html">1. 情報の表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_logic_circuits.html">2. 論理回路</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_computer_architecture.html">3. コンピュータの構成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_data_structures.html">4. データ構造</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">5. アルゴリズムと計算量</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">5.1. アルゴリズムとは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#o">5.2. 計算量と O 記法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">5.2.1. 計算量を何で測るか</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">5.2.2. O 記法・Ω 記法・Θ 記法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">5.2.3. 最悪・平均・最良</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">5.2.4. 代表的なオーダーの増え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">5.2.5. 実務での見積もり</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">5.3. 探索</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">5.3.1. 線形探索</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">5.3.2. 二分探索</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bisect">5.3.3. bisect モジュール</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ch05-recursion">5.4. 再帰と分割統治</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">5.4.1. 再帰</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">5.4.2. 分割統治法</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">5.5. ソート</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id16">5.5.1. 挿入ソート</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ch05-merge-sort">5.5.2. マージソート</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ch05-quick-sort">5.5.3. クイックソート</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id19">5.5.4. 比較回数の実験</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id20">5.5.5. 比較ソートの下限</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-sorted">5.5.6. 安定性と Python の sorted</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id22">5.6. 動的計画法</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id23">5.6.1. フィボナッチ数とメモ化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ch05-lcs">5.6.2. 最長共通部分列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id25">5.7. 貪欲法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id26">5.8. グラフ探索</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id27">5.8.1. 幅優先探索</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id28">5.8.2. 深さ優先探索</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id29">5.8.3. ダイクストラ法</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id32">5.9. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_theory_of_computation.html">6. 計算理論</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_programming_languages.html">7. プログラミング言語処理系</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_operating_systems.html">8. オペレーティングシステム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_concurrency_and_io.html">9. 並行処理と入出力</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_networks.html">10. コンピュータネットワーク</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_databases.html">11. データベース</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_distributed_systems.html">12. 分散システム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_security.html">13. 情報セキュリティと暗号</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_application_security.html">14. 認証とアプリケーションのセキュリティ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">おわりに</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">おわりに</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">サンプルコード一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">計算機科学入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">5. </span>アルゴリズムと計算量</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch04_data_structures.html" class="btn btn-neutral float-left" title="4. データ構造" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch06_theory_of_computation.html" class="btn btn-neutral float-right" title="6. 計算理論" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">5. </span>アルゴリズムと計算量<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>「<a class="reference internal" href="ch04_data_structures.html"><span class="doc">データ構造</span></a>」では、データの格納方法と、各操作にかかる手間を学んだ。この章では、そのデータ構造を使って問題を解く手順、すなわちアルゴリズムを扱う。まず、アルゴリズムの効率を比べるための尺度である計算量と O 記法を定義する。次に、探索とソートという基本的な問題を例に、計算量の異なるアルゴリズムを比べる。さらに、再帰と分割統治、動的計画法、貪欲法という代表的な設計手法を学び、最後にグラフ上の探索と最短経路の求め方を扱う。</p>
+<section id="id2">
+<h2><span class="section-number">5.1. </span>アルゴリズムとは<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="glossary.html#term-7"><span class="xref std std-term">アルゴリズム</span></a>とは、問題を解くための明確な手順を、有限の長さで記述したものである。例えば「整列済みの名簿から目的の名前を探す」「荷物の配送経路のうち最も短いものを求める」といった問題に対して、どのような順に何を計算すれば答えが得られるかを定めたものがアルゴリズムである。アルゴリズムには次の性質が求められる。</p>
+<ul class="simple">
+<li><p>各手順が曖昧さなく定められており、機械的に実行できる。</p></li>
+<li><p>どのような入力に対しても、有限回の手順で終了する。</p></li>
+<li><p>正しい出力（問題の答え）を返す。</p></li>
+</ul>
+<p>アルゴリズムはプログラミング言語とは独立した概念であり、同じアルゴリズムを Python でも C でも書ける。逆に、同じ問題を解く複数のアルゴリズムがあり、それらの効率は大きく異なることがある。データが少ないうちはどのアルゴリズムでも一瞬で終わるが、データが 100 万件、1 億件と増えたとき、選んだアルゴリズムの違いが数秒と数日の差になって現れる。</p>
+<p>なお、「どのようなアルゴリズムでも解けない問題」も存在する。これについては「<a class="reference internal" href="ch06_theory_of_computation.html"><span class="doc">計算理論</span></a>」で扱う。</p>
+</section>
+<section id="o">
+<span id="ch05-big-o"></span><h2><span class="section-number">5.2. </span>計算量と O 記法<a class="headerlink" href="#o" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3><span class="section-number">5.2.1. </span>計算量を何で測るか<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>アルゴリズムの効率を実行時間の秒数で比べると、CPU の性能、プログラミング言語、他に動いているプロセスなどの影響を受けてしまう。そこで、アルゴリズムが実行する基本的な操作（比較、代入、算術演算など）の回数を、入力の大きさ <span class="math notranslate nohighlight">\(n\)</span> の関数として数える。これを<a class="reference internal" href="glossary.html#term-83"><span class="xref std std-term">時間計算量</span></a>と呼ぶ。同様に、アルゴリズムが使う記憶領域の量を <span class="math notranslate nohighlight">\(n\)</span> の関数として表したものを<a class="reference internal" href="glossary.html#term-51"><span class="xref std std-term">空間計算量</span></a>と呼ぶ。両者を合わせて<a class="reference internal" href="glossary.html#term-61"><span class="xref std std-term">計算量</span></a>と呼び、単に計算量といえば時間計算量を指すことが多い。入力の大きさは、配列なら要素数、文字列なら文字数、グラフなら頂点数と辺数で表す。</p>
+<p>操作の回数を正確に数えるのは難しく、また正確な値にはあまり意味がない。例えば、ある処理の回数が <span class="math notranslate nohighlight">\(3n^2 + 5n + 2\)</span> 回だったとしても、<span class="math notranslate nohighlight">\(n\)</span> が大きくなると <span class="math notranslate nohighlight">\(3n^2\)</span> の項が圧倒的に大きくなり、係数の 3 も CPU や言語によって変わる。重要なのは「<span class="math notranslate nohighlight">\(n\)</span> が 2 倍になると手間がおよそ 4 倍になる」という増え方である。そこで、最も増え方の大きい項だけを残し、定数倍を無視して増え方を表す。</p>
+</section>
+<section id="id4">
+<h3><span class="section-number">5.2.2. </span>O 記法・Ω 記法・Θ 記法<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>増え方を表す記法が <a class="reference internal" href="glossary.html#term-O"><span class="xref std std-term">O 記法</span></a>（オー記法、ビッグオー記法）である。関数 <span class="math notranslate nohighlight">\(f(n)\)</span> と <span class="math notranslate nohighlight">\(g(n)\)</span> について、ある正の定数 <span class="math notranslate nohighlight">\(c\)</span> と <span class="math notranslate nohighlight">\(n_0\)</span> が存在し、<span class="math notranslate nohighlight">\(n \ge n_0\)</span> を満たすすべての <span class="math notranslate nohighlight">\(n\)</span> に対して次の不等式が成り立つとき、<span class="math notranslate nohighlight">\(f(n) = O(g(n))\)</span> と書く。</p>
+<div class="math notranslate nohighlight">
+\[0 \le f(n) \le c \cdot g(n)\]</div>
+<p>これは「<span class="math notranslate nohighlight">\(n\)</span> が十分大きければ、<span class="math notranslate nohighlight">\(f(n)\)</span> は <span class="math notranslate nohighlight">\(g(n)\)</span> の定数倍を超えない」こと、すなわち <span class="math notranslate nohighlight">\(g(n)\)</span> が <span class="math notranslate nohighlight">\(f(n)\)</span> の増え方の<strong>上界</strong>であることを表す。例えば <span class="math notranslate nohighlight">\(n \ge 1\)</span> のとき <span class="math notranslate nohighlight">\(3n^2 + 5n + 2 \le 3n^2 + 5n^2 + 2n^2 = 10n^2\)</span> なので、<span class="math notranslate nohighlight">\(c = 10\)</span>、<span class="math notranslate nohighlight">\(n_0 = 1\)</span> とすれば <span class="math notranslate nohighlight">\(3n^2 + 5n + 2 = O(n^2)\)</span> である。この定義から、次の規則が導かれる。</p>
+<ul class="simple">
+<li><p>定数倍は無視できる。<span class="math notranslate nohighlight">\(100n = O(n)\)</span> である。</p></li>
+<li><p>和では増え方の大きい項だけが残る。<span class="math notranslate nohighlight">\(n^2 + n \log n = O(n^2)\)</span> である。</p></li>
+<li><p>対数の底は無視できる。底の変換公式 <span class="math notranslate nohighlight">\(\log_a n = \log_b n / \log_b a\)</span> より、底の違いは定数倍の違いにすぎないからである。そのため、本書では O 記法の中で底を書かない。O 記法の外で底を省略した <span class="math notranslate nohighlight">\(\log n\)</span> は、底 2 の対数 <span class="math notranslate nohighlight">\(\log_2 n\)</span> を表す。</p></li>
+</ul>
+<p>同様に、下界と、上下からの評価を表す記法がある。</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(f(n) = \Omega(g(n))\)</span>（オメガ記法）: ある正の定数 <span class="math notranslate nohighlight">\(c\)</span> と <span class="math notranslate nohighlight">\(n_0\)</span> が存在し、<span class="math notranslate nohighlight">\(n \ge n_0\)</span> で <span class="math notranslate nohighlight">\(f(n) \ge c \cdot g(n) \ge 0\)</span> が成り立つ。<span class="math notranslate nohighlight">\(g(n)\)</span> が下界であることを表す。</p></li>
+<li><p><span class="math notranslate nohighlight">\(f(n) = \Theta(g(n))\)</span>（シータ記法）: <span class="math notranslate nohighlight">\(f(n) = O(g(n))\)</span> かつ <span class="math notranslate nohighlight">\(f(n) = \Omega(g(n))\)</span> である。増え方がちょうど <span class="math notranslate nohighlight">\(g(n)\)</span> であることを表す。</p></li>
+</ul>
+<p>厳密には、<span class="math notranslate nohighlight">\(O\)</span> は上界にすぎないので、<span class="math notranslate nohighlight">\(O(\log n)\)</span> で終わるアルゴリズムは <span class="math notranslate nohighlight">\(O(n)\)</span> でもある。しかし実務や多くの文献では、<span class="math notranslate nohighlight">\(O\)</span> を「ちょうどその増え方」という <span class="math notranslate nohighlight">\(\Theta\)</span> の意味で使うことが多い。本書でも、誤解の無い範囲で <span class="math notranslate nohighlight">\(O\)</span> を使う。より厳密な扱いは <a class="reference internal" href="references.html#clrs" id="id5"><span>[CLRS]</span></a> を参照。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">5.2.3. </span>最悪・平均・最良<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>同じ大きさの入力でも、入力の内容によって手間は変わる。例えば配列の先頭から値を探す場合、目的の値が先頭にあれば 1 回の比較で済むが、存在しなければ <span class="math notranslate nohighlight">\(n\)</span> 回の比較が必要である。そこで、次の 3 つを区別する。</p>
+<ul class="simple">
+<li><p>最悪計算量: 大きさ <span class="math notranslate nohighlight">\(n\)</span> の入力のうち、最も手間のかかる入力に対する計算量。</p></li>
+<li><p>平均計算量: 入力の現れ方に確率分布（例えばすべての並び順が等確率）を仮定したときの計算量の期待値。</p></li>
+<li><p>最良計算量: 最も手間の少ない入力に対する計算量。</p></li>
+</ul>
+<p>特に断らない限り、計算量は最悪計算量を指す。最悪計算量は「どんな入力が来てもこれ以上はかからない」という保証になるからである。ただし、後で扱うクイックソートや第 4 章のハッシュ表のように、最悪の場合はまれで平均が実用上の性能をよく表すものもある。また、第 4 章の「<a class="reference internal" href="ch04_data_structures.html#ch04-dynamic-array"><span class="std std-ref">動的配列と償却計算量</span></a>」で扱った償却計算量は、一連の操作全体の最悪の手間を操作の回数で割ったもので、確率の仮定を置かない点で平均計算量とは異なる。</p>
+</section>
+<section id="id7">
+<h3><span class="section-number">5.2.4. </span>代表的なオーダーの増え方<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>代表的な計算量のオーダーについて、<span class="math notranslate nohighlight">\(n\)</span> に対する値を次の表に示す。値は近似値である。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>オーダー</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(n = 10\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(n = 100\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(n = 1000\)</span></p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(n = 10^6\)</span></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\log n\)</span></p></td>
+<td><p>3.3</p></td>
+<td><p>6.6</p></td>
+<td><p>10</p></td>
+<td><p>20</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(n\)</span></p></td>
+<td><p>10</p></td>
+<td><p>100</p></td>
+<td><p>1,000</p></td>
+<td><p><span class="math notranslate nohighlight">\(10^6\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(n \log n\)</span></p></td>
+<td><p>33</p></td>
+<td><p>664</p></td>
+<td><p>9,966</p></td>
+<td><p><span class="math notranslate nohighlight">\(2.0 \times 10^7\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(n^2\)</span></p></td>
+<td><p>100</p></td>
+<td><p>10,000</p></td>
+<td><p><span class="math notranslate nohighlight">\(10^6\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(10^{12}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(n^3\)</span></p></td>
+<td><p>1,000</p></td>
+<td><p><span class="math notranslate nohighlight">\(10^6\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(10^9\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(10^{18}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(2^n\)</span></p></td>
+<td><p>1,024</p></td>
+<td><p><span class="math notranslate nohighlight">\(1.3 \times 10^{30}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(1.1 \times 10^{301}\)</span></p></td>
+<td><p>約 <span class="math notranslate nohighlight">\(10^{301030}\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p><span class="math notranslate nohighlight">\(O(1)\)</span>、<span class="math notranslate nohighlight">\(O(\log n)\)</span>、<span class="math notranslate nohighlight">\(O(n)\)</span>、<span class="math notranslate nohighlight">\(O(n \log n)\)</span> は <span class="math notranslate nohighlight">\(n\)</span> が 100 万でも十分現実的な手間で済む。<span class="math notranslate nohighlight">\(O(n^2)\)</span> は <span class="math notranslate nohighlight">\(n\)</span> が 1 万程度までなら許容できることが多いが、100 万では <span class="math notranslate nohighlight">\(10^{12}\)</span> 回となり、1 秒間に <span class="math notranslate nohighlight">\(10^9\)</span> 回の操作ができる計算機でも 15 分以上かかる。<span class="math notranslate nohighlight">\(O(2^n)\)</span> は <span class="math notranslate nohighlight">\(n\)</span> が 50 を超えたあたりで、どのような計算機でも現実的な時間では終わらなくなる。指数関数的な計算量を持つ問題については「<a class="reference internal" href="ch06_theory_of_computation.html"><span class="doc">計算理論</span></a>」でも触れる。</p>
+</section>
+<section id="id8">
+<h3><span class="section-number">5.2.5. </span>実務での見積もり<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>実務でコードを読むときは、ループの入れ子の深さと、ループの中で呼び出している操作の計算量に注目すると、おおよその計算量を見積もれる。<span class="math notranslate nohighlight">\(n\)</span> 件のデータに対する 1 重のループは <span class="math notranslate nohighlight">\(O(n)\)</span>、2 重のループは <span class="math notranslate nohighlight">\(O(n^2)\)</span> である。注意したいのは、ループが目に見えない形で隠れている場合である。</p>
+<ul class="simple">
+<li><p>ループの中で <code class="docutils literal notranslate"><span class="pre">list</span></code> に対して <code class="docutils literal notranslate"><span class="pre">in</span></code>、<code class="docutils literal notranslate"><span class="pre">index()</span></code>、<code class="docutils literal notranslate"><span class="pre">remove()</span></code>、<code class="docutils literal notranslate"><span class="pre">pop(0)</span></code> を使うと、それぞれが <span class="math notranslate nohighlight">\(O(n)\)</span> のため全体が <span class="math notranslate nohighlight">\(O(n^2)\)</span> になる（「<a class="reference internal" href="ch04_data_structures.html"><span class="doc">データ構造</span></a>」）。</p></li>
+<li><p>ループの中で文字列を <code class="docutils literal notranslate"><span class="pre">+=</span></code> で連結し続けると、処理系によっては毎回新しい文字列へのコピーが発生し、全体で <span class="math notranslate nohighlight">\(O(n^2)\)</span> になる。<code class="docutils literal notranslate"><span class="pre">&quot;&quot;.join()</span></code> を使えば <span class="math notranslate nohighlight">\(O(n)\)</span> で済む。</p></li>
+<li><p>データベースの検索をループの中で 1 件ずつ発行すると、<span class="math notranslate nohighlight">\(n\)</span> 件のデータに対して <span class="math notranslate nohighlight">\(1 + n\)</span> 回の問い合わせが発生する。これは N+1 問題と呼ばれ、1 回ごとの通信の遅延が積み重なって大きな遅れになる。まとめて 1 回で取得するか、結合を使う（「<a class="reference internal" href="ch11_databases.html"><span class="doc">データベース</span></a>」）。</p></li>
+</ul>
+<p>目安として、Python で単純な操作を繰り返すと 1 秒間に <span class="math notranslate nohighlight">\(10^7\)</span> 回程度（環境によって大きく異なる）実行できる。<span class="math notranslate nohighlight">\(n\)</span> と計算量から操作の回数を見積もり、この値と比べると、書く前にそのアルゴリズムが実用的かどうかを判断できる。</p>
+</section>
+</section>
+<section id="id9">
+<h2><span class="section-number">5.3. </span>探索<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>配列の中から目的の値を探す問題を<strong>探索</strong>と呼ぶ。</p>
+<section id="id10">
+<h3><span class="section-number">5.3.1. </span>線形探索<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-120"><span class="xref std std-term">線形探索</span></a>は、先頭から順に 1 つずつ目的の値と比較していく方法である。データが整列していなくても使えるが、最悪の場合（値が末尾にあるか存在しない場合）は <span class="math notranslate nohighlight">\(n\)</span> 回の比較が必要で、計算量は <span class="math notranslate nohighlight">\(O(n)\)</span> である。値が存在し、どの位置にあるかが等確率なら、平均の比較回数は約 <span class="math notranslate nohighlight">\(n/2\)</span> 回であり、これも <span class="math notranslate nohighlight">\(O(n)\)</span> である。Python の <code class="docutils literal notranslate"><span class="pre">list</span></code> に対する <code class="docutils literal notranslate"><span class="pre">in</span></code> 演算子や <code class="docutils literal notranslate"><span class="pre">index()</span></code> メソッドは線形探索である。</p>
+</section>
+<section id="id11">
+<h3><span class="section-number">5.3.2. </span>二分探索<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>データが整列済みなら、より速く探せる。<a class="reference internal" href="glossary.html#term-150"><span class="xref std std-term">二分探索</span></a>は、探す範囲の中央の要素と目的の値を比較し、目的の値が小さければ左半分、大きければ右半分に範囲を絞り込む方法である。辞書を引くとき、真ん中あたりを開いて前か後ろかを判断する作業を繰り返すのと同じである。</p>
+<p>1 回の比較で範囲が半分になるので、<span class="math notranslate nohighlight">\(n\)</span> 個の要素は <span class="math notranslate nohighlight">\(k\)</span> 回の比較で <span class="math notranslate nohighlight">\(n / 2^k\)</span> 個以下に絞られる。範囲が 1 個になるまでの比較回数は <span class="math notranslate nohighlight">\(\log n\)</span> 程度で、最悪の比較回数は <span class="math notranslate nohighlight">\(\lfloor \log n \rfloor + 1\)</span> 回である。したがって計算量は <span class="math notranslate nohighlight">\(O(\log n)\)</span> である。</p>
+<p>線形探索と二分探索の比較回数を数える例を次に示す。</p>
+<div class="literal-block-wrapper docutils container" id="id33">
+<div class="code-block-caption"><span class="caption-text">ch05_search.py</span><a class="headerlink" href="#id33" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;線形探索と二分探索のサンプル。</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">要素数を 10 倍ずつ増やしながら、最悪の場合（探す値が存在しない場合）の</span>
+<span class="linenos"> 4</span><span class="sd">比較回数を数える。線形探索は要素数に比例して増え、二分探索は要素数が</span>
+<span class="linenos"> 5</span><span class="sd">10 倍になっても 3〜4 回しか増えないことを確かめる。後半では標準</span>
+<span class="linenos"> 6</span><span class="sd">ライブラリの bisect を使う。</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="sd">実行方法: python ch05_search.py</span>
+<span class="linenos"> 9</span><span class="sd">関連する章: 第 5 章「アルゴリズムと計算量」</span>
+<span class="linenos">10</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="kn">import</span><span class="w"> </span><span class="nn">bisect</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="k">def</span><span class="w"> </span><span class="nf">linear_search</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="linenos">16</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;先頭から順に調べる。(見つかった添字または -1, 比較回数) を返す。&quot;&quot;&quot;</span>
+<span class="linenos">17</span>    <span class="n">comparisons</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">18</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">):</span>
+<span class="linenos">19</span>        <span class="n">comparisons</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">20</span>        <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
+<span class="linenos">21</span>            <span class="k">return</span> <span class="n">i</span><span class="p">,</span> <span class="n">comparisons</span>
+<span class="linenos">22</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">comparisons</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="k">def</span><span class="w"> </span><span class="nf">binary_search</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="linenos">26</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;整列済みの items を二分探索する。戻り値は linear_search と同じ形。&quot;&quot;&quot;</span>
+<span class="linenos">27</span>    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="linenos">28</span>    <span class="n">comparisons</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">29</span>    <span class="k">while</span> <span class="n">lo</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">:</span>
+<span class="linenos">30</span>        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">lo</span> <span class="o">+</span> <span class="n">hi</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+<span class="linenos">31</span>        <span class="n">comparisons</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># target と items[mid] の大小比較を 1 回と数える</span>
+<span class="linenos">32</span>        <span class="k">if</span> <span class="n">items</span><span class="p">[</span><span class="n">mid</span><span class="p">]</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
+<span class="linenos">33</span>            <span class="k">return</span> <span class="n">mid</span><span class="p">,</span> <span class="n">comparisons</span>
+<span class="linenos">34</span>        <span class="k">if</span> <span class="n">items</span><span class="p">[</span><span class="n">mid</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">target</span><span class="p">:</span>
+<span class="linenos">35</span>            <span class="n">lo</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># 探す範囲を右半分に絞る</span>
+<span class="linenos">36</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos">37</span>            <span class="n">hi</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># 探す範囲を左半分に絞る</span>
+<span class="linenos">38</span>    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">comparisons</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">42</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;比較回数の比較と bisect の使用例を表示する。&quot;&quot;&quot;</span>
+<span class="linenos">43</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;存在しない値を探したときの比較回数&quot;</span><span class="p">)</span>
+<span class="linenos">44</span>    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">,</span> <span class="mi">10_000</span><span class="p">,</span> <span class="mi">100_000</span><span class="p">,</span> <span class="mi">1_000_000</span><span class="p">]:</span>
+<span class="linenos">45</span>        <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># 偶数だけが並ぶ整列済みリスト</span>
+<span class="linenos">46</span>        <span class="n">target</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n</span>  <span class="c1"># 存在しない値（最悪の場合）</span>
+<span class="linenos">47</span>        <span class="n">_</span><span class="p">,</span> <span class="n">lin</span> <span class="o">=</span> <span class="n">linear_search</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="linenos">48</span>        <span class="n">_</span><span class="p">,</span> <span class="n">bin_</span> <span class="o">=</span> <span class="n">binary_search</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="linenos">49</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n = </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">&gt;9,</span><span class="si">}</span><span class="s2">: 線形探索 </span><span class="si">{</span><span class="n">lin</span><span class="si">:</span><span class="s2">&gt;9,</span><span class="si">}</span><span class="s2"> 回, 二分探索 </span><span class="si">{</span><span class="n">bin_</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> 回&quot;</span><span class="p">)</span>
+<span class="linenos">50</span>
+<span class="linenos">51</span>    <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="mi">35</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span> <span class="mi">85</span><span class="p">,</span> <span class="mi">91</span><span class="p">]</span>
+<span class="linenos">52</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;scores:&quot;</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+<span class="linenos">53</span>    <span class="c1"># bisect_left は、値を挿入しても整列が保たれる最も左の位置を返す</span>
+<span class="linenos">54</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;60 以上の最初の位置:&quot;</span><span class="p">,</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_left</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="mi">60</span><span class="p">))</span>
+<span class="linenos">55</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;60 より大きい最初の位置:&quot;</span><span class="p">,</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_right</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="mi">60</span><span class="p">))</span>
+<span class="linenos">56</span>    <span class="n">count</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_right</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span> <span class="o">-</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_left</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<span class="linenos">57</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;50 以上 80 以下の個数:&quot;</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+<span class="linenos">58</span>    <span class="n">bisect</span><span class="o">.</span><span class="n">insort</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="mi">66</span><span class="p">)</span>
+<span class="linenos">59</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;66 を挿入:&quot;</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+<span class="linenos">60</span>
+<span class="linenos">61</span>
+<span class="linenos">62</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">63</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/c5e57baab8bb63a3ecf9f8c2c7a14e8a/ch05_search.py"><code class="xref download docutils literal notranslate"><span class="pre">ch05_search.py</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">binary_search()</span></code> では、探す範囲を添字 <code class="docutils literal notranslate"><span class="pre">lo</span></code> から <code class="docutils literal notranslate"><span class="pre">hi</span></code> まで（両端を含む）とし、範囲が空になる（<code class="docutils literal notranslate"><span class="pre">lo</span> <span class="pre">&gt;</span> <span class="pre">hi</span></code>）まで絞り込みを繰り返す。<code class="docutils literal notranslate"><span class="pre">main()</span></code> の前半では、要素数を 10 倍ずつ増やしながら、存在しない値を探したとき（最悪の場合）の比較回数を表示する。実行結果は次のとおりである。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>存在しない値を探したときの比較回数
+<span class="linenos"> 2</span>n =        10: 線形探索        10 回, 二分探索  4 回
+<span class="linenos"> 3</span>n =       100: 線形探索       100 回, 二分探索  7 回
+<span class="linenos"> 4</span>n =     1,000: 線形探索     1,000 回, 二分探索 10 回
+<span class="linenos"> 5</span>n =    10,000: 線形探索    10,000 回, 二分探索 14 回
+<span class="linenos"> 6</span>n =   100,000: 線形探索   100,000 回, 二分探索 17 回
+<span class="linenos"> 7</span>n = 1,000,000: 線形探索 1,000,000 回, 二分探索 20 回
+<span class="linenos"> 8</span>scores: [35, 48, 60, 60, 72, 85, 91]
+<span class="linenos"> 9</span>60 以上の最初の位置: 2
+<span class="linenos">10</span>60 より大きい最初の位置: 4
+<span class="linenos">11</span>50 以上 80 以下の個数: 3
+<span class="linenos">12</span>66 を挿入: [35, 48, 60, 60, 66, 72, 85, 91]
+</pre></div>
+</div>
+<p>線形探索の比較回数は <span class="math notranslate nohighlight">\(n\)</span> に比例して増えるが、二分探索は <span class="math notranslate nohighlight">\(n\)</span> が 10 倍になっても 3〜4 回しか増えない。二分探索の比較回数は、いずれも <span class="math notranslate nohighlight">\(\lfloor \log n \rfloor + 1\)</span> に一致している。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>二分探索は単純に見えるが、範囲の端を含むか含まないか、ループの終了条件、<code class="docutils literal notranslate"><span class="pre">mid</span></code> の更新を誤りやすい。また、C や Java のように整数の大きさに上限がある言語では、<code class="docutils literal notranslate"><span class="pre">(lo</span> <span class="pre">+</span> <span class="pre">hi)</span> <span class="pre">/</span> <span class="pre">2</span></code> の加算があふれる（オーバーフローする）ことがあり、<code class="docutils literal notranslate"><span class="pre">lo</span> <span class="pre">+</span> <span class="pre">(hi</span> <span class="pre">-</span> <span class="pre">lo)</span> <span class="pre">/</span> <span class="pre">2</span></code> と書くのが安全である。Python の整数には上限が無いので、この問題は起きない。</p>
+</div>
+</section>
+<section id="bisect">
+<h3><span class="section-number">5.3.3. </span>bisect モジュール<a class="headerlink" href="#bisect" title="Link to this heading"></a></h3>
+<p>Python では、整列済みの <code class="docutils literal notranslate"><span class="pre">list</span></code> に対する二分探索に標準ライブラリの <code class="docutils literal notranslate"><span class="pre">bisect</span></code> モジュールを使う。<code class="docutils literal notranslate"><span class="pre">bisect_left(a,</span> <span class="pre">x)</span></code> は「<code class="docutils literal notranslate"><span class="pre">x</span></code> を挿入しても整列が保たれる最も左の位置」、すなわち <code class="docutils literal notranslate"><span class="pre">x</span></code> 以上の最初の要素の位置を返し、<code class="docutils literal notranslate"><span class="pre">bisect_right(a,</span> <span class="pre">x)</span></code> は <code class="docutils literal notranslate"><span class="pre">x</span></code> より大きい最初の要素の位置を返す。サンプルの後半のように、2 つを組み合わせると「ある範囲の値がいくつあるか」を <span class="math notranslate nohighlight">\(O(\log n)\)</span> で求められる。時刻順に並んだログから指定した期間のものを取り出す、点数から評価の段階を決める、といった処理に使える。</p>
+<p><code class="docutils literal notranslate"><span class="pre">insort()</span></code> は整列を保ったまま値を挿入するが、挿入位置を探すのが <span class="math notranslate nohighlight">\(O(\log n)\)</span> でも、<code class="docutils literal notranslate"><span class="pre">list</span></code> の途中への挿入で後ろの要素をずらすため、全体では <span class="math notranslate nohighlight">\(O(n)\)</span> かかる。挿入と検索を大量に繰り返す場合は、平衡木（第 4 章）のようなデータ構造が必要になる。</p>
+<p>また、整列には次節で見るように <span class="math notranslate nohighlight">\(O(n \log n)\)</span> かかる。1 回だけ探すなら、整列してから二分探索するより、線形探索の方が速い。何度も探す場合に、整列の手間を多くの探索で分け合うことで二分探索が有利になる。キーによる検索だけで十分なら、<code class="docutils literal notranslate"><span class="pre">set</span></code> や <code class="docutils literal notranslate"><span class="pre">dict</span></code> で平均 <span class="math notranslate nohighlight">\(O(1)\)</span> の検索をする方が簡単である。</p>
+</section>
+</section>
+<section id="ch05-recursion">
+<span id="id12"></span><h2><span class="section-number">5.4. </span>再帰と分割統治<a class="headerlink" href="#ch05-recursion" title="Link to this heading"></a></h2>
+<section id="id13">
+<h3><span class="section-number">5.4.1. </span>再帰<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>関数が自分自身を呼び出すことを<a class="reference internal" href="glossary.html#term-78"><span class="xref std std-term">再帰</span></a>と呼ぶ。再帰を使うと、「問題を同じ形の小さな問題に分けて解く」手順を素直に書ける。例えば <span class="math notranslate nohighlight">\(n\)</span> の階乗 <span class="math notranslate nohighlight">\(n!\)</span> は、<span class="math notranslate nohighlight">\(0! = 1\)</span> および <span class="math notranslate nohighlight">\(n! = n \times (n-1)!\)</span> と定義でき、そのまま次のように書ける。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">2</span>    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">3</span>        <span class="k">return</span> <span class="mi">1</span>                   <span class="c1"># 基底部: これ以上分けずに答えを返す</span>
+<span class="linenos">4</span>    <span class="k">return</span> <span class="n">n</span> <span class="o">*</span> <span class="n">factorial</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>    <span class="c1"># 再帰部: 小さな問題に帰着する</span>
+</pre></div>
+</div>
+<p>再帰関数には、それ以上自分を呼ばずに答えを返す<strong>基底部</strong>と、より小さな問題について自分を呼ぶ<strong>再帰部</strong>が必要である。再帰部が必ず基底部に近づくように書かないと、呼び出しが無限に続く。</p>
+<p>関数を呼び出すたびに、引数や局所変数を保存する領域（スタックフレーム）がコールスタックに積まれる（「<a class="reference internal" href="ch07_programming_languages.html"><span class="doc">プログラミング言語処理系</span></a>」）。そのため再帰の深さに比例した空間計算量が必要であり、深すぎるとスタックがあふれる。Python は既定で再帰の深さを 1000 程度に制限しており（<code class="docutils literal notranslate"><span class="pre">sys.getrecursionlimit()</span></code> で確認できる）、超えると <code class="docutils literal notranslate"><span class="pre">RecursionError</span></code> になる。深さが <span class="math notranslate nohighlight">\(n\)</span> に比例する再帰は、Python ではループに書き直すのが安全である。</p>
+</section>
+<section id="id14">
+<h3><span class="section-number">5.4.2. </span>分割統治法<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p>問題を同じ形のいくつかの小さな問題に分割し（分割）、それぞれを再帰的に解き（統治）、その結果を組み合わせて元の問題の答えを得る設計手法を<a class="reference internal" href="glossary.html#term-200"><span class="xref std std-term">分割統治法</span></a>と呼ぶ。前節の二分探索は、問題を半分に分けて片方だけを解く、最も簡単な分割統治法である。次節のマージソートとクイックソートも分割統治法である。</p>
+<p>分割統治法の計算量は、大きさ <span class="math notranslate nohighlight">\(n\)</span> の問題にかかる手間 <span class="math notranslate nohighlight">\(T(n)\)</span> を、より小さな問題の手間で表した式（漸化式）で表せる。例えば二分探索は、大きさ <span class="math notranslate nohighlight">\(n/2\)</span> の問題 1 つと、定数の手間の比較からなるので、次の漸化式になる。</p>
+<div class="math notranslate nohighlight">
+\[T(n) = T(n/2) + c\]</div>
+<p>これを繰り返し展開すると <span class="math notranslate nohighlight">\(T(n) = T(n/2^k) + kc\)</span> となり、<span class="math notranslate nohighlight">\(k = \log n\)</span> で <span class="math notranslate nohighlight">\(T(1)\)</span> に達するので <span class="math notranslate nohighlight">\(T(n) = O(\log n)\)</span> である。代表的な漸化式とその解を次の表に示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 25.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>漸化式</p></th>
+<th class="head"><p>解</p></th>
+<th class="head"><p>例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(T(n) = T(n/2) + O(1)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(O(\log n)\)</span></p></td>
+<td><p>二分探索</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(T(n) = 2T(n/2) + O(n)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(O(n \log n)\)</span></p></td>
+<td><p>マージソート</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(T(n) = T(n-1) + O(n)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(O(n^2)\)</span></p></td>
+<td><p>クイックソートの最悪の場合</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(T(n) = 2T(n-1) + O(1)\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(O(2^n)\)</span></p></td>
+<td><p>ハノイの塔</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="id15">
+<h2><span class="section-number">5.5. </span>ソート<a class="headerlink" href="#id15" title="Link to this heading"></a></h2>
+<p>データを決められた順序に並べ替えることを<strong>ソート</strong>（整列）と呼ぶ。ソートは、二分探索の前処理、重複の除去、順位付け、データベースの結合など、多くの処理の基礎となる。ここでは要素同士の比較によって並べ替える 3 つのアルゴリズムを取り上げる。</p>
+<section id="id16">
+<h3><span class="section-number">5.5.1. </span>挿入ソート<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>挿入ソートは、配列の先頭側を「整列済みの部分」とし、その次の要素を整列済みの部分の適切な位置に挿入することを繰り返す方法である。トランプの手札を並べるときの方法に近い。挿入する要素より大きい要素を 1 つずつ右にずらしながら、挿入位置を探す。</p>
+<p>最悪の場合（逆順に並んでいる場合）、<span class="math notranslate nohighlight">\(i\)</span> 番目の要素の挿入に <span class="math notranslate nohighlight">\(i\)</span> 回の比較が必要で、比較の総数は <span class="math notranslate nohighlight">\(1 + 2 + \cdots + (n-1) = n(n-1)/2\)</span> 回、計算量は <span class="math notranslate nohighlight">\(O(n^2)\)</span> である。一方、すでに整列している場合は各要素で 1 回比較するだけで済み、<span class="math notranslate nohighlight">\(O(n)\)</span> で終わる。このため、ほぼ整列済みのデータや要素数の少ないデータに対しては高速であり、後述の Timsort の内部でも使われている。</p>
+</section>
+<section id="ch05-merge-sort">
+<span id="id17"></span><h3><span class="section-number">5.5.2. </span>マージソート<a class="headerlink" href="#ch05-merge-sort" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-214"><span class="xref std std-term">マージソート</span></a>は、配列を半分に分け、それぞれを再帰的にソートし、2 つの整列済みの列を 1 つに併合（マージ）する分割統治法である。2 つの整列済みの列の併合は、それぞれの先頭を比べて小さい方を取り出すことを繰り返せばよく、<span class="math notranslate nohighlight">\(O(n)\)</span> でできる。したがって計算量は次の漸化式で表せる（<span class="math notranslate nohighlight">\(c\)</span> は定数）。</p>
+<div class="math notranslate nohighlight">
+\[T(n) = 2T(n/2) + cn\]</div>
+<p>これを展開すると次のようになる。</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}T(n) &amp;= 2T(n/2) + cn \\
+     &amp;= 4T(n/4) + 2cn \\
+     &amp;= 2^k T(n/2^k) + kcn\end{split}\]</div>
+<p><span class="math notranslate nohighlight">\(k = \log n\)</span> のとき <span class="math notranslate nohighlight">\(n/2^k = 1\)</span> となるので、<span class="math notranslate nohighlight">\(T(n) = nT(1) + cn \log n = O(n \log n)\)</span> である。分割を繰り返すと <span class="math notranslate nohighlight">\(\log n\)</span> 段になり、各段の併合の手間の合計が <span class="math notranslate nohighlight">\(cn\)</span> であると考えてもよい。マージソートは入力の並びによらず常に <span class="math notranslate nohighlight">\(O(n \log n)\)</span> であるが、併合のために <span class="math notranslate nohighlight">\(O(n)\)</span> の作業領域が必要である。</p>
+</section>
+<section id="ch05-quick-sort">
+<span id="id18"></span><h3><span class="section-number">5.5.3. </span>クイックソート<a class="headerlink" href="#ch05-quick-sort" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-50"><span class="xref std std-term">クイックソート</span></a>は、配列から 1 つの要素（ピボット）を選び、ピボット以下の要素を左に、大きい要素を右に集める分割を行い、左右をそれぞれ再帰的にソートする方法である。分割が終わった時点でピボットは最終的な位置に確定するので、併合の手間は要らない。</p>
+<p>ピボットによって配列がほぼ半分に分かれれば、マージソートと同じく <span class="math notranslate nohighlight">\(O(n \log n)\)</span> になる。しかし、ピボットが常に最小値や最大値になると、分割のたびに要素が 1 つ減るだけになり、漸化式 <span class="math notranslate nohighlight">\(T(n) = T(n-1) + cn\)</span> から <span class="math notranslate nohighlight">\(O(n^2)\)</span> になる。例えば末尾の要素を常にピボットに選ぶ実装に整列済みの配列を与えると、この最悪の場合になる。ピボットをランダムに選べば、どのような入力に対しても平均 <span class="math notranslate nohighlight">\(O(n \log n)\)</span> になる。クイックソートは作業領域が少なく、内側のループが単純でキャッシュの効果も得やすいため、実用上は高速なことが多い。C++ の <code class="docutils literal notranslate"><span class="pre">std::sort()</span></code> の多くの実装は、クイックソートを基に、再帰が深くなりすぎたらヒープソートに切り替えるなどして最悪の場合を避ける工夫（イントロソート）を加えたものである。</p>
+</section>
+<section id="id19">
+<h3><span class="section-number">5.5.4. </span>比較回数の実験<a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<p>3 つのソートの比較回数を数える例を次に示す。実行時間は CPU や Python の版、他に動いているプロセスなどによって変わり、実行するたびにも揺らぐため、ここでは環境に依存しない要素同士の比較回数を数える。</p>
+<div class="literal-block-wrapper docutils container" id="id34">
+<div class="code-block-caption"><span class="caption-text">ch05_sort.py</span><a class="headerlink" href="#id34" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="sd">&quot;&quot;&quot;挿入ソート・マージソート・クイックソートの比較回数を数えるサンプル。</span>
+<span class="linenos">  2</span>
+<span class="linenos">  3</span><span class="sd">実行時間は環境によって変わるため、ここでは要素同士の比較回数を数えて</span>
+<span class="linenos">  4</span><span class="sd">アルゴリズムの効率を比べる。最後に sorted() が安定なソートであることを</span>
+<span class="linenos">  5</span><span class="sd">確かめる。</span>
+<span class="linenos">  6</span>
+<span class="linenos">  7</span><span class="sd">実行方法: python ch05_sort.py</span>
+<span class="linenos">  8</span><span class="sd">関連する章: 第 5 章「アルゴリズムと計算量」</span>
+<span class="linenos">  9</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 10</span>
+<span class="linenos"> 11</span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="linenos"> 12</span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="linenos"> 13</span>
+<span class="linenos"> 14</span>
+<span class="linenos"> 15</span><span class="k">class</span><span class="w"> </span><span class="nc">Counter</span><span class="p">:</span>
+<span class="linenos"> 16</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;比較回数を数えるためのカウンタ。&quot;&quot;&quot;</span>
+<span class="linenos"> 17</span>
+<span class="linenos"> 18</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 19</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;回数を 0 で初期化する。&quot;&quot;&quot;</span>
+<span class="linenos"> 20</span>        <span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos"> 21</span>
+<span class="linenos"> 22</span>    <span class="k">def</span><span class="w"> </span><span class="nf">less_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos"> 23</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;a &lt;= b を判定し、比較回数を 1 増やす。&quot;&quot;&quot;</span>
+<span class="linenos"> 24</span>        <span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 25</span>        <span class="k">return</span> <span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span>
+<span class="linenos"> 26</span>
+<span class="linenos"> 27</span>
+<span class="linenos"> 28</span><span class="k">def</span><span class="w"> </span><span class="nf">insertion_sort</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">c</span><span class="p">:</span> <span class="n">Counter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 29</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;a をその場で昇順に並べ替える。&quot;&quot;&quot;</span>
+<span class="linenos"> 30</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)):</span>
+<span class="linenos"> 31</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+<span class="linenos"> 32</span>        <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="linenos"> 33</span>        <span class="c1"># x より大きい要素を 1 つずつ右へずらす</span>
+<span class="linenos"> 34</span>        <span class="k">while</span> <span class="n">j</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">less_equal</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
+<span class="linenos"> 35</span>            <span class="n">a</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+<span class="linenos"> 36</span>            <span class="n">j</span> <span class="o">-=</span> <span class="mi">1</span>
+<span class="linenos"> 37</span>        <span class="n">a</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+<span class="linenos"> 38</span>
+<span class="linenos"> 39</span>
+<span class="linenos"> 40</span><span class="k">def</span><span class="w"> </span><span class="nf">merge_sort</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">c</span><span class="p">:</span> <span class="n">Counter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="linenos"> 41</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;a を昇順に並べた新しいリストを返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 42</span>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+<span class="linenos"> 43</span>        <span class="k">return</span> <span class="n">a</span><span class="p">[:]</span>
+<span class="linenos"> 44</span>    <span class="n">mid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+<span class="linenos"> 45</span>    <span class="n">left</span> <span class="o">=</span> <span class="n">merge_sort</span><span class="p">(</span><span class="n">a</span><span class="p">[:</span><span class="n">mid</span><span class="p">],</span> <span class="n">c</span><span class="p">)</span>  <span class="c1"># 分割して再帰的に整列する</span>
+<span class="linenos"> 46</span>    <span class="n">right</span> <span class="o">=</span> <span class="n">merge_sort</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">mid</span><span class="p">:],</span> <span class="n">c</span><span class="p">)</span>
+<span class="linenos"> 47</span>    <span class="n">merged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 48</span>    <span class="n">i</span> <span class="o">=</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos"> 49</span>    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="ow">and</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">right</span><span class="p">):</span>
+<span class="linenos"> 50</span>        <span class="c1"># 等しいときは左を先に出すことで安定性を保つ</span>
+<span class="linenos"> 51</span>        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">less_equal</span><span class="p">(</span><span class="n">left</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">right</span><span class="p">[</span><span class="n">j</span><span class="p">]):</span>
+<span class="linenos"> 52</span>            <span class="n">merged</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">left</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<span class="linenos"> 53</span>            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 54</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos"> 55</span>            <span class="n">merged</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">right</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+<span class="linenos"> 56</span>            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 57</span>    <span class="n">merged</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">left</span><span class="p">[</span><span class="n">i</span><span class="p">:])</span>
+<span class="linenos"> 58</span>    <span class="n">merged</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">right</span><span class="p">[</span><span class="n">j</span><span class="p">:])</span>
+<span class="linenos"> 59</span>    <span class="k">return</span> <span class="n">merged</span>
+<span class="linenos"> 60</span>
+<span class="linenos"> 61</span>
+<span class="linenos"> 62</span><span class="k">def</span><span class="w"> </span><span class="nf">quick_sort</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">lo</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">Counter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 63</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;a[lo..hi] をその場で並べ替える。末尾の要素をピボットに使う。&quot;&quot;&quot;</span>
+<span class="linenos"> 64</span>    <span class="k">if</span> <span class="n">lo</span> <span class="o">&gt;=</span> <span class="n">hi</span><span class="p">:</span>
+<span class="linenos"> 65</span>        <span class="k">return</span>
+<span class="linenos"> 66</span>    <span class="n">pivot</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">hi</span><span class="p">]</span>
+<span class="linenos"> 67</span>    <span class="n">i</span> <span class="o">=</span> <span class="n">lo</span>
+<span class="linenos"> 68</span>    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">):</span>
+<span class="linenos"> 69</span>        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">less_equal</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">pivot</span><span class="p">):</span>
+<span class="linenos"> 70</span>            <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+<span class="linenos"> 71</span>            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 72</span>    <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">hi</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">hi</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># ピボットを確定した位置に置く</span>
+<span class="linenos"> 73</span>    <span class="n">quick_sort</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+<span class="linenos"> 74</span>    <span class="n">quick_sort</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+<span class="linenos"> 75</span>
+<span class="linenos"> 76</span>
+<span class="linenos"> 77</span><span class="k">def</span><span class="w"> </span><span class="nf">count_all</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="linenos"> 78</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;3 つのソートの比較回数を返す。結果が正しいことも確かめる。&quot;&quot;&quot;</span>
+<span class="linenos"> 79</span>    <span class="n">counts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 80</span>    <span class="n">c</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+<span class="linenos"> 81</span>    <span class="n">a</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:]</span>
+<span class="linenos"> 82</span>    <span class="n">insertion_sort</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+<span class="linenos"> 83</span>    <span class="k">assert</span> <span class="n">a</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="linenos"> 84</span>    <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
+<span class="linenos"> 85</span>    <span class="n">c</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+<span class="linenos"> 86</span>    <span class="k">assert</span> <span class="n">merge_sort</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="linenos"> 87</span>    <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
+<span class="linenos"> 88</span>    <span class="n">c</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+<span class="linenos"> 89</span>    <span class="n">a</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:]</span>
+<span class="linenos"> 90</span>    <span class="n">quick_sort</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+<span class="linenos"> 91</span>    <span class="k">assert</span> <span class="n">a</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="linenos"> 92</span>    <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
+<span class="linenos"> 93</span>    <span class="k">return</span> <span class="n">counts</span>
+<span class="linenos"> 94</span>
+<span class="linenos"> 95</span>
+<span class="linenos"> 96</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 97</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;入力の種類ごとに比較回数を表示し、安定性を確かめる。&quot;&quot;&quot;</span>
+<span class="linenos"> 98</span>    <span class="n">n</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="linenos"> 99</span>    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">100</span>    <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ランダム&quot;</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">n</span><span class="p">),</span>
+<span class="linenos">101</span>              <span class="s2">&quot;整列済み&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)),</span>
+<span class="linenos">102</span>              <span class="s2">&quot;逆順&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))}</span>
+<span class="linenos">103</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n = </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">, n log2 n = </span><span class="si">{</span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">, &quot;</span>
+<span class="linenos">104</span>          <span class="sa">f</span><span class="s2">&quot;下限 log2(n!) = </span><span class="si">{</span><span class="n">math</span><span class="o">.</span><span class="n">lgamma</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">105</span>    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">inputs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="linenos">106</span>        <span class="n">ins</span><span class="p">,</span> <span class="n">mer</span><span class="p">,</span> <span class="n">qui</span> <span class="o">=</span> <span class="n">count_all</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="linenos">107</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: 挿入 </span><span class="si">{</span><span class="n">ins</span><span class="si">:</span><span class="s2">&gt;7,</span><span class="si">}</span><span class="s2">, マージ </span><span class="si">{</span><span class="n">mer</span><span class="si">:</span><span class="s2">&gt;5,</span><span class="si">}</span><span class="s2">, クイック </span><span class="si">{</span><span class="n">qui</span><span class="si">:</span><span class="s2">&gt;7,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">108</span>
+<span class="linenos">109</span>    <span class="c1"># 安定なソート: 点数が同じ人は元の並び（受付順）が保たれる</span>
+<span class="linenos">110</span>    <span class="n">entries</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;佐藤&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;鈴木&quot;</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;高橋&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;田中&quot;</span><span class="p">,</span> <span class="mi">90</span><span class="p">)]</span>
+<span class="linenos">111</span>    <span class="nb">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="linenos">112</span>
+<span class="linenos">113</span>
+<span class="linenos">114</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">115</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/9fef91abc940f0b59f7641e0f166ddf1/ch05_sort.py"><code class="xref download docutils literal notranslate"><span class="pre">ch05_sort.py</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">Counter.less_equal()</span></code> は比較のたびに回数を数える。<code class="docutils literal notranslate"><span class="pre">quick_sort()</span></code> は末尾の要素をピボットに使う。<code class="docutils literal notranslate"><span class="pre">main()</span></code> は 500 個の要素について、ランダムな並び（乱数のシードを固定）、整列済み、逆順の 3 種類の入力で比較回数を表示する。実行結果は次のとおりである。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>n = 500, n log2 n = 4483, 下限 log2(n!) = 3767
+<span class="linenos">2</span>ランダム: 挿入  65,082, マージ 3,837, クイック   5,079
+<span class="linenos">3</span>整列済み: 挿入     499, マージ 2,216, クイック 124,750
+<span class="linenos">4</span>逆順: 挿入 124,750, マージ 2,272, クイック 124,750
+<span class="linenos">5</span>[(&#39;鈴木&#39;, 90), (&#39;田中&#39;, 90), (&#39;佐藤&#39;, 80), (&#39;高橋&#39;, 80)]
+</pre></div>
+</div>
+<p>挿入ソートは、ランダムな入力では <span class="math notranslate nohighlight">\(n^2/4 = 62{,}500\)</span> に近い 65,082 回、逆順では <span class="math notranslate nohighlight">\(n(n-1)/2 = 124{,}750\)</span> 回の比較をしており、整列済みの入力では <span class="math notranslate nohighlight">\(n - 1 = 499\)</span> 回で済んでいる。マージソートはどの入力でも <span class="math notranslate nohighlight">\(n \log n\)</span> 以下に収まっている。クイックソートはランダムな入力ではマージソートに近い回数であるが、整列済みと逆順の入力ではピボットが常に端の値になり、挿入ソートの最悪の場合と同じ 124,750 回に悪化している。</p>
+</section>
+<section id="id20">
+<h3><span class="section-number">5.5.5. </span>比較ソートの下限<a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<p>要素同士の比較だけを使うソートは、どれほど工夫しても最悪の場合に <span class="math notranslate nohighlight">\(\Omega(n \log n)\)</span> 回の比較が必要であることが知られている。<span class="math notranslate nohighlight">\(n\)</span> 個の異なる要素の並び方は <span class="math notranslate nohighlight">\(n!\)</span> 通りあり、ソートはこのうちどれが入力されたかを比較の結果だけから見分けなければならない。1 回の比較の結果は「以下」か「より大きい」の 2 通りなので、<span class="math notranslate nohighlight">\(k\)</span> 回の比較で見分けられるのは高々 <span class="math notranslate nohighlight">\(2^k\)</span> 通りである。したがって <span class="math notranslate nohighlight">\(2^k \ge n!\)</span>、すなわち次が必要である。</p>
+<div class="math notranslate nohighlight">
+\[k \ge \log (n!)\]</div>
+<p><span class="math notranslate nohighlight">\(n!\)</span> には <span class="math notranslate nohighlight">\(n/2\)</span> 以上の数が <span class="math notranslate nohighlight">\(n/2\)</span> 個以上含まれるので <span class="math notranslate nohighlight">\(n! \ge (n/2)^{n/2}\)</span> であり、<span class="math notranslate nohighlight">\(\log (n!) \ge (n/2) \log (n/2) = \Omega(n \log n)\)</span> となる。実行結果の 1 行目の「下限」はこの <span class="math notranslate nohighlight">\(\log (n!)\)</span> の値であり、マージソートの 3,837 回はこの下限に近い。マージソートは比較ソートとして漸近的に最適である。</p>
+<p>なお、この下限は比較だけを使う場合のものである。値が小さな範囲の整数であることが分かっていれば、値ごとの個数を数える計数ソートや、桁ごとに分類する基数ソートによって <span class="math notranslate nohighlight">\(O(n)\)</span> でソートできる場合がある。</p>
+</section>
+<section id="python-sorted">
+<h3><span class="section-number">5.5.6. </span>安定性と Python の sorted<a class="headerlink" href="#python-sorted" title="Link to this heading"></a></h3>
+<p>ソートの前後で、等しいキーを持つ要素の相対的な順序が保たれるソートを<a class="reference internal" href="glossary.html#term-10"><span class="xref std std-term">安定ソート</span></a>と呼ぶ。例えば、受付順に並んだ応募者を点数でソートしたとき、同じ点数の人が受付順のまま並ぶのが安定ソートである。安定ソートを使えば、「部署順、同じ部署なら入社順」のような複数のキーによる並べ替えを、優先度の低いキーから順にソートを重ねることで実現できる。挿入ソートとマージソート（併合で等しいときに左を先に出す場合）は安定であり、クイックソートは一般に安定ではない。</p>
+<p>Python の <code class="docutils literal notranslate"><span class="pre">sorted()</span></code> と <code class="docutils literal notranslate"><span class="pre">list.sort()</span></code> は Timsort と呼ばれるアルゴリズムを使っている。Timsort はマージソートと挿入ソートを組み合わせたもので、入力の中にすでに整列している区間（ラン）を見つけて活用する。最悪の場合も <span class="math notranslate nohighlight">\(O(n \log n)\)</span> であり、整列済みやほぼ整列済みのデータでは <span class="math notranslate nohighlight">\(O(n)\)</span> に近い手間で終わる。また、安定ソートであることが保証されている <a class="reference internal" href="references.html#pythondocs" id="id21"><span>[PythonDocs]</span></a>。実行結果の最後の行では、点数の高い順に並べたとき、同じ 90 点の「鈴木」と「田中」、同じ 80 点の「佐藤」と「高橋」が元の順序を保っている。<code class="docutils literal notranslate"><span class="pre">reverse=True</span></code> を指定しても安定性は保たれる。</p>
+<p>実務では、ソートアルゴリズムを自作する必要はほとんどなく、<code class="docutils literal notranslate"><span class="pre">sorted()</span></code> に <code class="docutils literal notranslate"><span class="pre">key</span></code> 引数を渡して使えばよい。自作のソートより速く、安定性も保証されている。</p>
+</section>
+</section>
+<section id="id22">
+<h2><span class="section-number">5.6. </span>動的計画法<a class="headerlink" href="#id22" title="Link to this heading"></a></h2>
+<p>問題を小さな部分問題に分けて解く点は分割統治法と同じであるが、部分問題が互いに重なり合い、同じ部分問題が何度も現れる場合には、別の工夫が有効である。部分問題の答えを表に記録しておき、同じ部分問題が現れたら記録を再利用する設計手法を<a class="reference internal" href="glossary.html#term-141"><span class="xref std std-term">動的計画法</span></a>（DP: Dynamic Programming）と呼ぶ。動的計画法が使えるのは、元の問題の最適解が部分問題の最適解から組み立てられる（最適部分構造を持つ）場合である。</p>
+<section id="id23">
+<h3><span class="section-number">5.6.1. </span>フィボナッチ数とメモ化<a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
+<p>フィボナッチ数は次の漸化式で定義される。</p>
+<div class="math notranslate nohighlight">
+\[F(0) = 0, \quad F(1) = 1, \quad F(n) = F(n-1) + F(n-2) \quad (n \ge 2)\]</div>
+<p>これを定義どおりに再帰で書くと、<span class="math notranslate nohighlight">\(F(n-1)\)</span> の計算の中でも <span class="math notranslate nohighlight">\(F(n-2)\)</span> が計算されるため、同じ値が何度も計算される。関数の呼び出し回数は <span class="math notranslate nohighlight">\(F(n)\)</span> 自体と同じく指数関数的に増え、計算量は <span class="math notranslate nohighlight">\(O(\phi^n)\)</span>（<span class="math notranslate nohighlight">\(\phi = (1 + \sqrt{5})/2 \approx 1.618\)</span> は黄金比）になる。</p>
+<p>一度計算した結果を記録しておき、同じ引数で呼ばれたら記録を返す方法を<a class="reference internal" href="glossary.html#term-223"><span class="xref std std-term">メモ化</span></a>と呼ぶ。メモ化すると、<span class="math notranslate nohighlight">\(F(0)\)</span> から <span class="math notranslate nohighlight">\(F(n)\)</span> までをそれぞれ 1 回だけ計算するので、計算量は <span class="math notranslate nohighlight">\(O(n)\)</span> になる。Python では <code class="docutils literal notranslate"><span class="pre">functools.cache</span></code> デコレータを付けるだけでメモ化できる。</p>
+<p><a class="reference download internal" download="" href="_downloads/26e12a881feb23ebcffd9cc4513cc6ee/ch05_dp.py"><code class="xref download docutils literal notranslate"><span class="pre">ch05_dp.py</span></code></a></p>
+<div class="literal-block-wrapper docutils container" id="id35">
+<div class="code-block-caption"><span class="caption-text">ch05_dp.py（フィボナッチ数）</span><a class="headerlink" href="#id35" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">15</span><span class="n">calls</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># 素朴な再帰での呼び出し回数</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="k">def</span><span class="w"> </span><span class="nf">fib_naive</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">19</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;定義どおりに再帰で計算する。同じ引数で何度も呼ばれる。&quot;&quot;&quot;</span>
+<span class="linenos">20</span>    <span class="k">global</span> <span class="n">calls</span>
+<span class="linenos">21</span>    <span class="n">calls</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">22</span>    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+<span class="linenos">23</span>        <span class="k">return</span> <span class="n">n</span>
+<span class="linenos">24</span>    <span class="k">return</span> <span class="n">fib_naive</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib_naive</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="nd">@cache</span>
+<span class="linenos">28</span><span class="k">def</span><span class="w"> </span><span class="nf">fib_memo</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">29</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;一度計算した結果を覚えておく（メモ化）再帰。&quot;&quot;&quot;</span>
+<span class="linenos">30</span>    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+<span class="linenos">31</span>        <span class="k">return</span> <span class="n">n</span>
+<span class="linenos">32</span>    <span class="k">return</span> <span class="n">fib_memo</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib_memo</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">fib_naive()</span></code> は呼び出し回数を大域変数 <code class="docutils literal notranslate"><span class="pre">calls</span></code> に数える。<code class="docutils literal notranslate"><span class="pre">fib_memo()</span></code> は <code class="docutils literal notranslate"><span class="pre">&#64;cache</span></code> を付けた以外は同じ定義である。フィボナッチ数の部分の実行結果は次のとおりである（実行結果全体は後の貪欲法の節に示す）。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>fib(10) = 55: 素朴な再帰 177 回, メモ化 11 回の計算
+<span class="linenos">2</span>fib(20) = 6765: 素朴な再帰 21,891 回, メモ化 21 回の計算
+<span class="linenos">3</span>fib(30) = 832040: 素朴な再帰 2,692,537 回, メモ化 31 回の計算
+</pre></div>
+</div>
+<p>素朴な再帰の呼び出し回数は <span class="math notranslate nohighlight">\(2F(n+1) - 1\)</span> 回になり、<span class="math notranslate nohighlight">\(n\)</span> が 10 増えるごとに約 120 倍になっている。メモ化した場合は、実際に計算した回数（記録に無かった回数）が <span class="math notranslate nohighlight">\(n + 1\)</span> 回で済んでいる。</p>
+<p>メモ化は「上から」再帰で解く方法であるが、<span class="math notranslate nohighlight">\(F(0)\)</span>、<span class="math notranslate nohighlight">\(F(1)\)</span>、<span class="math notranslate nohighlight">\(F(2)\)</span>、… と「下から」順にループで表を埋めてもよい。こちらは再帰の深さの制限を受けず、直前の 2 つの値だけを覚えておけば空間計算量も <span class="math notranslate nohighlight">\(O(1)\)</span> にできる。</p>
+</section>
+<section id="ch05-lcs">
+<span id="id24"></span><h3><span class="section-number">5.6.2. </span>最長共通部分列<a class="headerlink" href="#ch05-lcs" title="Link to this heading"></a></h3>
+<p>動的計画法の典型的な例として、2 つの文字列の<strong>最長共通部分列</strong>（LCS: Longest Common Subsequence）を求める問題を取り上げる。部分列とは、文字列からいくつかの文字を取り除いて（順序は変えずに）得られる列である。例えば <code class="docutils literal notranslate"><span class="pre">ACA</span></code> は <code class="docutils literal notranslate"><span class="pre">AGCAT</span></code> の部分列であり、<code class="docutils literal notranslate"><span class="pre">GACTA</span></code> の部分列でもあるので、両者の共通部分列である。2 つのファイルの差分を表示する <code class="docutils literal notranslate"><span class="pre">diff</span></code> コマンドや Git の差分表示も、この問題と密接に関係する問題を解いている。</p>
+<p>文字列 <span class="math notranslate nohighlight">\(a\)</span> の先頭 <span class="math notranslate nohighlight">\(i\)</span> 文字と、文字列 <span class="math notranslate nohighlight">\(b\)</span> の先頭 <span class="math notranslate nohighlight">\(j\)</span> 文字の LCS の長さを <span class="math notranslate nohighlight">\(L(i, j)\)</span> とする。<span class="math notranslate nohighlight">\(a\)</span> の <span class="math notranslate nohighlight">\(i\)</span> 文字目を <span class="math notranslate nohighlight">\(a_i\)</span> と書くと、<span class="math notranslate nohighlight">\(L(i, j)\)</span> は次の漸化式で求まる。</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}L(i, j) =
+\begin{cases}
+0 &amp; (i = 0 \lor j = 0) \\
+L(i-1, j-1) + 1 &amp; (a_i = b_j) \\
+\max(L(i-1, j), L(i, j-1)) &amp; (a_i \ne b_j)
+\end{cases}\end{split}\]</div>
+<p>末尾の文字が等しければ、その文字を LCS に含めて残りの LCS に 1 を足せばよい。等しくなければ、どちらか一方の末尾の文字を捨てた 2 つの部分問題のうち、長い方が答えになる。<span class="math notranslate nohighlight">\(L(i, j)\)</span> を <span class="math notranslate nohighlight">\(i\)</span> と <span class="math notranslate nohighlight">\(j\)</span> の小さい順に表に埋めていけば、各要素は定数の手間で求まり、計算量は文字列の長さを <span class="math notranslate nohighlight">\(m\)</span>、<span class="math notranslate nohighlight">\(n\)</span> として <span class="math notranslate nohighlight">\(O(mn)\)</span> である。すべての部分列を列挙する方法では <span class="math notranslate nohighlight">\(O(2^m)\)</span> 個の部分列を調べることになるので、大きな改善である。</p>
+<div class="literal-block-wrapper docutils container" id="id36">
+<div class="code-block-caption"><span class="caption-text">ch05_dp.py（最長共通部分列）</span><a class="headerlink" href="#id36" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">35</span><span class="k">def</span><span class="w"> </span><span class="nf">lcs</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">36</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;文字列 a と b の最長共通部分列の 1 つを返す。&quot;&quot;&quot;</span>
+<span class="linenos">37</span>    <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="linenos">38</span>    <span class="c1"># t[i][j] は a[:i] と b[:j] の LCS の長さ</span>
+<span class="linenos">39</span>    <span class="n">t</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+<span class="linenos">40</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">41</span>        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">42</span>            <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+<span class="linenos">43</span>                <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="linenos">44</span>            <span class="k">else</span><span class="p">:</span>
+<span class="linenos">45</span>                <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+<span class="linenos">46</span>    <span class="c1"># 表を右下から逆にたどって部分列を復元する</span>
+<span class="linenos">47</span>    <span class="n">chars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">48</span>    <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span>
+<span class="linenos">49</span>    <span class="k">while</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">j</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">50</span>        <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">b</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+<span class="linenos">51</span>            <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+<span class="linenos">52</span>            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="linenos">53</span>        <span class="k">elif</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+<span class="linenos">54</span>            <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
+<span class="linenos">55</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos">56</span>            <span class="n">j</span> <span class="o">-=</span> <span class="mi">1</span>
+<span class="linenos">57</span>    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">chars</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<p>39〜45 行目で表 <code class="docutils literal notranslate"><span class="pre">t</span></code> を埋め、47〜57 行目で表を右下から逆にたどって、実際の共通部分列を 1 つ復元している。<code class="docutils literal notranslate"><span class="pre">AGCAT</span></code> と <code class="docutils literal notranslate"><span class="pre">GACTA</span></code> に対する結果は <code class="docutils literal notranslate"><span class="pre">ACA</span></code> であり、長さ 3 の共通部分列である（LCS は 1 つとは限らず、例えば <code class="docutils literal notranslate"><span class="pre">GCA</span></code> も長さ 3 の共通部分列である）。</p>
+</section>
+</section>
+<section id="id25">
+<h2><span class="section-number">5.7. </span>貪欲法<a class="headerlink" href="#id25" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="glossary.html#term-147"><span class="xref std std-term">貪欲法</span></a>は、各段階でその時点で最も良く見える選択を行い、後から選び直さない設計手法である。手順が単純で高速なことが多いが、常に最適解が得られるとは限らない。貪欲法で最適解が得られるかどうかは、問題ごとに証明が必要である。</p>
+<p>例として、指定した金額をできるだけ少ない枚数の硬貨で支払う問題を考える。貪欲法では「支払える範囲で額の最も大きい硬貨を使う」ことを繰り返す。日本の硬貨（1、5、10、50、100、500 円）では、この方法で常に最小枚数になる。しかし、硬貨の種類が 1、3、4 円の場合に 6 円を支払うと、貪欲法は 4 + 1 + 1 の 3 枚を選ぶが、最適解は 3 + 3 の 2 枚である。最初に 4 円を選んだ時点で、最適解への道が閉ざされている。</p>
+<p>この問題は、金額 <span class="math notranslate nohighlight">\(x\)</span> を支払う最小枚数を <span class="math notranslate nohighlight">\(B(x)\)</span> とすると、硬貨の額面の集合を <span class="math notranslate nohighlight">\(C\)</span> として次の漸化式で表せるので、動的計画法で確実に解ける。</p>
+<div class="math notranslate nohighlight">
+\[B(0) = 0, \quad B(x) = \min_{c \in C,\ c \le x} \bigl( B(x - c) + 1 \bigr)\]</div>
+<div class="literal-block-wrapper docutils container" id="id37">
+<div class="code-block-caption"><span class="caption-text">ch05_dp.py（硬貨の問題と main）</span><a class="headerlink" href="#id37" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 60</span><span class="k">def</span><span class="w"> </span><span class="nf">coins_greedy</span><span class="p">(</span><span class="n">coins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">amount</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="linenos"> 61</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;額の大きい硬貨から使えるだけ使う（貪欲法）。&quot;&quot;&quot;</span>
+<span class="linenos"> 62</span>    <span class="n">result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 63</span>    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">coins</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="linenos"> 64</span>        <span class="k">while</span> <span class="n">amount</span> <span class="o">&gt;=</span> <span class="n">c</span><span class="p">:</span>
+<span class="linenos"> 65</span>            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+<span class="linenos"> 66</span>            <span class="n">amount</span> <span class="o">-=</span> <span class="n">c</span>
+<span class="linenos"> 67</span>    <span class="k">return</span> <span class="n">result</span>
+<span class="linenos"> 68</span>
+<span class="linenos"> 69</span>
+<span class="linenos"> 70</span><span class="k">def</span><span class="w"> </span><span class="nf">coins_dp</span><span class="p">(</span><span class="n">coins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">amount</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="linenos"> 71</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;金額 0 から amount までの最小枚数を順に求める（動的計画法）。&quot;&quot;&quot;</span>
+<span class="linenos"> 72</span>    <span class="n">inf</span> <span class="o">=</span> <span class="n">amount</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="linenos"> 73</span>    <span class="n">best</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">inf</span><span class="p">]</span> <span class="o">*</span> <span class="n">amount</span>  <span class="c1"># best[x] は金額 x の最小枚数</span>
+<span class="linenos"> 74</span>    <span class="n">last</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">amount</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># 金額 x の最適解で最後に使った硬貨</span>
+<span class="linenos"> 75</span>    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">amount</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos"> 76</span>        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">coins</span><span class="p">:</span>
+<span class="linenos"> 77</span>            <span class="k">if</span> <span class="n">c</span> <span class="o">&lt;=</span> <span class="n">x</span> <span class="ow">and</span> <span class="n">best</span><span class="p">[</span><span class="n">x</span> <span class="o">-</span> <span class="n">c</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="n">best</span><span class="p">[</span><span class="n">x</span><span class="p">]:</span>
+<span class="linenos"> 78</span>                <span class="n">best</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">best</span><span class="p">[</span><span class="n">x</span> <span class="o">-</span> <span class="n">c</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="linenos"> 79</span>                <span class="n">last</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+<span class="linenos"> 80</span>    <span class="n">result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 81</span>    <span class="k">while</span> <span class="n">amount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos"> 82</span>        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last</span><span class="p">[</span><span class="n">amount</span><span class="p">])</span>
+<span class="linenos"> 83</span>        <span class="n">amount</span> <span class="o">-=</span> <span class="n">last</span><span class="p">[</span><span class="n">amount</span><span class="p">]</span>
+<span class="linenos"> 84</span>    <span class="k">return</span> <span class="n">result</span>
+<span class="linenos"> 85</span>
+<span class="linenos"> 86</span>
+<span class="linenos"> 87</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 88</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;3 つの例の結果を表示する。&quot;&quot;&quot;</span>
+<span class="linenos"> 89</span>    <span class="k">global</span> <span class="n">calls</span>
+<span class="linenos"> 90</span>    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">]:</span>
+<span class="linenos"> 91</span>        <span class="n">calls</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos"> 92</span>        <span class="n">value</span> <span class="o">=</span> <span class="n">fib_naive</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="linenos"> 93</span>        <span class="n">fib_memo</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
+<span class="linenos"> 94</span>        <span class="k">assert</span> <span class="n">fib_memo</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">value</span>
+<span class="linenos"> 95</span>        <span class="n">memo_calls</span> <span class="o">=</span> <span class="n">fib_memo</span><span class="o">.</span><span class="n">cache_info</span><span class="p">()</span><span class="o">.</span><span class="n">misses</span>
+<span class="linenos"> 96</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fib(</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">) = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">: 素朴な再帰 </span><span class="si">{</span><span class="n">calls</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> 回, &quot;</span>
+<span class="linenos"> 97</span>              <span class="sa">f</span><span class="s2">&quot;メモ化 </span><span class="si">{</span><span class="n">memo_calls</span><span class="si">}</span><span class="s2"> 回の計算&quot;</span><span class="p">)</span>
+<span class="linenos"> 98</span>
+<span class="linenos"> 99</span>    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="s2">&quot;AGCAT&quot;</span><span class="p">,</span> <span class="s2">&quot;GACTA&quot;</span>
+<span class="linenos">100</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LCS(</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">) = </span><span class="si">{</span><span class="n">lcs</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">101</span>
+<span class="linenos">102</span>    <span class="k">for</span> <span class="n">coins</span> <span class="ow">in</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">500</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]]:</span>
+<span class="linenos">103</span>        <span class="n">amount</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="linenos">104</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;硬貨 </span><span class="si">{</span><span class="n">coins</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">amount</span><span class="si">}</span><span class="s2"> 円: 貪欲法 &quot;</span>
+<span class="linenos">105</span>              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">coins_greedy</span><span class="p">(</span><span class="n">coins</span><span class="p">,</span><span class="w"> </span><span class="n">amount</span><span class="p">)</span><span class="si">}</span><span class="s2">, &quot;</span>
+<span class="linenos">106</span>              <span class="sa">f</span><span class="s2">&quot;動的計画法 </span><span class="si">{</span><span class="n">coins_dp</span><span class="p">(</span><span class="n">coins</span><span class="p">,</span><span class="w"> </span><span class="n">amount</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">107</span>
+<span class="linenos">108</span>
+<span class="linenos">109</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">110</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">coins_greedy()</span></code> が貪欲法、<code class="docutils literal notranslate"><span class="pre">coins_dp()</span></code> が動的計画法である。<code class="docutils literal notranslate"><span class="pre">coins_dp()</span></code> は金額 0 から順に最小枚数 <code class="docutils literal notranslate"><span class="pre">best</span></code> を求め、最後に使った硬貨 <code class="docutils literal notranslate"><span class="pre">last</span></code> をたどって硬貨の組み合わせを復元する。計算量は、金額を <span class="math notranslate nohighlight">\(A\)</span>、硬貨の種類を <span class="math notranslate nohighlight">\(k\)</span> として <span class="math notranslate nohighlight">\(O(Ak)\)</span> である。<code class="docutils literal notranslate"><span class="pre">ch05_dp.py</span></code> 全体の実行結果は次のとおりである。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>fib(10) = 55: 素朴な再帰 177 回, メモ化 11 回の計算
+<span class="linenos">2</span>fib(20) = 6765: 素朴な再帰 21,891 回, メモ化 21 回の計算
+<span class="linenos">3</span>fib(30) = 832040: 素朴な再帰 2,692,537 回, メモ化 31 回の計算
+<span class="linenos">4</span>LCS(AGCAT, GACTA) = ACA
+<span class="linenos">5</span>硬貨 [1, 5, 10, 50, 100, 500], 6 円: 貪欲法 [5, 1], 動的計画法 [1, 5]
+<span class="linenos">6</span>硬貨 [1, 3, 4], 6 円: 貪欲法 [4, 1, 1], 動的計画法 [3, 3]
+</pre></div>
+</div>
+<p>日本の硬貨では、貪欲法と動的計画法が同じ枚数（2 枚）の解を出している（並び順の違いは復元の順序によるもので、組み合わせは同じである）。1、3、4 円の硬貨では、貪欲法が 3 枚、動的計画法が 2 枚となり、貪欲法が最適解を出せていない。</p>
+<p>貪欲法が最適解を与える問題も多い。次節のダイクストラ法は、「まだ確定していない頂点のうち最も近いものを確定する」という貪欲法の一種であり、辺の重みが非負なら正しい最短距離が得られることが証明されている。また、データ圧縮に使われるハフマン符号の構成も貪欲法である。</p>
+</section>
+<section id="id26">
+<h2><span class="section-number">5.8. </span>グラフ探索<a class="headerlink" href="#id26" title="Link to this heading"></a></h2>
+<p>第 4 章の「<a class="reference internal" href="ch04_data_structures.html#ch04-graph"><span class="std std-ref">グラフの表現</span></a>」で学んだグラフについて、頂点を順にたどる方法と、最短経路を求める方法を扱う。以下、頂点数を <span class="math notranslate nohighlight">\(V\)</span>、辺数を <span class="math notranslate nohighlight">\(E\)</span> とし、グラフは隣接リストで表す。</p>
+<p><a class="reference download internal" download="" href="_downloads/1bf3038d02f15b113e2d584ea40fe0d7/ch05_graph.py"><code class="xref download docutils literal notranslate"><span class="pre">ch05_graph.py</span></code></a></p>
+<section id="id27">
+<h3><span class="section-number">5.8.1. </span>幅優先探索<a class="headerlink" href="#id27" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-171"><span class="xref std std-term">幅優先探索</span></a>（BFS: Breadth-First Search）は、出発点に近い頂点から順に訪問する方法である。キューを使い、取り出した頂点に隣接する未訪問の頂点をキューの末尾に追加することを繰り返す。こうすると、出発点から辺 1 本で行ける頂点をすべて訪問してから、辺 2 本で行ける頂点に進む。したがって、すべての辺の重みが等しいグラフでは、各頂点を初めて発見したときの辺の数がそのまま出発点からの最短距離になる。</p>
+<div class="literal-block-wrapper docutils container" id="id38">
+<div class="code-block-caption"><span class="caption-text">ch05_graph.py（幅優先探索）</span><a class="headerlink" href="#id38" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">16</span><span class="k">def</span><span class="w"> </span><span class="nf">bfs</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="linenos">17</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;start からの辺の数で数えた最短距離を返す（幅優先探索）。&quot;&quot;&quot;</span>
+<span class="linenos">18</span>    <span class="n">dist</span> <span class="o">=</span> <span class="p">{</span><span class="n">start</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="linenos">19</span>    <span class="n">queue</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">start</span><span class="p">])</span>
+<span class="linenos">20</span>    <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
+<span class="linenos">21</span>        <span class="n">u</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>  <span class="c1"># 先に見つけた頂点から順に取り出す</span>
+<span class="linenos">22</span>        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">u</span><span class="p">]:</span>
+<span class="linenos">23</span>            <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dist</span><span class="p">:</span>
+<span class="linenos">24</span>                <span class="n">dist</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="linenos">25</span>                <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+<span class="linenos">26</span>    <span class="k">return</span> <span class="n">dist</span>
+</pre></div>
+</div>
+</div>
+<p>キューには第 4 章で学んだ <code class="docutils literal notranslate"><span class="pre">collections.deque</span></code> を使っている。<code class="docutils literal notranslate"><span class="pre">list</span></code> の <code class="docutils literal notranslate"><span class="pre">pop(0)</span></code> を使うと取り出しのたびに <span class="math notranslate nohighlight">\(O(V)\)</span> かかってしまう。各頂点はキューに 1 回だけ入り、各頂点の隣接リストを 1 回ずつ調べるので、計算量は <span class="math notranslate nohighlight">\(O(V + E)\)</span> である。隣接行列で表した場合は、各頂点の隣接する頂点を列挙するのに <span class="math notranslate nohighlight">\(O(V)\)</span> かかるため <span class="math notranslate nohighlight">\(O(V^2)\)</span> になる。SNS で「友達の友達」を求める処理や、迷路の最短手数を求める処理は幅優先探索である。</p>
+</section>
+<section id="id28">
+<h3><span class="section-number">5.8.2. </span>深さ優先探索<a class="headerlink" href="#id28" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-186"><span class="xref std std-term">深さ優先探索</span></a>（DFS: Depth-First Search）は、行けるところまで先へ進み、行き止まりになったら戻って別の道を進む方法である。キューの代わりにスタックを使う（または再帰で書く）点が幅優先探索と異なる。計算量は幅優先探索と同じく <span class="math notranslate nohighlight">\(O(V + E)\)</span> である。</p>
+<div class="literal-block-wrapper docutils container" id="id39">
+<div class="code-block-caption"><span class="caption-text">ch05_graph.py（深さ優先探索）</span><a class="headerlink" href="#id39" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">29</span><span class="k">def</span><span class="w"> </span><span class="nf">dfs</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="linenos">30</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;深さ優先探索で訪問した順に頂点を返す。&quot;&quot;&quot;</span>
+<span class="linenos">31</span>    <span class="n">order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">32</span>    <span class="n">visited</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="linenos">33</span>    <span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">start</span><span class="p">]</span>
+<span class="linenos">34</span>    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+<span class="linenos">35</span>        <span class="n">u</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>  <span class="c1"># 最後に見つけた頂点から取り出す</span>
+<span class="linenos">36</span>        <span class="k">if</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+<span class="linenos">37</span>            <span class="k">continue</span>
+<span class="linenos">38</span>        <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+<span class="linenos">39</span>        <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+<span class="linenos">40</span>        <span class="c1"># 隣接リストの先頭の頂点から訪問するよう、逆順に積む</span>
+<span class="linenos">41</span>        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">graph</span><span class="p">[</span><span class="n">u</span><span class="p">]):</span>
+<span class="linenos">42</span>            <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+<span class="linenos">43</span>                <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+<span class="linenos">44</span>    <span class="k">return</span> <span class="n">order</span>
+</pre></div>
+</div>
+</div>
+<p>隣接リストの先頭の頂点から訪問するよう、スタックには逆順に積んでいる。深さ優先探索は、グラフが連結かどうかの判定、閉路の検出、依存関係を満たす順序の決定（トポロジカルソート）などに使われる。ビルドツールやパッケージ管理ツールが、依存するものから順にビルドやインストールを行う順序を決めるのは、トポロジカルソートの応用である。再帰で書くと簡潔になるが、Python では頂点数が多いと再帰の深さの制限に達するため、この例のように明示的なスタックを使う方が安全である。</p>
+</section>
+<section id="id29">
+<h3><span class="section-number">5.8.3. </span>ダイクストラ法<a class="headerlink" href="#id29" title="Link to this heading"></a></h3>
+<p>辺に距離や所要時間などの重みがある場合、辺の数が少ない経路が最短とは限らない。辺の重みが非負のグラフで、出発点から各頂点への最短距離を求める代表的なアルゴリズムが<a class="reference internal" href="glossary.html#term-125"><span class="xref std std-term">ダイクストラ法</span></a>である <a class="reference internal" href="references.html#dijkstra1959" id="id30"><span>[Dijkstra1959]</span></a>。</p>
+<p>ダイクストラ法は、各頂点について「現時点で分かっている最短距離（暫定距離）」を持ち、まだ確定していない頂点のうち暫定距離が最小の頂点を確定させる。そして、確定した頂点から出る辺をたどって、隣接する頂点の暫定距離をより短くできれば更新する（緩和）。辺の重みが非負なので、暫定距離が最小の頂点には、他の未確定の頂点を経由してもより短く到達できない。これがこの貪欲な選択が正しい理由である。</p>
+<p>暫定距離が最小の頂点を効率よく選ぶために、第 4 章で学んだ優先度付きキュー（<code class="docutils literal notranslate"><span class="pre">heapq</span></code>）を使う。</p>
+<div class="literal-block-wrapper docutils container" id="id40">
+<div class="code-block-caption"><span class="caption-text">ch05_graph.py（ダイクストラ法）</span><a class="headerlink" href="#id40" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">47</span><span class="k">def</span><span class="w"> </span><span class="nf">dijkstra</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">WeightedGraph</span><span class="p">,</span>
+<span class="linenos">48</span>             <span class="n">start</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="linenos">49</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;辺の重みが非負のグラフで、start からの最短距離と直前の頂点を返す。&quot;&quot;&quot;</span>
+<span class="linenos">50</span>    <span class="n">dist</span> <span class="o">=</span> <span class="p">{</span><span class="n">start</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="linenos">51</span>    <span class="n">prev</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">52</span>    <span class="n">heap</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="p">)]</span>  <span class="c1"># (暫定距離, 頂点) の優先度付きキュー</span>
+<span class="linenos">53</span>    <span class="k">while</span> <span class="n">heap</span><span class="p">:</span>
+<span class="linenos">54</span>        <span class="n">d</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">heapq</span><span class="o">.</span><span class="n">heappop</span><span class="p">(</span><span class="n">heap</span><span class="p">)</span>
+<span class="linenos">55</span>        <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">dist</span><span class="p">[</span><span class="n">u</span><span class="p">]:</span>
+<span class="linenos">56</span>            <span class="k">continue</span>  <span class="c1"># より短い距離で既に確定した古い候補は捨てる</span>
+<span class="linenos">57</span>        <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">u</span><span class="p">]:</span>
+<span class="linenos">58</span>            <span class="n">nd</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="n">w</span>
+<span class="linenos">59</span>            <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dist</span> <span class="ow">or</span> <span class="n">nd</span> <span class="o">&lt;</span> <span class="n">dist</span><span class="p">[</span><span class="n">v</span><span class="p">]:</span>
+<span class="linenos">60</span>                <span class="n">dist</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">nd</span>
+<span class="linenos">61</span>                <span class="n">prev</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span>
+<span class="linenos">62</span>                <span class="n">heapq</span><span class="o">.</span><span class="n">heappush</span><span class="p">(</span><span class="n">heap</span><span class="p">,</span> <span class="p">(</span><span class="n">nd</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+<span class="linenos">63</span>    <span class="k">return</span> <span class="n">dist</span><span class="p">,</span> <span class="n">prev</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">heapq</span></code> には要素の優先度を下げる操作が無いため、暫定距離を更新するたびに新しい組を追加し、取り出したときに確定済みの距離より長い古い組は捨てている（55〜56 行目）。<code class="docutils literal notranslate"><span class="pre">prev</span></code> には各頂点に最短距離で到達する直前の頂点を記録し、経路の復元に使う。ヒープへの追加と取り出しは辺の数に比例する回数だけ行われ、それぞれ <span class="math notranslate nohighlight">\(O(\log V)\)</span> 程度なので、計算量は <span class="math notranslate nohighlight">\(O((V + E) \log V)\)</span> である。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ch05_graph.py</span></code> の <code class="docutils literal notranslate"><span class="pre">main()</span></code> では、BFS と DFS を 6 頂点の無向グラフに、ダイクストラ法を 5 頂点の有向グラフに適用する。後者の辺は S→A（7）、S→B（2）、B→A（3）、B→C（8）、A→G（1）、C→G（2）である。</p>
+<div class="literal-block-wrapper docutils container" id="id41">
+<div class="code-block-caption"><span class="caption-text">ch05_graph.py（main）</span><a class="headerlink" href="#id41" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">74</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">75</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;3 つの探索の結果を表示する。&quot;&quot;&quot;</span>
+<span class="linenos">76</span>    <span class="n">graph</span><span class="p">:</span> <span class="n">Graph</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">77</span>        <span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">],</span>
+<span class="linenos">78</span>        <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">],</span>
+<span class="linenos">79</span>        <span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">],</span>
+<span class="linenos">80</span>        <span class="s2">&quot;D&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">],</span>
+<span class="linenos">81</span>        <span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">],</span>
+<span class="linenos">82</span>        <span class="s2">&quot;F&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">],</span>
+<span class="linenos">83</span>    <span class="p">}</span>
+<span class="linenos">84</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;BFS の距離:&quot;</span><span class="p">,</span> <span class="n">bfs</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">))</span>
+<span class="linenos">85</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DFS の訪問順:&quot;</span><span class="p">,</span> <span class="n">dfs</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">))</span>
+<span class="linenos">86</span>
+<span class="linenos">87</span>    <span class="n">roads</span><span class="p">:</span> <span class="n">WeightedGraph</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">88</span>        <span class="s2">&quot;S&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)],</span>
+<span class="linenos">89</span>        <span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span>
+<span class="linenos">90</span>        <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="mi">8</span><span class="p">)],</span>
+<span class="linenos">91</span>        <span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)],</span>
+<span class="linenos">92</span>        <span class="s2">&quot;G&quot;</span><span class="p">:</span> <span class="p">[],</span>
+<span class="linenos">93</span>    <span class="p">}</span>
+<span class="linenos">94</span>    <span class="n">dist</span><span class="p">,</span> <span class="n">prev</span> <span class="o">=</span> <span class="n">dijkstra</span><span class="p">(</span><span class="n">roads</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">)</span>
+<span class="linenos">95</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ダイクストラ法の距離:&quot;</span><span class="p">,</span> <span class="n">dist</span><span class="p">)</span>
+<span class="linenos">96</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;S から G への最短経路:&quot;</span><span class="p">,</span> <span class="s2">&quot; -&gt; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりである。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>BFS の距離: {&#39;A&#39;: 0, &#39;B&#39;: 1, &#39;C&#39;: 1, &#39;D&#39;: 2, &#39;E&#39;: 2, &#39;F&#39;: 2}
+<span class="linenos">2</span>DFS の訪問順: [&#39;A&#39;, &#39;B&#39;, &#39;D&#39;, &#39;E&#39;, &#39;F&#39;, &#39;C&#39;]
+<span class="linenos">3</span>ダイクストラ法の距離: {&#39;S&#39;: 0, &#39;A&#39;: 5, &#39;B&#39;: 2, &#39;C&#39;: 10, &#39;G&#39;: 6}
+<span class="linenos">4</span>S から G への最短経路: S -&gt; B -&gt; A -&gt; G
+</pre></div>
+</div>
+<p>BFS では、A から辺 1 本の B と C が距離 1、辺 2 本の D、E、F が距離 2 になっている。DFS では、B から D へ進み、行き止まりになったので B に戻って E、F、C と進んでいる。ダイクストラ法では、S から A へ直接行く辺（7）より、B を経由する経路（2 + 3 = 5）の方が短いことが見つかり、G への最短経路は S→B→A→G（距離 6）となった。</p>
+<p>辺の重みに負の値があると、確定した頂点に後からより短く到達できる可能性があり、ダイクストラ法は正しい答えを返さない。その場合はベルマン・フォード法などの別のアルゴリズムを使う <a class="reference internal" href="references.html#clrs" id="id31"><span>[CLRS]</span></a>。カーナビの経路探索や、ルータの経路表を自動で作る OSPF などのルーティングプロトコル（ルーティングは「<a class="reference internal" href="ch10_networks.html"><span class="doc">コンピュータネットワーク</span></a>」で扱う）では、ダイクストラ法やそれを改良したアルゴリズムが使われている。</p>
+</section>
+</section>
+<section id="id32">
+<h2><span class="section-number">5.9. </span>まとめ<a class="headerlink" href="#id32" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>アルゴリズムは問題を解くための明確で有限の手順であり、同じ問題でもアルゴリズムによって効率が大きく異なる。</p></li>
+<li><p>計算量は基本的な操作の回数を入力の大きさ <span class="math notranslate nohighlight">\(n\)</span> の関数として表したもので、O 記法で定数倍と低次の項を無視した増え方を表す。<span class="math notranslate nohighlight">\(O\)</span> は上界、<span class="math notranslate nohighlight">\(\Omega\)</span> は下界、<span class="math notranslate nohighlight">\(\Theta\)</span> は上下両方からの評価である。</p></li>
+<li><p>特に断らない限り計算量は最悪計算量を指す。平均計算量や償却計算量が実用上の性能をよく表す場合もある。</p></li>
+<li><p>ループの入れ子や、ループ内の <code class="docutils literal notranslate"><span class="pre">in</span></code>、データベースへの問い合わせなど、隠れたループに注意すると、コードの計算量を見積もれる。</p></li>
+<li><p>線形探索は <span class="math notranslate nohighlight">\(O(n)\)</span>、整列済みの配列に対する二分探索は <span class="math notranslate nohighlight">\(O(\log n)\)</span> である。Python では <code class="docutils literal notranslate"><span class="pre">bisect</span></code> を使う。</p></li>
+<li><p>挿入ソートは最悪 <span class="math notranslate nohighlight">\(O(n^2)\)</span> であるが、ほぼ整列済みのデータには速い。マージソートは常に <span class="math notranslate nohighlight">\(O(n \log n)\)</span>、クイックソートは平均 <span class="math notranslate nohighlight">\(O(n \log n)\)</span>、最悪 <span class="math notranslate nohighlight">\(O(n^2)\)</span> である。比較ソートには <span class="math notranslate nohighlight">\(\Omega(n \log n)\)</span> の下限がある。</p></li>
+<li><p>Python の <code class="docutils literal notranslate"><span class="pre">sorted()</span></code> は Timsort による安定ソートである。</p></li>
+<li><p>分割統治法は問題を分割して再帰的に解き、計算量は漸化式で表せる。Python では再帰の深さに制限がある。</p></li>
+<li><p>動的計画法は重なり合う部分問題の答えを記録して再利用する。フィボナッチ数のメモ化や最長共通部分列が典型例である。</p></li>
+<li><p>貪欲法は各段階で最良に見える選択をする。単純で高速であるが、硬貨の問題のように最適解を出さない場合がある。</p></li>
+<li><p>幅優先探索と深さ優先探索は <span class="math notranslate nohighlight">\(O(V + E)\)</span> でグラフをたどる。重みの無いグラフの最短距離は幅優先探索で、重みが非負のグラフの最短距離はダイクストラ法で求める。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch04_data_structures.html" class="btn btn-neutral float-left" title="4. データ構造" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch06_theory_of_computation.html" class="btn btn-neutral float-right" title="6. 計算理論" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
