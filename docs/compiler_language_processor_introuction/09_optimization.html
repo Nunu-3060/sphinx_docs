@@ -1,0 +1,621 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 9 章 最適化 &mdash; コンパイラ・言語処理系入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=01529632" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 10 章 コード生成と仮想マシン" href="10_vm.html" />
+    <link rel="prev" title="第 8 章 中間表現" href="08_ir.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンパイラ・言語処理系入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_overview.html">第 1 章 言語処理系の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_language.html">第 2 章 題材言語 Tiny の定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_lexer.html">第 3 章 字句解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_parsing.html">第 4 章 構文解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_ast.html">第 5 章 抽象構文木と Tiny の構文解析器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_semantic.html">第 6 章 意味解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_interpreter.html">第 7 章 インタプリタ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_ir.html">第 8 章 中間表現</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 9 章 最適化</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">最適化の考え方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">最適化の例</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">定数伝播と定数畳み込み</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">共通部分式除去</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">不要コード除去</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">制御フローの単純化と最適化の組み合わせ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">最適化の効果</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">データフロー解析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">生存変数解析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">データフロー解析の一般形</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">その他の最適化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="10_vm.html">第 10 章 コード生成と仮想マシン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_runtime.html">第 11 章 実行時環境とネイティブコード生成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_advanced.html">第 12 章 発展的な話題</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_examples.html">付録 A サンプルコード</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_glossary.html">付録 B 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_references.html">付録 C 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンパイラ・言語処理系入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 9 章 最適化</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 9 章 最適化<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p><a class="reference internal" href="appendix_b_glossary.html#term-28"><span class="xref std std-term">最適化</span></a>は、プログラムの意味を変えずに、より速く（あるいはより小さく）動くように書き換える処理です。この章では、第 8 章で作った SSA 形式の IR に対して代表的な最適化を実装し（<code class="docutils literal notranslate"><span class="pre">tiny_opt.py</span></code>）、最後に最適化の基礎となるデータフロー解析を説明します。</p>
+<section id="id2">
+<h2>最適化の考え方<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>最適化には、次の 2 つの条件があります。</p>
+<ul class="simple">
+<li><p>安全であること：どのような入力に対しても、最適化の前後でプログラムの観測できる振る舞い（出力、実行時エラーなど）が変わってはいけません。</p></li>
+<li><p>効果があること：実行する命令が減る、メモリの使用量が減るなど、書き換えによって実際に得をする必要があります。</p></li>
+</ul>
+<p>特に安全性は重要です。たとえば <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">/</span> <span class="pre">y</span></code> の結果が使われていなくても、<code class="docutils literal notranslate"><span class="pre">y</span></code> が 0 になりうるなら、この命令を削除すると「0 除算エラーで止まる」という振る舞いが変わってしまいます。本書の最適化器も、このような点に注意して実装しています。</p>
+<p>最適化は、適用する範囲によって次のように分類されます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>範囲</p></th>
+<th class="head"><p>説明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>局所的な最適化</p></td>
+<td><p>1 つの基本ブロックの中だけを見て行う</p></td>
+</tr>
+<tr class="row-odd"><td><p>大域的な最適化</p></td>
+<td><p>1 つの関数の制御フローグラフ全体を見て行う</p></td>
+</tr>
+<tr class="row-even"><td><p>手続き間の最適化</p></td>
+<td><p>複数の関数にまたがって行う（関数のインライン展開など）</p></td>
+</tr>
+</tbody>
+</table>
+<p>本書で実装する最適化は、いずれも大域的な最適化です。</p>
+</section>
+<section id="id3">
+<h2>最適化の例<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>まず、最適化器がどのような書き換えを行うかを見てみましょう。次の関数 <code class="docutils literal notranslate"><span class="pre">calc</span></code> には、最適化の機会が多く含まれています。</p>
+<div class="highlight-tiny notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">fn</span> <span class="n">calc</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="kt">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">int</span> <span class="p">{</span>
+<span class="linenos"> 2</span>    <span class="k">let</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="mi">4</span><span class="p">;</span>
+<span class="linenos"> 3</span>    <span class="k">let</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">2</span><span class="p">;</span>
+<span class="linenos"> 4</span>    <span class="k">let</span> <span class="n">unused</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="mi">100</span><span class="p">;</span>
+<span class="linenos"> 5</span>    <span class="k">let</span> <span class="n">x</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="n">n</span> <span class="o">*</span> <span class="n">b</span><span class="p">;</span>
+<span class="linenos"> 6</span>    <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">)</span> <span class="p">{</span>
+<span class="linenos"> 7</span>        <span class="nb">print</span><span class="p">(</span><span class="s">&quot;never&quot;</span><span class="p">);</span>
+<span class="linenos"> 8</span>    <span class="p">}</span>
+<span class="linenos"> 9</span>    <span class="k">return</span> <span class="n">x</span><span class="p">;</span>
+<span class="linenos">10</span><span class="p">}</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="k">fn</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="linenos">13</span>    <span class="nb">print</span><span class="p">(</span><span class="n">calc</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span>
+<span class="linenos">14</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">tiny_opt.py</span></code> を引数なしで実行すると、この関数を SSA 形式に変換して最適化した結果を表示します。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="gp">$ </span>python<span class="w"> </span>tiny_opt.py
+<span class="linenos"> 2</span><span class="go">function calc(n)</span>
+<span class="linenos"> 3</span><span class="go">entry:</span>
+<span class="linenos"> 4</span><span class="gp">    %</span><span class="nv">4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>n<span class="w"> </span>*<span class="w"> </span><span class="m">14</span>
+<span class="linenos"> 5</span><span class="gp">    %</span><span class="nv">6</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>%4<span class="w"> </span>+<span class="w"> </span>%4
+<span class="linenos"> 6</span><span class="go">    return %6</span>
+<span class="linenos"> 7</span><span class="go">function main()</span>
+<span class="linenos"> 8</span><span class="go">entry:</span>
+<span class="linenos"> 9</span><span class="gp">    %</span><span class="nv">1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>call<span class="w"> </span>calc<span class="o">(</span><span class="m">5</span><span class="o">)</span>
+<span class="linenos">10</span><span class="go">    call print(%1)</span>
+<span class="linenos">11</span><span class="go">    return</span>
+<span class="linenos">12</span><span class="go">140</span>
+<span class="linenos">13</span><span class="go">実行した命令数: 最適化前 16、最適化後 6</span>
+</pre></div>
+</div>
+<p>関数 <code class="docutils literal notranslate"><span class="pre">calc</span></code> は次のように書き換えられました。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">3</span> <span class="pre">*</span> <span class="pre">4</span></code> はコンパイル時に <code class="docutils literal notranslate"><span class="pre">12</span></code> に計算され（定数畳み込み）、<code class="docutils literal notranslate"><span class="pre">a</span></code> の使用は <code class="docutils literal notranslate"><span class="pre">12</span></code> に置き換えられました（定数伝播）。同様に <code class="docutils literal notranslate"><span class="pre">b</span></code> は <code class="docutils literal notranslate"><span class="pre">14</span></code> になりました。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">&gt;</span> <span class="pre">100</span></code> は <code class="docutils literal notranslate"><span class="pre">12</span> <span class="pre">&gt;</span> <span class="pre">100</span></code>、つまり <code class="docutils literal notranslate"><span class="pre">false</span></code> と分かるので、<code class="docutils literal notranslate"><span class="pre">if</span></code> 文の分岐と <code class="docutils literal notranslate"><span class="pre">print(&quot;never&quot;)</span></code> が取り除かれました。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">*</span> <span class="pre">b</span></code> は 2 回計算されていましたが、2 回目は 1 回目の結果を再利用するようになりました（共通部分式除去）。</p></li>
+<li><p>使われない変数 <code class="docutils literal notranslate"><span class="pre">unused</span></code> の計算が取り除かれました（不要コード除去）。</p></li>
+</ul>
+<p>以下、それぞれの最適化を説明します。</p>
+</section>
+<section id="id4">
+<h2>定数伝播と定数畳み込み<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>被演算子がすべて定数の演算を、コンパイル時に計算して結果の定数に置き換えることを<a class="reference internal" href="appendix_b_glossary.html#term-49"><span class="xref std std-term">定数畳み込み</span></a>と呼びます。また、定数が代入された変数の使用を、その定数に置き換えることを<a class="reference internal" href="appendix_b_glossary.html#term-50"><span class="xref std std-term">定数伝播</span></a>と呼びます。この 2 つは互いに機会を作り合います。定数伝播で被演算子が定数になれば畳み込みができ、畳み込みの結果が定数なら、さらに伝播できます。</p>
+<p>SSA 形式では各変数の定義が 1 か所しかないので、定数伝播が簡単です。<code class="docutils literal notranslate"><span class="pre">x.1</span> <span class="pre">=</span> <span class="pre">12</span></code> という命令があれば、プログラム中のすべての <code class="docutils literal notranslate"><span class="pre">x.1</span></code> を <code class="docutils literal notranslate"><span class="pre">12</span></code> に置き換えてかまいません。同様に、<code class="docutils literal notranslate"><span class="pre">x.1</span> <span class="pre">=</span> <span class="pre">y.2</span></code> というコピーがあれば、<code class="docutils literal notranslate"><span class="pre">x.1</span></code> の使用を <code class="docutils literal notranslate"><span class="pre">y.2</span></code> に置き換えられます。これを<a class="reference internal" href="appendix_b_glossary.html#term-23"><span class="xref std std-term">コピー伝播</span></a>と呼びます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">propagate_constants</span></code> は、置き換えの対応表 <code class="docutils literal notranslate"><span class="pre">subst</span></code> を作りながら、すべての命令を逆後順に 1 回ずつ処理します。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">tiny_opt.py（定数伝播・コピー伝播・畳み込み）</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 59</span><span class="k">def</span><span class="w"> </span><span class="nf">propagate_constants</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos"> 60</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;定数伝播・コピー伝播・畳み込みを行う。変更があれば True を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 61</span>    <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="linenos"> 62</span>    <span class="n">subst</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operand</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># 変数 → 置き換え先</span>
+<span class="linenos"> 63</span>
+<span class="linenos"> 64</span>    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Operand</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operand</span><span class="p">:</span>
+<span class="linenos"> 65</span>        <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span> <span class="ow">and</span> <span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">subst</span><span class="p">:</span>
+<span class="linenos"> 66</span>            <span class="n">op</span> <span class="o">=</span> <span class="n">subst</span><span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+<span class="linenos"> 67</span>        <span class="k">return</span> <span class="n">op</span>
+<span class="linenos"> 68</span>
+<span class="linenos"> 69</span>    <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">reverse_postorder</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+<span class="linenos"> 70</span>        <span class="n">block</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+<span class="linenos"> 71</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">instr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">):</span>
+<span class="linenos"> 72</span>            <span class="n">before</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+<span class="linenos"> 73</span>            <span class="n">map_operands</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span>
+<span class="linenos"> 74</span>            <span class="n">replacement</span><span class="p">:</span> <span class="n">Operand</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos"> 75</span>            <span class="k">match</span> <span class="n">instr</span><span class="p">:</span>
+<span class="linenos"> 76</span>                <span class="k">case</span> <span class="n">Copy</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+<span class="linenos"> 77</span>                    <span class="n">subst</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span> <span class="o">=</span> <span class="n">src</span>
+<span class="linenos"> 78</span>                <span class="k">case</span> <span class="n">BinOp</span><span class="p">()</span> <span class="o">|</span> <span class="n">UnOp</span><span class="p">():</span>
+<span class="linenos"> 79</span>                    <span class="n">replacement</span> <span class="o">=</span> <span class="n">fold</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+<span class="linenos"> 80</span>                    <span class="k">if</span> <span class="n">replacement</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="n">BinOp</span><span class="p">):</span>
+<span class="linenos"> 81</span>                        <span class="n">replacement</span> <span class="o">=</span> <span class="n">simplify_algebra</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+<span class="linenos"> 82</span>                <span class="k">case</span> <span class="n">Phi</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="linenos"> 83</span>                    <span class="c1"># 自分自身と未定義値を除いた値が 1 種類なら、その値と同じ。</span>
+<span class="linenos"> 84</span>                    <span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+<span class="linenos"> 85</span>                              <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">Var</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">Const</span><span class="p">(</span><span class="kc">None</span><span class="p">)}</span>
+<span class="linenos"> 86</span>                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+<span class="linenos"> 87</span>                        <span class="n">replacement</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="k">if</span> <span class="n">values</span> <span class="k">else</span> <span class="n">Const</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+<span class="linenos"> 88</span>            <span class="k">if</span> <span class="n">replacement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 89</span>                <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="n">Store</span><span class="p">)</span>
+<span class="linenos"> 90</span>                <span class="k">assert</span> <span class="n">instr</span><span class="o">.</span><span class="n">dst</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<span class="linenos"> 91</span>                <span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Copy</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">dst</span><span class="p">,</span> <span class="n">replacement</span><span class="p">)</span>
+<span class="linenos"> 92</span>                <span class="n">subst</span><span class="p">[</span><span class="n">instr</span><span class="o">.</span><span class="n">dst</span><span class="p">]</span> <span class="o">=</span> <span class="n">replacement</span>
+<span class="linenos"> 93</span>            <span class="n">changed</span> <span class="o">|=</span> <span class="n">before</span> <span class="o">!=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<span class="linenos"> 94</span>        <span class="n">term</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">terminator</span>
+<span class="linenos"> 95</span>        <span class="n">map_operands</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span>
+<span class="linenos"> 96</span>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">Branch</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term</span><span class="o">.</span><span class="n">cond</span><span class="p">,</span> <span class="n">Const</span><span class="p">):</span>
+<span class="linenos"> 97</span>            <span class="c1"># 条件が定数の分岐は無条件ジャンプにする。</span>
+<span class="linenos"> 98</span>            <span class="n">taken</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">if_true</span> <span class="k">if</span> <span class="n">term</span><span class="o">.</span><span class="n">cond</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="n">term</span><span class="o">.</span><span class="n">if_false</span>
+<span class="linenos"> 99</span>            <span class="n">other</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">if_false</span> <span class="k">if</span> <span class="n">term</span><span class="o">.</span><span class="n">cond</span><span class="o">.</span><span class="n">value</span> <span class="k">else</span> <span class="n">term</span><span class="o">.</span><span class="n">if_true</span>
+<span class="linenos">100</span>            <span class="n">block</span><span class="o">.</span><span class="n">terminator</span> <span class="o">=</span> <span class="n">Jump</span><span class="p">(</span><span class="n">taken</span><span class="p">)</span>
+<span class="linenos">101</span>            <span class="k">if</span> <span class="n">other</span> <span class="o">!=</span> <span class="n">taken</span><span class="p">:</span>
+<span class="linenos">102</span>                <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="n">other</span><span class="p">]</span><span class="o">.</span><span class="n">phis</span><span class="p">():</span>
+<span class="linenos">103</span>                    <span class="n">phi</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="linenos">104</span>            <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos">105</span>    <span class="c1"># ループの back edge から来る φ 関数の引数は、後から分かった置き換えを適用する。</span>
+<span class="linenos">106</span>    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="linenos">107</span>        <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">phis</span><span class="p">():</span>
+<span class="linenos">108</span>            <span class="n">before</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+<span class="linenos">109</span>            <span class="n">map_operands</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span>
+<span class="linenos">110</span>            <span class="n">changed</span> <span class="o">|=</span> <span class="n">before</span> <span class="o">!=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+<span class="linenos">111</span>    <span class="k">if</span> <span class="n">changed</span><span class="p">:</span>
+<span class="linenos">112</span>        <span class="n">remove_dead_blocks</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+<span class="linenos">113</span>    <span class="k">return</span> <span class="n">changed</span>
+</pre></div>
+</div>
+</div>
+<p>ポイントをいくつか補足します。</p>
+<ul class="simple">
+<li><p>畳み込みの計算には、インタプリタと同じ <code class="docutils literal notranslate"><span class="pre">tiny_runtime.py</span></code> の関数を使います。コンパイル時の計算と実行時の計算の結果が食い違わないようにするためです。0 除算のように実行時エラーになる演算は畳み込まずに残し、エラーは実行時に任せます。</p></li>
+<li><p>φ 関数の引数がすべて同じ値なら、その φ 関数は単なるコピーです。<code class="docutils literal notranslate"><span class="pre">undef</span></code> の引数は、その経路では値が使われないので無視できます。ループで値が変わらない変数に現れる、φ 関数自身の結果を引数とするもの（<code class="docutils literal notranslate"><span class="pre">x.2</span> <span class="pre">=</span> <span class="pre">phi(entry:</span> <span class="pre">0,</span> <span class="pre">body:</span> <span class="pre">x.2)</span></code> など）も無視します。</p></li>
+<li><p>条件が定数になった <code class="docutils literal notranslate"><span class="pre">branch</span></code> は <code class="docutils literal notranslate"><span class="pre">jump</span></code> に置き換えます。選ばれなかった後続ブロックの φ 関数からは、このブロックから来る引数を取り除きます。その後、到達できなくなったブロックを削除します。</p></li>
+<li><p>ループの先頭の φ 関数は、ループの末尾（後で処理するブロック）の値を引数に持つため、1 回の走査では置き換えが届きません。そこで最後に、すべての φ 関数の引数に置き換えを適用し直しています。</p></li>
+</ul>
+<p>定数畳み込みと合わせて、<code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">0</span></code> や <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">*</span> <span class="pre">1</span></code> を <code class="docutils literal notranslate"><span class="pre">x</span></code> に、<code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">*</span> <span class="pre">0</span></code> を <code class="docutils literal notranslate"><span class="pre">0</span></code> に置き換える代数的な簡約も行っています（<code class="docutils literal notranslate"><span class="pre">simplify_algebra</span></code>）。</p>
+</section>
+<section id="id5">
+<h2>共通部分式除去<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>同じ計算を 2 回以上行っている場合に、2 回目以降を 1 回目の結果で置き換えることを<a class="reference internal" href="appendix_b_glossary.html#term-15"><span class="xref std std-term">共通部分式除去</span></a>と呼びます。</p>
+<p>SSA 形式では、同じ演算子と同じ被演算子を持つ 2 つの命令は必ず同じ値を計算します。被演算子の変数が途中で書き換わることがないからです。ただし、1 回目の計算が 2 回目の計算より必ず先に実行されていなければ、その結果を使えません。この条件は、<a class="reference internal" href="08_ir.html"><span class="doc">第 8 章</span></a>の支配関係で表せます。1 回目の計算を含むブロックが、2 回目の計算を含むブロックを支配していればよいのです。</p>
+<p>そこで、支配木を根からたどりながら、計算済みの式の表を受け渡していきます。子ブロックには親までの表をコピーして渡すので、表に載っている式は、現在のブロックを支配するブロックで計算済みであることが保証されます。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">tiny_opt.py（共通部分式除去）</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">131</span><span class="k">def</span><span class="w"> </span><span class="nf">eliminate_common_subexpressions</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos">132</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;支配木を上からたどり、同じ計算を 2 度目以降はコピーに置き換える。&quot;&quot;&quot;</span>
+<span class="linenos">133</span>    <span class="n">children</span> <span class="o">=</span> <span class="n">dominator_tree</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">immediate_dominators</span><span class="p">(</span><span class="n">func</span><span class="p">))</span>
+<span class="linenos">134</span>    <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="linenos">135</span>
+<span class="linenos">136</span>    <span class="k">def</span><span class="w"> </span><span class="nf">visit</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">available</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">137</span>        <span class="k">nonlocal</span> <span class="n">changed</span>
+<span class="linenos">138</span>        <span class="n">table</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">available</span><span class="p">)</span>  <span class="c1"># 支配ブロックで計算済みの式 → 変数</span>
+<span class="linenos">139</span>        <span class="n">block</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+<span class="linenos">140</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">instr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">):</span>
+<span class="linenos">141</span>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="n">BinOp</span><span class="p">):</span>
+<span class="linenos">142</span>                <span class="n">operands</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">left</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">right</span><span class="p">)]</span>
+<span class="linenos">143</span>                <span class="k">if</span> <span class="n">instr</span><span class="o">.</span><span class="n">op</span> <span class="ow">in</span> <span class="n">COMMUTATIVE</span><span class="p">:</span>
+<span class="linenos">144</span>                    <span class="n">operands</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="linenos">145</span>                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">operands</span><span class="p">)</span>
+<span class="linenos">146</span>            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="n">UnOp</span><span class="p">):</span>
+<span class="linenos">147</span>                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">operand</span><span class="p">))</span>
+<span class="linenos">148</span>            <span class="k">else</span><span class="p">:</span>
+<span class="linenos">149</span>                <span class="k">continue</span>
+<span class="linenos">150</span>            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">table</span><span class="p">:</span>
+<span class="linenos">151</span>                <span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Copy</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">dst</span><span class="p">,</span> <span class="n">Var</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+<span class="linenos">152</span>                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos">153</span>            <span class="k">else</span><span class="p">:</span>
+<span class="linenos">154</span>                <span class="n">table</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">instr</span><span class="o">.</span><span class="n">dst</span>
+<span class="linenos">155</span>        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">[</span><span class="n">label</span><span class="p">]:</span>
+<span class="linenos">156</span>            <span class="n">visit</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+<span class="linenos">157</span>
+<span class="linenos">158</span>    <span class="n">visit</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">entry</span><span class="p">,</span> <span class="p">{})</span>
+<span class="linenos">159</span>    <span class="k">return</span> <span class="n">changed</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">*</span></code>、<code class="docutils literal notranslate"><span class="pre">==</span></code>、<code class="docutils literal notranslate"><span class="pre">!=</span></code> は交換法則が成り立つので、被演算子を並べ替えて表のキーを作ります。これにより <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">*</span> <span class="pre">b</span></code> と <code class="docutils literal notranslate"><span class="pre">b</span> <span class="pre">*</span> <span class="pre">a</span></code> も同じ式として扱えます。<code class="docutils literal notranslate"><span class="pre">+</span></code> は文字列の連結にも使うため、交換法則が成り立たず、並べ替えていません。</p>
+<p>添字の読み出し <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">=</span> <span class="pre">a[i]</span></code> は対象にしていません。同じ <code class="docutils literal notranslate"><span class="pre">a[i]</span></code> でも、間に <code class="docutils literal notranslate"><span class="pre">a[i]</span> <span class="pre">=</span> <span class="pre">...</span></code> や配列を変更する関数の呼び出しがあれば値が変わるからです。メモリの読み書きを含む式を扱うには、2 つの参照が同じ場所を指しうるかを調べる別名解析が必要になります。</p>
+</section>
+<section id="id6">
+<h2>不要コード除去<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>結果がどこからも使われない命令を削除することを<a class="reference internal" href="appendix_b_glossary.html#term-60"><span class="xref std std-term">不要コード除去</span></a>と呼びます。ただし、結果が使われなくても削除してはいけない命令があります。</p>
+<ul class="simple">
+<li><p>関数の呼び出し（<code class="docutils literal notranslate"><span class="pre">print</span></code> のように出力をしたり、配列を変更したりするかもしれない）</p></li>
+<li><p>添字への書き込み</p></li>
+<li><p>添字の読み出し（範囲外ならエラーになる）</p></li>
+<li><p>0 になりうる値による除算と剰余（0 除算エラーになる）</p></li>
+</ul>
+<p>本書の実装では、まずこれらの副作用のある命令と終端命令を「必要」とし、そこから使われている変数の定義を逆向きにたどって「必要」の印を付けていきます。最後に印のない命令を削除します。ガベージコレクションのマーク &amp; スイープ（<a class="reference internal" href="11_runtime.html"><span class="doc">第 11 章</span></a>）と同じ考え方です。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">tiny_opt.py（不要コード除去）</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">164</span><span class="k">def</span><span class="w"> </span><span class="nf">has_side_effect</span><span class="p">(</span><span class="n">instr</span><span class="p">:</span> <span class="n">Instr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos">165</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;結果を使わなくても削除できない命令か。&quot;&quot;&quot;</span>
+<span class="linenos">166</span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="p">(</span><span class="n">Call</span><span class="p">,</span> <span class="n">Store</span><span class="p">,</span> <span class="n">Load</span><span class="p">)):</span>  <span class="c1"># Load は範囲外エラーがある</span>
+<span class="linenos">167</span>        <span class="k">return</span> <span class="kc">True</span>
+<span class="linenos">168</span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="n">BinOp</span><span class="p">)</span> <span class="ow">and</span> <span class="n">instr</span><span class="o">.</span><span class="n">op</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;%&quot;</span><span class="p">):</span>
+<span class="linenos">169</span>        <span class="c1"># 0 除算の可能性があるものは残す。</span>
+<span class="linenos">170</span>        <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">Const</span><span class="p">)</span> <span class="ow">and</span> <span class="n">instr</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="linenos">171</span>    <span class="k">return</span> <span class="kc">False</span>
+<span class="linenos">172</span>
+<span class="linenos">173</span>
+<span class="linenos">174</span><span class="k">def</span><span class="w"> </span><span class="nf">eliminate_dead_code</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos">175</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;値が使われない命令を削除する。&quot;&quot;&quot;</span>
+<span class="linenos">176</span>    <span class="n">definition</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Instr</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">177</span>    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="linenos">178</span>        <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">:</span>
+<span class="linenos">179</span>            <span class="n">dst</span> <span class="o">=</span> <span class="n">defined_var</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+<span class="linenos">180</span>            <span class="k">if</span> <span class="n">dst</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">181</span>                <span class="n">definition</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span> <span class="o">=</span> <span class="n">instr</span>
+<span class="linenos">182</span>
+<span class="linenos">183</span>    <span class="c1"># 副作用のある命令と終端命令から、使われている変数をたどって印を付ける。</span>
+<span class="linenos">184</span>    <span class="n">live</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="linenos">185</span>    <span class="n">worklist</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">186</span>    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="linenos">187</span>        <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">:</span>
+<span class="linenos">188</span>            <span class="k">if</span> <span class="n">has_side_effect</span><span class="p">(</span><span class="n">instr</span><span class="p">):</span>
+<span class="linenos">189</span>                <span class="n">live</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">instr</span><span class="p">))</span>
+<span class="linenos">190</span>                <span class="n">worklist</span> <span class="o">+=</span> <span class="n">used_vars</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+<span class="linenos">191</span>        <span class="n">worklist</span> <span class="o">+=</span> <span class="n">used_vars</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">terminator</span><span class="p">)</span>
+<span class="linenos">192</span>    <span class="k">while</span> <span class="n">worklist</span><span class="p">:</span>
+<span class="linenos">193</span>        <span class="n">name</span> <span class="o">=</span> <span class="n">worklist</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos">194</span>        <span class="n">found</span> <span class="o">=</span> <span class="n">definition</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<span class="linenos">195</span>        <span class="k">if</span> <span class="n">found</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">id</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">live</span><span class="p">:</span>
+<span class="linenos">196</span>            <span class="n">live</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">found</span><span class="p">))</span>
+<span class="linenos">197</span>            <span class="n">worklist</span> <span class="o">+=</span> <span class="n">used_vars</span><span class="p">(</span><span class="n">found</span><span class="p">)</span>
+<span class="linenos">198</span>
+<span class="linenos">199</span>    <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="linenos">200</span>    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="linenos">201</span>        <span class="n">kept</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">instrs</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="ow">in</span> <span class="n">live</span><span class="p">]</span>
+<span class="linenos">202</span>        <span class="n">changed</span> <span class="o">|=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">)</span>
+<span class="linenos">203</span>        <span class="n">block</span><span class="o">.</span><span class="n">instrs</span> <span class="o">=</span> <span class="n">kept</span>
+<span class="linenos">204</span>    <span class="k">return</span> <span class="n">changed</span>
+<span class="linenos">205</span>
+<span class="linenos">206</span>
+</pre></div>
+</div>
+</div>
+<p>単純に「使われていない命令を削除する」ことを繰り返す方法では、ループで互いに参照し合っているだけの変数（ループの先頭の φ 関数と、ループ内でのその更新など）を削除できません。必要なものから印を付ける方法なら、このような変数もまとめて削除できます。</p>
+</section>
+<section id="id7">
+<h2>制御フローの単純化と最適化の組み合わせ<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>分岐を畳み込むと、前のブロックからしか到達しないブロックや、引数が 1 つしかない φ 関数ができます。<code class="docutils literal notranslate"><span class="pre">simplify_cfg</span></code> は、引数が 1 つの φ 関数をコピーに置き換え、一直線につながる 2 つのブロックを 1 つに併合します。</p>
+<p>各最適化は、互いに新しい最適化の機会を作ります。定数伝播で分岐が消えれば制御フローが単純になり、それによって φ 関数がコピーになり、コピー伝播で新たな定数が伝播する、といった具合です。そこで、すべての最適化を変化がなくなるまで繰り返し適用します。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">tiny_opt.py（最適化の繰り返し）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">243</span><span class="k">def</span><span class="w"> </span><span class="nf">optimize_function</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
+<span class="linenos">244</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;SSA 形式の関数を、変化がなくなるまで繰り返し最適化する。&quot;&quot;&quot;</span>
+<span class="linenos">245</span>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="linenos">246</span>        <span class="n">changed</span> <span class="o">=</span> <span class="n">propagate_constants</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+<span class="linenos">247</span>        <span class="n">changed</span> <span class="o">|=</span> <span class="n">eliminate_common_subexpressions</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+<span class="linenos">248</span>        <span class="n">changed</span> <span class="o">|=</span> <span class="n">eliminate_dead_code</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+<span class="linenos">249</span>        <span class="n">changed</span> <span class="o">|=</span> <span class="n">simplify_cfg</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+<span class="linenos">250</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">changed</span><span class="p">:</span>
+<span class="linenos">251</span>            <span class="k">return</span> <span class="n">func</span>
+</pre></div>
+</div>
+</div>
+<p>実用的なコンパイラでは、数十から百を超える最適化を、決められた順序（パスの順序）で適用します。どの順序で何回適用するかは、生成されるコードの質とコンパイル時間の両方に影響します。</p>
+</section>
+<section id="id8">
+<h2>最適化の効果<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p>サンプルプログラムを SSA 形式の IR インタプリタで実行し、最適化の前後で実行した命令の数を比べた結果を示します。</p>
+<table class="docutils align-default" id="id19">
+<caption><span class="caption-text">最適化による実行命令数の変化</span><a class="headerlink" href="#id19" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>プログラム</p></th>
+<th class="head"><p>最適化前</p></th>
+<th class="head"><p>最適化後</p></th>
+<th class="head"><p>削減率</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fib.tiny</span></code></p></td>
+<td><p>2591</p></td>
+<td><p>2579</p></td>
+<td><p>0.5 %</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fizzbuzz.tiny</span></code></p></td>
+<td><p>282</p></td>
+<td><p>250</p></td>
+<td><p>11 %</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">primes.tiny</span></code></p></td>
+<td><p>1303</p></td>
+<td><p>1039</p></td>
+<td><p>20 %</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sort.tiny</span></code></p></td>
+<td><p>278</p></td>
+<td><p>204</p></td>
+<td><p>27 %</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">strings.tiny</span></code></p></td>
+<td><p>629</p></td>
+<td><p>507</p></td>
+<td><p>19 %</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sum.tiny</span></code></p></td>
+<td><p>101</p></td>
+<td><p>79</p></td>
+<td><p>22 %</p></td>
+</tr>
+</tbody>
+</table>
+<p>削減の多くは、ソースコードの変数への代入で生じるコピー命令が、コピー伝播と不要コード除去で取り除かれたことによるものです。<code class="docutils literal notranslate"><span class="pre">fib.tiny</span></code> はほとんどの時間を再帰呼び出しに費やしており、関数の中に取り除ける命令がほとんどないため、効果がわずかです。最適化後の <code class="docutils literal notranslate"><span class="pre">sum</span></code> は次のとおりです。コピー命令がなくなり、ループの本体が 2 命令になっています。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="gp">$ </span>python<span class="w"> </span>tiny.py<span class="w"> </span>ir<span class="w"> </span>--opt<span class="w"> </span>programs/sum.tiny
+<span class="linenos"> 2</span><span class="go">function sum(n)</span>
+<span class="linenos"> 3</span><span class="go">entry:</span>
+<span class="linenos"> 4</span><span class="go">    jump cond1</span>
+<span class="linenos"> 5</span><span class="go">cond1:</span>
+<span class="linenos"> 6</span><span class="go">    s.2 = phi(entry: 0, body1: %2)</span>
+<span class="linenos"> 7</span><span class="go">    i.2 = phi(entry: 1, body1: %3)</span>
+<span class="linenos"> 8</span><span class="gp">    %</span><span class="nv">1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>i.2<span class="w"> </span>&lt;<span class="o">=</span><span class="w"> </span>n
+<span class="linenos"> 9</span><span class="go">    branch %1, body1, endwhile1</span>
+<span class="linenos">10</span><span class="go">body1:</span>
+<span class="linenos">11</span><span class="gp">    %</span><span class="nv">2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>s.2<span class="w"> </span>+<span class="w"> </span>i.2
+<span class="linenos">12</span><span class="gp">    %</span><span class="nv">3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>i.2<span class="w"> </span>+<span class="w"> </span><span class="m">1</span>
+<span class="linenos">13</span><span class="go">    jump cond1</span>
+<span class="linenos">14</span><span class="go">endwhile1:</span>
+<span class="linenos">15</span><span class="go">    return s.2</span>
+</pre></div>
+</div>
+</section>
+<section id="id9">
+<h2>データフロー解析<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>ここまでの最適化は、SSA 形式の「定義が 1 か所」という性質に頼っていました。SSA 形式を使わない場合や、変数の生存範囲のように制御フロー全体にわたる情報が必要な場合には、<a class="reference internal" href="appendix_b_glossary.html#term-52"><span class="xref std std-term">データフロー解析</span></a>を使います。データフロー解析は、制御フローグラフの各点で成り立つ事実（「この変数はこの後使われる」「この変数の値は定数 3 である」など）を、方程式を立てて求める手法です。</p>
+<section id="id10">
+<h3>生存変数解析<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>代表的なデータフロー解析である<a class="reference internal" href="appendix_b_glossary.html#term-43"><span class="xref std std-term">生存変数解析</span></a>を例にします。ある点で変数 <span class="math notranslate nohighlight">\(x\)</span> が生存しているとは、その点から <span class="math notranslate nohighlight">\(x\)</span> の使用に至る経路があり、その途中で <span class="math notranslate nohighlight">\(x\)</span> が再定義されないことをいいます。生存していない変数の値は二度と使われないので、そのレジスタを別の変数に使い回せます。生存変数解析は、<a class="reference internal" href="11_runtime.html"><span class="doc">第 11 章</span></a>のレジスタ割り当ての基礎になります。</p>
+<p>基本ブロック <span class="math notranslate nohighlight">\(B\)</span> について、次の 2 つの集合を考えます。</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\mathrm{use}[B]\)</span>：<span class="math notranslate nohighlight">\(B\)</span> の中で、定義される前に使われる変数</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathrm{def}[B]\)</span>：<span class="math notranslate nohighlight">\(B\)</span> の中で定義される変数</p></li>
+</ul>
+<p>ブロックの入口と出口で生存している変数の集合 <span class="math notranslate nohighlight">\(\mathrm{in}[B]\)</span> と <span class="math notranslate nohighlight">\(\mathrm{out}[B]\)</span> は、次の方程式を満たします。</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{out}[B] = \bigcup_{S \in \mathrm{succ}(B)} \mathrm{in}[S]\]</div>
+<div class="math notranslate nohighlight">
+\[\mathrm{in}[B] = \mathrm{use}[B] \cup (\mathrm{out}[B] - \mathrm{def}[B])\]</div>
+<p>1 つ目の式は「後続ブロックのどれかの入口で生存していれば、出口で生存している」、2 つ目の式は「ブロックの中で使われるか、出口で生存していてブロックの中で定義されなければ、入口で生存している」という意味です。情報が制御フローとは逆向きに（後続ブロックから先行ブロックへ）伝わるので、後ろ向きの解析と呼ばれます。</p>
+<p>ループがあると、方程式の右辺に自分自身の値が現れるため、一度では解けません。そこで、すべての集合を空集合から始め、方程式に従って値を更新することを、変化がなくなるまで繰り返します。集合は単調に大きくなり、変数の数は有限なので、この繰り返しは必ず終わります。後ろ向きの解析では、逆後順の逆の順にブロックを処理すると、少ない繰り返しで収束します。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">tiny_opt.py（生存変数解析）</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">262</span><span class="k">def</span><span class="w"> </span><span class="nf">liveness</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+<span class="linenos">263</span>                                      <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]:</span>
+<span class="linenos">264</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;各基本ブロックの入口と出口で生存している変数を求める。</span>
+<span class="linenos">265</span>
+<span class="linenos">266</span><span class="sd">    live_out[B] = ∪ live_in[S]  （S は B の後続ブロック）</span>
+<span class="linenos">267</span><span class="sd">    live_in[B]  = use[B] ∪ (live_out[B] - def[B])</span>
+<span class="linenos">268</span><span class="sd">    を、値が変化しなくなるまで繰り返し計算する。</span>
+<span class="linenos">269</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">270</span>    <span class="n">use</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">271</span>    <span class="n">defs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">272</span>    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="linenos">273</span>        <span class="n">u</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>  <span class="c1"># 定義より前に使われる変数</span>
+<span class="linenos">274</span>        <span class="n">d</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">phi</span><span class="o">.</span><span class="n">dst</span> <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">phis</span><span class="p">()}</span>  <span class="c1"># 定義される変数</span>
+<span class="linenos">275</span>        <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">phis</span><span class="p">()):]:</span>
+<span class="linenos">276</span>            <span class="n">u</span> <span class="o">|=</span> <span class="p">{</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">used_vars</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">d</span><span class="p">}</span>
+<span class="linenos">277</span>            <span class="n">dst</span> <span class="o">=</span> <span class="n">defined_var</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+<span class="linenos">278</span>            <span class="k">if</span> <span class="n">dst</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">279</span>                <span class="n">d</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+<span class="linenos">280</span>        <span class="n">u</span> <span class="o">|=</span> <span class="p">{</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">used_vars</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">terminator</span><span class="p">)</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">d</span><span class="p">}</span>
+<span class="linenos">281</span>        <span class="n">use</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">label</span><span class="p">],</span> <span class="n">defs</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="p">,</span> <span class="n">d</span>
+<span class="linenos">282</span>
+<span class="linenos">283</span>    <span class="n">live_in</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="p">}</span>
+<span class="linenos">284</span>    <span class="n">live_out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="p">}</span>
+<span class="linenos">285</span>    <span class="n">order</span> <span class="o">=</span> <span class="n">reverse_postorder</span><span class="p">(</span><span class="n">func</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># 後ろ向きの解析なので逆順に回す</span>
+<span class="linenos">286</span>    <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos">287</span>    <span class="k">while</span> <span class="n">changed</span><span class="p">:</span>
+<span class="linenos">288</span>        <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="linenos">289</span>        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+<span class="linenos">290</span>            <span class="n">out</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="linenos">291</span>            <span class="k">for</span> <span class="n">succ</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">successors</span><span class="p">():</span>
+<span class="linenos">292</span>                <span class="n">block</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="n">succ</span><span class="p">]</span>
+<span class="linenos">293</span>                <span class="n">out</span> <span class="o">|=</span> <span class="n">live_in</span><span class="p">[</span><span class="n">succ</span><span class="p">]</span> <span class="o">-</span> <span class="p">{</span><span class="n">phi</span><span class="o">.</span><span class="n">dst</span> <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">phis</span><span class="p">()}</span>
+<span class="linenos">294</span>                <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">phis</span><span class="p">():</span>  <span class="c1"># φ 関数の引数は先行ブロックの出口で使う</span>
+<span class="linenos">295</span>                    <span class="n">arg</span> <span class="o">=</span> <span class="n">phi</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+<span class="linenos">296</span>                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">Var</span><span class="p">):</span>
+<span class="linenos">297</span>                        <span class="n">out</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="linenos">298</span>            <span class="n">new_in</span> <span class="o">=</span> <span class="n">use</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">|</span> <span class="p">(</span><span class="n">out</span> <span class="o">-</span> <span class="n">defs</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+<span class="linenos">299</span>            <span class="k">if</span> <span class="n">out</span> <span class="o">!=</span> <span class="n">live_out</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="ow">or</span> <span class="n">new_in</span> <span class="o">!=</span> <span class="n">live_in</span><span class="p">[</span><span class="n">label</span><span class="p">]:</span>
+<span class="linenos">300</span>                <span class="n">live_out</span><span class="p">[</span><span class="n">label</span><span class="p">],</span> <span class="n">live_in</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">,</span> <span class="n">new_in</span>
+<span class="linenos">301</span>                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos">302</span>    <span class="k">return</span> <span class="n">live_in</span><span class="p">,</span> <span class="n">live_out</span>
+</pre></div>
+</div>
+</div>
+<p>φ 関数を含む関数も扱えるように、φ 関数の引数は、φ 関数のあるブロックではなく、対応する先行ブロックの出口で使われるものとして扱っています。最適化前の関数 <code class="docutils literal notranslate"><span class="pre">sum</span></code>（SSA 形式にする前）に適用した結果を示します。</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ir</span><span class="w"> </span><span class="kn">import</span> <span class="n">compile_to_ir</span>
+<span class="linenos"> 2</span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">tiny_opt</span><span class="w"> </span><span class="kn">import</span> <span class="n">liveness</span>
+<span class="linenos"> 3</span><span class="gp">&gt;&gt;&gt; </span><span class="n">module</span> <span class="o">=</span> <span class="n">compile_to_ir</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;programs/sum.tiny&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="linenos"> 4</span><span class="gp">&gt;&gt;&gt; </span><span class="n">live_in</span><span class="p">,</span> <span class="n">live_out</span> <span class="o">=</span> <span class="n">liveness</span><span class="p">(</span><span class="n">module</span><span class="p">[</span><span class="s2">&quot;sum&quot;</span><span class="p">])</span>
+<span class="linenos"> 5</span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">module</span><span class="p">[</span><span class="s2">&quot;sum&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+<span class="linenos"> 6</span><span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">live_in</span><span class="p">[</span><span class="n">label</span><span class="p">]),</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">live_out</span><span class="p">[</span><span class="n">label</span><span class="p">]))</span>
+<span class="linenos"> 7</span><span class="gp">...</span>
+<span class="linenos"> 8</span><span class="go">entry [&#39;n&#39;] [&#39;i&#39;, &#39;n&#39;, &#39;s&#39;]</span>
+<span class="linenos"> 9</span><span class="go">cond1 [&#39;i&#39;, &#39;n&#39;, &#39;s&#39;] [&#39;i&#39;, &#39;n&#39;, &#39;s&#39;]</span>
+<span class="linenos">10</span><span class="go">body1 [&#39;i&#39;, &#39;n&#39;, &#39;s&#39;] [&#39;i&#39;, &#39;n&#39;, &#39;s&#39;]</span>
+<span class="linenos">11</span><span class="go">endwhile1 [&#39;s&#39;] []</span>
+</pre></div>
+</div>
+<p>ループの中では <code class="docutils literal notranslate"><span class="pre">i</span></code>、<code class="docutils literal notranslate"><span class="pre">n</span></code>、<code class="docutils literal notranslate"><span class="pre">s</span></code> がすべて生存しており、ループを抜けた <code class="docutils literal notranslate"><span class="pre">endwhile1</span></code> では <code class="docutils literal notranslate"><span class="pre">s</span></code> だけが生存しています。</p>
+</section>
+<section id="id11">
+<h3>データフロー解析の一般形<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>データフロー解析には、生存変数解析のほかにも、到達定義解析（ある点に届きうる代入の集合）や利用可能式解析（ある点で計算済みの式の集合）などがあります。いずれも「各ブロックの効果を表す関数」と「合流点で情報を合わせる演算（和集合や積集合）」を決めれば、同じ反復のアルゴリズムで解けます。この枠組みは束（lattice）の理論で定式化されており、反復が停止することや、反復で得られる解が方程式の解のうち最も精密なもの（最大不動点、または最小不動点）であることが保証されます。</p>
+</section>
+</section>
+<section id="id12">
+<h2>その他の最適化<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<p>本書で実装しなかった代表的な最適化を挙げます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>最適化</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>関数のインライン展開</p></td>
+<td><p>関数の呼び出しを、関数の本体で置き換える。呼び出しの手間がなくなるだけでなく、呼び出し元の情報（定数の引数など）を使った最適化が可能になる</p></td>
+</tr>
+<tr class="row-odd"><td><p>ループ不変式の移動</p></td>
+<td><p>ループの中で毎回同じ値になる計算を、ループの前に移す</p></td>
+</tr>
+<tr class="row-even"><td><p>強度低減</p></td>
+<td><p>乗算をより軽い加算に置き換える。たとえばループ変数 <code class="docutils literal notranslate"><span class="pre">i</span></code> に対する <code class="docutils literal notranslate"><span class="pre">i</span> <span class="pre">*</span> <span class="pre">4</span></code> を、ループごとに 4 ずつ増える変数で置き換える</p></td>
+</tr>
+<tr class="row-odd"><td><p>疎な条件付き定数伝播（SCCP）</p></td>
+<td><p>定数伝播と到達不能コードの検出を同時に行い、本書の方法より多くの定数を見つける <a class="reference internal" href="appendix_c_references.html#wegman1991" id="id13"><span>[Wegman1991]</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>大域的な値番号付け（GVN）</p></td>
+<td><p>支配関係にない場所の共通部分式や、形の違う同値な式も見つける</p></td>
+</tr>
+<tr class="row-odd"><td><p>ループ展開</p></td>
+<td><p>ループの本体を複製して、繰り返しの回数と分岐の数を減らす</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id14">
+<h2>まとめ<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>最適化は安全でなければなりません。実行時エラーの有無も含めて、振る舞いを変えてはいけません。</p></li>
+<li><p>SSA 形式では、定数伝播やコピー伝播を、変数の名前の置き換えだけで実装できます。</p></li>
+<li><p>共通部分式除去は、支配木に沿って計算済みの式の表を受け渡すことで実装できます。</p></li>
+<li><p>不要コード除去は、副作用のある命令から使用をたどって印を付け、印のない命令を削除します。</p></li>
+<li><p>最適化は互いに機会を作り合うので、変化がなくなるまで繰り返し適用します。</p></li>
+<li><p>データフロー解析は、制御フローグラフ上の方程式を反復で解きます。生存変数解析はその代表例です。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="08_ir.html" class="btn btn-neutral float-left" title="第 8 章 中間表現" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="10_vm.html" class="btn btn-neutral float-right" title="第 10 章 コード生成と仮想マシン" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

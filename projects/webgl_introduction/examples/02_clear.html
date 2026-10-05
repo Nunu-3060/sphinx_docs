@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 画面のクリアと描画ループ</title>
+<style>
+  body { margin: 16px; font-family: sans-serif; background: #f4f4f4; color: #222; }
+  canvas { display: block; background: #000; max-width: 100%; }
+  #error { color: #b00; white-space: pre-wrap; }
+  .controls { margin: 8px 0; }
+</style>
+</head>
+<body>
+<h1>02 画面のクリアと描画ループ</h1>
+<p>経過時間に応じて、画面をクリアする色を変化させます。</p>
+<pre id="error" hidden></pre>
+<canvas id="canvas" width="640" height="360"></canvas>
+<div class="controls">
+  <button id="toggle">停止</button>
+  <span id="fps"></span>
+</div>
+<p>コンテキスト属性（getContextAttributes の結果）:</p>
+<pre id="attributes"></pre>
+
+<script>
+"use strict";
+
+function showError(message) {
+  const element = document.getElementById("error");
+  element.textContent += message + "\n";
+  element.hidden = false;
+}
+
+function main() {
+  const canvas = document.getElementById("canvas");
+  // 第 2 引数でコンテキスト属性を指定できる（ここでは既定値を明示している）
+  const gl = canvas.getContext("webgl2", {
+    alpha: true,
+    antialias: true,
+    depth: true,
+    premultipliedAlpha: true,
+    preserveDrawingBuffer: false,
+  });
+  if (!gl) {
+    showError("このブラウザーは WebGL 2.0 に対応していません。");
+    canvas.hidden = true;
+    return;
+  }
+  document.getElementById("attributes").textContent =
+    JSON.stringify(gl.getContextAttributes(), null, 2);
+
+  let running = true;
+  let hue = 0;              // 色相 (0 以上 1 未満)
+  let previousTime = null;  // 前回のフレームの時刻（ミリ秒）
+  let frameCount = 0;
+  let fpsTime = 0;
+
+  function render(time) {
+    // 前回のフレームからの経過時間（秒）。フレームレートに依存しない動きにするために使う
+    const deltaTime = previousTime === null ? 0 : (time - previousTime) / 1000;
+    previousTime = time;
+
+    if (running) {
+      hue = (hue + deltaTime * 0.1) % 1;  // 10 秒で色相が 1 周する
+    }
+    const [r, g, b] = hsvToRgb(hue, 0.6, 0.9);
+
+    // クリアする色を設定してから、カラーバッファーをクリアする
+    gl.clearColor(r, g, b, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // 1 秒ごとにフレームレートを表示する
+    frameCount++;
+    fpsTime += deltaTime;
+    if (fpsTime >= 1) {
+      document.getElementById("fps").textContent = `${(frameCount / fpsTime).toFixed(1)} fps`;
+      frameCount = 0;
+      fpsTime = 0;
+    }
+
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+
+  const button = document.getElementById("toggle");
+  button.addEventListener("click", () => {
+    running = !running;
+    button.textContent = running ? "停止" : "再開";
+  });
+}
+
+// HSV（色相・彩度・明度。いずれも 0 から 1）を RGB に変換する
+function hsvToRgb(h, s, v) {
+  const i = Math.floor(h * 6);
+  const f = h * 6 - i;
+  const p = v * (1 - s);
+  const q = v * (1 - f * s);
+  const t = v * (1 - (1 - f) * s);
+  return [
+    [v, q, p, p, t, v][i % 6],
+    [t, v, v, q, p, p][i % 6],
+    [p, p, t, v, v, q][i % 6],
+  ];
+}
+
+try {
+  main();
+} catch (error) {
+  showError(error.message);
+}
+</script>
+</body>
+</html>

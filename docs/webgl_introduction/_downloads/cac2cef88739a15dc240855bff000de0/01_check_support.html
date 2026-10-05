@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01 WebGL 2.0 対応の確認</title>
+<style>
+  body { margin: 16px; font-family: sans-serif; background: #f4f4f4; color: #222; }
+  table { border-collapse: collapse; background: #fff; }
+  th, td { border: 1px solid #bbb; padding: 4px 8px; text-align: left; vertical-align: top; }
+  th { background: #e4e4e4; }
+  #result { font-size: 1.2em; font-weight: bold; }
+  #error { color: #b00; white-space: pre-wrap; }
+  #extensions { columns: 2; margin: 0; padding-left: 1.5em; }
+</style>
+</head>
+<body>
+<h1>01 WebGL 2.0 対応の確認</h1>
+<p id="result"></p>
+<pre id="error" hidden></pre>
+<table id="info" hidden>
+  <tr><th>項目</th><th>値</th></tr>
+</table>
+<h2>利用できる拡張機能</h2>
+<ul id="extensions"></ul>
+<!-- 表示はしないが、コンテキストを取得するために canvas が必要 -->
+<canvas id="canvas" width="1" height="1" hidden></canvas>
+
+<script>
+"use strict";
+
+function showError(message) {
+  const element = document.getElementById("error");
+  element.textContent += message + "\n";
+  element.hidden = false;
+}
+
+// 表に 1 行追加する
+function addRow(name, value) {
+  const row = document.getElementById("info").insertRow();
+  row.insertCell().textContent = name;
+  row.insertCell().textContent = String(value);
+}
+
+function main() {
+  const canvas = document.getElementById("canvas");
+  const result = document.getElementById("result");
+
+  // WebGL 2.0 のコンテキストを取得する。非対応なら null が返る
+  const gl = canvas.getContext("webgl2");
+  if (!gl) {
+    result.textContent = "このブラウザーは WebGL 2.0 に対応していません。";
+    return;
+  }
+  result.textContent = "このブラウザーは WebGL 2.0 に対応しています。";
+
+  // getParameter で実装の情報や上限値を調べられる
+  const parameters = [
+    ["VERSION（WebGL のバージョン）", gl.VERSION],
+    ["SHADING_LANGUAGE_VERSION（GLSL のバージョン）", gl.SHADING_LANGUAGE_VERSION],
+    ["VENDOR", gl.VENDOR],
+    ["RENDERER", gl.RENDERER],
+    ["MAX_TEXTURE_SIZE（テクスチャの最大サイズ）", gl.MAX_TEXTURE_SIZE],
+    ["MAX_VERTEX_ATTRIBS（頂点属性の最大数）", gl.MAX_VERTEX_ATTRIBS],
+    ["MAX_TEXTURE_IMAGE_UNITS（フラグメントシェーダーのテクスチャユニット数）", gl.MAX_TEXTURE_IMAGE_UNITS],
+    ["MAX_DRAW_BUFFERS（同時に出力できるカラーバッファー数）", gl.MAX_DRAW_BUFFERS],
+    ["MAX_SAMPLES（マルチサンプルの最大数）", gl.MAX_SAMPLES],
+  ];
+  for (const [name, parameter] of parameters) {
+    addRow(name, gl.getParameter(parameter));
+  }
+
+  // フラグメントシェーダーで highp（高精度）の浮動小数点数が使えるか
+  const highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+  addRow("フラグメントシェーダーの highp float の精度（ビット）", highp.precision);
+
+  // ブラウザーと OS から見た表示倍率
+  addRow("devicePixelRatio", window.devicePixelRatio);
+  document.getElementById("info").hidden = false;
+
+  const list = document.getElementById("extensions");
+  for (const name of gl.getSupportedExtensions()) {
+    const item = document.createElement("li");
+    item.textContent = name;
+    list.appendChild(item);
+  }
+}
+
+try {
+  main();
+} catch (error) {
+  showError(error.message);
+}
+</script>
+</body>
+</html>

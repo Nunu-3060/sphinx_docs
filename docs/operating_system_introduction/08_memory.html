@@ -1,0 +1,970 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8. メモリ管理 &mdash; オペレーティングシステム入門 1.0</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=fc4766ba" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="9. ストレージとファイルシステム" href="09_storage_and_filesystem.html" />
+    <link rel="prev" title="7. CPU スケジューリング" href="07_scheduling.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            オペレーティングシステム入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. はじめに</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id2">1.1. 本書の目的</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id3">1.2. 対象読者</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id4">1.3. 本書の構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id5">1.4. サンプルコードの使い方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id6">1.5. 表記について</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="02_what_is_os.html">2. OS とは何か</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id1">2.1. OS の定義</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_os.html#id2">2.1.1. 拡張機械としての OS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_os.html#id3">2.1.2. 資源管理者としての OS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id4">2.2. OS がない世界</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id5">2.3. カーネルとユーザーランド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id6">2.4. OS が提供する抽象化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id7">2.5. OS の主な機能</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id8">2.6. 機構と方針の分離</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id9">2.7. OS の設計目標とトレードオフ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id10">2.8. OS の種類</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id11">2.9. OS のインターフェース</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_os.html#id12">2.9.1. 利用者に対するインターフェース</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_os.html#id13">2.9.2. アプリケーションに対するインターフェース</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#python-os">2.10. Python のプログラムから見た OS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id14">2.11. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="03_history.html">3. OS の歴史</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id1">3.1. 年表</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id2">3.2. OS 以前の時代</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id3">3.3. バッチ処理の時代</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id4">3.3.1. 保護の必要性</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id5">3.4. マルチプログラミング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#os-360">3.4.1. OS/360 とソフトウェア開発の難しさ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id6">3.5. タイムシェアリング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#ctss">3.5.1. CTSS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#multics">3.5.2. Multics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#the">3.5.3. THE とダイクストラ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id7">3.5.4. 仮想記憶の誕生</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#unix">3.6. UNIX の誕生</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#c">3.6.1. C 言語による書き直し</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id8">3.6.2. UNIX の設計思想</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id9">3.6.3. UNIX の普及と分裂</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id10">3.7. パーソナルコンピュータの OS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#cp-m-ms-dos">3.7.1. CP/M と MS-DOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#gui">3.7.2. GUI の登場</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#windows-nt">3.7.3. Windows NT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#macos">3.7.4. macOS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id11">3.8. オープンソースの OS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#gnu">3.8.1. GNU プロジェクト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#minix-linux">3.8.2. MINIX と Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#bsd-os">3.8.3. BSD 系 OS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#os-tron">3.9. 日本の OS：TRON</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id12">3.10. モバイル OS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id13">3.11. 仮想化とクラウドの時代</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id14">3.11.1. 仮想化の起源</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#x86">3.11.2. x86 の仮想化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id15">3.11.3. クラウドとコンテナ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id16">3.12. 歴史から見える流れ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id17">3.13. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="04_hardware_and_kernel.html">4. ハードウェアとカーネル</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#cpu">4.1. CPU の特権モード</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id2">4.2. 割り込みと例外</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id3">4.2.1. タイマー割り込み</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id4">4.3. システムコール</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id5">4.3.1. システムコールの流れ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id6">4.3.2. 主なシステムコール</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id7">4.3.3. システムコールの費用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id8">4.3.4. システムコールを観察する</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id9">4.4. 起動の流れ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id10">4.5. カーネルの構成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id11">4.5.1. モノリシックカーネル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id12">4.5.2. マイクロカーネル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id13">4.5.3. ハイブリッドカーネル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id14">4.6. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="05_process.html">5. プロセス</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id2">5.1. プログラムとプロセス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id3">5.2. プロセスのアドレス空間</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id4">5.3. プロセスの状態</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id5">5.4. プロセス制御ブロック</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id6">5.4.1. 自分のプロセスの情報を見る</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id7">5.5. プロセスの作成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#unix-os-fork-exec">5.5.1. UNIX 系 OS：fork と exec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#windows-createprocess">5.5.2. Windows：CreateProcess</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id8">5.6. プロセスの終了</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id9">5.6.1. ゾンビプロセスと孤児プロセス</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id10">5.7. プロセス間通信</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id11">5.7.1. パイプ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id12">5.7.2. シグナル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id13">5.7.3. 共有メモリ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id14">5.8. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="06_thread.html">6. スレッドと並行性</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id2">6.1. スレッドとは</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id3">6.1.1. なぜスレッドを使うのか</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id4">6.1.2. 並行と並列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id5">6.2. ユーザースレッドとカーネルスレッド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id6">6.3. 競合状態</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id7">6.4. クリティカルセクションと排他制御</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id8">6.4.1. アトミック命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id9">6.4.2. ミューテックス</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id10">6.4.3. セマフォ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id11">6.4.4. 条件変数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id12">6.5. デッドロック</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id13">6.5.1. デッドロックの 4 条件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id14">6.5.2. デッドロックへの対処</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id15">6.6. その他の問題</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#python-gil">6.7. Python のスレッドと GIL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id16">6.8. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="07_scheduling.html">7. CPU スケジューリング</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="07_scheduling.html#id1">7.1. コンテキストスイッチ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_scheduling.html#id2">7.2. スケジューリングの基本</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#id3">7.2.1. CPU バーストと入出力バースト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#id4">7.2.2. スケジューリングのきっかけ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#id5">7.2.3. 評価指標</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="07_scheduling.html#id6">7.3. スケジューリングのアルゴリズム</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#fcfs">7.3.1. FCFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#sjf">7.3.2. SJF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#id7">7.3.3. ラウンドロビン</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#id8">7.3.4. シミュレーターによる比較</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#id9">7.3.5. 優先度スケジューリング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#id10">7.3.6. 多段フィードバックキュー</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="07_scheduling.html#os">7.4. 実際の OS のスケジューラ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#linux">7.4.1. Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_scheduling.html#windows">7.4.2. Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="07_scheduling.html#id11">7.5. マルチコアのスケジューリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_scheduling.html#id12">7.6. リアルタイムスケジューリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_scheduling.html#id13">7.7. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">8. メモリ管理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">8.1. 物理アドレスと論理アドレス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">8.2. 単純な方式とその問題</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">8.2.1. ベースレジスタとリミットレジスタ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">8.2.2. セグメンテーション</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">8.3. ページング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">8.3.1. アドレス変換</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">8.3.2. ページテーブルのエントリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">8.3.3. 多段のページテーブル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tlb">8.3.4. TLB</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">8.4. 仮想記憶</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">8.4.1. デマンドページング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">8.4.2. ページ置換</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">8.4.3. ワーキングセットとスラッシング</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">8.5. ページングの応用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id15">8.5.1. コピーオンライト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">8.5.2. 共有ライブラリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">8.5.3. メモリマップトファイル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id18">8.6. メモリの割り当てとメモリ不足</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id19">8.6.1. ユーザー空間でのメモリの割り当て</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id20">8.6.2. メモリの使用量の指標</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#oom-killer">8.6.3. オーバーコミットと OOM Killer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id21">8.7. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="09_storage_and_filesystem.html">9. ストレージとファイルシステム</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id2">9.1. ストレージ装置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id3">9.1.1. ブロックデバイス</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id4">9.2. ファイルとディレクトリ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id5">9.2.1. ファイル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id6">9.2.2. ディレクトリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id7">9.2.3. リンク</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id8">9.3. ファイルディスクリプタ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id9">9.4. ファイルシステムの構造</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id10">9.4.1. データの配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id11">9.5. ページキャッシュと書き込み</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id12">9.6. クラッシュへの備え</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id13">9.6.1. ジャーナリング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id14">9.6.2. コピーオンライトのファイルシステム</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id15">9.7. 主なファイルシステム</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id16">9.7.1. 仮想ファイルシステム</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id17">9.8. アクセス権</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id18">9.9. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="10_io_and_device.html">10. 入出力とデバイス</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#id2">10.1. デバイスドライバ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#id3">10.1.1. デバイスの種類</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#cpu">10.2. CPU と装置のやり取り</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#id4">10.3. 入出力スケジューリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#id5">10.4. アプリケーションから見た入出力の方式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#i-o">10.4.1. ブロッキング I/O</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#id6">10.4.2. ノンブロッキング I/O</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#id7">10.4.3. I/O 多重化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#id8">10.4.4. 非同期 I/O</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#id9">10.5. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="11_network.html">11. OS とネットワーク</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id1">11.1. ソケット</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#tcp">11.1.1. TCP のサーバーとクライアント</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#id2">11.1.2. ポート番号</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id3">11.2. カーネルの中のプロトコルスタック</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#id4">11.2.1. 送信の流れ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#id5">11.2.2. 受信の流れ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#id6">11.2.3. ループバック</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id7">11.3. ネットワークの高速化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id8">11.4. 通信の状態を観察する</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id9">11.5. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="12_security.html">12. セキュリティと保護</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id2">12.1. 保護とセキュリティの目標</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id3">12.2. 利用者と権限</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id4">12.2.1. 利用者の識別と認証</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id5">12.2.2. 管理者と最小権限の原則</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id6">12.3. アクセス制御</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id7">12.4. 攻撃と防御機構</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id8">12.4.1. バッファオーバーフロー</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id9">12.4.2. 防御機構</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id10">12.4.3. カーネルの保護</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id11">12.5. サンドボックス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id12">12.6. 起動の検証</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id13">12.7. 更新の重要性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id14">12.8. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="13_virtualization.html">13. 仮想化とコンテナ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id2">13.1. 仮想化とは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id3">13.2. ハイパーバイザー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#cpu">13.2.1. CPU の仮想化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#id4">13.2.2. メモリの仮想化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#id5">13.2.3. 入出力の仮想化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id6">13.3. コンテナ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#namespace">13.3.1. namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#cgroup">13.3.2. cgroup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#id7">13.3.3. コンテナイメージ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id8">13.4. 仮想マシンとコンテナの比較</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id9">13.5. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="14_practice.html">14. OS を観察する</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id1">14.1. 観察の道具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id2">14.2. プロセスを観察する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#ps-top">14.2.1. ps と top</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#proc">14.2.2. /proc ファイルシステム</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id3">14.3. システムの概況を観察する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#id4">14.3.1. ロードアベレージ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#vmstat">14.3.2. vmstat</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id5">14.4. 性能の問題を切り分ける</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#use">14.4.1. USE メソッド</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#id6">14.4.2. よくある症状と原因</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id7">14.5. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="15_summary.html">15. まとめ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="15_summary.html#id2">15.1. 各章の要点</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_summary.html#id3">15.2. 本書を貫く考え方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_summary.html#id4">15.3. 次に学ぶべきこと</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_references.html">参考文献</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#os">OS の教科書</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#linux-windows">Linux と Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id2">歴史</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id3">論文</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#web">Web サイト</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">サンプルコード一覧</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="appendix_examples.html#id2">コードの品質について</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_examples.html#id3">実行時の注意</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">オペレーティングシステム入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">8. </span>メモリ管理</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">8. </span>メモリ管理<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>この章では、OS がメモリをどのように管理しているかを説明します。中心となるのは、各プロセスに独立したアドレス空間を与えるページングと、物理メモリよりも大きなメモリがあるように見せる仮想記憶です。</p>
+<section id="id2">
+<h2><span class="section-number">8.1. </span>物理アドレスと論理アドレス<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>メモリ上の各バイトには、場所を示す番号であるアドレスが付いています。メモリの装置そのものに付いているアドレスを物理アドレスと呼びます。</p>
+<p>これに対して、プログラムが扱うアドレスを論理アドレス（仮想アドレス）と呼びます。現代の OS では、プロセスが使うアドレスはすべて論理アドレスで、CPU がメモリにアクセスするたびに、MMU（Memory Management Unit：メモリ管理ユニット）と呼ばれるハードウェアが論理アドレスを物理アドレスに変換します。</p>
+<p>論理アドレスと物理アドレスを分けることで、次のことが可能になります。</p>
+<ul class="simple">
+<li><p>各プロセスが、他のプロセスと重ならない独立したアドレス空間を持てる。</p></li>
+<li><p>プロセスのメモリを、物理メモリ上のどこにでも配置できる。</p></li>
+<li><p>プロセスのメモリの一部を、物理メモリではなくストレージに置いておける。</p></li>
+<li><p>プロセスがアクセスしてよい範囲を、ハードウェアで強制できる。</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2><span class="section-number">8.2. </span>単純な方式とその問題<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>ページングを説明する前に、より単純な方式とその問題を見ておきます。</p>
+<section id="id4">
+<h3><span class="section-number">8.2.1. </span>ベースレジスタとリミットレジスタ<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>最も単純な方式は、各プロセスに物理メモリの連続した領域を割り当て、CPU のベースレジスタに領域の先頭の物理アドレスを、リミットレジスタに領域の大きさを設定するものです。MMU は、論理アドレスがリミットより小さいことを確かめてから、ベースを足して物理アドレスを求めます。</p>
+<p>この方式でも、プロセス間の保護と配置の自由は実現できます。しかし、プロセスごとに連続した領域が必要なため、プロセスの起動と終了を繰り返すうちに、物理メモリに小さな空き領域が点在するようになります。空き領域の合計は十分あるのに、連続した大きな領域が確保できない状態を外部断片化と呼びます。</p>
+</section>
+<section id="id5">
+<h3><span class="section-number">8.2.2. </span>セグメンテーション<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>セグメンテーションは、プロセスのアドレス空間を、コード、データ、スタックなどの意味のある単位（セグメント）に分け、セグメントごとにベースとリミットを持たせる方式です。セグメントごとにアクセス権を設定できる利点がありますが、セグメントの大きさがまちまちなので、外部断片化の問題は残ります。</p>
+<p>x86 の CPU はセグメンテーションの機能を持っていますが、現在の 64 ビットの OS ではほとんど使われておらず、メモリ管理は次に述べるページングで行われています。</p>
+</section>
+</section>
+<section id="id6">
+<h2><span class="section-number">8.3. </span>ページング<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>ページングは、論理アドレス空間と物理メモリを、どちらも同じ大きさの小さなブロックに分けて管理する方式です。論理アドレス空間のブロックをページ、物理メモリのブロックをページフレーム（または単にフレーム）と呼びます。ページの大きさは、多くの場合 4 KiB です。</p>
+<p>ページングでは、どのページをどのフレームに置くかを自由に決められます。プロセスのページは物理メモリ上で連続している必要がないので、外部断片化が起きません。ただし、割り当ての単位がページなので、プロセスが必要とするメモリがページの大きさで割り切れない場合、最後のページの一部が無駄になります。これを内部断片化と呼びます。</p>
+<section id="id7">
+<h3><span class="section-number">8.3.1. </span>アドレス変換<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>ページの大きさを <span class="math notranslate nohighlight">\(2^k\)</span> バイトとすると、論理アドレスは上位のページ番号と、下位 <span class="math notranslate nohighlight">\(k\)</span> ビットのページ内オフセットに分けられます。ページ番号からフレーム番号への対応は、プロセスごとに用意されたページテーブルに記録されています。</p>
+<figure class="align-default" id="id22">
+<a class="reference internal image-reference" href="_images/paging.svg"><img alt="仮想アドレスのページ番号をページテーブルでフレーム番号に変換し、オフセットはそのまま使う" src="_images/paging.svg" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">図 8.1 </span><span class="caption-text">ページングによるアドレス変換</span><a class="headerlink" href="#id22" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>ページの大きさを <span class="math notranslate nohighlight">\(S\)</span>、ページ番号を <span class="math notranslate nohighlight">\(p\)</span>、オフセットを <span class="math notranslate nohighlight">\(d\)</span>、ページ <span class="math notranslate nohighlight">\(p\)</span> が置かれているフレームの番号を <span class="math notranslate nohighlight">\(f(p)\)</span> とすると、論理アドレス <span class="math notranslate nohighlight">\(v\)</span> と物理アドレス <span class="math notranslate nohighlight">\(r\)</span> の関係は次のとおりです。</p>
+<div class="math notranslate nohighlight">
+\[p = \left\lfloor \frac{v}{S} \right\rfloor, \qquad d = v \bmod S, \qquad r = f(p) \times S + d\]</div>
+<p><span class="math notranslate nohighlight">\(S\)</span> が 2 のべき乗なので、この計算はビットのシフトとマスクだけで行えます。</p>
+<p>サンプルコード <a class="reference download internal" download="" href="_downloads/3c8925917adb191c85a019d24bef2500/address_translation.py"><code class="xref download docutils literal notranslate"><span class="pre">address_translation.py</span></code></a> は、ページの大きさを 4 KiB とし、小さなページテーブルを使ってアドレスを変換するものです。</p>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-number">リスト 8.1 </span><span class="caption-text">address_translation.py</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;ページテーブルによるアドレス変換のサンプル。</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">ページサイズを 4 KiB とし、仮想アドレスを</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="sd">* ページ番号 (上位ビット)</span>
+<span class="linenos"> 6</span><span class="sd">* ページ内オフセット (下位 12 ビット)</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="sd">に分けて、ページテーブルで物理アドレスに変換します。</span>
+<span class="linenos"> 9</span><span class="sd">ページテーブルに載っていないページを参照するとページフォールトになります。</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="sd">実行方法::</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="sd">    python address_translation.py</span>
+<span class="linenos">14</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="n">PAGE_SIZE</span> <span class="o">=</span> <span class="mi">4096</span>  <span class="c1"># 4 KiB</span>
+<span class="linenos">17</span><span class="n">OFFSET_BITS</span> <span class="o">=</span> <span class="mi">12</span>  <span class="c1"># 4096 = 2 ** 12</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="c1"># ページテーブル: ページ番号 → フレーム番号</span>
+<span class="linenos">20</span><span class="c1"># 載っていないページは物理メモリに割り当てられていない</span>
+<span class="linenos">21</span><span class="n">PAGE_TABLE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">22</span>    <span class="mi">0</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+<span class="linenos">23</span>    <span class="mi">1</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+<span class="linenos">24</span>    <span class="mi">2</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+<span class="linenos">25</span>    <span class="mi">4</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="linenos">26</span><span class="p">}</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="k">class</span><span class="w"> </span><span class="nc">PageFault</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="linenos">30</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ページテーブルにないページを参照したときの例外。&quot;&quot;&quot;</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="k">def</span><span class="w"> </span><span class="nf">translate</span><span class="p">(</span><span class="n">virtual</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">34</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;仮想アドレスを物理アドレスに変換する。&quot;&quot;&quot;</span>
+<span class="linenos">35</span>    <span class="n">page</span> <span class="o">=</span> <span class="n">virtual</span> <span class="o">&gt;&gt;</span> <span class="n">OFFSET_BITS</span>  <span class="c1"># 上位ビットがページ番号</span>
+<span class="linenos">36</span>    <span class="n">offset</span> <span class="o">=</span> <span class="n">virtual</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">PAGE_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># 下位 12 ビットがオフセット</span>
+<span class="linenos">37</span>    <span class="k">if</span> <span class="n">page</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">PAGE_TABLE</span><span class="p">:</span>
+<span class="linenos">38</span>        <span class="k">raise</span> <span class="n">PageFault</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ページ </span><span class="si">{</span><span class="n">page</span><span class="si">}</span><span class="s2"> は物理メモリにありません&quot;</span><span class="p">)</span>
+<span class="linenos">39</span>    <span class="n">frame</span> <span class="o">=</span> <span class="n">PAGE_TABLE</span><span class="p">[</span><span class="n">page</span><span class="p">]</span>
+<span class="linenos">40</span>    <span class="k">return</span> <span class="p">(</span><span class="n">frame</span> <span class="o">&lt;&lt;</span> <span class="n">OFFSET_BITS</span><span class="p">)</span> <span class="o">|</span> <span class="n">offset</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span>
+<span class="linenos">43</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">44</span>    <span class="n">addresses</span> <span class="o">=</span> <span class="p">[</span><span class="mh">0x0000</span><span class="p">,</span> <span class="mh">0x0ABC</span><span class="p">,</span> <span class="mh">0x1004</span><span class="p">,</span> <span class="mh">0x2FFF</span><span class="p">,</span> <span class="mh">0x3000</span><span class="p">,</span> <span class="mh">0x4010</span><span class="p">]</span>
+<span class="linenos">45</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;仮想アドレス  ページ  オフセット  物理アドレス&quot;</span><span class="p">)</span>
+<span class="linenos">46</span>    <span class="k">for</span> <span class="n">virtual</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">:</span>
+<span class="linenos">47</span>        <span class="n">page</span> <span class="o">=</span> <span class="n">virtual</span> <span class="o">&gt;&gt;</span> <span class="n">OFFSET_BITS</span>
+<span class="linenos">48</span>        <span class="n">offset</span> <span class="o">=</span> <span class="n">virtual</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">PAGE_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos">49</span>        <span class="k">try</span><span class="p">:</span>
+<span class="linenos">50</span>            <span class="n">physical</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;0x</span><span class="si">{</span><span class="n">translate</span><span class="p">(</span><span class="n">virtual</span><span class="p">)</span><span class="si">:</span><span class="s2">05X</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="linenos">51</span>        <span class="k">except</span> <span class="n">PageFault</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<span class="linenos">52</span>            <span class="n">physical</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;ページフォールト (</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">)&quot;</span>
+<span class="linenos">53</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;     0x</span><span class="si">{</span><span class="n">virtual</span><span class="si">:</span><span class="s2">05X</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">page</span><span class="si">:</span><span class="s2">&gt;6</span><span class="si">}</span><span class="s2">  0x</span><span class="si">{</span><span class="n">offset</span><span class="si">:</span><span class="s2">03X</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="linenos">54</span>              <span class="sa">f</span><span class="s2">&quot;       </span><span class="si">{</span><span class="n">physical</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">55</span>
+<span class="linenos">56</span>
+<span class="linenos">57</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">58</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。ページテーブルに載っていないページ 3 へのアクセスは、ページフォールトになります。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>仮想アドレス  ページ  オフセット  物理アドレス
+     0x00000       0  0x000       0x05000
+     0x00ABC       0  0xABC       0x05ABC
+     0x01004       1  0x004       0x02004
+     0x02FFF       2  0xFFF       0x07FFF
+     0x03000       3  0x000       ページフォールト (ページ 3 は物理メモリにありません)
+     0x04010       4  0x010       0x01010
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h3><span class="section-number">8.3.2. </span>ページテーブルのエントリ<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>ページテーブルの各エントリには、フレーム番号のほかに、次のような制御用のビットが含まれています。</p>
+<table class="docutils align-default" id="id24">
+<caption><span class="caption-number">表 8.1 </span><span class="caption-text">ページテーブルのエントリの主なビット</span><a class="headerlink" href="#id24" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ビット</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>存在ビット</p></td>
+<td><p>そのページが物理メモリ上にあるかどうか。0 のページにアクセスするとページフォールトが起きる</p></td>
+</tr>
+<tr class="row-odd"><td><p>書き込み許可ビット</p></td>
+<td><p>そのページに書き込んでよいかどうか</p></td>
+</tr>
+<tr class="row-even"><td><p>ユーザービット</p></td>
+<td><p>ユーザーモードからアクセスしてよいかどうか。カーネルの領域では 0 にする</p></td>
+</tr>
+<tr class="row-odd"><td><p>実行禁止ビット</p></td>
+<td><p>そのページの内容を命令として実行してよいかどうか（x86-64 では NX ビット）</p></td>
+</tr>
+<tr class="row-even"><td><p>参照ビット</p></td>
+<td><p>そのページが最近アクセスされたかどうか。アクセスされると CPU が 1 にする</p></td>
+</tr>
+<tr class="row-odd"><td><p>ダーティビット</p></td>
+<td><p>そのページが書き換えられたかどうか。書き込まれると CPU が 1 にする</p></td>
+</tr>
+</tbody>
+</table>
+<p>これらのビットに違反するアクセス（書き込み禁止のページへの書き込みなど）があると、CPU は例外を発生させ、カーネルに制御を移します。プログラムの不具合で不正なアドレスにアクセスしたときに、UNIX 系 OS で「Segmentation fault」、Windows で「アクセス違反」と表示されるのは、この仕組みによるものです。</p>
+</section>
+<section id="id9">
+<h3><span class="section-number">8.3.3. </span>多段のページテーブル<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>64 ビットの CPU では、アドレス空間は非常に広大です。x86-64 で現在一般的に使われる 48 ビットのアドレス空間を 4 KiB のページに分けると、ページの数は <span class="math notranslate nohighlight">\(2^{48} / 2^{12} = 2^{36}\)</span> 個にもなります。エントリ 1 つを 8 バイトとすると、1 つのプロセスのページテーブルだけで 512 GiB が必要になってしまいます。</p>
+<p>実際には、プロセスが使うのはアドレス空間のごく一部です。そこで、ページテーブルを木構造にし、使っていない部分の表は作らずに済ませます。これを多段のページテーブルと呼びます。x86-64 では 4 段（より広いアドレス空間に対応した CPU では 5 段）のページテーブルが使われ、論理アドレスのページ番号の部分を 9 ビットずつに区切って、各段の表の添字として使います。</p>
+</section>
+<section id="tlb">
+<h3><span class="section-number">8.3.4. </span>TLB<a class="headerlink" href="#tlb" title="Link to this heading"></a></h3>
+<p>多段のページテーブルを使うと、1 回のメモリアクセスのために、ページテーブルを引くための複数回のメモリアクセスが必要になります。これでは性能が大きく低下してしまいます。</p>
+<p>そこで CPU は、最近使ったページ番号とフレーム番号の対応を、TLB（Translation Lookaside Buffer）と呼ばれる小さく高速なキャッシュに保存しています。プログラムのメモリアクセスには局所性（同じ場所や近くの場所に繰り返しアクセスする傾向）があるため、TLB には数十から数千個程度のエントリしかないにもかかわらず、ほとんどのアドレス変換は TLB だけで済みます。</p>
+<p>TLB の内容はプロセスのアドレス空間に固有なので、プロセスを切り替えると、基本的には TLB の内容が使えなくなります。これが「<a class="reference internal" href="07_scheduling.html"><span class="doc">CPU スケジューリング</span></a>」で述べたコンテキストスイッチの間接的な費用の一因です。</p>
+<p>また、大量のメモリを使うプログラムでは、ページの大きさを 2 MiB や 1 GiB にした大きなページ（ヒュージページ）を使うと、少ない TLB のエントリで広い範囲をカバーでき、性能が向上することがあります。</p>
+</section>
+</section>
+<section id="id10">
+<h2><span class="section-number">8.4. </span>仮想記憶<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>ページテーブルの存在ビットを使うと、プロセスのページのすべてを物理メモリに置いておく必要がなくなります。使われていないページはストレージ上に置いておき、アクセスされたときに初めて物理メモリに読み込めばよいのです。このように、物理メモリとストレージを組み合わせて、物理メモリよりも大きなメモリがあるように見せる仕組みを仮想記憶と呼びます。</p>
+<section id="id11">
+<h3><span class="section-number">8.4.1. </span>デマンドページング<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>必要になったときに初めてページを読み込む方式を、デマンドページングと呼びます。存在ビットが 0 のページにアクセスすると、次の流れで処理が進みます。</p>
+<ol class="arabic simple">
+<li><p>CPU がページフォールトの例外を発生させ、カーネルに制御が移る。</p></li>
+<li><p>カーネルは、そのアクセスが正当かどうか（プロセスのアドレス空間の有効な範囲内か）を確かめる。正当でなければ、プロセスを強制終了させる。</p></li>
+<li><p>カーネルは空いているフレームを探す。空きがなければ、後述するページ置換によってフレームを空ける。</p></li>
+<li><p>ストレージからページの内容をフレームに読み込む。読み込みの間、プロセスは待ちの状態になる。</p></li>
+<li><p>ページテーブルを更新し、存在ビットを 1 にする。</p></li>
+<li><p>ページフォールトを起こした命令を、最初からやり直す。</p></li>
+</ol>
+<p>プロセスから見ると、ページフォールトは何事もなかったかのように処理され、ただメモリアクセスに時間がかかっただけに見えます。</p>
+<p>ページフォールトには、ストレージからの読み込みを伴うメジャーフォールトと、伴わないマイナーフォールトがあります。マイナーフォールトは、例えば初めて使うメモリに 0 で埋めたフレームを割り当てる場合や、他のプロセスがすでに読み込んでいる共有ライブラリのページを対応付けるだけの場合に起きます。メジャーフォールトはストレージへのアクセスを伴うため、マイナーフォールトに比べて桁違いに時間がかかります。</p>
+</section>
+<section id="id12">
+<h3><span class="section-number">8.4.2. </span>ページ置換<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>物理メモリに空きがないときにページフォールトが起きると、どれかのページを物理メモリから追い出す必要があります。追い出すページのダーティビットが 1 なら、その内容をストレージのスワップ領域（Windows ではページファイル）に書き出してから、フレームを再利用します。どのページを追い出すかを決める方法を、ページ置換アルゴリズムと呼びます。</p>
+<table class="docutils align-default" id="id25">
+<caption><span class="caption-number">表 8.2 </span><span class="caption-text">主なページ置換アルゴリズム</span><a class="headerlink" href="#id25" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 50.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>アルゴリズム</p></th>
+<th class="head"><p>追い出すページ</p></th>
+<th class="head"><p>特徴</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>OPT</p></td>
+<td><p>今後最も長く参照されないページ</p></td>
+<td><p>ページフォールトが最小になるが、将来の参照を知る必要があるため実現できない。他の方式の評価の基準に使う</p></td>
+</tr>
+<tr class="row-odd"><td><p>FIFO</p></td>
+<td><p>最も古くに読み込んだページ</p></td>
+<td><p>実装は単純だが、よく使われるページも追い出してしまう</p></td>
+</tr>
+<tr class="row-even"><td><p>LRU</p></td>
+<td><p>最も長く参照されていないページ</p></td>
+<td><p>過去の参照から将来を予測するもので、OPT に近い性能が出やすい。ただし、すべての参照を記録するのは費用が大きい</p></td>
+</tr>
+<tr class="row-odd"><td><p>クロック</p></td>
+<td><p>参照ビットが 0 のページ</p></td>
+<td><p>参照ビットを使って LRU を近似する。実際の OS で広く使われる</p></td>
+</tr>
+</tbody>
+</table>
+<p>クロックアルゴリズムは、フレームを環状に並べ、時計の針のようにその上を回るポインタを使います。ページを追い出す必要が生じたら、針の指すフレームの参照ビットを調べ、1 なら 0 にして（もう一度だけ猶予を与えて）針を進め、0 ならそのページを追い出します。参照ビットは CPU がアクセスのたびに自動的に設定するので、ソフトウェアの費用はわずかです。</p>
+<p>サンプルコード <a class="reference download internal" download="" href="_downloads/530b6cdb0e0fd0e2feb91c76e3cc2fdd/page_replacement_sim.py"><code class="xref download docutils literal notranslate"><span class="pre">page_replacement_sim.py</span></code></a> は、同じ参照列に対して 4 つのアルゴリズムのページフォールトの回数を比べるものです。</p>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-number">リスト 8.2 </span><span class="caption-text">page_replacement_sim.py</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="sd">&quot;&quot;&quot;ページ置換アルゴリズムのシミュレーター。</span>
+<span class="linenos">  2</span>
+<span class="linenos">  3</span><span class="sd">プログラムが参照するページ番号の列 (参照列) と、使える物理メモリの</span>
+<span class="linenos">  4</span><span class="sd">枠 (フレーム) の数を与え、次のアルゴリズムでページフォールトが</span>
+<span class="linenos">  5</span><span class="sd">何回起きるかを比べます。</span>
+<span class="linenos">  6</span>
+<span class="linenos">  7</span><span class="sd">* FIFO: 最も古くに読み込んだページを追い出す</span>
+<span class="linenos">  8</span><span class="sd">* LRU: 最も長く参照されていないページを追い出す</span>
+<span class="linenos">  9</span><span class="sd">* クロック: 参照ビットを使って LRU を近似する</span>
+<span class="linenos"> 10</span><span class="sd">* OPT: 今後最も長く参照されないページを追い出す (理論上の最適解)</span>
+<span class="linenos"> 11</span>
+<span class="linenos"> 12</span><span class="sd">実行方法::</span>
+<span class="linenos"> 13</span>
+<span class="linenos"> 14</span><span class="sd">    python page_replacement_sim.py</span>
+<span class="linenos"> 15</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 16</span>
+<span class="linenos"> 17</span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">deque</span>
+<span class="linenos"> 18</span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="linenos"> 19</span>
+<span class="linenos"> 20</span><span class="c1"># 参照列とフレーム数を受け取り、ページフォールトの回数を返す関数の型</span>
+<span class="linenos"> 21</span><span class="n">Algorithm</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span>
+<span class="linenos"> 22</span>
+<span class="linenos"> 23</span>
+<span class="linenos"> 24</span><span class="k">def</span><span class="w"> </span><span class="nf">fifo</span><span class="p">(</span><span class="n">references</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos"> 25</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;FIFO でのページフォールトの回数を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 26</span>    <span class="n">memory</span><span class="p">:</span> <span class="n">deque</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+<span class="linenos"> 27</span>    <span class="n">faults</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos"> 28</span>    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">references</span><span class="p">:</span>
+<span class="linenos"> 29</span>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">memory</span><span class="p">:</span>
+<span class="linenos"> 30</span>            <span class="k">continue</span>
+<span class="linenos"> 31</span>        <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 32</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">memory</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+<span class="linenos"> 33</span>            <span class="n">memory</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>  <span class="c1"># 最も古くに読み込んだページを追い出す</span>
+<span class="linenos"> 34</span>        <span class="n">memory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+<span class="linenos"> 35</span>    <span class="k">return</span> <span class="n">faults</span>
+<span class="linenos"> 36</span>
+<span class="linenos"> 37</span>
+<span class="linenos"> 38</span><span class="k">def</span><span class="w"> </span><span class="nf">lru</span><span class="p">(</span><span class="n">references</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos"> 39</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;LRU でのページフォールトの回数を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 40</span>    <span class="c1"># 参照された順に並べ、先頭が最も長く参照されていないページになる</span>
+<span class="linenos"> 41</span>    <span class="n">memory</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+<span class="linenos"> 42</span>    <span class="n">faults</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos"> 43</span>    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">references</span><span class="p">:</span>
+<span class="linenos"> 44</span>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">memory</span><span class="p">:</span>
+<span class="linenos"> 45</span>            <span class="n">memory</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>  <span class="c1"># 最近参照されたので末尾へ</span>
+<span class="linenos"> 46</span>            <span class="k">continue</span>
+<span class="linenos"> 47</span>        <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 48</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">memory</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+<span class="linenos"> 49</span>            <span class="n">memory</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos"> 50</span>        <span class="n">memory</span><span class="p">[</span><span class="n">page</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos"> 51</span>    <span class="k">return</span> <span class="n">faults</span>
+<span class="linenos"> 52</span>
+<span class="linenos"> 53</span>
+<span class="linenos"> 54</span><span class="k">def</span><span class="w"> </span><span class="nf">clock</span><span class="p">(</span><span class="n">references</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos"> 55</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;クロックアルゴリズムでのページフォールトの回数を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 56</span>    <span class="n">pages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">frames</span>  <span class="c1"># 各フレームのページ</span>
+<span class="linenos"> 57</span>    <span class="n">referenced</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">frames</span>  <span class="c1"># 各フレームの参照ビット</span>
+<span class="linenos"> 58</span>    <span class="n">hand</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># 時計の針 (次に調べるフレーム)</span>
+<span class="linenos"> 59</span>    <span class="n">faults</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos"> 60</span>    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">references</span><span class="p">:</span>
+<span class="linenos"> 61</span>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">pages</span><span class="p">:</span>
+<span class="linenos"> 62</span>            <span class="n">referenced</span><span class="p">[</span><span class="n">pages</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">page</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos"> 63</span>            <span class="k">continue</span>
+<span class="linenos"> 64</span>        <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 65</span>        <span class="c1"># 参照ビットが 0 のフレームが見つかるまで針を進める</span>
+<span class="linenos"> 66</span>        <span class="k">while</span> <span class="n">referenced</span><span class="p">[</span><span class="n">hand</span><span class="p">]:</span>
+<span class="linenos"> 67</span>            <span class="n">referenced</span><span class="p">[</span><span class="n">hand</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># 1 なら 0 にして猶予を与える</span>
+<span class="linenos"> 68</span>            <span class="n">hand</span> <span class="o">=</span> <span class="p">(</span><span class="n">hand</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">frames</span>
+<span class="linenos"> 69</span>        <span class="n">pages</span><span class="p">[</span><span class="n">hand</span><span class="p">]</span> <span class="o">=</span> <span class="n">page</span>
+<span class="linenos"> 70</span>        <span class="n">referenced</span><span class="p">[</span><span class="n">hand</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos"> 71</span>        <span class="n">hand</span> <span class="o">=</span> <span class="p">(</span><span class="n">hand</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">frames</span>
+<span class="linenos"> 72</span>    <span class="k">return</span> <span class="n">faults</span>
+<span class="linenos"> 73</span>
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span><span class="k">def</span><span class="w"> </span><span class="nf">optimal</span><span class="p">(</span><span class="n">references</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos"> 76</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;OPT でのページフォールトの回数を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 77</span>    <span class="n">memory</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 78</span>    <span class="n">faults</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos"> 79</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">page</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">references</span><span class="p">):</span>
+<span class="linenos"> 80</span>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">memory</span><span class="p">:</span>
+<span class="linenos"> 81</span>            <span class="k">continue</span>
+<span class="linenos"> 82</span>        <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 83</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">memory</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">frames</span><span class="p">:</span>
+<span class="linenos"> 84</span>            <span class="n">memory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+<span class="linenos"> 85</span>            <span class="k">continue</span>
+<span class="linenos"> 86</span>        <span class="n">future</span> <span class="o">=</span> <span class="n">references</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+<span class="linenos"> 87</span>
+<span class="linenos"> 88</span>        <span class="k">def</span><span class="w"> </span><span class="nf">next_use</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos"> 89</span><span class="w">            </span><span class="sd">&quot;&quot;&quot;次に参照される位置を返す。参照されないなら無限大とみなす。&quot;&quot;&quot;</span>
+<span class="linenos"> 90</span>            <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">future</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+<span class="linenos"> 91</span>
+<span class="linenos"> 92</span>        <span class="n">memory</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">memory</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">next_use</span><span class="p">))</span>
+<span class="linenos"> 93</span>        <span class="n">memory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+<span class="linenos"> 94</span>    <span class="k">return</span> <span class="n">faults</span>
+<span class="linenos"> 95</span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span><span class="n">ALGORITHMS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Algorithm</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos"> 98</span>    <span class="s2">&quot;FIFO&quot;</span><span class="p">:</span> <span class="n">fifo</span><span class="p">,</span>
+<span class="linenos"> 99</span>    <span class="s2">&quot;LRU&quot;</span><span class="p">:</span> <span class="n">lru</span><span class="p">,</span>
+<span class="linenos">100</span>    <span class="s2">&quot;クロック&quot;</span><span class="p">:</span> <span class="n">clock</span><span class="p">,</span>
+<span class="linenos">101</span>    <span class="s2">&quot;OPT&quot;</span><span class="p">:</span> <span class="n">optimal</span><span class="p">,</span>
+<span class="linenos">102</span><span class="p">}</span>
+<span class="linenos">103</span>
+<span class="linenos">104</span>
+<span class="linenos">105</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">106</span>    <span class="n">references</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="linenos">107</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;参照列: </span><span class="si">{</span><span class="n">references</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">108</span>    <span class="k">for</span> <span class="n">frames</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+<span class="linenos">109</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;フレーム数 </span><span class="si">{</span><span class="n">frames</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+<span class="linenos">110</span>        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">algorithm</span> <span class="ow">in</span> <span class="n">ALGORITHMS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="linenos">111</span>            <span class="n">faults</span> <span class="o">=</span> <span class="n">algorithm</span><span class="p">(</span><span class="n">references</span><span class="p">,</span> <span class="n">frames</span><span class="p">)</span>
+<span class="linenos">112</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ページフォールト </span><span class="si">{</span><span class="n">faults</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> 回: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">113</span>
+<span class="linenos">114</span>    <span class="c1"># FIFO でフレームを増やすとかえってページフォールトが増える例</span>
+<span class="linenos">115</span>    <span class="n">belady</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+<span class="linenos">116</span>    <span class="nb">print</span><span class="p">()</span>
+<span class="linenos">117</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;参照列: </span><span class="si">{</span><span class="n">belady</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">118</span>    <span class="k">for</span> <span class="n">frames</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+<span class="linenos">119</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  FIFO, フレーム数 </span><span class="si">{</span><span class="n">frames</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">fifo</span><span class="p">(</span><span class="n">belady</span><span class="p">,</span><span class="w"> </span><span class="n">frames</span><span class="p">)</span><span class="si">}</span><span class="s2"> 回&quot;</span><span class="p">)</span>
+<span class="linenos">120</span>
+<span class="linenos">121</span>
+<span class="linenos">122</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">123</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>参照列: [7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1]
+フレーム数 3:
+  ページフォールト 15 回: FIFO
+  ページフォールト 12 回: LRU
+  ページフォールト 14 回: クロック
+  ページフォールト  9 回: OPT
+フレーム数 4:
+  ページフォールト 10 回: FIFO
+  ページフォールト  8 回: LRU
+  ページフォールト  9 回: クロック
+  ページフォールト  8 回: OPT
+
+参照列: [1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5]
+  FIFO, フレーム数 3: 9 回
+  FIFO, フレーム数 4: 10 回
+</pre></div>
+</div>
+<p>OPT が最も少なく、LRU とクロックがそれに続き、FIFO が最も多いという結果になっています。</p>
+<p>最後の結果に注目してください。FIFO では、フレーム数を 3 から 4 に増やしたのに、ページフォールトの回数が 9 回から 10 回に増えています。この直感に反する現象はビレイディの異常（Belady's anomaly）と呼ばれます。LRU や OPT では、フレーム数を増やしてページフォールトが増えることはありません。</p>
+</section>
+<section id="id13">
+<h3><span class="section-number">8.4.3. </span>ワーキングセットとスラッシング<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>プロセスが一定の期間にアクセスするページの集合を、ワーキングセットと呼びます。プロセスのワーキングセットが物理メモリに収まっていれば、ページフォールトはまれにしか起きません。</p>
+<p>ところが、実行中のプロセスのワーキングセットの合計が物理メモリの容量を超えると、あるプロセスのページを追い出した直後に、そのページが再び必要になるという事態が頻発します。こうなると、システムはページの読み書きにほとんどの時間を費やし、計算がほとんど進まなくなります。この状態をスラッシングと呼びます。メモリが不足したときに、計算機が極端に遅くなり、ストレージへのアクセスが止まらなくなるのは、スラッシングが起きているためです。</p>
+<p>スラッシングを解消するには、実行するプロセスの数を減らすか、物理メモリを増やすしかありません。</p>
+</section>
+</section>
+<section id="id14">
+<h2><span class="section-number">8.5. </span>ページングの応用<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<p>ページングと仮想記憶の仕組みは、メモリの節約や高速化のためのさまざまな工夫に応用されています。</p>
+<section id="id15">
+<h3><span class="section-number">8.5.1. </span>コピーオンライト<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<p>「<a class="reference internal" href="05_process.html"><span class="doc">プロセス</span></a>」で見たように、UNIX 系 OS の <code class="docutils literal notranslate"><span class="pre">fork</span></code> は親プロセスのメモリを複製します。実際には、カーネルはメモリの内容をコピーせず、親と子のページテーブルが同じフレームを指すようにし、両方を書き込み禁止にします。どちらかがページに書き込もうとすると例外が起き、カーネルはそのときに初めてそのページだけをコピーして、それぞれに書き込みを許可します。この方式をコピーオンライト（Copy-on-Write）と呼びます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">fork</span></code> の直後に <code class="docutils literal notranslate"><span class="pre">exec</span></code> を呼ぶ場合、ほとんどのページは一度もコピーされずに済みます。</p>
+</section>
+<section id="id16">
+<h3><span class="section-number">8.5.2. </span>共有ライブラリ<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>C 標準ライブラリのような共有ライブラリのコードは、多数のプロセスで使われます。OS は、共有ライブラリのコードを物理メモリに 1 つだけ置き、それを使うすべてのプロセスのページテーブルから同じフレームを指すようにしています。コードの領域は書き込み禁止なので、共有しても問題は起きません。</p>
+</section>
+<section id="id17">
+<h3><span class="section-number">8.5.3. </span>メモリマップトファイル<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<p>メモリマップトファイルは、ファイルの内容をプロセスのアドレス空間に対応付け、メモリへのアクセスとしてファイルを読み書きする仕組みです。UNIX 系 OS では <code class="docutils literal notranslate"><span class="pre">mmap</span></code> システムコールで、Windows では <code class="docutils literal notranslate"><span class="pre">CreateFileMapping</span></code> 関数と <code class="docutils literal notranslate"><span class="pre">MapViewOfFile</span></code> 関数で使えます。</p>
+<p>対応付けた領域に初めてアクセスすると、ページフォールトをきっかけにファイルの内容が読み込まれます。書き換えたページは、カーネルによって適当なときにファイルに書き戻されます。プログラムの実行ファイル自体も、この仕組みでメモリに対応付けられて実行されています。</p>
+<p>サンプルコード <a class="reference download internal" download="" href="_downloads/9c58de4faf4a1b035bfc149791f2548f/mmap_example.py"><code class="xref download docutils literal notranslate"><span class="pre">mmap_example.py</span></code></a> は、ファイルをメモリに対応付け、メモリを書き換えることでファイルの内容を変更するものです。</p>
+<div class="literal-block-wrapper docutils container" id="id27">
+<div class="code-block-caption"><span class="caption-number">リスト 8.3 </span><span class="caption-text">mmap_example.py</span><a class="headerlink" href="#id27" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;メモリマップトファイルのサンプル。</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">ファイルをメモリ空間に対応付け (マップし)、bytearray のように</span>
+<span class="linenos"> 4</span><span class="sd">添字で読み書きします。メモリへの書き込みは OS によってファイルに</span>
+<span class="linenos"> 5</span><span class="sd">反映されるので、read や write を呼ばずにファイルを更新できます。</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="sd">実行方法::</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">    python mmap_example.py</span>
+<span class="linenos">10</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="kn">import</span><span class="w"> </span><span class="nn">mmap</span>
+<span class="linenos">13</span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="linenos">14</span><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">18</span>    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">directory</span><span class="p">:</span>
+<span class="linenos">19</span>        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">&quot;data.txt&quot;</span><span class="p">)</span>
+<span class="linenos">20</span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="linenos">21</span>            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;hello, operating system!&quot;</span><span class="p">)</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;r+b&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="linenos">24</span>            <span class="c1"># ファイル全体 (長さ 0 を指定) をメモリにマップする</span>
+<span class="linenos">25</span>            <span class="k">with</span> <span class="n">mmap</span><span class="o">.</span><span class="n">mmap</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span> <span class="k">as</span> <span class="n">memory</span><span class="p">:</span>
+<span class="linenos">26</span>                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;マップした長さ : </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">memory</span><span class="p">)</span><span class="si">}</span><span class="s2"> バイト&quot;</span><span class="p">)</span>
+<span class="linenos">27</span>                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;先頭 5 バイト  : </span><span class="si">{</span><span class="n">memory</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">28</span>                <span class="c1"># メモリを書き換えるだけで、ファイルの内容が変わる</span>
+<span class="linenos">29</span>                <span class="n">memory</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;HELLO&quot;</span>
+<span class="linenos">30</span>                <span class="n">memory</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>  <span class="c1"># 変更をファイルに書き戻す</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span>        <span class="c1"># 通常のファイル読み込みで、変更が反映されたことを確かめる</span>
+<span class="linenos">33</span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="linenos">34</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ファイルの内容 : </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">38</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。<code class="docutils literal notranslate"><span class="pre">read</span></code> や <code class="docutils literal notranslate"><span class="pre">write</span></code> を使わずに、ファイルの先頭 5 バイトが書き換わっていることが分かります。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>マップした長さ : 24 バイト
+先頭 5 バイト  : b&#39;hello&#39;
+ファイルの内容 : b&#39;HELLO, operating system!&#39;
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id18">
+<h2><span class="section-number">8.6. </span>メモリの割り当てとメモリ不足<a class="headerlink" href="#id18" title="Link to this heading"></a></h2>
+<section id="id19">
+<h3><span class="section-number">8.6.1. </span>ユーザー空間でのメモリの割り当て<a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<p>C 言語の <code class="docutils literal notranslate"><span class="pre">malloc</span></code> や、Python のオブジェクトの作成のたびにシステムコールを呼ぶのは費用が大きすぎます。そのため、プロセスはまとまった大きさのメモリを OS から受け取り（Linux では <code class="docutils literal notranslate"><span class="pre">brk</span></code> や <code class="docutils literal notranslate"><span class="pre">mmap</span></code> システムコール、Windows では <code class="docutils literal notranslate"><span class="pre">VirtualAlloc</span></code> 関数）、それを小さく切り分けて使います。この切り分けを担うのが、C 標準ライブラリなどに含まれるメモリアロケータです。</p>
+<p>また、OS からメモリを受け取っても、その時点では物理メモリのフレームは割り当てられていません。実際にフレームが割り当てられるのは、そのページに初めてアクセスしたとき（ページフォールトが起きたとき）です。</p>
+</section>
+<section id="id20">
+<h3><span class="section-number">8.6.2. </span>メモリの使用量の指標<a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<p>プロセスのメモリの使用量には、いくつかの異なる指標があります。</p>
+<table class="docutils align-default" id="id28">
+<caption><span class="caption-number">表 8.3 </span><span class="caption-text">プロセスのメモリの使用量の指標</span><a class="headerlink" href="#id28" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>指標</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>仮想メモリサイズ（VSZ）</p></td>
+<td><p>プロセスのアドレス空間のうち、確保済みの領域の合計。実際には使っていない領域も含む</p></td>
+</tr>
+<tr class="row-odd"><td><p>常駐セットサイズ（RSS）</p></td>
+<td><p>プロセスのページのうち、物理メモリ上にあるものの合計。共有ライブラリのように他のプロセスと共有しているページも含む</p></td>
+</tr>
+<tr class="row-even"><td><p>ワーキングセット（Windows）</p></td>
+<td><p>Windows で、プロセスのページのうち物理メモリ上にあるものの合計。RSS とほぼ同じ意味</p></td>
+</tr>
+</tbody>
+</table>
+<p>VSZ が非常に大きくても、実際に物理メモリを使っているとは限りません。また、各プロセスの RSS を単純に合計すると、共有されているページを重複して数えることになるため、実際の物理メモリの使用量よりも大きくなります。</p>
+</section>
+<section id="oom-killer">
+<h3><span class="section-number">8.6.3. </span>オーバーコミットと OOM Killer<a class="headerlink" href="#oom-killer" title="Link to this heading"></a></h3>
+<p>前述のとおり、プロセスが確保したメモリの多くは、実際にはすぐには使われません。そこで Linux は既定で、物理メモリとスワップ領域の合計を超える量のメモリの確保を、ある程度まで許します。これをオーバーコミットと呼びます。</p>
+<p>オーバーコミットのもとで、プロセスが実際にメモリを使い始め、物理メモリとスワップ領域の両方が不足すると、カーネルは OOM Killer（Out Of Memory Killer）と呼ばれる仕組みを起動します。OOM Killer は、メモリを多く使っているプロセスなどを選んで強制終了させ、メモリを空けます。コンテナや仮想マシンの上で動くプログラムが、エラーを出さずに突然終了した場合は、OOM Killer によって終了させられた可能性を疑う必要があります。</p>
+<p>Windows はオーバーコミットを行わず、確保できるメモリの総量（コミットチャージ）を物理メモリとページファイルの合計までに制限します。上限に達すると、それ以上のメモリの確保が失敗します。</p>
+</section>
+</section>
+<section id="id21">
+<h2><span class="section-number">8.7. </span>まとめ<a class="headerlink" href="#id21" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>プロセスは論理アドレスを使い、MMU がそれを物理アドレスに変換します。これにより、プロセスごとの独立したアドレス空間と保護が実現されます。</p></li>
+<li><p>ページングは、アドレス空間と物理メモリを同じ大きさのブロックに分けて対応付ける方式で、外部断片化が起きません。変換を高速にするため、TLB が使われます。</p></li>
+<li><p>仮想記憶は、使われていないページをストレージに置くことで、物理メモリよりも大きなメモリを提供します。ページ置換には、LRU を近似したクロックアルゴリズムなどが使われます。</p></li>
+<li><p>ワーキングセットが物理メモリに収まらないと、スラッシングが起きて性能が極端に低下します。</p></li>
+<li><p>ページングは、コピーオンライト、共有ライブラリ、メモリマップトファイルなどに応用されています。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="07_scheduling.html" class="btn btn-neutral float-left" title="7. CPU スケジューリング" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="09_storage_and_filesystem.html" class="btn btn-neutral float-right" title="9. ストレージとファイルシステム" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

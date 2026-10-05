@@ -1,0 +1,774 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12. 分散システム &mdash; 計算機科学入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="13. 情報セキュリティと暗号" href="ch13_security.html" />
+    <link rel="prev" title="11. データベース" href="ch11_databases.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            計算機科学入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">はじめに</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">はじめに</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_data_representation.html">1. 情報の表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_logic_circuits.html">2. 論理回路</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_computer_architecture.html">3. コンピュータの構成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_data_structures.html">4. データ構造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_algorithms.html">5. アルゴリズムと計算量</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_theory_of_computation.html">6. 計算理論</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_programming_languages.html">7. プログラミング言語処理系</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08_operating_systems.html">8. オペレーティングシステム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_concurrency_and_io.html">9. 並行処理と入出力</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_networks.html">10. コンピュータネットワーク</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_databases.html">11. データベース</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">12. 分散システム</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id3">12.1. 分散システムとは</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">12.1.1. なぜ分散させるのか</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ch12-partial-failure">12.1.2. 部分故障</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">12.1.3. 分散コンピューティングの落とし穴</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">12.1.4. 障害の種類</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">12.2. 時刻と順序</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">12.2.1. コンピュータの時刻</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ntp">12.2.2. 時計のずれと NTP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">12.2.3. 壁時計とモノトニッククロック</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">12.2.4. 時刻で順序を決める危険</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">12.2.5. 論理時計</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">12.3. レプリケーション</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id16">12.3.1. 目的とリーダ型の複製</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">12.3.2. 同期と非同期の複製</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">12.3.3. 複製の遅延が引き起こす異常</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id19">12.3.4. 一貫性のモデル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id20">12.4. 分割（シャーディング）</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id21">12.4.1. キーの範囲による分割とハッシュによる分割</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id22">12.4.2. 偏りとホットスポット</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id23">12.4.3. ノードの追加とコンシステントハッシュ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cap">12.5. CAP 定理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id24">12.5.1. 定理の内容</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id26">12.5.2. よくある誤解</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id28">12.6. 合意</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id29">12.6.1. 合意問題</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#raft">12.6.2. Raft の概要</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id32">12.6.3. 実用例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ch12-fault-tolerance">12.7. 障害に強い設計</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id34">12.7.1. タイムアウトの決め方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id35">12.7.2. 再試行と指数バックオフ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id36">12.7.3. 冪等性と冪等キー</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id37">12.7.4. 配送の保証</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id38">12.7.5. 分散トランザクションとサガ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id39">12.8. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_security.html">13. 情報セキュリティと暗号</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_application_security.html">14. 認証とアプリケーションのセキュリティ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">おわりに</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">おわりに</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">サンプルコード一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">計算機科学入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">12. </span>分散システム</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch11_databases.html" class="btn btn-neutral float-left" title="11. データベース" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch13_security.html" class="btn btn-neutral float-right" title="13. 情報セキュリティと暗号" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">12. </span>分散システム<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>Web サービスの裏側では、何台、何百台ものサーバがネットワークでつながり、1 つのシステムとして動いている。データベースは複製されて別のデータセンタにも置かれ、注文の処理は決済、在庫、配送の別々のサービスが分担する。こうしたシステムでは、1 台のコンピュータの上では起こらなかった問題が次々に現れる。メッセージは失われ、時計は合わず、一部のサーバだけが止まる。この章では、まず分散システムに特有の故障の性質を確認し、時刻と順序、レプリケーション、分割（シャーディング）、CAP 定理、合意の順に基本的な考え方を学ぶ。最後に、再試行と冪等性を中心に、障害に強いプログラムを書くための実践的な設計を扱う。ネットワークの仕組みは「<a class="reference internal" href="ch10_networks.html"><span class="doc">コンピュータネットワーク</span></a>」、トランザクションは「<a class="reference internal" href="ch11_databases.html"><span class="doc">データベース</span></a>」の知識を前提にする。全体の参考書としては <a class="reference internal" href="references.html#ddia" id="id2"><span>[DDIA]</span></a> を挙げておく。</p>
+<section id="id3">
+<h2><span class="section-number">12.1. </span>分散システムとは<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<section id="id4">
+<h3><span class="section-number">12.1.1. </span>なぜ分散させるのか<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>ネットワークでつながった複数のコンピュータが、メッセージをやり取りしながら協調して 1 つの仕事をするシステムを<a class="reference internal" href="glossary.html#term-202"><span class="xref std std-term">分散システム</span></a>と呼ぶ。1 台で済むなら 1 台の方がはるかに単純だが、次のような理由で複数のコンピュータが必要になる。</p>
+<ul class="simple">
+<li><p><strong>規模</strong>: データ量やリクエスト数が 1 台の性能や記憶容量を超える。高性能な 1 台に買い替える（スケールアップ）には限界があり、台数を増やす（スケールアウト）方が安く済むことが多い。</p></li>
+<li><p><strong>可用性</strong>: 1 台が故障しても、別のコンピュータが仕事を引き継いでサービスを続けられる。ハードウェアの故障だけでなく、OS の更新のための再起動のような計画的な停止にも対応できる。</p></li>
+<li><p><strong>地理的分散</strong>: 利用者の近くにサーバを置けば遅延を減らせる。東京と米国の間の RTT が 100 ミリ秒程度あることは「<a class="reference internal" href="ch10_networks.html"><span class="doc">コンピュータネットワーク</span></a>」で見た。また、1 つのデータセンタが災害で止まっても、別の地域でサービスを続けられる。</p></li>
+</ul>
+</section>
+<section id="ch12-partial-failure">
+<span id="id5"></span><h3><span class="section-number">12.1.2. </span>部分故障<a class="headerlink" href="#ch12-partial-failure" title="Link to this heading"></a></h3>
+<p>1 台のコンピュータでは、ハードウェアに問題があればたいていシステム全体が止まる。動いているか止まっているかのどちらかであり、中間の状態は珍しい。分散システムでは、システムの一部だけが故障し、残りは動き続けるということが日常的に起こる。これを<a class="reference internal" href="glossary.html#term-191"><span class="xref std std-term">部分故障</span></a>と呼ぶ。</p>
+<p>部分故障が難しいのは、故障を確実に検知できないからである。サーバ A がサーバ B に要求を送り、応答が返ってこないとき、A には次のどれが起きたのか区別できない。</p>
+<ol class="arabic simple">
+<li><p>要求がネットワークの途中で失われた。</p></li>
+<li><p>B が停止している、または過負荷で処理が遅れている。</p></li>
+<li><p>B は処理を終えたが、応答がネットワークの途中で失われた、または遅れている。</p></li>
+</ol>
+<p>1 と 3 では B の状態がまったく異なる。3 の場合、B はすでに処理を行っているので、A が要求を送り直すと処理が 2 回行われるおそれがある。A にできるのは、一定時間待って応答が無ければ失敗とみなす<strong>タイムアウト</strong>だけであり、タイムアウトしても「相手が処理したかどうかは分からない」という事実は変わらない。この問題には「<a class="reference internal" href="#ch12-fault-tolerance"><span class="std std-ref">障害に強い設計</span></a>」の節で再び取り組む。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">12.1.3. </span>分散コンピューティングの落とし穴<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>分散システムを初めて作る人が無意識に置きがちな誤った仮定は、「分散コンピューティングの落とし穴」（fallacies of distributed computing）として 8 項目にまとめられている。次の表に、それぞれの仮定と現実を示す。</p>
+<table class="docutils align-default" id="id40">
+<caption><span class="caption-text">分散コンピューティングの落とし穴</span><a class="headerlink" href="#id40" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>誤った仮定</p></th>
+<th class="head"><p>現実</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ネットワークは信頼できる</p></td>
+<td><p>パケットは失われ、接続は途中で切れる。一部のサーバの間だけ通信できなくなることもある。</p></td>
+</tr>
+<tr class="row-odd"><td><p>遅延はゼロである</p></td>
+<td><p>大陸間の往復には 100 ミリ秒以上かかり、混雑や再送でときどき桁違いに遅くなる。</p></td>
+</tr>
+<tr class="row-even"><td><p>帯域幅は無限である</p></td>
+<td><p>大量のデータを転送すると回線が飽和し、他の通信も遅くなる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ネットワークは安全である</p></td>
+<td><p>経路上で盗聴や改ざんが起こりうる（「<a class="reference internal" href="ch13_security.html"><span class="doc">情報セキュリティと暗号</span></a>」を参照）。</p></td>
+</tr>
+<tr class="row-even"><td><p>ネットワーク構成は変わらない</p></td>
+<td><p>サーバは追加・削除・移動され、IP アドレスも変わる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>管理者は 1 人である</p></td>
+<td><p>部署、クラウド事業者、外部サービスなど、管理者が異なる部分が混在する。</p></td>
+</tr>
+<tr class="row-even"><td><p>転送コストはゼロである</p></td>
+<td><p>シリアライズには CPU 時間がかかり、クラウドでは転送量に料金がかかる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ネットワークは均質である</p></td>
+<td><p>機器、OS、プロトコルのバージョン、回線の品質はまちまちである。</p></td>
+</tr>
+</tbody>
+</table>
+<p>ネットワーク越しの呼び出しは、失敗しうるし、遅くなりうるし、成否が分からないまま終わりうる、という前提で設計する必要がある。</p>
+</section>
+<section id="id7">
+<h3><span class="section-number">12.1.4. </span>障害の種類<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>分散システムの理論では、どのような故障を想定するかを<strong>障害モデル</strong>として明示する。代表的なものを次に示す。</p>
+<ul class="simple">
+<li><p><strong>停止故障</strong>（crash failure）: ノード（システムを構成する個々のコンピュータやプロセス）が停止し、以後何もしなくなる。再起動して復帰する場合を含めて考えることも多い。</p></li>
+<li><p><a class="reference internal" href="glossary.html#term-155"><span class="xref std std-term">ネットワーク分断</span></a>: ノード自体は動いているが、ネットワークの故障により、ノードの集まりが互いに通信できない 2 つ以上のグループに分かれる。各グループの中では通信できるので、それぞれが「相手側が停止した」と判断して独自に動き出す危険がある。</p></li>
+<li><p><strong>ビザンチン故障</strong>（Byzantine failure）: ノードがバグや悪意によって、嘘の情報を送るなど任意の誤った振る舞いをする。1 つの組織が運用するシステムでは通常想定しない。</p></li>
+</ul>
+<p>この章で扱う手法の多くは、停止故障とネットワーク分断に加え、メッセージの喪失、遅延、順序の入れ替わりを想定している。</p>
+</section>
+</section>
+<section id="id8">
+<h2><span class="section-number">12.2. </span>時刻と順序<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<section id="id9">
+<h3><span class="section-number">12.2.1. </span>コンピュータの時刻<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>多くのシステムは時刻を <strong>Unix 時間</strong>で表す。Unix 時間は、1970 年 1 月 1 日 0 時 0 分 0 秒（UTC）からの経過秒数である。32 ビットの符号付き整数で格納すると 2038 年にオーバーフローすることは「<a class="reference internal" href="ch01_data_representation.html"><span class="doc">情報の表現</span></a>」で見た。UTC（協定世界時）は世界共通の基準となる時刻で、日本標準時（JST）は UTC より 9 時間進んでいる。システムの内部やデータベースでは UTC（または Unix 時間）で記録し、利用者に見せるときにその地域のタイムゾーンの時刻に変換するのが定石である。地域の時刻のまま記録すると、夏時間の切り替えで同じ時刻が 2 回現れることがある。</p>
+<p>地球の自転は一定ではないため、UTC は<strong>うるう秒</strong>を挿入して天文学的な時刻との差を調整してきた。うるう秒が入る日は 86,401 秒になるが、Unix 時間は 1 日を常に 86,400 秒として数えるので、うるう秒をそのまま表せない。同じ Unix 時間を 2 回繰り返すか、前後の時間で少しずつ時計をずらして吸収する（leap smear）かはシステムによって異なり、うるう秒をきっかけにした障害も起きてきた。なお、2035 年までにうるう秒の挿入をやめる方針が 2022 年に決まっている。</p>
+</section>
+<section id="ntp">
+<h3><span class="section-number">12.2.2. </span>時計のずれと NTP<a class="headerlink" href="#ntp" title="Link to this heading"></a></h3>
+<p>コンピュータの時計は、水晶振動子の振動を数えて時間を測る。振動数は個体差や温度によってわずかに異なるので、時計は少しずつ進んだり遅れたりする。この進み方の誤差を<strong>ドリフト</strong>と呼び、通常のサーバでは数十 ppm（100 万分の数十）程度である。20 ppm でも 1 日に <span class="math notranslate nohighlight">\(86400 \times 20 \times 10^{-6} \approx 1.7\)</span> 秒ずれる。</p>
+<p>時計を合わせるために広く使われているのが <a class="reference internal" href="glossary.html#term-NTP"><span class="xref std std-term">NTP</span></a>（Network Time Protocol）である <a class="reference internal" href="references.html#rfc5905" id="id10"><span>[RFC5905]</span></a>。NTP は UDP の 123 番ポートを使い、原子時計や GPS に直結した上位のサーバから階層的に時刻を配る。クライアントは、要求を送った時刻 <span class="math notranslate nohighlight">\(t_1\)</span>、サーバが要求を受け取った時刻 <span class="math notranslate nohighlight">\(t_2\)</span>、サーバが応答を送った時刻 <span class="math notranslate nohighlight">\(t_3\)</span>、応答を受け取った時刻 <span class="math notranslate nohighlight">\(t_4\)</span> の 4 つから、自分の時計のサーバとのずれ <span class="math notranslate nohighlight">\(\theta\)</span> と往復の遅延 <span class="math notranslate nohighlight">\(\delta\)</span> を次のように推定する。<span class="math notranslate nohighlight">\(t_1\)</span> と <span class="math notranslate nohighlight">\(t_4\)</span> はクライアントの時計、<span class="math notranslate nohighlight">\(t_2\)</span> と <span class="math notranslate nohighlight">\(t_3\)</span> はサーバの時計で測った値である。</p>
+<div class="math notranslate nohighlight">
+\[\theta = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}, \qquad
+\delta = (t_4 - t_1) - (t_3 - t_2)\]</div>
+<p>この式は、行きと帰りの遅延が等しいと仮定している。経路が混雑して片方向だけ遅れると、その差の半分がそのまま推定の誤差になる。そのため、NTP で合わせた時計でも、同じデータセンタ内で 1 ミリ秒未満、インターネット越しでは数十ミリ秒程度の誤差が残りうる。また、NTP はずれが小さければ時計の進み方を少しずつ調整する（slew）が、ずれが大きいと時刻を一気に書き換える（step）ことがあり、このとき時計は飛んだり<strong>逆戻り</strong>したりする。</p>
+</section>
+<section id="id11">
+<h3><span class="section-number">12.2.3. </span>壁時計とモノトニッククロック<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>OS は性質の異なる 2 種類の時計を提供している。<strong>壁時計</strong>（wall clock）は「今が何年何月何日何時何分か」を表す時計で、NTP による補正や管理者の設定変更で飛んだり戻ったりする。一方、<a class="reference internal" href="glossary.html#term-230"><span class="xref std std-term">モノトニッククロック</span></a>は、ある基準点からの経過時間を表し、決して逆戻りしない時計である。基準点（例えば OS の起動時刻）に意味は無く、値の差だけが意味を持つ。別のコンピュータの値とは比べられない。</p>
+<p>Python では、<code class="docutils literal notranslate"><span class="pre">time.time()</span></code> が壁時計の Unix 時間を、<code class="docutils literal notranslate"><span class="pre">time.monotonic()</span></code> がモノトニッククロックの値を秒単位の浮動小数点数で返す。処理時間の測定やタイムアウトの判定には、必ずモノトニッククロックを使う。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="linenos">2</span>
+<span class="linenos">3</span><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
+<span class="linenos">4</span><span class="n">do_something</span><span class="p">()</span>
+<span class="linenos">5</span><span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>  <span class="c1"># 経過時間は monotonic で測る</span>
+<span class="linenos">6</span>
+<span class="linenos">7</span><span class="n">created_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>  <span class="c1"># 記録用の時刻は壁時計（UTC の Unix 時間）</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">time.time()</span></code> の差で経過時間を測ると、測定中に NTP が時計を戻した場合に経過時間が負になったり、タイムアウトが永遠に来なかったりする。</p>
+</section>
+<section id="id12">
+<h3><span class="section-number">12.2.4. </span>時刻で順序を決める危険<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>複数のノードで起きた出来事の前後関係を、各ノードの壁時計の時刻で決めるのは危険である。例えば、2 台のサーバに同じキーへの書き込みが届き、タイムスタンプの新しい方を残す「最後の書き込みが勝つ」（LWW: Last Write Wins）方式で衝突を解決するとする。サーバ X の時計が 50 ミリ秒進んでいれば、Y の書き込みより 10 ミリ秒前に X で行われた書き込みの方が「新しい」とみなされ、後の書き込みが黙って捨てられる。エラーは何も出ない。時計のずれが数ミリ秒でも、その間隔より短い時間に起きた出来事の順序は時刻からは決められない。</p>
+</section>
+<section id="id13">
+<h3><span class="section-number">12.2.5. </span>論理時計<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>順序を知りたいのは多くの場合、「ある出来事が別の出来事の原因になりえたか」である。L. Lamport は、物理的な時刻を使わずにこの関係を扱う方法を示した <a class="reference internal" href="references.html#lamport1978" id="id14"><span>[Lamport1978]</span></a>。</p>
+<p>出来事（イベント）<span class="math notranslate nohighlight">\(a\)</span> と <span class="math notranslate nohighlight">\(b\)</span> について、次のいずれかが成り立つとき「<span class="math notranslate nohighlight">\(a\)</span> は <span class="math notranslate nohighlight">\(b\)</span> より前に起きた」といい、<span class="math notranslate nohighlight">\(a \to b\)</span> と書く。この関係を <a class="reference internal" href="glossary.html#term-happened-before"><span class="xref std std-term">happened-before 関係</span></a>と呼ぶ。</p>
+<ol class="arabic simple">
+<li><p><span class="math notranslate nohighlight">\(a\)</span> と <span class="math notranslate nohighlight">\(b\)</span> が同じプロセスのイベントで、<span class="math notranslate nohighlight">\(a\)</span> が先に起きた。</p></li>
+<li><p><span class="math notranslate nohighlight">\(a\)</span> があるメッセージの送信で、<span class="math notranslate nohighlight">\(b\)</span> がそのメッセージの受信である。</p></li>
+<li><p>ある <span class="math notranslate nohighlight">\(c\)</span> について <span class="math notranslate nohighlight">\(a \to c\)</span> かつ <span class="math notranslate nohighlight">\(c \to b\)</span> である（推移律）。</p></li>
+</ol>
+<p><span class="math notranslate nohighlight">\(a \to b\)</span> でも <span class="math notranslate nohighlight">\(b \to a\)</span> でもないとき、<span class="math notranslate nohighlight">\(a\)</span> と <span class="math notranslate nohighlight">\(b\)</span> は<strong>並行</strong>であるという。並行な 2 つのイベントは、互いに影響を与えようがなかったので、どちらを先とみなしても矛盾は生じない。</p>
+<p>物理的な時刻の代わりに、この関係と矛盾しない数を各イベントに割り当てる仕組みを<a class="reference internal" href="glossary.html#term-250"><span class="xref std std-term">論理時計</span></a>と呼ぶ。最も単純なものが<a class="reference internal" href="glossary.html#term-236"><span class="xref std std-term">ランポート時計</span></a>で、各プロセスが整数のカウンタを 1 つ持ち、次の規則で更新する。</p>
+<ul class="simple">
+<li><p>ローカルなイベントの前に、カウンタを 1 増やす。</p></li>
+<li><p>メッセージを送るときは、カウンタを 1 増やし、その値をメッセージに付ける。</p></li>
+<li><p>メッセージを受け取ったら、自分のカウンタとメッセージに付いた値の大きい方に 1 を足した値をカウンタにする。</p></li>
+</ul>
+<p>イベント <span class="math notranslate nohighlight">\(a\)</span> のランポート時刻を <span class="math notranslate nohighlight">\(L(a)\)</span> とすると、この規則により <span class="math notranslate nohighlight">\(a \to b\)</span> ならば <span class="math notranslate nohighlight">\(L(a) &lt; L(b)\)</span> が成り立つ。次のサンプルは、3 つのプロセスの送受信の筋書きを実行して、各イベントのランポート時刻を表示する。</p>
+<div class="literal-block-wrapper docutils container" id="id41">
+<div class="code-block-caption"><span class="caption-text">ch12_lamport_clock.py</span><a class="headerlink" href="#id41" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;ランポート時計（論理時計）をシミュレートするサンプル。</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">3 つのプロセス P1、P2、P3 がローカル処理とメッセージの送受信を</span>
+<span class="linenos"> 4</span><span class="sd">行う筋書きを決めておき、各イベントに付くランポート時刻を表示する。</span>
+<span class="linenos"> 5</span><span class="sd">最後に、ランポート時刻とプロセス名の組でイベントを全順序に並べる。</span>
+<span class="linenos"> 6</span><span class="sd">筋書きは固定なので、出力は毎回同じになる。</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="sd">実行方法: python ch12_lamport_clock.py</span>
+<span class="linenos"> 9</span><span class="sd">関連する章: 第 12 章「分散システム」</span>
+<span class="linenos">10</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="nd">@dataclass</span>
+<span class="linenos">16</span><span class="k">class</span><span class="w"> </span><span class="nc">Process</span><span class="p">:</span>
+<span class="linenos">17</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ランポート時計を持つプロセス。&quot;&quot;&quot;</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">20</span>    <span class="n">clock</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span>    <span class="k">def</span><span class="w"> </span><span class="nf">local_event</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">23</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;ローカル処理: 時計を 1 進める。&quot;&quot;&quot;</span>
+<span class="linenos">24</span>        <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">25</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span>    <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">28</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;送信: 時計を 1 進め、その値をメッセージに付ける。&quot;&quot;&quot;</span>
+<span class="linenos">29</span>        <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">30</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span>    <span class="k">def</span><span class="w"> </span><span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">33</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;受信: 自分の時計とメッセージの時刻の大きい方に 1 を足す。&quot;&quot;&quot;</span>
+<span class="linenos">34</span>        <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clock</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="linenos">35</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clock</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span><span class="nd">@dataclass</span>
+<span class="linenos">39</span><span class="k">class</span><span class="w"> </span><span class="nc">Event</span><span class="p">:</span>
+<span class="linenos">40</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;記録したイベント。&quot;&quot;&quot;</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span>    <span class="n">process</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">43</span>    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">44</span>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">45</span>
+<span class="linenos">46</span>
+<span class="linenos">47</span><span class="c1"># 筋書き: (種類, プロセス名, メッセージ名, 宛先)</span>
+<span class="linenos">48</span><span class="n">SCENARIO</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos">49</span>    <span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;P1&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+<span class="linenos">50</span>    <span class="p">(</span><span class="s2">&quot;send&quot;</span><span class="p">,</span> <span class="s2">&quot;P1&quot;</span><span class="p">,</span> <span class="s2">&quot;m1&quot;</span><span class="p">,</span> <span class="s2">&quot;P2&quot;</span><span class="p">),</span>
+<span class="linenos">51</span>    <span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;P3&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+<span class="linenos">52</span>    <span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;P3&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+<span class="linenos">53</span>    <span class="p">(</span><span class="s2">&quot;send&quot;</span><span class="p">,</span> <span class="s2">&quot;P3&quot;</span><span class="p">,</span> <span class="s2">&quot;m2&quot;</span><span class="p">,</span> <span class="s2">&quot;P2&quot;</span><span class="p">),</span>
+<span class="linenos">54</span>    <span class="p">(</span><span class="s2">&quot;recv&quot;</span><span class="p">,</span> <span class="s2">&quot;P2&quot;</span><span class="p">,</span> <span class="s2">&quot;m1&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+<span class="linenos">55</span>    <span class="p">(</span><span class="s2">&quot;recv&quot;</span><span class="p">,</span> <span class="s2">&quot;P2&quot;</span><span class="p">,</span> <span class="s2">&quot;m2&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+<span class="linenos">56</span>    <span class="p">(</span><span class="s2">&quot;send&quot;</span><span class="p">,</span> <span class="s2">&quot;P2&quot;</span><span class="p">,</span> <span class="s2">&quot;m3&quot;</span><span class="p">,</span> <span class="s2">&quot;P1&quot;</span><span class="p">),</span>
+<span class="linenos">57</span>    <span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;P3&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+<span class="linenos">58</span>    <span class="p">(</span><span class="s2">&quot;recv&quot;</span><span class="p">,</span> <span class="s2">&quot;P1&quot;</span><span class="p">,</span> <span class="s2">&quot;m3&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+<span class="linenos">59</span><span class="p">]</span>
+<span class="linenos">60</span>
+<span class="linenos">61</span>
+<span class="linenos">62</span><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">scenario</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Event</span><span class="p">]:</span>
+<span class="linenos">63</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;筋書きを順に実行し、イベントの記録を返す。&quot;&quot;&quot;</span>
+<span class="linenos">64</span>    <span class="n">procs</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">Process</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;P1&quot;</span><span class="p">,</span> <span class="s2">&quot;P2&quot;</span><span class="p">,</span> <span class="s2">&quot;P3&quot;</span><span class="p">)}</span>
+<span class="linenos">65</span>    <span class="n">in_flight</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># 送信中のメッセージ名 -&gt; 付いた時刻</span>
+<span class="linenos">66</span>    <span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">67</span>    <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">dest</span> <span class="ow">in</span> <span class="n">scenario</span><span class="p">:</span>
+<span class="linenos">68</span>        <span class="n">proc</span> <span class="o">=</span> <span class="n">procs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="linenos">69</span>        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span>
+<span class="linenos">70</span>            <span class="n">ts</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">local_event</span><span class="p">()</span>
+<span class="linenos">71</span>            <span class="n">desc</span> <span class="o">=</span> <span class="s2">&quot;ローカル処理&quot;</span>
+<span class="linenos">72</span>        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;send&quot;</span><span class="p">:</span>
+<span class="linenos">73</span>            <span class="n">ts</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+<span class="linenos">74</span>            <span class="n">in_flight</span><span class="p">[</span><span class="n">msg</span><span class="p">]</span> <span class="o">=</span> <span class="n">ts</span>
+<span class="linenos">75</span>            <span class="n">desc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2"> を </span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2"> へ送信&quot;</span>
+<span class="linenos">76</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos">77</span>            <span class="n">sent_ts</span> <span class="o">=</span> <span class="n">in_flight</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+<span class="linenos">78</span>            <span class="n">ts</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">sent_ts</span><span class="p">)</span>
+<span class="linenos">79</span>            <span class="n">desc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2"> を受信（メッセージの時刻 </span><span class="si">{</span><span class="n">sent_ts</span><span class="si">}</span><span class="s2">）&quot;</span>
+<span class="linenos">80</span>        <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">ts</span><span class="p">,</span> <span class="n">desc</span><span class="p">))</span>
+<span class="linenos">81</span>    <span class="k">return</span> <span class="n">events</span>
+<span class="linenos">82</span>
+<span class="linenos">83</span>
+<span class="linenos">84</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">85</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;筋書きを実行し、実行順と全順序の 2 通りで表示する。&quot;&quot;&quot;</span>
+<span class="linenos">86</span>    <span class="n">events</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">SCENARIO</span><span class="p">)</span>
+<span class="linenos">87</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;== 実行順 ==&quot;</span><span class="p">)</span>
+<span class="linenos">88</span>    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+<span class="linenos">89</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">process</span><span class="si">}</span><span class="s2">  L=</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">90</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;== (ランポート時刻, プロセス名) による全順序 ==&quot;</span><span class="p">)</span>
+<span class="linenos">91</span>    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">process</span><span class="p">)):</span>
+<span class="linenos">92</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;L=</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">process</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">93</span>
+<span class="linenos">94</span>
+<span class="linenos">95</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">96</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/8a834c8b71b97046b68fa1b59e45930f/ch12_lamport_clock.py"><code class="xref download docutils literal notranslate"><span class="pre">ch12_lamport_clock.py</span></code></a></p>
+<p>22〜35 行目が上の 3 つの規則であり、特に 34 行目の <code class="docutils literal notranslate"><span class="pre">max</span></code> が受信の規則である。48〜59 行目の筋書きでは、P1 と P3 がそれぞれ P2 にメッセージ m1、m2 を送り、P2 が両方を受け取ってから P1 に m3 を返す。実行結果は次のとおりである。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>== 実行順 ==
+<span class="linenos"> 2</span>P1  L=1  ローカル処理
+<span class="linenos"> 3</span>P1  L=2  m1 を P2 へ送信
+<span class="linenos"> 4</span>P3  L=1  ローカル処理
+<span class="linenos"> 5</span>P3  L=2  ローカル処理
+<span class="linenos"> 6</span>P3  L=3  m2 を P2 へ送信
+<span class="linenos"> 7</span>P2  L=3  m1 を受信（メッセージの時刻 2）
+<span class="linenos"> 8</span>P2  L=4  m2 を受信（メッセージの時刻 3）
+<span class="linenos"> 9</span>P2  L=5  m3 を P1 へ送信
+<span class="linenos">10</span>P3  L=4  ローカル処理
+<span class="linenos">11</span>P1  L=6  m3 を受信（メッセージの時刻 5）
+<span class="linenos">12</span>== (ランポート時刻, プロセス名) による全順序 ==
+<span class="linenos">13</span>L=1  P1  ローカル処理
+<span class="linenos">14</span>L=1  P3  ローカル処理
+<span class="linenos">15</span>L=2  P1  m1 を P2 へ送信
+<span class="linenos">16</span>L=2  P3  ローカル処理
+<span class="linenos">17</span>L=3  P2  m1 を受信（メッセージの時刻 2）
+<span class="linenos">18</span>L=3  P3  m2 を P2 へ送信
+<span class="linenos">19</span>L=4  P2  m2 を受信（メッセージの時刻 3）
+<span class="linenos">20</span>L=4  P3  ローカル処理
+<span class="linenos">21</span>L=5  P2  m3 を P1 へ送信
+<span class="linenos">22</span>L=6  P1  m3 を受信（メッセージの時刻 5）
+</pre></div>
+</div>
+<p>実行結果の 7 行目では、P2 の時計は 0 だったが、m1 に付いた 2 との大きい方に 1 を足して 3 になる。m1 の送信（L=2）は受信（L=3）より必ず小さい時刻を持つ。11 行目の P1 は、自分の時計が 2 でも m3 に付いた 5 に合わせて 6 に進む。こうして、因果関係でつながったイベントには必ず増加する時刻が付く。</p>
+<p>ただし、逆は成り立たない。<span class="math notranslate nohighlight">\(L(a) &lt; L(b)\)</span> であっても <span class="math notranslate nohighlight">\(a \to b\)</span> とは限らない。P1 の m1 の送信（L=2）と P3 の m2 の送信（L=3）は、どちらからどちらにもメッセージが届いていない並行なイベントだが、時刻だけを見ると前後関係があるように見える。ランポート時刻が等しいイベントはプロセス名で順序を決めれば（91 行目）、すべてのイベントを矛盾なく 1 列に並べた全順序が得られる。分散システムでの排他制御のように、全員が同じ順序に合意できれば十分な用途には、これで足りる。</p>
+<p>並行かどうかまで判定したい場合は<a class="reference internal" href="glossary.html#term-207"><span class="xref std std-term">ベクタ時計</span></a>を使う。ベクタ時計では、各プロセスがプロセスの数だけの要素を持つカウンタの配列を持ち、自分の要素を増やし、受信時には要素ごとに大きい方をとる。上の筋書きでは、m1 の送信は <span class="math notranslate nohighlight">\((2, 0, 0)\)</span>、m2 の送信は <span class="math notranslate nohighlight">\((0, 0, 3)\)</span> になる（要素は P1、P2、P3 の順）。どちらの配列も他方の要素ごとの値以下になっていないので、2 つのイベントは並行だと判定できる。ベクタ時計は、マルチリーダやリーダレスのレプリケーション（次節）で、同時に行われた書き込みの衝突を検出するのに使われる。</p>
+</section>
+</section>
+<section id="id15">
+<h2><span class="section-number">12.3. </span>レプリケーション<a class="headerlink" href="#id15" title="Link to this heading"></a></h2>
+<section id="id16">
+<h3><span class="section-number">12.3.1. </span>目的とリーダ型の複製<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>同じデータの複製（レプリカ）を複数のノードに持たせることを<a class="reference internal" href="glossary.html#term-245"><span class="xref std std-term">レプリケーション</span></a>と呼ぶ。目的は、一部のノードが故障してもデータを失わずサービスを続けること（可用性と耐久性）、読み出しを複数のノードに分散すること（性能）、利用者の近くにデータを置くこと（遅延の削減）である。</p>
+<p>最も広く使われているのが<strong>単一リーダ型</strong>（リーダ型）のレプリケーションである。レプリカのうち 1 つをリーダ（プライマリ）とし、書き込みはすべてリーダが受け付ける。リーダは変更を自分のデータに反映するとともに、その内容をログとして他のレプリカであるフォロワ（レプリカ、セカンダリ）に送り、フォロワは同じ順序で変更を適用する。読み出しはリーダでもフォロワでも行える。PostgreSQL や MySQL のレプリケーションはこの方式である。リーダが故障したときは、フォロワの 1 つを新しいリーダに昇格させる<strong>フェイルオーバ</strong>を行う。</p>
+<p>単一リーダ型のほかに、複数のノードが書き込みを受け付ける<strong>マルチリーダ型</strong>と、リーダを置かずにクライアントが複数のレプリカに直接読み書きする<strong>リーダレス型</strong>がある。マルチリーダ型は、データセンタごとにリーダを置いて書き込みの遅延を減らせるが、別々のリーダで同じデータが同時に書き換えられる衝突の解決が必要になる。リーダレス型では、<span class="math notranslate nohighlight">\(n\)</span> 個のレプリカのうち <span class="math notranslate nohighlight">\(w\)</span> 個に書き込めたら書き込み成功、<span class="math notranslate nohighlight">\(r\)</span> 個から読めたら読み出し成功とし、<span class="math notranslate nohighlight">\(w + r &gt; n\)</span> となるように選ぶ。こうすると読み出すレプリカの少なくとも 1 つは最新の書き込みを受け取っている。この <span class="math notranslate nohighlight">\(w\)</span> と <span class="math notranslate nohighlight">\(r\)</span> を<strong>クォーラム</strong>と呼ぶ。</p>
+</section>
+<section id="id17">
+<h3><span class="section-number">12.3.2. </span>同期と非同期の複製<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<p>リーダがクライアントに書き込み成功を返すタイミングには 2 つの選択肢がある。<strong>同期レプリケーション</strong>では、フォロワが変更を受け取ったと応答するまで待ってから成功を返す。成功を返した書き込みはフォロワにも存在するので、リーダが故障しても失われない。ただし、フォロワが 1 台でも遅いか故障していると、書き込み全体が止まってしまう。<strong>非同期レプリケーション</strong>では、フォロワの応答を待たずに成功を返す。書き込みは速く、フォロワの故障の影響を受けないが、リーダが故障したとき、まだフォロワに届いていない書き込みは、成功を返したにもかかわらず失われる。実務では、フォロワのうち 1 台だけを同期にし、残りを非同期にする折衷（準同期）もよく使われる。</p>
+<p>フェイルオーバにも落とし穴がある。古いリーダが実は止まっておらず、ネットワーク分断で見えなくなっていただけの場合、新旧 2 つのリーダが同時に書き込みを受け付けてデータが食い違う。この状態を<strong>スプリットブレイン</strong>と呼ぶ。これを防ぐには、後述の合意の仕組みでリーダを 1 つに決める必要がある。</p>
+</section>
+<section id="id18">
+<h3><span class="section-number">12.3.3. </span>複製の遅延が引き起こす異常<a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<p>非同期レプリケーションでは、フォロワはリーダより少し古いデータを持つ。この遅れ（レプリケーションラグ）は通常 1 秒未満だが、負荷が高いときや障害時には数秒から数分に伸びる。読み出しをフォロワに振り分けると、利用者からは次のような奇妙な現象が見える。</p>
+<ul class="simple">
+<li><p><strong>自分の書き込みが読めない</strong>: プロフィールを更新した直後に再読み込みすると、まだ反映されていないフォロワから古いプロフィールが読まれ、利用者は更新が失敗したと思う。自分が書き込んだデータや、書き込みから一定時間はリーダから読むといった方法で防ぐ。この保証を read-your-writes 一貫性と呼ぶ。</p></li>
+<li><p><strong>時間が逆戻りする</strong>: 1 回目の読み出しは追い付いたフォロワ、2 回目は遅れたフォロワに振り分けられると、1 回目に見えたコメントが 2 回目には消えている。同じ利用者の読み出しは常に同じレプリカに振り分けることで防ぐ。この保証をモノトニックリード一貫性と呼ぶ。</p></li>
+<li><p><strong>因果の逆転</strong>: 質問とその回答が別々に複製されると、回答だけが先に届いたレプリカでは、質問より先に回答が見える。</p></li>
+</ul>
+</section>
+<section id="id19">
+<h3><span class="section-number">12.3.4. </span>一貫性のモデル<a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<p>レプリカがある状態で、読み出しがどの程度新しい値を返すことを保証するかを<strong>一貫性モデル</strong>と呼ぶ。代表的な 2 つを示す。</p>
+<p><a class="reference internal" href="glossary.html#term-119"><span class="xref std std-term">線形化可能性</span></a>（linearizability）は、レプリカがいくつあっても、システムがあたかもデータのコピーが 1 つしかないかのように振る舞うことを保証する。各操作は、呼び出してから応答が返るまでの間のある一瞬に効果を持つとみなせ、ある書き込みが完了した後に始まった読み出しは、必ずその値かそれより新しい値を返す。強い一貫性と呼ばれるのは多くの場合これである。プログラマにとっては最も分かりやすいが、実現するには操作のたびにレプリカ間の調整が必要で、遅延が大きく、ネットワーク分断の間は一部のノードが応答できなくなる（後述の CAP 定理）。</p>
+<p><a class="reference internal" href="glossary.html#term-63"><span class="xref std std-term">結果整合性</span></a>（eventual consistency）は、新しい書き込みが止まれば、いずれすべてのレプリカが同じ値に収束することだけを保証する。「いずれ」がいつかは保証せず、それまでの間は古い値が返りうる。非同期レプリケーションの読み出しは結果整合性しか持たない。保証は弱いが、各レプリカが他を待たずに応答できるので、速く、可用性が高い。read-your-writes やモノトニックリードは、その中間にある保証である。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>「一貫性」という言葉は文脈によって意味が異なるので注意が必要である。ACID 特性の一貫性（Consistency）は、トランザクションの前後で整合性制約が満たされることを意味し、レプリカの新しさとは関係が無い。また、第 11 章の<a class="reference internal" href="glossary.html#term-204"><span class="xref std std-term">分離レベル</span></a>（SERIALIZABLE など）は、複数の行にまたがる<strong>トランザクション同士の干渉</strong>をどこまで防ぐかの保証であり、線形化可能性は <strong>1 つのデータに対する個々の操作が最新の値を返すか</strong>の保証である。両者は独立した概念で、直列化可能であっても線形化可能とは限らない（例えば古いスナップショットから読むトランザクションは、直列化可能でも最新の値を返さない）。両方を満たすものは厳密な直列化可能性（strict serializability）と呼ばれる。</p>
+</div>
+</section>
+</section>
+<section id="id20">
+<h2><span class="section-number">12.4. </span>分割（シャーディング）<a class="headerlink" href="#id20" title="Link to this heading"></a></h2>
+<section id="id21">
+<h3><span class="section-number">12.4.1. </span>キーの範囲による分割とハッシュによる分割<a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<p>レプリケーションはすべてのノードに同じデータを置くので、データ量が 1 台に収まらない場合や、書き込みの負荷が 1 台のリーダでさばけない場合には役に立たない。そこで、データを重ならない部分（パーティション、シャード）に分け、それぞれを別のノードに置く。これを<a class="reference internal" href="glossary.html#term-90"><span class="xref std std-term">シャーディング</span></a>（分割、パーティショニング）と呼ぶ。実際には、各シャードをさらにレプリケーションして可用性も確保するのが普通である。シャーディングの要点は、どのキーをどのシャードに置くかの決め方にある。</p>
+<ul class="simple">
+<li><p><strong>キーの範囲による分割</strong>: 辞書の巻のように、キーの範囲ごとにシャードを決める（A〜F はシャード 1、G〜M はシャード 2、など）。キーが順に並ぶので範囲検索が効率よく行える。一方、キーの分布が偏るとシャードの大きさも偏る。特に、時刻をキーにすると、新しいデータの書き込みがすべて最新の範囲を受け持つ 1 つのシャードに集中する。</p></li>
+<li><p><strong>ハッシュによる分割</strong>: キーの<a class="reference internal" href="glossary.html#term-167"><span class="xref std std-term">ハッシュ関数</span></a>の値でシャードを決める。ハッシュ値は元のキーが似ていても大きく異なるので、データと負荷が均等に分散する。その代わりに、隣り合うキーが別々のシャードに散らばるため、範囲検索ではすべてのシャードに問い合わせる必要がある。</p></li>
+</ul>
+</section>
+<section id="id22">
+<h3><span class="section-number">12.4.2. </span>偏りとホットスポット<a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<p>ハッシュで分割しても、1 つのキーへのアクセスが極端に多い場合は避けられない。例えば、SNS で多数のフォロワを持つ有名人の投稿には、読み出しも書き込みも集中する。このように特定のシャードやキーに負荷が集中する箇所を<strong>ホットスポット</strong>と呼ぶ。対策として、人気のあるキーだけ末尾に乱数を付けて複数のキーに分散させ、読み出し時にそれらを集める、キャッシュを前段に置く、といった方法がとられる。</p>
+</section>
+<section id="id23">
+<h3><span class="section-number">12.4.3. </span>ノードの追加とコンシステントハッシュ<a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
+<p>ハッシュ値をノード数 <span class="math notranslate nohighlight">\(N\)</span> で割った余り（<span class="math notranslate nohighlight">\(h \bmod N\)</span>）でノードを決める方法は単純だが、ノード数が変わるとほとんどのキーの置き場所が変わってしまう。ハッシュ値が一様に分布していれば、<span class="math notranslate nohighlight">\(N\)</span> を 4 から 5 に増やしたとき、置き場所が変わらないキーは <span class="math notranslate nohighlight">\(1/5\)</span> だけで、残りの 80% のデータを移動することになる。</p>
+<p><a class="reference internal" href="glossary.html#term-74"><span class="xref std std-term">コンシステントハッシュ</span></a>は、ハッシュ値の空間を円環とみなし、ノードもキーも同じハッシュ関数で円環上に配置して、各キーを円環を時計回りにたどって最初に出会うノードに割り当てる方法である。ノードを 1 つ追加しても、移動するのは新しいノードと直前のノードの間にあったキーだけで、平均すると全体の <span class="math notranslate nohighlight">\(1/(N+1)\)</span> 程度で済む。実際には、1 台のノードを円環上の多数の点（仮想ノード）に配置して、偏りを小さくする。別の方法として、シャードの数をノード数よりはるかに多い固定の値（例えば 1,024 個）にしておき、ノードの増減時にはシャード単位でノードに割り当て直すシステムも多い。</p>
+</section>
+</section>
+<section id="cap">
+<h2><span class="section-number">12.5. </span>CAP 定理<a class="headerlink" href="#cap" title="Link to this heading"></a></h2>
+<section id="id24">
+<h3><span class="section-number">12.5.1. </span>定理の内容<a class="headerlink" href="#id24" title="Link to this heading"></a></h3>
+<p>レプリケーションされたデータについて、一貫性と可用性の間には根本的なトレードオフがある。これを述べたのが <a class="reference internal" href="glossary.html#term-CAP"><span class="xref std std-term">CAP 定理</span></a>である。E. Brewer が 2000 年に予想として示し、2002 年に S. Gilbert と N. Lynch が定式化して証明した <a class="reference internal" href="references.html#gilbertlynch2002" id="id25"><span>[GilbertLynch2002]</span></a>。証明で使われた 3 つの性質は次のとおりである。</p>
+<ul class="simple">
+<li><p><strong>一貫性</strong>（Consistency）: 線形化可能性。すべての読み出しが最新の書き込みの値を返し、システムはデータのコピーが 1 つであるかのように振る舞う。</p></li>
+<li><p><strong>可用性</strong>（Availability）: 故障していないノードが受け取ったすべての要求に、（エラーではない）応答を返す。</p></li>
+<li><p><strong>分断耐性</strong>（Partition tolerance）: ノード間のメッセージが任意に失われても（ネットワーク分断が起きても）、システムが動作を続ける。</p></li>
+</ul>
+<p>定理は「ネットワーク分断が起きているとき、一貫性と可用性を両立するシステムは作れない」ことを示している。理由は単純である。ノード X と Y の間の通信が途絶えている間に、X が書き込みを受け付けたとする。その後 Y に読み出しが届いたとき、Y が応答すれば、X の書き込みを知らないので古い値を返すことになり一貫性が破れる。一貫性を守るには、Y は応答を拒否するか分断が解消するまで待つしかなく、可用性が破れる。</p>
+</section>
+<section id="id26">
+<h3><span class="section-number">12.5.2. </span>よくある誤解<a class="headerlink" href="#id26" title="Link to this heading"></a></h3>
+<p>CAP 定理は「3 つのうち 2 つを選べる」と説明されることが多いが、これは誤解を招く。ネットワーク分断は選ぶものではなく、分散システムである限り必ず起こりうる。したがって実際の選択は、「分断が起きたときに、一貫性を優先して一部の要求を拒否するか（CP）、可用性を優先して古い値を返すことを許すか（AP）」である。分断が起きていない平常時には、一貫性と可用性は両立できる。「CA のシステム」とは、分断が起きないことを前提にしたシステム、つまり実質的に 1 台のシステムのことである。</p>
+<p>また、CAP 定理の「一貫性」は線形化可能性という特定の意味であり、ACID の一貫性とは異なる。「可用性」も、故障していないすべてのノードが応答するという厳しい定義であり、情報セキュリティの<a class="reference internal" href="glossary.html#term-31"><span class="xref std std-term">可用性</span></a>や、稼働率で表す日常的な意味の可用性とは異なる。CP を選んだシステムでも、分断されたのが少数のノードだけなら、多数派の側は応答を続けられるので、実用上は十分に高い稼働率を達成できる。さらに、CAP 定理は分断という 1 種類の故障だけを扱い、平常時の遅延については何も述べていない。</p>
+<p>この最後の点を補うのが <strong>PACELC</strong> という整理である。分断（Partition）が起きたときは可用性（Availability）と一貫性（Consistency）のどちらかを選び、それ以外（Else）の平常時には遅延（Latency）と一貫性（Consistency）のどちらを優先するかを選ぶ、という意味である <a class="reference internal" href="references.html#abadi2012" id="id27"><span>[Abadi2012]</span></a>。強い一貫性を得るには、分断が無くても操作のたびにレプリカの応答を待つ遅延を払う。実際のシステム選びでは、平常時のこのトレードオフの方が影響が大きいことが多い。</p>
+</section>
+</section>
+<section id="id28">
+<h2><span class="section-number">12.6. </span>合意<a class="headerlink" href="#id28" title="Link to this heading"></a></h2>
+<section id="id29">
+<h3><span class="section-number">12.6.1. </span>合意問題<a class="headerlink" href="#id29" title="Link to this heading"></a></h3>
+<p>フェイルオーバでは、どのノードを新しいリーダにするかを、すべてのノードが同じ結論で決めなければならない。2 つのノードがそれぞれ自分をリーダだと思えば、スプリットブレインになる。このように、複数のノードが 1 つの値について同じ結論に達することを<a class="reference internal" href="glossary.html#term-65"><span class="xref std std-term">合意</span></a>（consensus）と呼ぶ。合意のアルゴリズムには、次の性質が求められる。</p>
+<ul class="simple">
+<li><p><strong>合意性</strong>: 決定した値は、すべてのノードで同じである。</p></li>
+<li><p><strong>妥当性</strong>: 決定した値は、いずれかのノードが提案した値である。</p></li>
+<li><p><strong>停止性</strong>: 故障していないノードは、いずれ値を決定する。</p></li>
+</ul>
+<p>リーダ選出、分散ロック（同時に 1 つのノードだけがロックを持つ）、レプリケーションのログの順序の決定は、いずれも合意問題に帰着する。</p>
+<p>合意は理論的に難しい問題である。M. Fischer、N. Lynch、M. Paterson が 1985 年に示した <strong>FLP 不可能性</strong>は、メッセージの遅延に上限が無い非同期のシステムでは、1 つのノードが停止するかもしれないというだけで、必ず停止する決定的な合意アルゴリズムは存在しないことを示している <a class="reference internal" href="references.html#flp1985" id="id30"><span>[FLP1985]</span></a>。遅いノードと停止したノードを区別できないからである。実用的なアルゴリズムは、安全性（異なる値に決まらないこと）は常に守り、停止性はタイムアウトを使って「ネットワークがある程度安定していれば」保証する、という形でこの限界を回避している。</p>
+</section>
+<section id="raft">
+<h3><span class="section-number">12.6.2. </span>Raft の概要<a class="headerlink" href="#raft" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-Raft"><span class="xref std std-term">Raft</span></a> は、理解しやすさを重視して設計された合意アルゴリズムである <a class="reference internal" href="references.html#raft" id="id31"><span>[Raft]</span></a>。それ以前から使われてきた Paxos と同等の保証を持ちながら、仕組みを「リーダ選出」と「ログ複製」に分けて説明できるようにしてある。Raft は、すべてのノードが同じ順序で同じ命令の列（ログ）を受け取ることを保証し、各ノードがそのログを順に適用すれば同じ状態になる。この考え方をステートマシンレプリケーションと呼ぶ。</p>
+<p><strong>任期</strong>（term）: Raft は時間を任期という区間に分け、1, 2, 3, ……と番号を付ける。各任期にはリーダが高々 1 つしか存在しない。各ノードは自分が知っている最新の任期の番号をメッセージに付けて送り、古い任期の番号が付いたメッセージは拒否される。任期の番号は、ランポート時計と同じく、物理的な時刻を使わずに新旧を判断するための論理時計の役割を果たす。</p>
+<p><strong>リーダ選出</strong>: 各ノードはフォロワ、候補者、リーダのいずれかの状態にある。リーダは定期的にハートビート（中身の無いログ複製の要求）を送る。フォロワは、一定時間ハートビートを受け取らないと、リーダが故障したとみなして任期の番号を 1 増やし、候補者となって他のノードに投票を依頼する。各ノードは 1 つの任期に 1 回だけ投票でき、過半数の票を得た候補者がその任期のリーダになる。複数の候補者が同時に立候補して票が割れることを防ぐため、タイムアウトの長さは各ノードで乱数で決める（論文では 150〜300 ミリ秒の範囲が例示されている）。</p>
+<p><strong>ログ複製</strong>: クライアントからの命令はリーダが受け取り、自分のログに任期の番号とともに追加して、フォロワに複製を依頼する。ログの項目が過半数のノードに保存されると、その項目は<strong>コミット</strong>されたとみなされ、各ノードで適用してよくなる。また、候補者のログが自分より古い場合は投票しないという規則があるため、コミットされた項目を持たないノードがリーダに選ばれることは無い。</p>
+<p><strong>過半数の考え方</strong>: Raft の安全性は過半数（クォーラム）に支えられている。<span class="math notranslate nohighlight">\(n\)</span> 台のうちの過半数 <span class="math notranslate nohighlight">\(\lfloor n/2 \rfloor + 1\)</span> 台からなる 2 つの集まりは、必ず少なくとも 1 台を共有する。そのため、同じ任期に 2 人の候補者が両方とも過半数の票を得ることはできず、コミットされた項目は、次にリーダになるノードに投票した過半数のうち少なくとも 1 台が持っている。ネットワーク分断が起きても、過半数の側だけがリーダを選んで書き込みを続けられ、少数派の側の古いリーダはコミットできない。合意は CAP 定理でいう CP の側を選んでいるわけである。<span class="math notranslate nohighlight">\(n\)</span> 台のクラスタが耐えられる故障は <span class="math notranslate nohighlight">\(\lfloor (n-1)/2 \rfloor\)</span> 台までで、次の表のようになる。</p>
+<table class="docutils align-default" id="id42">
+<caption><span class="caption-text">クラスタの台数と耐えられる故障の数</span><a class="headerlink" href="#id42" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 35.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>台数 <span class="math notranslate nohighlight">\(n\)</span></p></th>
+<th class="head"><p>過半数 <span class="math notranslate nohighlight">\(\lfloor n/2 \rfloor + 1\)</span></p></th>
+<th class="head"><p>耐えられる故障の数</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>2</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>3</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>3</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>4</p></td>
+<td><p>3</p></td>
+</tr>
+</tbody>
+</table>
+<p>4 台は 3 台と同じく 1 台の故障にしか耐えられず、過半数をそろえるのに必要な台数だけが増える。そのため、合意を行うクラスタは通常 3 台か 5 台の奇数で構成する。</p>
+</section>
+<section id="id32">
+<h3><span class="section-number">12.6.3. </span>実用例<a class="headerlink" href="#id32" title="Link to this heading"></a></h3>
+<p>アプリケーションが合意のアルゴリズムを自分で実装することはまれで、合意を提供するミドルウェアを使うのが普通である。etcd は Raft を実装したキーバリューストアで、Kubernetes がクラスタの状態の保存に使っている。Apache ZooKeeper は Zab という独自の合意プロトコルを使い、多くの分散システムでリーダ選出、設定情報の管理、分散ロックに使われてきた。これらはいずれも、少量の重要なデータを強い一貫性で保持するためのものであり、大量のデータを置く用途には向かない。</p>
+<p>分散ロックでは、ガベージコレクションなどで長時間止まっている間にロックの有効期限が切れ、別のノードがロックを取得した後で、止まっていたノードがロックを持っているつもりで処理を再開することがある。これを防ぐには、ロックを取得するたびに増加する番号（フェンシングトークン）を発行し、書き込み先がそれより古い番号の要求を拒否するようにする。読んだときの版数を条件に更新する「<a class="reference internal" href="ch11_databases.html"><span class="doc">データベース</span></a>」の楽観的ロックと同じ考え方である。</p>
+</section>
+</section>
+<section id="ch12-fault-tolerance">
+<span id="id33"></span><h2><span class="section-number">12.7. </span>障害に強い設計<a class="headerlink" href="#ch12-fault-tolerance" title="Link to this heading"></a></h2>
+<section id="id34">
+<h3><span class="section-number">12.7.1. </span>タイムアウトの決め方<a class="headerlink" href="#id34" title="Link to this heading"></a></h3>
+<p>部分故障を検知する手段はタイムアウトしかない。短すぎると、少し遅いだけの正常なノードを故障とみなして不要なフェイルオーバや再試行を引き起こし、負荷が増えてさらに遅くなる悪循環に陥りうる。長すぎると、本当に故障したときの検知が遅れ、その間呼び出し元は待たされ続ける。</p>
+<p>固定の値を勘で決めるのではなく、通常時の応答時間の分布を測り、例えば上位 0.1% の応答時間（99.9 パーセンタイル）に余裕を加えた値を使うのが 1 つの目安である。また、呼び出しが何段にも連なる場合は、利用者に応答すべき期限（デッドライン）を下流に伝え、残り時間が無くなった処理は打ち切る。「<a class="reference internal" href="ch10_networks.html"><span class="doc">コンピュータネットワーク</span></a>」で述べたように、タイムアウトを設定しないことは論外である。</p>
+</section>
+<section id="id35">
+<h3><span class="section-number">12.7.2. </span>再試行と指数バックオフ<a class="headerlink" href="#id35" title="Link to this heading"></a></h3>
+<p>ネットワークの一時的な不調やサーバの一時的な過負荷による失敗は、少し待ってやり直せば成功することが多い。ただし、再試行してよいのは、タイムアウトや HTTP の 503 のような一時的な失敗に限られる。400 や 404 のような要求自体の誤りは、何度送っても結果は変わらない。</p>
+<p>再試行の間隔は、失敗するたびに 2 倍、4 倍と伸ばしていく<a class="reference internal" href="glossary.html#term-86"><span class="xref std std-term">指数バックオフ</span></a>にする。<span class="math notranslate nohighlight">\(k\)</span> 回目の再試行の前の待ち時間を <span class="math notranslate nohighlight">\(b \cdot 2^{k-1}\)</span>（<span class="math notranslate nohighlight">\(b\)</span> は基準の待ち時間）とし、上限を設ける。過負荷のサーバに間を置かずに再試行を浴びせると、回復を妨げてしまうからである。さらに、待ち時間に乱数の揺らぎ（<strong>ジッタ</strong>）を加える。障害で一斉に失敗した多数のクライアントが同じ間隔で再試行すると、再試行も一斉に届いて再びサーバを圧倒する。0 から <span class="math notranslate nohighlight">\(b \cdot 2^{k-1}\)</span> までの一様乱数を待ち時間にする方法（フルジッタ）がよく使われる。</p>
+<p>再試行の回数にも上限が必要である。特に、呼び出しが多段になっている場合、各段がそれぞれ 3 回ずつ再試行すると（1 回の呼び出しが最大 4 回の試行になる）、3 段では最下段への要求が最大 <span class="math notranslate nohighlight">\(4^3 = 64\)</span> 倍に増幅される。再試行はなるべく 1 か所に限るのがよい。</p>
+</section>
+<section id="id36">
+<h3><span class="section-number">12.7.3. </span>冪等性と冪等キー<a class="headerlink" href="#id36" title="Link to this heading"></a></h3>
+<p>再試行には根本的な問題が残る。「<a class="reference internal" href="#ch12-partial-failure"><span class="std std-ref">部分故障</span></a>」で見たように、応答が返らなかったとき、相手が処理したかどうかは分からない。処理済みだった場合に再試行すると、同じ処理が 2 回行われる。「<a class="reference internal" href="ch10_networks.html"><span class="doc">コンピュータネットワーク</span></a>」で学んだように、GET や PUT のような<strong>冪等</strong>な操作なら何度行っても結果は同じなので、安全に再試行できる。問題は、決済や注文のように本質的に冪等でない操作である。</p>
+<p>そこで、冪等でない操作を冪等にするために<a class="reference internal" href="glossary.html#term-206"><span class="xref std std-term">冪等キー</span></a>を使う。クライアントは 1 つの論理的な操作（例えば 1 件の注文の支払い）ごとに一意な識別子を生成し、要求に付けて送る。再試行するときは同じ識別子を使う。サーバは処理した識別子と結果を記録しておき、同じ識別子の要求が再び届いたら、処理を行わずに記録した結果を返す。</p>
+<p>次のサンプルは、要求と応答のそれぞれが 30% の確率で失われる通信を乱数で模擬し、冪等キーの有無で課金の回数を比べる。</p>
+<div class="literal-block-wrapper docutils container" id="id43">
+<div class="code-block-caption"><span class="caption-text">ch12_idempotent_retry.py</span><a class="headerlink" href="#id43" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;冪等キーの有無で再試行の結果がどう変わるかを比べるサンプル。</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">要求または応答が一定の確率で失われる不安定な通信を、乱数の</span>
+<span class="linenos"> 4</span><span class="sd">シードを固定して模擬する。クライアントは応答が返らなければ</span>
+<span class="linenos"> 5</span><span class="sd">指数バックオフとジッタで待ってから再試行する（待ち時間は</span>
+<span class="linenos"> 6</span><span class="sd">実際には待たず、合計だけを計算する）。決済サーバが冪等キーを</span>
+<span class="linenos"> 7</span><span class="sd">使わない場合と使う場合で、同じ注文が何回課金されるかを比べる。</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">実行方法: python ch12_idempotent_retry.py</span>
+<span class="linenos">10</span><span class="sd">関連する章: 第 12 章「分散システム」</span>
+<span class="linenos">11</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="n">LOSS_RATE</span> <span class="o">=</span> <span class="mf">0.3</span>     <span class="c1"># 要求・応答のそれぞれが失われる確率</span>
+<span class="linenos">16</span><span class="n">MAX_ATTEMPTS</span> <span class="o">=</span> <span class="mi">4</span>    <span class="c1"># 1 つの注文に対する最大の試行回数</span>
+<span class="linenos">17</span><span class="n">BASE_MS</span> <span class="o">=</span> <span class="mf">100.0</span>     <span class="c1"># バックオフの基準の待ち時間（ミリ秒）</span>
+<span class="linenos">18</span><span class="n">SEED</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="linenos">19</span><span class="n">ORDERS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">]</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span><span class="k">class</span><span class="w"> </span><span class="nc">PaymentServer</span><span class="p">:</span>
+<span class="linenos">23</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;課金を行うサーバ。use_key が真なら冪等キーで重複を防ぐ。&quot;&quot;&quot;</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_key</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">26</span>        <span class="bp">self</span><span class="o">.</span><span class="n">use_key</span> <span class="o">=</span> <span class="n">use_key</span>
+<span class="linenos">27</span>        <span class="bp">self</span><span class="o">.</span><span class="n">charges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>      <span class="c1"># 実際に行った課金（注文名）</span>
+<span class="linenos">28</span>        <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>    <span class="c1"># 冪等キー -&gt; 課金番号</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span>    <span class="k">def</span><span class="w"> </span><span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">31</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;課金要求を処理し、課金番号を返す。&quot;&quot;&quot;</span>
+<span class="linenos">32</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_key</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+<span class="linenos">33</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>  <span class="c1"># 処理済み: 前回の結果を返すだけ</span>
+<span class="linenos">34</span>        <span class="bp">self</span><span class="o">.</span><span class="n">charges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+<span class="linenos">35</span>        <span class="n">charge_id</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">charges</span><span class="p">)</span>
+<span class="linenos">36</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_key</span><span class="p">:</span>
+<span class="linenos">37</span>            <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">charge_id</span>
+<span class="linenos">38</span>        <span class="k">return</span> <span class="n">charge_id</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="k">def</span><span class="w"> </span><span class="nf">call_with_retry</span><span class="p">(</span><span class="n">server</span><span class="p">:</span> <span class="n">PaymentServer</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">,</span>
+<span class="linenos">42</span>                    <span class="n">order</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="linenos">43</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;1 つの注文を再試行付きで送る。</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="sd">    戻り値は (試行回数, 応答を受け取れたか, 待ち時間の合計)。</span>
+<span class="linenos">46</span><span class="sd">    冪等キーは注文ごとに 1 つ作り、再試行でも同じものを使う。</span>
+<span class="linenos">47</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">48</span>    <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;order-</span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="linenos">49</span>    <span class="n">waited</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="linenos">50</span>    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">MAX_ATTEMPTS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">51</span>        <span class="k">if</span> <span class="n">attempt</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+<span class="linenos">52</span>            <span class="c1"># 指数バックオフ + フルジッタ: n 回目の前に [0, BASE * 2^(n-2)) 待つ</span>
+<span class="linenos">53</span>            <span class="n">waited</span> <span class="o">+=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">BASE_MS</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">attempt</span> <span class="o">-</span> <span class="mi">2</span><span class="p">))</span>
+<span class="linenos">54</span>        <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">LOSS_RATE</span><span class="p">:</span>
+<span class="linenos">55</span>            <span class="k">continue</span>  <span class="c1"># 要求が失われた: サーバは何もしていない</span>
+<span class="linenos">56</span>        <span class="n">server</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+<span class="linenos">57</span>        <span class="k">if</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">LOSS_RATE</span><span class="p">:</span>
+<span class="linenos">58</span>            <span class="k">continue</span>  <span class="c1"># 応答が失われた: 処理は済んだがクライアントは知らない</span>
+<span class="linenos">59</span>        <span class="k">return</span> <span class="n">attempt</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">waited</span>
+<span class="linenos">60</span>    <span class="k">return</span> <span class="n">MAX_ATTEMPTS</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">waited</span>
+<span class="linenos">61</span>
+<span class="linenos">62</span>
+<span class="linenos">63</span><span class="k">def</span><span class="w"> </span><span class="nf">simulate</span><span class="p">(</span><span class="n">use_key</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">64</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;すべての注文を送り、注文ごとの課金回数を表示する。&quot;&quot;&quot;</span>
+<span class="linenos">65</span>    <span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="n">SEED</span><span class="p">)</span>  <span class="c1"># 両方の実験で同じ通信の失敗を再現する</span>
+<span class="linenos">66</span>    <span class="n">server</span> <span class="o">=</span> <span class="n">PaymentServer</span><span class="p">(</span><span class="n">use_key</span><span class="p">)</span>
+<span class="linenos">67</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;== 冪等キー: </span><span class="si">{</span><span class="s1">&#39;あり&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">use_key</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;なし&#39;</span><span class="si">}</span><span class="s2"> ==&quot;</span><span class="p">)</span>
+<span class="linenos">68</span>    <span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="n">ORDERS</span><span class="p">:</span>
+<span class="linenos">69</span>        <span class="n">attempts</span><span class="p">,</span> <span class="n">ok</span><span class="p">,</span> <span class="n">waited</span> <span class="o">=</span> <span class="n">call_with_retry</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+<span class="linenos">70</span>        <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;成功&quot;</span> <span class="k">if</span> <span class="n">ok</span> <span class="k">else</span> <span class="s2">&quot;失敗（結果不明）&quot;</span>
+<span class="linenos">71</span>        <span class="n">count</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">charges</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+<span class="linenos">72</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;注文 </span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">: 試行 </span><span class="si">{</span><span class="n">attempts</span><span class="si">}</span><span class="s2"> 回, </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">, &quot;</span>
+<span class="linenos">73</span>              <span class="sa">f</span><span class="s2">&quot;課金 </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> 回, 待ち </span><span class="si">{</span><span class="n">waited</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+<span class="linenos">74</span>    <span class="n">doubled</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">ORDERS</span> <span class="k">if</span> <span class="n">server</span><span class="o">.</span><span class="n">charges</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos">75</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;課金の合計 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">charges</span><span class="p">)</span><span class="si">}</span><span class="s2"> 回&quot;</span>
+<span class="linenos">76</span>          <span class="sa">f</span><span class="s2">&quot;（注文 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ORDERS</span><span class="p">)</span><span class="si">}</span><span class="s2"> 件, 二重課金 </span><span class="si">{</span><span class="n">doubled</span><span class="si">}</span><span class="s2"> 件）&quot;</span><span class="p">)</span>
+<span class="linenos">77</span>
+<span class="linenos">78</span>
+<span class="linenos">79</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">80</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;冪等キーなし・ありの 2 通りを実行する。&quot;&quot;&quot;</span>
+<span class="linenos">81</span>    <span class="n">simulate</span><span class="p">(</span><span class="n">use_key</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos">82</span>    <span class="n">simulate</span><span class="p">(</span><span class="n">use_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">83</span>
+<span class="linenos">84</span>
+<span class="linenos">85</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">86</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/64adb74871dc6cbdfcc4d7694b780601/ch12_idempotent_retry.py"><code class="xref download docutils literal notranslate"><span class="pre">ch12_idempotent_retry.py</span></code></a></p>
+<p>30〜38 行目の <code class="docutils literal notranslate"><span class="pre">handle</span></code> がサーバの処理で、冪等キーを使う場合は 32〜33 行目で処理済みのキーを調べ、処理済みなら課金せずに前回の結果を返す。48 行目で注文ごとに冪等キーを作り、再試行でも同じものを使う。クライアントは、要求が失われた場合（54〜55 行目）と、サーバは処理したが応答が失われた場合（57〜58 行目）の両方で再試行する。クライアントからはこの 2 つを区別できない。51〜53 行目は指数バックオフとフルジッタで、実際には待たずに待ち時間の合計だけを計算している。65 行目で両方の実験に同じシードを使うので、通信の失敗の起こり方は 2 つの実験でまったく同じになる。実行結果は次のとおりである。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>== 冪等キー: なし ==
+<span class="linenos"> 2</span>注文 A: 試行 4 回, 失敗（結果不明）, 課金 1 回, 待ち 336 ms
+<span class="linenos"> 3</span>注文 B: 試行 1 回, 成功, 課金 1 回, 待ち 0 ms
+<span class="linenos"> 4</span>注文 C: 試行 1 回, 成功, 課金 1 回, 待ち 0 ms
+<span class="linenos"> 5</span>注文 D: 試行 4 回, 成功, 課金 1 回, 待ち 237 ms
+<span class="linenos"> 6</span>注文 E: 試行 3 回, 成功, 課金 3 回, 待ち 150 ms
+<span class="linenos"> 7</span>注文 F: 試行 1 回, 成功, 課金 1 回, 待ち 0 ms
+<span class="linenos"> 8</span>課金の合計 8 回（注文 6 件, 二重課金 1 件）
+<span class="linenos"> 9</span>== 冪等キー: あり ==
+<span class="linenos">10</span>注文 A: 試行 4 回, 失敗（結果不明）, 課金 1 回, 待ち 336 ms
+<span class="linenos">11</span>注文 B: 試行 1 回, 成功, 課金 1 回, 待ち 0 ms
+<span class="linenos">12</span>注文 C: 試行 1 回, 成功, 課金 1 回, 待ち 0 ms
+<span class="linenos">13</span>注文 D: 試行 4 回, 成功, 課金 1 回, 待ち 237 ms
+<span class="linenos">14</span>注文 E: 試行 3 回, 成功, 課金 1 回, 待ち 150 ms
+<span class="linenos">15</span>注文 F: 試行 1 回, 成功, 課金 1 回, 待ち 0 ms
+<span class="linenos">16</span>課金の合計 6 回（注文 6 件, 二重課金 0 件）
+</pre></div>
+</div>
+<p>冪等キーが無い場合、実行結果の 6 行目の注文 E は、応答が 2 回失われたために 3 回課金されている。冪等キーがあれば、14 行目のように同じ通信の失敗が起きても課金は 1 回で済む。5 行目と 13 行目の注文 D は 4 回目でようやく成功しているが、課金は 1 回である。最初の 3 回は要求そのものが失われ、サーバに届かなかったからである。2 行目と 10 行目の注文 A は、すべての試行で応答を受け取れず、クライアントは失敗と判断したが、実際には課金されている。冪等キーがあれば、後で同じキーで再び問い合わせて結果を確かめられる。</p>
+<p>実際のシステムでは、冪等キーの記録と処理本体を同じ<a class="reference internal" href="glossary.html#term-146"><span class="xref std std-term">トランザクション</span></a>で行う必要がある。処理だけが成功してキーの記録が失われると、次の再試行で二重に処理される。データベースの冪等キーの列に一意制約を付けておけば、同じキーの同時の要求も防げる。また、記録をいつまで保持するかの期限（例えば 24 時間）を決め、クライアントはその期間内に再試行を終える。</p>
+</section>
+<section id="id37">
+<h3><span class="section-number">12.7.4. </span>配送の保証<a class="headerlink" href="#id37" title="Link to this heading"></a></h3>
+<p>メッセージキューなどでメッセージを届ける仕組みは、どこまで配送を保証するかによって次の 3 つに分けられる。</p>
+<table class="docutils align-default" id="id44">
+<caption><span class="caption-text">メッセージ配送の保証</span><a class="headerlink" href="#id44" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 43.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>保証</p></th>
+<th class="head"><p>仕組み</p></th>
+<th class="head"><p>起こりうること</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>高々 1 回（at-most-once）</p></td>
+<td><p>再試行しない</p></td>
+<td><p>メッセージが失われる</p></td>
+</tr>
+<tr class="row-odd"><td><p>少なくとも 1 回（at-least-once）</p></td>
+<td><p>受信の確認が来るまで再試行する</p></td>
+<td><p>同じメッセージが重複して届く</p></td>
+</tr>
+<tr class="row-even"><td><p>ちょうど 1 回（exactly-once）</p></td>
+<td><p>少なくとも 1 回の配送と、受信側の重複排除（冪等な処理）を組み合わせる</p></td>
+<td><p>重複排除の記録と処理の原子性が必要になる</p></td>
+</tr>
+</tbody>
+</table>
+<p>ネットワークがメッセージを失いうる以上、送るだけでちょうど 1 回の<strong>配送</strong>を保証することはできない。「ちょうど 1 回」をうたう製品が実際に保証しているのは、少なくとも 1 回届けたうえで、受信側が重複を取り除くことにより、<strong>処理の効果</strong>がちょうど 1 回分になることである。上のサンプルの冪等キーは、まさにこの方法である。多くのシステムでは、少なくとも 1 回の配送を選び、受信側の処理を冪等にするのが基本の設計になる。</p>
+</section>
+<section id="id38">
+<h3><span class="section-number">12.7.5. </span>分散トランザクションとサガ<a class="headerlink" href="#id38" title="Link to this heading"></a></h3>
+<p>注文サービスのデータベースと在庫サービスのデータベースのように、複数のノードにまたがる更新を原子的に行いたい場合がある。これを分散トランザクションと呼び、その古典的な方法が<a class="reference internal" href="glossary.html#term-148"><span class="xref std std-term">二相コミット</span></a>（2PC: Two-Phase Commit）である。第 11 章の二相ロックとは別のものなので注意してほしい。二相コミットでは、調整役（コーディネータ）が次の 2 段階で各参加者のコミットを取りまとめる。</p>
+<ol class="arabic simple">
+<li><p><strong>準備フェーズ</strong>: コーディネータは全参加者に「コミットできるか」を問い合わせる。各参加者は、変更をログに永続化してコミットできる状態にしてから「はい」と答えるか、できなければ「いいえ」と答える。「はい」と答えた参加者は、以後自分の判断でロールバックしてはならない。</p></li>
+<li><p><strong>コミットフェーズ</strong>: 全員が「はい」ならコーディネータはコミットを決定し、その決定を記録してから全参加者に伝える。1 人でも「いいえ」と答えるか応答が無ければ、ロールバックを伝える。</p></li>
+</ol>
+<p>二相コミットの最大の問題は、準備フェーズで「はい」と答えた後にコーディネータが故障すると、参加者はコミットすべきかロールバックすべきか分からず、ロックを持ったまま待ち続けるしかないことである。その間、関係する行は他のトランザクションからも使えない。また、すべての参加者の応答を待つので遅い。</p>
+<p>そのため、サービスごとにデータベースを分ける設計では、<strong>サガ</strong>（saga）と呼ばれる方法がよく使われる。サガは、全体を各サービスのローカルなトランザクションの列に分け、順に実行する。途中の段階が失敗したら、それまでに完了した段階を取り消す<strong>補償トランザクション</strong>（例えば、在庫の引き当ての取り消しや返金）を逆順に実行する。サガは長時間のロックを必要としないが、途中の状態が他から見えてしまう（分離性が無い）ので、それを前提とした業務の設計が必要になる。</p>
+</section>
+</section>
+<section id="id39">
+<h2><span class="section-number">12.8. </span>まとめ<a class="headerlink" href="#id39" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>分散システムは規模、可用性、地理的分散のために使われる。一部だけが故障する部分故障が起こり、応答が無いときに相手が処理したかどうかは分からない。</p></li>
+<li><p>ネットワークは信頼できず、遅延はゼロではない。停止故障、ネットワーク分断、メッセージの喪失と遅延を前提に設計する。</p></li>
+<li><p>時刻は UTC の Unix 時間で記録する。時計はドリフトし、NTP で合わせても誤差が残り、逆戻りもする。経過時間の測定にはモノトニッククロックを使い、壁時計の時刻で出来事の順序を決めない。</p></li>
+<li><p>ランポート時計は happened-before 関係と矛盾しない論理的な時刻を与える。並行なイベントの判定にはベクタ時計を使う。</p></li>
+<li><p>レプリケーションには単一リーダ型、マルチリーダ型、リーダレス型がある。非同期の複製では複製の遅延による異常が見え、結果整合性しか得られない。線形化可能性はトランザクションの分離レベルとは別の概念である。</p></li>
+<li><p>シャーディングにはキーの範囲による分割とハッシュによる分割があり、ホットスポットへの対策が必要になる。コンシステントハッシュはノードの増減時に移動するデータを減らす。</p></li>
+<li><p>CAP 定理は、ネットワーク分断が起きたときに線形化可能性と可用性を両立できないことを示す。平常時の遅延と一貫性のトレードオフも重要である。</p></li>
+<li><p>Raft は任期、リーダ選出、ログ複製と過半数の仕組みで合意を実現する。合意を行うクラスタは 3 台か 5 台の奇数で構成し、etcd や ZooKeeper のような実装を使う。</p></li>
+<li><p>タイムアウトは応答時間の分布から決め、再試行は一時的な失敗に限って指数バックオフとジッタで行う。冪等キーにより、冪等でない操作も安全に再試行できる。</p></li>
+<li><p>ちょうど 1 回の配送は、少なくとも 1 回の配送と冪等な処理の組み合わせで実現する。二相コミットは調整役の故障で停止しうるため、サービス間ではサガも使われる。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch11_databases.html" class="btn btn-neutral float-left" title="11. データベース" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch13_security.html" class="btn btn-neutral float-right" title="13. 情報セキュリティと暗号" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

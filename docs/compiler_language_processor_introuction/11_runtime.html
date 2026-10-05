@@ -1,0 +1,555 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 11 章 実行時環境とネイティブコード生成 &mdash; コンパイラ・言語処理系入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=01529632" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 12 章 発展的な話題" href="12_advanced.html" />
+    <link rel="prev" title="第 10 章 コード生成と仮想マシン" href="10_vm.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンパイラ・言語処理系入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_overview.html">第 1 章 言語処理系の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_language.html">第 2 章 題材言語 Tiny の定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_lexer.html">第 3 章 字句解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_parsing.html">第 4 章 構文解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_ast.html">第 5 章 抽象構文木と Tiny の構文解析器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_semantic.html">第 6 章 意味解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_interpreter.html">第 7 章 インタプリタ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_ir.html">第 8 章 中間表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_vm.html">第 10 章 コード生成と仮想マシン</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 11 章 実行時環境とネイティブコード生成</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">記憶領域の構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">呼び出しスタックとスタックフレーム</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">呼び出し規約</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">ネイティブコードの生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">レジスタ割り当て</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">干渉グラフとグラフ彩色</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">線形走査法</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">実行例</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">ガベージコレクション</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">参照カウント</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">マーク &amp; スイープ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gc">コピー GC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">世代別 GC</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id17">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="12_advanced.html">第 12 章 発展的な話題</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_examples.html">付録 A サンプルコード</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_glossary.html">付録 B 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_references.html">付録 C 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンパイラ・言語処理系入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 11 章 実行時環境とネイティブコード生成</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 11 章 実行時環境とネイティブコード生成<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>コンパイラが生成したコードは、それだけでは動きません。関数を呼び出すための約束事、局所変数を置く場所、不要になったメモリを回収するしくみなど、実行を支える環境が必要です。この章では、このような<a class="reference internal" href="appendix_b_glossary.html#term-36"><span class="xref std std-term">実行時環境</span></a>を説明し、続いて機械語を生成する場合の中心的な問題であるレジスタ割り当てを実装します。</p>
+<section id="id2">
+<h2>記憶領域の構成<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>プログラムの実行中、メモリはおおむね次のような領域に分けて使われます。</p>
+<figure class="align-default" id="id18">
+<div class="graphviz"><object data="_images/graphviz-4efe94d40d4606cccaedaaa18c8181203e5f5e46.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph memory {
+  node [shape=record, fontname=&quot;sans-serif&quot;];
+  mem [label=&quot;{高いアドレス | スタック（下に向かって伸びる）\n関数呼び出しごとのフレーム | ↓ | （空き） | ↑ | ヒープ（上に向かって伸びる）\n実行時に確保するオブジェクト | 静的データ\n大域変数、文字列定数 | コード\n機械語の命令 | 低いアドレス}&quot;];
+}</p></object></div>
+<figcaption>
+<p><span class="caption-text">実行中のプログラムの記憶領域（典型的な配置）</span><a class="headerlink" href="#id18" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>領域</p></th>
+<th class="head"><p>置かれるもの</p></th>
+<th class="head"><p>寿命</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>コード</p></td>
+<td><p>機械語の命令</p></td>
+<td><p>プログラムの実行中ずっと</p></td>
+</tr>
+<tr class="row-odd"><td><p>静的データ</p></td>
+<td><p>大域変数、文字列定数</p></td>
+<td><p>プログラムの実行中ずっと</p></td>
+</tr>
+<tr class="row-even"><td><p>スタック</p></td>
+<td><p>局所変数、引数、戻り番地</p></td>
+<td><p>関数の呼び出しから戻りまで</p></td>
+</tr>
+<tr class="row-odd"><td><p>ヒープ</p></td>
+<td><p>実行時に確保したオブジェクト（Tiny の配列など）</p></td>
+<td><p>確保してから解放されるまで</p></td>
+</tr>
+</tbody>
+</table>
+<p>スタックに置いたデータは関数から戻ると自動的に捨てられますが、ヒープに置いたデータはいつ不要になるかが一般には分かりません。ヒープの管理は、プログラマが明示的に解放する方式（C の <code class="docutils literal notranslate"><span class="pre">free</span></code>）と、処理系が自動的に回収する方式（<a class="reference internal" href="appendix_b_glossary.html#term-9"><span class="xref std std-term">ガベージコレクション</span></a>）があります。</p>
+</section>
+<section id="id3">
+<h2>呼び出しスタックとスタックフレーム<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="10_vm.html"><span class="doc">第 10 章</span></a>の仮想マシンでは、関数呼び出しごとにフレームを作り、局所変数を値スタックに置きました。機械語を実行する場合も考え方は同じですが、より多くの情報をフレームに置きます。</p>
+<figure class="align-default" id="id19">
+<div class="graphviz"><object data="_images/graphviz-8af69299ae646af4f717255b8554c0c23f3b1c67.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph frame {
+  node [shape=record, fontname=&quot;sans-serif&quot;];
+  f [label=&quot;{呼び出し元のフレーム | レジスタに入りきらない引数 | 戻り番地 | 保存したフレームポインタ | 保存したレジスタ | 局所変数・退避領域 | （次の呼び出しの引数）}&quot;];
+}</p></object></div>
+<figcaption>
+<p><span class="caption-text">機械語の関数のスタックフレーム（x86-64 の例、下が低いアドレス）</span><a class="headerlink" href="#id19" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p><code class="docutils literal notranslate"><span class="pre">call</span></code> 命令は戻り番地（呼び出しの次の命令の番地）をスタックに積んでから関数の先頭に飛び、<code class="docutils literal notranslate"><span class="pre">ret</span></code> 命令はスタックから戻り番地を取り出してそこに戻ります。関数の先頭（プロローグ）では、呼び出し元のフレームポインタを保存し、局所変数のための領域を確保します。関数の末尾（エピローグ）ではその逆を行います。</p>
+<section id="id4">
+<h3>呼び出し規約<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>引数をどこに置くか、戻り値をどこに返すか、どのレジスタの値を呼び出しの前後で保存しなければならないか、といった約束事を<a class="reference internal" href="appendix_b_glossary.html#term-64"><span class="xref std std-term">呼び出し規約</span></a>と呼びます。呼び出し規約が一致していれば、別々のコンパイラで作ったコードどうしでも関数を呼び出せます。x86-64 の代表的な呼び出し規約を示します。</p>
+<table class="docutils align-default" id="id20">
+<caption><span class="caption-text">x86-64 の呼び出し規約（整数の引数と戻り値）</span><a class="headerlink" href="#id20" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 40.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>規約</p></th>
+<th class="head"><p>引数を渡すレジスタ</p></th>
+<th class="head"><p>戻り値</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>System V（Linux、macOS など）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rdi</span></code>、<code class="docutils literal notranslate"><span class="pre">rsi</span></code>、<code class="docutils literal notranslate"><span class="pre">rdx</span></code>、<code class="docutils literal notranslate"><span class="pre">rcx</span></code>、<code class="docutils literal notranslate"><span class="pre">r8</span></code>、<code class="docutils literal notranslate"><span class="pre">r9</span></code>（7 番目以降はスタック）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rax</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Microsoft x64（Windows）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rcx</span></code>、<code class="docutils literal notranslate"><span class="pre">rdx</span></code>、<code class="docutils literal notranslate"><span class="pre">r8</span></code>、<code class="docutils literal notranslate"><span class="pre">r9</span></code>（5 番目以降はスタック）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rax</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>レジスタは、呼び出された側が値を保存して元に戻す義務を負うもの（callee-saved）と、呼び出し側が必要なら保存しておくもの（caller-saved）に分けられます。呼び出しをまたいで生存する変数を caller-saved のレジスタに置くと、呼び出しのたびに保存と復元が必要になります。</p>
+</section>
+</section>
+<section id="id5">
+<h2>ネイティブコードの生成<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>機械語を生成するバックエンドは、主に次の 3 つの仕事をします。</p>
+<ul class="simple">
+<li><p>命令選択：IR の命令を、対象の CPU の命令に対応させます。CPU には <code class="docutils literal notranslate"><span class="pre">mov</span> <span class="pre">rax,</span> <span class="pre">[rbx</span> <span class="pre">+</span> <span class="pre">rcx</span> <span class="pre">*</span> <span class="pre">8]</span></code> のように、複数の IR の命令（乗算、加算、読み出し）をまとめて行える命令があるので、IR の命令の木を CPU の命令のパターンで覆うように選びます。</p></li>
+<li><p><a class="reference internal" href="appendix_b_glossary.html#term-66"><span class="xref std std-term">レジスタ割り当て</span></a>：IR の無数の変数を、CPU の有限個のレジスタに割り当てます。</p></li>
+<li><p>命令スケジューリング：CPU のパイプラインが止まらないように、意味を変えない範囲で命令の順序を入れ替えます。</p></li>
+</ul>
+<p>関数 <code class="docutils literal notranslate"><span class="pre">sum</span></code> を x86-64 の機械語（アセンブリ言語、Intel 記法）で書くと、たとえば次のようになります。すべての変数がレジスタに割り当てられており、メモリの読み書きがありません。</p>
+<div class="highlight-nasm notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="nl">sum:</span><span class="w">                    </span><span class="c1">; 引数 n は edi レジスタに渡される</span>
+<span class="linenos"> 2</span><span class="w">    </span><span class="nf">xor</span><span class="w">  </span><span class="nb">eax</span><span class="p">,</span><span class="w"> </span><span class="nb">eax</span><span class="w">       </span><span class="c1">; s = 0（s は eax に割り当てる）</span>
+<span class="linenos"> 3</span><span class="w">    </span><span class="nf">mov</span><span class="w">  </span><span class="nb">ecx</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w">         </span><span class="c1">; i = 1（i は ecx に割り当てる）</span>
+<span class="linenos"> 4</span><span class="nl">.cond:</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="nf">cmp</span><span class="w">  </span><span class="nb">ecx</span><span class="p">,</span><span class="w"> </span><span class="nb">edi</span><span class="w">       </span><span class="c1">; i と n を比較し</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="nf">jg</span><span class="w">   </span><span class="nv">.end</span><span class="w">           </span><span class="c1">; i &gt; n ならループを抜ける</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="nf">add</span><span class="w">  </span><span class="nb">eax</span><span class="p">,</span><span class="w"> </span><span class="nb">ecx</span><span class="w">       </span><span class="c1">; s = s + i</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="nf">add</span><span class="w">  </span><span class="nb">ecx</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w">         </span><span class="c1">; i = i + 1</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="nf">jmp</span><span class="w">  </span><span class="nv">.cond</span>
+<span class="linenos">10</span><span class="nl">.end:</span>
+<span class="linenos">11</span><span class="w">    </span><span class="nf">ret</span><span class="w">                 </span><span class="c1">; 戻り値は eax で返す</span>
+</pre></div>
+</div>
+<p>次の節では、レジスタ割り当てを実装します（<code class="docutils literal notranslate"><span class="pre">tiny_regalloc.py</span></code>）。</p>
+</section>
+<section id="id6">
+<h2>レジスタ割り当て<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>レジスタはメモリより桁違いに速いので、よく使う変数をできるだけレジスタに置くことが性能上重要です。しかし、レジスタの数は限られています（x86-64 の汎用レジスタは 16 個）。2 つの変数が同時に生存していなければ、同じレジスタを使い回せます。<a class="reference internal" href="09_optimization.html"><span class="doc">第 9 章</span></a>の生存変数解析が、ここで役に立ちます。</p>
+<section id="id7">
+<h3>干渉グラフとグラフ彩色<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>同時に生存する 2 つの変数は「干渉する」といいます。変数を節点とし、干渉する変数どうしを辺で結んだグラフを<a class="reference internal" href="appendix_b_glossary.html#term-11"><span class="xref std std-term">干渉グラフ</span></a>と呼びます。次の図は、最適化前の関数 <code class="docutils literal notranslate"><span class="pre">sum</span></code> の干渉グラフです。</p>
+<figure class="align-default" id="id21">
+<div class="graphviz"><object data="_images/graphviz-277f7acf86ab8309b7177f9cebfd72ea769844d1.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">graph interference {
+  layout=circo;
+  node [shape=circle, fontname=&quot;monospace&quot;];
+  n; s; i; &quot;%1&quot;; &quot;%2&quot;; &quot;%3&quot;;
+  n -- s; n -- i; s -- i;
+  &quot;%1&quot; -- n; &quot;%1&quot; -- s; &quot;%1&quot; -- i;
+  &quot;%2&quot; -- n; &quot;%2&quot; -- i;
+  &quot;%3&quot; -- n; &quot;%3&quot; -- s;
+  s -- &quot;%2&quot; [style=dashed];
+  i -- &quot;%3&quot; [style=dashed];
+}</p></object></div>
+<figcaption>
+<p><span class="caption-text">関数 sum の干渉グラフ（破線はコピー命令で結ばれた変数の組）</span><a class="headerlink" href="#id21" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>隣り合う節点が同じ色にならないように、<span class="math notranslate nohighlight">\(k\)</span> 色で節点を塗り分けることをグラフの <span class="math notranslate nohighlight">\(k\)</span> 彩色と呼びます。色をレジスタとみなせば、レジスタ割り当ては干渉グラフの彩色問題になります。この図では <code class="docutils literal notranslate"><span class="pre">n</span></code>、<code class="docutils literal notranslate"><span class="pre">s</span></code>、<code class="docutils literal notranslate"><span class="pre">i</span></code>、<code class="docutils literal notranslate"><span class="pre">%1</span></code> が互いに干渉しているので、4 つのレジスタが必要です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">s</span> <span class="pre">=</span> <span class="pre">%2</span></code> というコピー命令の <code class="docutils literal notranslate"><span class="pre">s</span></code> と <code class="docutils literal notranslate"><span class="pre">%2</span></code> は干渉していません。コピー元とコピー先は同じ値なので、コピーの直後に両方が生存していても干渉とはみなさないからです。そこで <code class="docutils literal notranslate"><span class="pre">s</span></code> と <code class="docutils literal notranslate"><span class="pre">%2</span></code> に同じレジスタを割り当てると、コピー命令は「同じレジスタへのコピー」となり、削除できます。干渉しない 2 つの変数を 1 つの節点にまとめて、このようにコピーを消すことを<a class="reference internal" href="appendix_b_glossary.html#term-24"><span class="xref std std-term">コピーの合併</span></a>と呼びます。</p>
+<p>グラフの彩色は一般に NP 困難ですが、Chaitin らの方法に代表される発見的なアルゴリズムで、実用上十分な結果が得られます。塗り分けられない場合は、一部の変数をメモリに置きます。これを<a class="reference internal" href="appendix_b_glossary.html#term-40"><span class="xref std std-term">スピル</span></a>と呼びます。</p>
+</section>
+<section id="id8">
+<h3>線形走査法<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>グラフ彩色による割り当ては質が高い一方、干渉グラフの構築と彩色に時間がかかります。JIT コンパイラのようにコンパイル時間を短くしたい場合には、Poletto と Sarkar による<a class="reference internal" href="appendix_b_glossary.html#term-45"><span class="xref std std-term">線形走査法</span></a>がよく使われます <a class="reference internal" href="appendix_c_references.html#poletto1999" id="id9"><span>[Poletto1999]</span></a>。本書でもこの方法を実装します。</p>
+<p>線形走査法では、命令を一列に並べて通し番号を付け、各変数が生存する範囲を「最初の番号から最後の番号まで」の 1 つの区間（生存区間）で近似します。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">tiny_regalloc.py（生存区間の計算）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">32</span><span class="k">def</span><span class="w"> </span><span class="nf">live_intervals</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Function</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Interval</span><span class="p">]:</span>
+<span class="linenos">33</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;各変数の生存区間を（1 つの連続した区間として）求める。&quot;&quot;&quot;</span>
+<span class="linenos">34</span>    <span class="n">live_in</span><span class="p">,</span> <span class="n">live_out</span> <span class="o">=</span> <span class="n">liveness</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+<span class="linenos">35</span>    <span class="n">first</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">36</span>    <span class="n">last</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span>    <span class="k">def</span><span class="w"> </span><span class="nf">touch</span><span class="p">(</span><span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">39</span>        <span class="n">first</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">first</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">pos</span><span class="p">),</span> <span class="n">pos</span><span class="p">)</span>
+<span class="linenos">40</span>        <span class="n">last</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">last</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">pos</span><span class="p">),</span> <span class="n">pos</span><span class="p">)</span>
+<span class="linenos">41</span>
+<span class="linenos">42</span>    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+<span class="linenos">43</span>        <span class="n">touch</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="linenos">44</span>    <span class="c1"># 基本ブロックを並べた順に、命令へ通し番号 pos を付ける。</span>
+<span class="linenos">45</span>    <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">46</span>    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">blocks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="linenos">47</span>        <span class="n">start</span> <span class="o">=</span> <span class="n">pos</span>
+<span class="linenos">48</span>        <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">instrs</span><span class="p">:</span>
+<span class="linenos">49</span>            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">used_vars</span><span class="p">(</span><span class="n">instr</span><span class="p">):</span>
+<span class="linenos">50</span>                <span class="n">touch</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+<span class="linenos">51</span>            <span class="n">dst</span> <span class="o">=</span> <span class="n">defined_var</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+<span class="linenos">52</span>            <span class="k">if</span> <span class="n">dst</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">53</span>                <span class="n">touch</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+<span class="linenos">54</span>            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">55</span>        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">used_vars</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">terminator</span><span class="p">):</span>
+<span class="linenos">56</span>            <span class="n">touch</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+<span class="linenos">57</span>        <span class="c1"># ブロックの入口・出口で生存している変数は、区間をそこまで広げる。</span>
+<span class="linenos">58</span>        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">live_in</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">label</span><span class="p">]:</span>
+<span class="linenos">59</span>            <span class="n">touch</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+<span class="linenos">60</span>        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">live_out</span><span class="p">[</span><span class="n">block</span><span class="o">.</span><span class="n">label</span><span class="p">]:</span>
+<span class="linenos">61</span>            <span class="n">touch</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+<span class="linenos">62</span>        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">63</span>    <span class="n">intervals</span> <span class="o">=</span> <span class="p">[</span><span class="n">Interval</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">first</span><span class="p">[</span><span class="n">v</span><span class="p">],</span> <span class="n">last</span><span class="p">[</span><span class="n">v</span><span class="p">])</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">first</span><span class="p">]</span>
+<span class="linenos">64</span>    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">intervals</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">i</span><span class="o">.</span><span class="n">end</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<p>生存区間を開始位置の順に処理し、空いているレジスタを割り当てていきます。処理中の区間の開始位置より前に終わった区間のレジスタは空きに戻します。空きがなければ、処理中の区間を含めて最も遠くまで生存する区間をスピルします。遠くまで生存する区間をメモリに追い出せば、その分長い間レジスタが空くからです。</p>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text">tiny_regalloc.py（線形走査法）</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">67</span><span class="k">def</span><span class="w"> </span><span class="nf">linear_scan</span><span class="p">(</span><span class="n">intervals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Interval</span><span class="p">],</span> <span class="n">num_registers</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">68</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Poletto と Sarkar の線形走査法。使った退避領域の数を返す。&quot;&quot;&quot;</span>
+<span class="linenos">69</span>    <span class="n">free</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;r</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_registers</span><span class="p">)]</span>
+<span class="linenos">70</span>    <span class="n">active</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Interval</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># レジスタを持つ区間（end の昇順）</span>
+<span class="linenos">71</span>    <span class="n">spill_count</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">72</span>
+<span class="linenos">73</span>    <span class="k">def</span><span class="w"> </span><span class="nf">spill_slot</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">74</span>        <span class="k">nonlocal</span> <span class="n">spill_count</span>
+<span class="linenos">75</span>        <span class="n">spill_count</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">76</span>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[fp-</span><span class="si">{</span><span class="n">spill_count</span><span class="si">}</span><span class="s2">]&quot;</span>
+<span class="linenos">77</span>
+<span class="linenos">78</span>    <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">intervals</span><span class="p">:</span>
+<span class="linenos">79</span>        <span class="c1"># 終わった区間のレジスタを解放する。</span>
+<span class="linenos">80</span>        <span class="k">for</span> <span class="n">old</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">active</span><span class="p">):</span>
+<span class="linenos">81</span>            <span class="k">if</span> <span class="n">old</span><span class="o">.</span><span class="n">end</span> <span class="o">&lt;</span> <span class="n">current</span><span class="o">.</span><span class="n">start</span><span class="p">:</span>
+<span class="linenos">82</span>                <span class="n">active</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">old</span><span class="p">)</span>
+<span class="linenos">83</span>                <span class="n">free</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+<span class="linenos">84</span>        <span class="k">if</span> <span class="n">free</span><span class="p">:</span>
+<span class="linenos">85</span>            <span class="n">current</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">free</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">86</span>            <span class="n">active</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+<span class="linenos">87</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos">88</span>            <span class="c1"># 最も遠くまで生きる区間をスピルする。</span>
+<span class="linenos">89</span>            <span class="n">victim</span> <span class="o">=</span> <span class="n">active</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="linenos">90</span>            <span class="k">if</span> <span class="n">victim</span><span class="o">.</span><span class="n">end</span> <span class="o">&gt;</span> <span class="n">current</span><span class="o">.</span><span class="n">end</span><span class="p">:</span>
+<span class="linenos">91</span>                <span class="n">current</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">victim</span><span class="o">.</span><span class="n">location</span>
+<span class="linenos">92</span>                <span class="n">victim</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">spill_slot</span><span class="p">()</span>
+<span class="linenos">93</span>                <span class="n">active</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span>
+<span class="linenos">94</span>                <span class="n">active</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+<span class="linenos">95</span>            <span class="k">else</span><span class="p">:</span>
+<span class="linenos">96</span>                <span class="n">current</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">spill_slot</span><span class="p">()</span>
+<span class="linenos">97</span>        <span class="n">active</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">i</span><span class="o">.</span><span class="n">end</span><span class="p">)</span>
+<span class="linenos">98</span>    <span class="k">return</span> <span class="n">spill_count</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id10">
+<h3>実行例<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>最適化した関数 <code class="docutils literal notranslate"><span class="pre">sum</span></code> を SSA 形式から戻し、4 個のレジスタ（<code class="docutils literal notranslate"><span class="pre">r0</span></code> ～ <code class="docutils literal notranslate"><span class="pre">r3</span></code>）で割り当てた結果を示します。<code class="docutils literal notranslate"><span class="pre">[fp-1]</span></code> などはスタック上の退避領域です。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="gp">$ </span>python<span class="w"> </span>tiny.py<span class="w"> </span>regalloc<span class="w"> </span>-k<span class="w"> </span><span class="m">4</span><span class="w"> </span>programs/sum.tiny
+<span class="linenos"> 2</span><span class="go">function sum(n)</span>
+<span class="linenos"> 3</span><span class="go">entry:</span>
+<span class="linenos"> 4</span><span class="go">    s.2&#39; = 0</span>
+<span class="linenos"> 5</span><span class="go">    i.2&#39; = 1</span>
+<span class="linenos"> 6</span><span class="go">    jump cond1</span>
+<span class="linenos"> 7</span><span class="go">cond1:</span>
+<span class="linenos"> 8</span><span class="go">    s.2 = s.2&#39;</span>
+<span class="linenos"> 9</span><span class="go">    i.2 = i.2&#39;</span>
+<span class="linenos">10</span><span class="gp">    %</span><span class="nv">1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>i.2<span class="w"> </span>&lt;<span class="o">=</span><span class="w"> </span>n
+<span class="linenos">11</span><span class="go">    branch %1, body1, endwhile1</span>
+<span class="linenos">12</span><span class="go">body1:</span>
+<span class="linenos">13</span><span class="gp">    %</span><span class="nv">2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>s.2<span class="w"> </span>+<span class="w"> </span>i.2
+<span class="linenos">14</span><span class="gp">    %</span><span class="nv">3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>i.2<span class="w"> </span>+<span class="w"> </span><span class="m">1</span>
+<span class="linenos">15</span><span class="go">    s.2&#39; = %2</span>
+<span class="linenos">16</span><span class="go">    i.2&#39; = %3</span>
+<span class="linenos">17</span><span class="go">    jump cond1</span>
+<span class="linenos">18</span><span class="go">endwhile1:</span>
+<span class="linenos">19</span><span class="go">    return s.2</span>
+<span class="linenos">20</span><span class="go">--- レジスタ割り当て後</span>
+<span class="linenos">21</span><span class="go">function sum(r0)</span>
+<span class="linenos">22</span><span class="go">entry:</span>
+<span class="linenos">23</span><span class="go">    [fp-3] = 0</span>
+<span class="linenos">24</span><span class="go">    [fp-2] = 1</span>
+<span class="linenos">25</span><span class="go">    jump cond1</span>
+<span class="linenos">26</span><span class="go">cond1:</span>
+<span class="linenos">27</span><span class="go">    [fp-1] = [fp-3]</span>
+<span class="linenos">28</span><span class="go">    r3 = [fp-2]</span>
+<span class="linenos">29</span><span class="go">    r2 = r3 &lt;= r0</span>
+<span class="linenos">30</span><span class="go">    branch r2, body1, endwhile1</span>
+<span class="linenos">31</span><span class="go">body1:</span>
+<span class="linenos">32</span><span class="go">    r2 = [fp-1] + r3</span>
+<span class="linenos">33</span><span class="go">    r1 = r3 + 1</span>
+<span class="linenos">34</span><span class="go">    [fp-3] = r2</span>
+<span class="linenos">35</span><span class="go">    [fp-2] = r1</span>
+<span class="linenos">36</span><span class="go">    jump cond1</span>
+<span class="linenos">37</span><span class="go">endwhile1:</span>
+<span class="linenos">38</span><span class="go">    return [fp-1]</span>
+</pre></div>
+</div>
+<p>（<code class="docutils literal notranslate"><span class="pre">main</span></code> 関数の出力は省略しています。）レジスタが 4 個あるにもかかわらず、3 つの変数がスピルされました。原因は 2 つあります。</p>
+<ul class="simple">
+<li><p>SSA 形式から戻したときに追加した <code class="docutils literal notranslate"><span class="pre">s.2'</span></code> と <code class="docutils literal notranslate"><span class="pre">s.2</span></code> のようなコピー命令の組が、ループ全体にわたる長い生存区間を作っています。生存区間を 1 つの連続した区間で近似しているため、実際には生存していない隙間（ループ内で値を使い終えてから次の代入までの間）も占有したことになっています。</p></li>
+<li><p>コピー元とコピー先を同じ場所に割り当てる工夫（コピーの合併）をしていないため、コピー命令がそのまま残り、変数の数が減りません。</p></li>
+</ul>
+<p>実用的な線形走査法では、生存区間を隙間のある複数の区間の集まりとして扱い、レジスタが足りなくなったら区間を途中で分割して、一部だけをスピルします。また、コピーで結ばれた区間には同じレジスタを優先して割り当てます。LLVM は、以前は線形走査法を使っていましたが、現在は区間の分割を積極的に行う貪欲法による割り当てを標準で使っています。<code class="docutils literal notranslate"><span class="pre">-k</span></code> オプションでレジスタの数を変えて、結果がどう変わるかを試してみてください。</p>
+<p>本書の擬似的な機械では、命令の被演算子にメモリ（<code class="docutils literal notranslate"><span class="pre">[fp-1]</span></code> など）を直接書けるものとし、関数の呼び出しでレジスタの値は壊れないものとしています。実際の機械では、メモリにある値は演算の前にレジスタに読み込む必要があり、呼び出しをまたいで生存する変数は呼び出し規約に従って保存する必要があります。</p>
+</section>
+</section>
+<section id="id11">
+<h2>ガベージコレクション<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>Tiny の配列はヒープに置かれ、どこからも参照されなくなったら回収する必要があります。本書の処理系は Python で書かれているので、この仕事は Python のメモリ管理に任せています。ここでは、言語処理系が自前でヒープを管理する場合の代表的な<a class="reference internal" href="appendix_b_glossary.html#term-9"><span class="xref std std-term">ガベージコレクション</span></a>（GC）の方式を、シミュレーション（<code class="docutils literal notranslate"><span class="pre">gc_sim.py</span></code>）で確かめます。GC の方式を網羅的に知りたい場合は <a class="reference internal" href="appendix_c_references.html#jones2023" id="id12"><span>[Jones2023]</span></a> を参照してください。</p>
+<p>GC では、局所変数や大域変数のように、プログラムが直接参照できる場所を<a class="reference internal" href="appendix_b_glossary.html#term-65"><span class="xref std std-term">ルート</span></a>と呼びます。ルートから参照をたどって到達できるオブジェクトは生きており、到達できないオブジェクトはごみです。</p>
+<section id="id13">
+<h3>参照カウント<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>参照カウントは、各オブジェクトに「自分を指している参照の数」を持たせ、それが 0 になった時点でオブジェクトを解放する方式です。ごみになった瞬間に回収できるので、メモリの使用量が少なく、停止時間も短いという利点があります。CPython の基本的なメモリ管理は参照カウントです。</p>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">gc_sim.py（参照カウント）</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">14</span><span class="k">class</span><span class="w"> </span><span class="nc">RefCountHeap</span><span class="p">:</span>
+<span class="linenos">15</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;各オブジェクトが「自分を指す参照の数」を持つヒープ。&quot;&quot;&quot;</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">18</span>        <span class="bp">self</span><span class="o">.</span><span class="n">refs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># オブジェクト → 参照先</span>
+<span class="linenos">19</span>        <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span>    <span class="k">def</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">22</span>        <span class="bp">self</span><span class="o">.</span><span class="n">refs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">23</span>        <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span>    <span class="k">def</span><span class="w"> </span><span class="nf">increment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">26</span>        <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span>    <span class="k">def</span><span class="w"> </span><span class="nf">decrement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">29</span>        <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+<span class="linenos">30</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">31</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> を解放&quot;</span><span class="p">)</span>
+<span class="linenos">32</span>            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">refs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="linenos">33</span>                <span class="bp">self</span><span class="o">.</span><span class="n">decrement</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+<span class="linenos">34</span>            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span>    <span class="k">def</span><span class="w"> </span><span class="nf">add_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">37</span>        <span class="bp">self</span><span class="o">.</span><span class="n">refs</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+<span class="linenos">38</span>        <span class="bp">self</span><span class="o">.</span><span class="n">increment</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>参照カウントの弱点は、循環参照を回収できないことです。<code class="docutils literal notranslate"><span class="pre">C</span></code> と <code class="docutils literal notranslate"><span class="pre">D</span></code> が互いに参照し合っていると、ルートからの参照がなくなっても、互いの参照によってカウントが 0 になりません。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>== 参照カウント
+<span class="linenos">2</span>ルートから A への参照を消す
+<span class="linenos">3</span>  A を解放
+<span class="linenos">4</span>  B を解放
+<span class="linenos">5</span>ルートから C への参照を消す
+<span class="linenos">6</span>  解放されずに残ったオブジェクト: [&#39;C&#39;, &#39;D&#39;]
+</pre></div>
+</div>
+<p>CPython は、この問題を補うために、循環参照を検出する GC を参照カウントと併用しています。</p>
+</section>
+<section id="id14">
+<h3>マーク &amp; スイープ<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p>マーク &amp; スイープは、ルートから到達できるオブジェクトに印を付け（マーク）、印のないオブジェクトをすべて解放する（スイープ）方式です。到達可能性を直接調べるので、循環参照も回収できます。<a class="reference internal" href="09_optimization.html"><span class="doc">第 9 章</span></a>の不要コード除去と同じ考え方です。</p>
+<div class="literal-block-wrapper docutils container" id="id25">
+<div class="code-block-caption"><span class="caption-text">gc_sim.py（マーク &amp; スイープ）</span><a class="headerlink" href="#id25" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">60</span><span class="k">def</span><span class="w"> </span><span class="nf">mark_and_sweep</span><span class="p">(</span><span class="n">refs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="linenos">61</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ルートから到達できないオブジェクトを refs から取り除き、その名前を返す。&quot;&quot;&quot;</span>
+<span class="linenos">62</span>    <span class="n">marked</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="linenos">63</span>    <span class="n">stack</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span>
+<span class="linenos">64</span>    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>  <span class="c1"># マーク: ルートからたどれるものに印を付ける</span>
+<span class="linenos">65</span>        <span class="n">name</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos">66</span>        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">marked</span><span class="p">:</span>
+<span class="linenos">67</span>            <span class="n">marked</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<span class="linenos">68</span>            <span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">refs</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+<span class="linenos">69</span>    <span class="n">garbage</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">refs</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">marked</span><span class="p">]</span>
+<span class="linenos">70</span>    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">garbage</span><span class="p">:</span>  <span class="c1"># スイープ: 印のないものを解放する</span>
+<span class="linenos">71</span>        <span class="k">del</span> <span class="n">refs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="linenos">72</span>    <span class="k">return</span> <span class="n">garbage</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>== マーク &amp; スイープ
+<span class="linenos">2</span>  解放: [&#39;C&#39;, &#39;D&#39;, &#39;E&#39;]
+<span class="linenos">3</span>  残り: [&#39;A&#39;, &#39;B&#39;]
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">E</span></code> は <code class="docutils literal notranslate"><span class="pre">B</span></code> を参照していますが、<code class="docutils literal notranslate"><span class="pre">E</span></code> 自身はルートから到達できないので回収されます。</p>
+</section>
+<section id="gc">
+<h3>コピー GC<a class="headerlink" href="#gc" title="Link to this heading"></a></h3>
+<p>コピー GC は、ヒープを 2 つの領域に分け、生きているオブジェクトだけを一方の領域からもう一方の領域へ詰めてコピーする方式です。コピーの後は元の領域全体が空きになるので、解放の処理が要らず、空き領域が断片化しません。Cheney のアルゴリズム <a class="reference internal" href="appendix_c_references.html#cheney1970" id="id15"><span>[Cheney1970]</span></a> は、コピー先の領域自体を幅優先探索の待ち行列として使うことで、追加のメモリなしにコピーを行います。オブジェクトをコピーしたら元の場所に移動先（転送アドレス）を書いておき、同じオブジェクトを 2 度コピーしないようにします。</p>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-text">gc_sim.py（Cheney のコピー GC）</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 93</span><span class="k">def</span><span class="w"> </span><span class="nf">copying_collect</span><span class="p">(</span><span class="n">from_space</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">],</span>
+<span class="linenos"> 94</span>                    <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="linenos"> 95</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Cheney のアルゴリズム。生きているオブジェクトを新しい領域に詰めて写す。</span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span><span class="sd">    新しい領域と、書き換えたルート（新しいアドレス）を返す。</span>
+<span class="linenos"> 98</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 99</span>    <span class="n">to_space</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cell</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">100</span>
+<span class="linenos">101</span>    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="n">address</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">102</span>        <span class="n">cell</span> <span class="o">=</span> <span class="n">from_space</span><span class="p">[</span><span class="n">address</span><span class="p">]</span>
+<span class="linenos">103</span>        <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">forward</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">104</span>            <span class="n">to_space</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Cell</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">fields</span><span class="p">)))</span>
+<span class="linenos">105</span>            <span class="n">cell</span><span class="o">.</span><span class="n">forward</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">to_space</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="linenos">106</span>        <span class="k">return</span> <span class="n">cell</span><span class="o">.</span><span class="n">forward</span>
+<span class="linenos">107</span>
+<span class="linenos">108</span>    <span class="n">new_roots</span> <span class="o">=</span> <span class="p">[</span><span class="n">copy</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">]</span>
+<span class="linenos">109</span>    <span class="n">scan</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">110</span>    <span class="k">while</span> <span class="n">scan</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">to_space</span><span class="p">):</span>  <span class="c1"># 写したオブジェクトの参照先を順に写す</span>
+<span class="linenos">111</span>        <span class="n">cell</span> <span class="o">=</span> <span class="n">to_space</span><span class="p">[</span><span class="n">scan</span><span class="p">]</span>
+<span class="linenos">112</span>        <span class="n">cell</span><span class="o">.</span><span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">copy</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">cell</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span>
+<span class="linenos">113</span>        <span class="n">scan</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">114</span>    <span class="k">return</span> <span class="n">to_space</span><span class="p">,</span> <span class="n">new_roots</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>== コピー GC
+<span class="linenos">2</span>  コピー前: 0:A-&gt;[3], 1:X-&gt;[], 2:Y-&gt;[1], 3:B-&gt;[4], 4:C-&gt;[0]
+<span class="linenos">3</span>  コピー後: 0:A-&gt;[1], 1:B-&gt;[2], 2:C-&gt;[0]  ルート=[0]
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">A</span></code>、<code class="docutils literal notranslate"><span class="pre">B</span></code>、<code class="docutils literal notranslate"><span class="pre">C</span></code> だけが新しい領域の先頭に詰めて配置され、参照先のアドレスも新しい場所に書き換えられています。</p>
+</section>
+<section id="id16">
+<h3>世代別 GC<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p>多くのプログラムでは、「ほとんどのオブジェクトは確保されてすぐに不要になる」という傾向があります（世代別仮説）。世代別 GC は、ヒープを若い世代と古い世代に分け、若い世代だけを頻繁に回収します。若い世代の回収にはコピー GC を使い、何度かの回収を生き延びたオブジェクトを古い世代に移します。Java の多くの GC や、CPython の循環参照を検出する GC が、世代の考え方を取り入れています。</p>
+</section>
+</section>
+<section id="id17">
+<h2>まとめ<a class="headerlink" href="#id17" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>実行時のメモリは、コード、静的データ、スタック、ヒープの領域に分けて使われます。</p></li>
+<li><p>関数呼び出しはスタックフレームで管理し、引数や戻り値の受け渡しは呼び出し規約で決まります。</p></li>
+<li><p>レジスタ割り当ては干渉グラフの彩色問題として定式化でき、高速な近似として線形走査法があります。</p></li>
+<li><p>コピーで結ばれた変数を同じレジスタに割り当てると、コピー命令を削除できます。</p></li>
+<li><p>ガベージコレクションには、参照カウント、マーク &amp; スイープ、コピー GC、世代別 GC などの方式があります。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="10_vm.html" class="btn btn-neutral float-left" title="第 10 章 コード生成と仮想マシン" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="12_advanced.html" class="btn btn-neutral float-right" title="第 12 章 発展的な話題" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

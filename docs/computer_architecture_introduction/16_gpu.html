@@ -1,0 +1,1851 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16. GPU のアーキテクチャ &mdash; コンピューターアーキテクチャ入門 1.0</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=fdd3d810" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="17. アクセラレーターとヘテロジニアス構成" href="17_accelerators.html" />
+    <link rel="prev" title="15. 並列アーキテクチャ" href="15_parallel.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンピューターアーキテクチャ入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. はじめに</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id2">1.1. 本書の目的</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id3">1.2. 対象読者と前提知識</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id4">1.3. 本書の構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id5">1.4. サンプルコードの使い方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id6">1.5. 表記の決まり</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="01_introduction.html#id7">1.5.1. 例に使う命令セットアーキテクチャ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="01_introduction.html#id8">1.5.2. 数値の表記</a></li>
+<li class="toctree-l3"><a class="reference internal" href="01_introduction.html#id9">1.5.3. 単位の接頭辞</a></li>
+<li class="toctree-l3"><a class="reference internal" href="01_introduction.html#id10">1.5.4. 用語の表記</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id11">1.6. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="02_what_is_architecture.html">2. コンピューターアーキテクチャとは</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_architecture.html#id2">2.1. 抽象化の階層</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_architecture.html#isa">2.2. ISA とマイクロアーキテクチャ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id3">2.2.1. 同じ ISA、異なる実装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id4">2.2.2. アーキテクチャとして見えるもの、見えないもの</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_architecture.html#id5">2.3. ノイマン型とハーバード型</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id6">2.3.1. ノイマン型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id7">2.3.2. ハーバード型</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id8">2.3.3. 変形ハーバード型</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_architecture.html#id9">2.4. 設計上のトレードオフ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_architecture.html#id10">2.5. なぜエンジニアがアーキテクチャを学ぶのか</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id11">2.5.1. 性能のチューニング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id12">2.5.2. 並行プログラミングのバグ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id13">2.5.3. セキュリティ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_architecture.html#id14">2.5.4. ハードウェアの選択</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_architecture.html#id15">2.6. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="03_history.html">3. アーキテクチャの歴史</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id2">3.1. 電子計算機の誕生</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id3">3.1.1. 機械式・電気機械式の計算機</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#eniac">3.1.2. ENIAC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#edvac">3.1.3. プログラム内蔵方式と EDVAC 報告書</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id4">3.1.4. 最初のプログラム内蔵式計算機</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id5">3.2. マイクロプログラム方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#ibm-system-360">3.3. 「アーキテクチャ」の誕生と IBM System/360</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id6">3.3.1. 互換性のない製品群という問題</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#system-360">3.3.2. System/360 の発想</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id7">3.4. スーパーコンピューターと高速化技術の源流</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#cdc-6600">3.4.1. CDC 6600 とスコアボード</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#ibm-system-360-model-91-tomasulo">3.4.2. IBM System/360 Model 91 と Tomasulo のアルゴリズム</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#atlas">3.4.3. Atlas と仮想記憶</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#system-360-model-85">3.4.4. System/360 Model 85 とキャッシュ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#cray-1">3.4.5. Cray-1 とベクトル計算機</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#cisc">3.5. ミニコンピューターと CISC の隆盛</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id8">3.6. マイクロプロセッサの登場</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#intel-4004-8086">3.6.1. Intel 4004 から 8086 へ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#motorola-68000">3.6.2. Motorola 68000</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#ibm-pc-x86">3.6.3. IBM PC と x86 の定着</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#risc">3.7. RISC 革命</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id9">3.7.1. 複雑な命令は本当に役に立っているのか</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#ibm-801">3.7.2. IBM 801</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#risc-mips">3.7.3. バークレーの RISC とスタンフォードの MIPS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#arm">3.7.4. Arm の誕生</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#risc-cisc">3.7.5. RISC と CISC の論争の結末</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id10">3.8. スーパースカラとアウトオブオーダー実行の時代</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#vliw-itanium">3.9. VLIW と Itanium の挑戦と挫折</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id11">3.10. 64 ビット化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id12">3.11. 電力の壁とマルチコアへの転換</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id13">3.11.1. デナード・スケーリングの終わり</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#pentium-4">3.11.2. Pentium 4 とクロック周波数競争の終わり</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id14">3.11.3. マルチコアへ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id15">3.12. モバイルと Arm の時代</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#gpu">3.13. GPU の汎用化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id16">3.14. ドメイン特化型アーキテクチャ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#risc-v-isa">3.15. RISC-V とオープンな ISA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id17">3.16. 新たな黄金時代</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#isa">3.17. 主要な ISA の系譜</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id18">3.18. 年表</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id19">3.19. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="04_performance.html">4. 性能の測り方</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#id2">4.1. 性能の指標</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id3">4.1.1. 実行時間と応答時間</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id4">4.1.2. スループットとレイテンシ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#cpu">4.2. CPU 性能の式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id5">4.2.1. クロックとサイクル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#cpi">4.2.2. 命令数、CPI、クロック周期</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id6">4.2.3. 命令の種類ごとの CPI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id7">4.2.4. 3 つの要因に影響するもの</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#mips-flops">4.3. MIPS と FLOPS の落とし穴</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#mips">4.3.1. MIPS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#flops">4.3.2. FLOPS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#id8">4.4. ベンチマーク</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id9">4.4.1. ベンチマークとは</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id10">4.4.2. 平均の取り方</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#id11">4.5. アムダールの法則</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id12">4.5.1. 法則の内容</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id13">4.5.2. 数値例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id14">4.5.3. グスタフソンの法則</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#id15">4.6. 電力とエネルギー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id16">4.6.1. 動的電力</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id17">4.6.2. 静的電力</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id18">4.6.3. 電力の壁</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id19">4.6.4. エネルギー</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#id20">4.7. ルーフラインモデル</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id21">4.7.1. 演算強度</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_performance.html#id22">4.7.2. 到達可能な性能</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#id23">4.8. サンプルコード：性能の計算</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_performance.html#id24">4.9. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="05_data_representation.html">5. データの表現</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id2">5.1. ビット・バイト・ワード</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id3">5.2. 整数の表現</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#id4">5.2.1. 符号なし整数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#id5">5.2.2. 2 の補数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id6">5.3. オーバーフロー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#id7">5.3.1. オーバーフローとは</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#id8">5.3.2. フラグによる検出</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#risc-v">5.3.3. RISC-V にはフラグがない</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id9">5.4. 符号拡張とゼロ拡張</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id10">5.5. 浮動小数点数</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#ieee-754">5.5.1. IEEE 754</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#id11">5.5.2. 正規化数の値</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#id12">5.5.3. 特殊な値</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#id13">5.5.4. 丸め</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#ai">5.5.5. AI 向けの低精度の形式</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id14">5.6. バイトオーダー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_data_representation.html#id15">5.6.1. リトルエンディアンとビッグエンディアン</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id16">5.7. アラインメント</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id17">5.8. 固定小数点数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id18">5.9. サンプルコード：ビット表現を確かめる</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_data_representation.html#id19">5.10. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="06_isa.html">6. 命令セットアーキテクチャ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#isa">6.1. ISA が定めるもの</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#id2">6.2. レジスタとレジスタファイル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#id3">6.3. 命令形式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#id4">6.4. アドレッシングモード</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#id5">6.5. 主な命令</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="06_isa.html#id6">6.5.1. 算術論理命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_isa.html#id7">6.5.2. ロード命令とストア命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_isa.html#id8">6.5.3. 分岐命令とジャンプ命令</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#id9">6.6. ロード／ストアアーキテクチャ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#risc-v">6.7. RISC-V のモジュール構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#x86-64aarch64">6.8. x86-64、AArch64 との比較</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#risc-cisc">6.9. RISC と CISC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#id10">6.10. エンコード例</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_isa.html#id11">6.11. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="07_machine_language.html">7. 機械語とプログラム</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#c">7.1. C のプログラムと命令列</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="07_machine_language.html#if">7.1.1. if 文</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_machine_language.html#for">7.1.2. for ループと配列アクセス</a></li>
+<li class="toctree-l3"><a class="reference internal" href="07_machine_language.html#id2">7.1.3. 関数呼び出し</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#id3">7.2. スタックとスタックフレーム</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#id4">7.3. 呼び出し規約</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#abi">7.4. ABI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#id5">7.5. アセンブラ、リンカ、ローダ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#id6">7.6. 擬似命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#id7">7.7. コンパイラの最適化とアーキテクチャ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#id8">7.8. 逆アセンブルして確かめる</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_machine_language.html#id9">7.9. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="08_digital_logic.html">8. 論理回路の復習</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id2">8.1. 組合せ回路と順序回路</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id3">8.2. 論理ゲート</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id4">8.3. マルチプレクサとデコーダ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id5">8.4. 加算器</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="08_digital_logic.html#id6">8.4.1. 半加算器と全加算器</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_digital_logic.html#id7">8.4.2. リプルキャリー加算器</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_digital_logic.html#id8">8.4.3. キャリールックアヘッド加算器</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id9">8.5. 乗算器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#alu">8.6. ALU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id10">8.7. サンプル：ゲートから ALU を作る</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id11">8.8. フリップフロップとレジスタ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id12">8.9. レジスタファイル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id13">8.10. クロックとクリティカルパス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#cmos">8.11. CMOS とトランジスタ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_digital_logic.html#id14">8.12. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="09_datapath.html">9. プロセッサの設計</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#id2">9.1. データパスと制御</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#id3">9.2. 命令実行の段階</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#id4">9.3. 単一サイクル実装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_datapath.html#id5">9.3.1. 制御信号</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#id6">9.4. 単一サイクル実装の問題</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#id7">9.5. マルチサイクル実装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#id8">9.6. 制御方式</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#id9">9.7. 例外と割り込み</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#risc-v">9.8. サンプル：RISC-V の命令セットシミュレーター</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_datapath.html#id10">9.9. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="10_pipeline.html">10. パイプライン</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id2">10.1. 洗濯の例え</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#risc-v-5">10.2. RISC-V の 5 段パイプライン</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id3">10.3. パイプライン図</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id4">10.4. 理想的な速度向上</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#ch10-hazard">10.5. パイプラインハザード</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="10_pipeline.html#id6">10.5.1. 構造ハザード</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_pipeline.html#rawwarwaw">10.5.2. データハザード：RAW・WAR・WAW</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id7">10.6. フォワーディング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id8">10.7. ロード使用ハザードとストール</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id9">10.8. 制御ハザードと分岐の扱い</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id10">10.9. サンプル：パイプラインのストールの計算</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#cpi">10.10. パイプラインの性能と CPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id11">10.11. 深いパイプラインの得失</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_pipeline.html#id12">10.12. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="11_ilp.html">11. 命令レベル並列性</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id2">11.1. 命令レベル並列性とは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id3">11.2. 分岐予測</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id4">11.2.1. 静的予測</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id5">11.2.2. 1 ビットと 2 ビットの飽和カウンタ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#gshare">11.2.3. 相関分岐予測と gshare</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id6">11.2.4. 分岐先バッファとリターンアドレススタック</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id7">11.2.5. 現代の分岐予測器</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id8">11.2.6. 分岐予測ミスのペナルティ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id9">11.2.7. サンプル：分岐予測器の比較</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id10">11.3. スーパースカラ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id11">11.4. 動的スケジューリングとアウトオブオーダー実行</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#tomasulo">11.4.1. Tomasulo のアルゴリズム</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id12">11.4.2. サンプル：Tomasulo のアルゴリズムのシミュレーター</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id13">11.5. レジスタリネーミング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id14">11.6. リオーダーバッファとインオーダーコミット</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id15">11.7. 投機実行</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id16">11.8. 正確な例外</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#vliw">11.9. VLIW</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#smt">11.10. SMT（同時マルチスレッディング）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#ilp">11.11. ILP の限界</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id17">11.12. ソフトウェアへの示唆</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id18">11.12.1. 予測しにくい分岐を避ける</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_ilp.html#id19">11.12.2. 依存の連鎖を短くする</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="11_ilp.html#id20">11.13. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="12_memory_hierarchy.html">12. メモリ階層とキャッシュ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id2">12.1. メモリウォール</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id3">12.2. 局所性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#sram-dram">12.3. SRAM と DRAM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id4">12.4. メモリ階層</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id5">12.5. キャッシュの構成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_memory_hierarchy.html#id6">12.5.1. ブロックとアドレスの分割</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_memory_hierarchy.html#id7">12.5.2. ダイレクトマップ、セットアソシアティブ、フルアソシアティブ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_memory_hierarchy.html#id8">12.5.3. 置換方式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_memory_hierarchy.html#id9">12.5.4. 書き込み方式</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#c">12.6. ミスの 3C 分類</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id10">12.7. 平均メモリアクセス時間</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id11">12.8. 多段キャッシュ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id12">12.9. プリフェッチ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#dram">12.10. DRAM の構造</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id13">12.11. キャッシュを意識したプログラミング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_memory_hierarchy.html#id14">12.11.1. 配列の走査順</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_memory_hierarchy.html#id15">12.11.2. 構造体の配列と配列の構造体</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_memory_hierarchy.html#id16">12.11.3. ブロッキング</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id17">12.12. サンプル：キャッシュシミュレーター</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id18">12.13. サンプル：連続アクセスとストライドアクセスの速さ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_memory_hierarchy.html#id19">12.14. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="13_virtual_memory.html">13. 仮想記憶</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id2">13.1. 仮想アドレスと物理アドレス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id3">13.2. ページとページフレーム</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id4">13.3. アドレス変換</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id5">13.4. ページテーブルエントリ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id6">13.5. 多段ページテーブル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#tlb">13.6. TLB</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="13_virtual_memory.html#id7">13.6.1. TLB の構成</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtual_memory.html#id8">13.6.2. TLB ミスとページテーブルウォーク</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id9">13.7. ページフォールト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id10">13.8. ヒュージページ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id11">13.9. キャッシュと TLB の関係</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id12">13.10. 保護とプロセスの分離</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#asid">13.11. ASID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id13">13.12. サンプル：TLB とページテーブルによるアドレス変換</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtual_memory.html#id14">13.13. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="14_io.html">14. 入出力とバス</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#i-o">14.1. I/O デバイスの多様性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#i-o-i-o">14.2. デバイスの操作：メモリマップト I/O とポートマップト I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#dma">14.3. ポーリング・割り込み・DMA</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_io.html#id2">14.3.1. ポーリング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_io.html#id3">14.3.2. 割り込み</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_io.html#id4">14.3.3. DMA</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#id5">14.4. 割り込みコントローラ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#id6">14.5. バスとインターコネクト</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_io.html#id7">14.5.1. 共有バス</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_io.html#point-to-point">14.5.2. Point-to-Point の高速シリアル接続へ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#pci-express">14.6. PCI Express</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#id8">14.7. ストレージ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_io.html#hdd">14.7.1. HDD</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_io.html#ssd">14.7.2. SSD とフラッシュメモリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_io.html#nvme">14.7.3. NVMe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#id9">14.8. キャッシュコヒーレントな I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#iommu">14.9. IOMMU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#id10">14.10. ネットワーク</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_io.html#id11">14.11. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="15_parallel.html">15. 並列アーキテクチャ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id2">15.1. 並列化が必要になった背景</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id3">15.2. 並列性の種類</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id4">15.3. フリンの分類</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#simd">15.4. SIMD 命令</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#id5">15.4.1. 自動ベクトル化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id6">15.5. マルチコアと共有メモリ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id7">15.6. キャッシュコヒーレンス</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#id8">15.6.1. 問題の例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#id9">15.6.2. スヌープ方式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#mesi">15.6.3. MESI プロトコル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#id10">15.6.4. ディレクトリ方式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#id11">15.6.5. MESI シミュレーター</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#false-sharing">15.7. false sharing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id12">15.8. メモリ一貫性モデル</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#id13">15.8.1. 逐次一貫性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#tso">15.8.2. TSO</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#id14">15.8.3. 弱いメモリモデル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#id15">15.8.4. メモリバリア</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id16">15.9. アトミック命令</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="15_parallel.html#risc-v-a">15.9.1. RISC-V の A 拡張</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#numa">15.10. NUMA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id17">15.11. アムダールの法則の再確認</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id18">15.12. 分散メモリとクラスタ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_parallel.html#id19">15.13. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">16. GPU のアーキテクチャ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">16.1. GPU とは何か</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">16.1.1. レイテンシ重視とスループット重視</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">16.1.2. トランジスタの使い方の比較</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">16.2. GPU の歴史</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">16.2.1. 固定機能のグラフィックスアクセラレーター</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#geforce-256-gpu">16.2.2. GeForce 256 と「GPU」という名前</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">16.2.3. プログラマブルシェーダー</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">16.2.4. 統合シェーダーアーキテクチャ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cuda-gpgpu">16.2.5. CUDA と GPGPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">16.2.6. 科学技術計算とスーパーコンピューター</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">16.2.7. 深層学習</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tensor">16.2.8. Tensor コアと大規模言語モデル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">16.3. グラフィックスパイプライン</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">16.4. GPU の構成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id12">16.4.1. 全体の構成</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sm">16.4.2. ストリーミングマルチプロセッサ（SM）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">16.4.3. 非常に大きなレジスタファイル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">16.5. 実行モデル</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id15">16.5.1. スレッド・ブロック・グリッドの階層</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#simt">16.5.2. SIMT とワープ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#simd-simt">16.5.3. SIMD と SIMT の違い</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id16">16.6. レイテンシの隠蔽</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id17">16.6.1. 多数のワープを切り替える</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">16.6.2. 必要な並列度の見積もり</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id19">16.6.3. 占有率</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id20">16.7. 分岐ダイバージェンス</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id21">16.7.1. マスクによる実行</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id22">16.7.2. 性能への影響を確かめる</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id23">16.7.3. 独立スレッドスケジューリング</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id24">16.8. メモリ階層</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hbm-gddr">16.8.1. HBM と GDDR</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id25">16.9. メモリアクセスの合体とバンクコンフリクト</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id26">16.9.1. メモリアクセスの合体（コアレッシング）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id27">16.9.2. 共有メモリのバンクコンフリクト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id28">16.9.3. 合体とバンクコンフリクトを数える</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id29">16.10. プログラミングモデル</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id30">16.10.1. ホストとデバイス</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id31">16.10.2. ベクトル加算の例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id32">16.10.3. メモリ転送の工夫</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id33">16.11. 行列積の高速化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id34">16.11.1. 素朴な実装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id35">16.11.2. タイリングと共有メモリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id36">16.11.3. Tensor コア</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id37">16.11.4. 低精度演算</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id38">16.12. 性能を考える</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id39">16.12.1. ルーフラインモデル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pcie">16.12.2. PCIe 転送のボトルネック</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cpu-gpu">16.13. CPU と GPU の接続</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id40">16.14. GPU のプログラミング環境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id41">16.15. GPU が向く処理と向かない処理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id42">16.16. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="17_accelerators.html">17. アクセラレーターとヘテロジニアス構成</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#id2">17.1. ドメイン特化型アーキテクチャ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="17_accelerators.html#id3">17.1.1. 汎用性と効率のトレードオフ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="17_accelerators.html#id4">17.1.2. ヘネシーとパターソンの指針</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#google-tpu">17.2. Google TPU</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="17_accelerators.html#id5">17.2.1. シストリックアレイの仕組み</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#npu">17.3. NPU</a></li>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#fpga">17.4. FPGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#asic">17.5. ASIC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#soc">17.6. SoC とヘテロジニアス構成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="17_accelerators.html#id6">17.6.1. ヘテロジニアス構成</a></li>
+<li class="toctree-l3"><a class="reference internal" href="17_accelerators.html#id7">17.6.2. SoC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="17_accelerators.html#id8">17.6.3. 異種のコア</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#id9">17.7. メモリと演算の近接</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="17_accelerators.html#hbm">17.7.1. HBM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="17_accelerators.html#id10">17.7.2. 近メモリ処理とメモリ内処理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#id11">17.8. ソフトウェアスタックの重要性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="17_accelerators.html#id12">17.9. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="18_security_reliability.html">18. セキュリティと信頼性</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#id2">18.1. ハードウェアによる保護の基本</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id3">18.1.1. 特権モード</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id4">18.1.2. ページ単位の保護</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#nx">18.1.3. NX ビット</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#id5">18.2. サイドチャネル攻撃</a></li>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#id6">18.3. 投機実行に起因する脆弱性</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id7">18.3.1. 背景にある考え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#spectre">18.3.2. Spectre</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#meltdown">18.3.3. Meltdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id8">18.3.4. 主な変種</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#id9">18.4. 対策と性能への影響</a></li>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#rowhammer">18.5. Rowhammer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#id10">18.6. 信頼性</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id11">18.6.1. ソフトエラー</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id12">18.6.2. パリティ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id13">18.6.3. ハミング符号</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id14">18.6.4. 冗長化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="18_security_reliability.html#id15">18.6.5. チェックポイント</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#id16">18.7. 信頼できる実行環境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#id17">18.8. メモリ安全性のハードウェア支援</a></li>
+<li class="toctree-l2"><a class="reference internal" href="18_security_reliability.html#id18">18.9. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="19_trends.html">19. 最新動向</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id2">19.1. ムーアの法則とデナード・スケーリングの鈍化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id3">19.2. ダークシリコン</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id4">19.3. チップレットと先進パッケージング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id5">19.4. ドメイン特化型アーキテクチャ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#risc-v">19.5. RISC-V の普及</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#arm-pc">19.6. Arm のサーバー・PC への進出</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id6">19.7. メモリ技術</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id7">19.8. 省電力化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id8">19.9. 光インターコネクト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id9">19.10. 量子コンピューターとニューロモーフィックコンピューティング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="19_trends.html#id10">19.10.1. 量子コンピューター</a></li>
+<li class="toctree-l3"><a class="reference internal" href="19_trends.html#id11">19.10.2. ニューロモーフィックコンピューティング</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#ai">19.11. AI のための大規模システム</a></li>
+<li class="toctree-l2"><a class="reference internal" href="19_trends.html#id12">19.12. この章のまとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="20_summary.html">20. まとめ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="20_summary.html#id2">20.1. 各章の要点</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20_summary.html#id3">20.2. 性能向上の主要な手法の整理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20_summary.html#id4">20.3. ソフトウェアエンジニアのためのチェックリスト</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20_summary.html#id5">20.4. 次に学ぶべきこと</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="20_summary.html#id6">20.4.1. 定番の教科書</a></li>
+<li class="toctree-l3"><a class="reference internal" href="20_summary.html#id7">20.4.2. シミュレーターで試す</a></li>
+<li class="toctree-l3"><a class="reference internal" href="20_summary.html#hdl-cpu">20.4.3. HDL で CPU を自作する</a></li>
+<li class="toctree-l3"><a class="reference internal" href="20_summary.html#fpga">20.4.4. FPGA で動かす</a></li>
+<li class="toctree-l3"><a class="reference internal" href="20_summary.html#id8">20.4.5. さらに進むには</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="20_summary.html#id9">20.5. おわりに</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20_summary.html#id10">20.6. 本書のまとめ</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_riscv.html">付録：RISC-V RV32I 命令一覧</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="appendix_riscv.html#id1">算術論理命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_riscv.html#id2">ロード命令とストア命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_riscv.html#id3">分岐命令とジャンプ命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_riscv.html#id4">その他の命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_riscv.html#m">M 拡張の命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_riscv.html#id5">主な擬似命令</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_riscv.html#abi">レジスタの ABI 名</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_references.html">参考文献</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id2">教科書</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id3">歴史</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id4">性能と技術の動向</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id5">プロセッサの高速化と並列化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#gpu">GPU とアクセラレーター</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id6">セキュリティと信頼性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id7">仕様書とマニュアル</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">サンプルコード一覧</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="appendix_examples.html#id2">コードの品質について</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンピューターアーキテクチャ入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">16. </span>GPU のアーキテクチャ</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gpu">
+<h1><span class="section-number">16. </span>GPU のアーキテクチャ<a class="headerlink" href="#gpu" title="Link to this heading"></a></h1>
+<p><strong>GPU</strong>（Graphics Processing Unit）は、もともと 3 次元グラフィックスの描画を高速に行うための専用プロセッサでした。しかし、その本質である「大量のデータに同じ処理を並列に適用する能力」は、科学技術計算や深層学習にもそのまま役立ちます。現在では、スーパーコンピューターの演算性能の大部分や、大規模言語モデルの学習と推論を支えているのは GPU です。</p>
+<p>この章では、GPU が CPU とどのように異なる設計思想に基づいているかを出発点に、GPU の歴史、ハードウェアの構成、SIMT と呼ばれる実行モデル、レイテンシの隠し方、分岐やメモリアクセスが性能に与える影響、CUDA によるプログラミング、行列積の高速化、そして性能の見積もり方までを順に説明します。「<a class="reference internal" href="15_parallel.html"><span class="doc">並列アーキテクチャ</span></a>」で説明した SIMD やマルチコアの知識を前提とし、両者の違いもこの章で整理します。具体的な製品の数値は世代によって変わるので、仕組みを理解するための目安として読んでください。</p>
+<section id="id1">
+<h2><span class="section-number">16.1. </span>GPU とは何か<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3><span class="section-number">16.1.1. </span>レイテンシ重視とスループット重視<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>CPU と GPU は、どちらも命令を実行するプロセッサですが、最適化している目標が異なります。</p>
+<p>CPU は、1 つのスレッドをできるだけ早く終わらせること、つまり<strong>レイテンシ</strong>（latency）を短くすることを重視しています。「<a class="reference internal" href="10_pipeline.html"><span class="doc">パイプライン</span></a>」から「<a class="reference internal" href="12_memory_hierarchy.html"><span class="doc">メモリ階層とキャッシュ</span></a>」で見た、分岐予測、アウトオブオーダー実行、投機実行、大きなキャッシュは、すべて 1 つの命令の流れの待ち時間を減らすための仕組みです。プログラムの多くは逐次的な部分を含み、ユーザーは応答の速さを求めるので、これは合理的な選択です。</p>
+<p>GPU は、一定時間内に処理できる仕事の総量、つまり<strong>スループット</strong>（throughput）を重視しています。画面のピクセルや行列の要素のように、独立した仕事が数百万個ある場合、1 つ 1 つの仕事が終わるまでの時間はそれほど重要ではありません。重要なのは、全体がどれだけ早く終わるかです。そこで GPU は、1 つのスレッドを速くする仕組みを省き、その分のトランジスタと電力を演算器の数に回しています。メモリの遅さは、キャッシュで隠すのではなく、多数のスレッドを切り替えて実行することで隠します（後の節で説明します）。</p>
+<p>この違いを、乗り物にたとえて説明することがあります。CPU は少人数を高速に運ぶスポーツカー、GPU は大勢をまとめて運ぶバスの列です。1 人を目的地に運ぶならスポーツカーが早く着きますが、1 万人を運ぶならバスの列のほうが早く運び終わります。</p>
+</section>
+<section id="id3">
+<h3><span class="section-number">16.1.2. </span>トランジスタの使い方の比較<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>設計思想の違いは、チップの面積（トランジスタ）の使い方に表れます。</p>
+<table class="docutils align-default" id="id43">
+<caption><span class="caption-number">表 16.1 </span><span class="caption-text">CPU と GPU の設計の比較（典型的な傾向）</span><a class="headerlink" href="#id43" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 24.0%" />
+<col style="width: 38.0%" />
+<col style="width: 38.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>項目</p></th>
+<th class="head"><p>CPU（レイテンシ重視）</p></th>
+<th class="head"><p>GPU（スループット重視）</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>コアの数</p></td>
+<td><p>数個〜百数十個の複雑なコア</p></td>
+<td><p>数十〜百数十個の SM に、合計で数千〜1 万数千個の単純な演算器</p></td>
+</tr>
+<tr class="row-odd"><td><p>1 コアの制御</p></td>
+<td><p>分岐予測、アウトオブオーダー実行、投機実行など大規模</p></td>
+<td><p>基本的にインオーダー実行で、制御は単純。1 つの命令をワープの 32 スレッドで共有します。</p></td>
+</tr>
+<tr class="row-even"><td><p>キャッシュ</p></td>
+<td><p>コアあたり数 MB と大きく、レイテンシを隠す主役</p></td>
+<td><p>演算器あたりでは小さいです。帯域を補うのが主な役割。</p></td>
+</tr>
+<tr class="row-odd"><td><p>同時に保持するスレッド</p></td>
+<td><p>1 コアあたり 1〜2 個（SMT）</p></td>
+<td><p>1 SM あたり最大 2048 個程度</p></td>
+</tr>
+<tr class="row-even"><td><p>レジスタ</p></td>
+<td><p>1 コアあたり数百個の物理レジスタ</p></td>
+<td><p>1 SM あたり 256 KB 程度の巨大なレジスタファイル</p></td>
+</tr>
+<tr class="row-odd"><td><p>メモリ帯域の目安</p></td>
+<td><p>数十〜数百 GB/s（DDR）</p></td>
+<td><p>約 1〜8 TB/s（GDDR、HBM）</p></td>
+</tr>
+<tr class="row-even"><td><p>得意な処理</p></td>
+<td><p>分岐が多く逐次的な処理、低レイテンシの応答</p></td>
+<td><p>大量のデータに同じ処理を行う、データ並列な処理</p></td>
+</tr>
+</tbody>
+</table>
+<p>CPU のコアは、命令 1 個あたりに大きな制御回路を使います。たとえば、アウトオブオーダー実行のための命令ウィンドウやリネーム、分岐予測器は、実際の演算器よりも大きな面積と電力を使います。GPU では、1 つの命令の取り出しとデコードの結果を 32 個のスレッドで共有するので、制御のコストが 32 分の 1 になり、その分を演算器に回せます。</p>
+</section>
+</section>
+<section id="id4">
+<h2><span class="section-number">16.2. </span>GPU の歴史<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<section id="id5">
+<h3><span class="section-number">16.2.1. </span>固定機能のグラフィックスアクセラレーター<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>1990 年代には、パソコン向けに 3 次元グラフィックスを高速化する<strong>グラフィックスアクセラレーター</strong>が登場しました。3dfx の Voodoo Graphics（1996 年）などが代表です。これらは、三角形をピクセルに分解し（ラスタライズ）、テクスチャ（画像）を貼り付ける処理を専用回路で行いました。処理の内容は回路で固定されており、決められた計算しかできない<strong>固定機能</strong>（fixed-function）のハードウェアでした。頂点の座標変換などの幾何計算は、まだ CPU が担当していました。</p>
+</section>
+<section id="geforce-256-gpu">
+<h3><span class="section-number">16.2.2. </span>GeForce 256 と「GPU」という名前<a class="headerlink" href="#geforce-256-gpu" title="Link to this heading"></a></h3>
+<p>1999 年に NVIDIA は GeForce 256 を発表し、これを「世界初の GPU」と宣伝しました。GeForce 256 は、頂点の座標変換と光源計算（Transform and Lighting：T&amp;L）をハードウェアで行い、幾何計算まで CPU から引き受けました。「GPU」という言葉はこのときのマーケティングで広まり、グラフィックス用のプロセッサを指す一般的な名前になりました。ただし、この時点でも処理の内容は固定機能でした。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">16.2.3. </span>プログラマブルシェーダー<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>2001 年ごろ、DirectX 8 に対応した GeForce 3 などで、頂点やピクセルの処理を短いプログラムで記述できる<strong>プログラマブルシェーダー</strong>（programmable shader）が登場しました。頂点を処理する<strong>頂点シェーダー</strong>と、ピクセルの色を計算する<strong>ピクセルシェーダー</strong>（フラグメントシェーダー）は、それぞれ専用の処理ユニットで実行されました。その後、シェーダーで使える命令数や浮動小数点数の精度が拡大し、GPU は「プログラムできる並列プロセッサ」へと変わっていきました。</p>
+<p>この時期、研究者たちは、行列やベクトルのデータをテクスチャとして GPU に与え、ピクセルシェーダーで計算させるという方法で、グラフィックス以外の計算に GPU を使い始めました。これを <strong>GPGPU</strong>（General-Purpose computing on GPUs）と呼びます。ただし、計算をグラフィックスの言葉に置き換える必要があり、プログラミングは困難でした。</p>
+</section>
+<section id="id7">
+<h3><span class="section-number">16.2.4. </span>統合シェーダーアーキテクチャ<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>頂点シェーダーとピクセルシェーダーを別々のユニットで実行すると、描く画面によってどちらかのユニットが遊んでしまいます。そこで、同じ汎用の処理ユニットが、頂点の処理もピクセルの処理も実行する<strong>統合シェーダーアーキテクチャ</strong>（unified shader architecture）が生まれました。2005 年の Xbox 360 の GPU（ATI 製）に続いて、パソコン向けでは 2006 年に NVIDIA が GeForce 8800（G80）を発表しました。G80 は 128 個のスカラーの処理ユニット（ストリーミングプロセッサ）を持ち、これを 8 個ずつまとめてストリーミングマルチプロセッサ（SM）を構成していました。この構成は、現在の NVIDIA の GPU の基本形になっています。</p>
+</section>
+<section id="cuda-gpgpu">
+<h3><span class="section-number">16.2.5. </span>CUDA と GPGPU<a class="headerlink" href="#cuda-gpgpu" title="Link to this heading"></a></h3>
+<p>統合シェーダーによって GPU の処理ユニットが汎用になったことで、グラフィックスを経由せずに直接プログラムする道が開けました。NVIDIA は 2007 年に、C 言語を拡張した言語で GPU をプログラムできる環境 <strong>CUDA</strong>（Compute Unified Device Architecture）を公開しました。CUDA では、数千のスレッドが同じ関数（カーネル）を実行するという単純なモデルで、行列計算やシミュレーションを書けます。これにより GPGPU は一部の研究者の技法から、広く使われる計算手段になりました。2008 年には、ベンダーに依存しない標準として OpenCL の仕様が公開されています。</p>
+<p>2010 年の Fermi アーキテクチャでは、倍精度浮動小数点数の性能の強化、L1 と L2 のキャッシュ階層、メモリの誤り訂正（ECC）など、科学技術計算に必要な機能が加わりました。</p>
+</section>
+<section id="id8">
+<h3><span class="section-number">16.2.6. </span>科学技術計算とスーパーコンピューター<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>演算性能あたりの消費電力と価格が小さいことから、GPU はスーパーコンピューターにも採用されました。2010 年 11 月のスーパーコンピューターの性能ランキング TOP500 で 1 位になった中国の天河一号 A は、NVIDIA の GPU を搭載していました。その後も、米国オークリッジ国立研究所の Titan（2012 年）、Summit（2018 年）が NVIDIA の GPU を使い、2022 年に初めて 1 エクサ FLOPS を超えたと認定された Frontier は AMD の GPU を使っています。現在の TOP500 の上位の多くは GPU を搭載したシステムです。</p>
+</section>
+<section id="id9">
+<h3><span class="section-number">16.2.7. </span>深層学習<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>GPU の役割を決定的に変えたのが深層学習です。2012 年、トロント大学の Alex Krizhevsky、Ilya Sutskever、Geoffrey Hinton の <strong>AlexNet</strong> は、画像認識のコンテスト ILSVRC で従来の手法を大きく上回る精度を達成しました。AlexNet は、2 枚の NVIDIA GeForce GTX 580 を使って学習されました。ニューラルネットワークの学習と推論は、大部分が行列積であり、GPU が最も得意とする計算です。これ以降、深層学習の研究と GPU の発展は互いを加速し合うことになりました。</p>
+</section>
+<section id="tensor">
+<h3><span class="section-number">16.2.8. </span>Tensor コアと大規模言語モデル<a class="headerlink" href="#tensor" title="Link to this heading"></a></h3>
+<p>2017 年の Volta アーキテクチャ（V100）で、NVIDIA は小さな行列の積和演算を 1 命令で行う専用の演算器 <strong>Tensor コア</strong>を導入しました。Tensor コアは FP16 などの低い精度の演算を前提とし、通常の演算器より桁違いに高い行列演算性能を実現します。その後の世代では、BF16、TF32、FP8 などの形式への対応や、疎な行列への対応が追加されていきました。</p>
+<p>同じ 2017 年には、現在の大規模言語モデルの基礎となる Transformer が発表されています。2020 年代に入ると、数千〜数万個の GPU を高速なネットワークでつないで、巨大なモデルを数か月かけて学習することが行われるようになりました。GPU はもはや「グラフィックス用のチップ」ではなく、AI のための計算基盤の中心になっています。一方で、GPU は今でもグラフィックスの処理も担っており、リアルタイムのレイトレーシングを行う専用ユニット（RT コア）や、AI を使った画像の高解像度化も取り入れています。</p>
+<table class="docutils align-default" id="id44">
+<caption><span class="caption-number">表 16.2 </span><span class="caption-text">GPU の歴史の主な出来事</span><a class="headerlink" href="#id44" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 85.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>年</p></th>
+<th class="head"><p>出来事</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1996</p></td>
+<td><p>3dfx Voodoo Graphics など、固定機能の 3D グラフィックスアクセラレーターが普及</p></td>
+</tr>
+<tr class="row-odd"><td><p>1999</p></td>
+<td><p>NVIDIA GeForce 256。T&amp;L をハードウェア化し、「GPU」と命名</p></td>
+</tr>
+<tr class="row-even"><td><p>2001</p></td>
+<td><p>GeForce 3 など、プログラマブルシェーダーが登場</p></td>
+</tr>
+<tr class="row-odd"><td><p>2006</p></td>
+<td><p>GeForce 8800（G80）。パソコン向けの統合シェーダーアーキテクチャ</p></td>
+</tr>
+<tr class="row-even"><td><p>2007</p></td>
+<td><p>CUDA の公開</p></td>
+</tr>
+<tr class="row-odd"><td><p>2010</p></td>
+<td><p>Fermi アーキテクチャ。GPU を搭載した天河一号 A が TOP500 で 1 位</p></td>
+</tr>
+<tr class="row-even"><td><p>2012</p></td>
+<td><p>AlexNet が GPU で学習され、深層学習が急速に普及</p></td>
+</tr>
+<tr class="row-odd"><td><p>2017</p></td>
+<td><p>Volta（V100）で Tensor コアを導入</p></td>
+</tr>
+<tr class="row-even"><td><p>2020 年代</p></td>
+<td><p>大規模言語モデルの学習と推論が GPU の最大の用途に</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="id10">
+<h2><span class="section-number">16.3. </span>グラフィックスパイプライン<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>GPU がなぜ大量並列の構成になったのかは、3 次元グラフィックスの処理の流れ（<strong>グラフィックスパイプライン</strong>）を見ると理解できます。</p>
+<figure class="align-center" id="id45">
+<div class="graphviz"><object data="_images/graphviz-6aa29aaf5a65565207920d1c4271446e1aa03518.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph gfx {
+  rankdir=LR;
+  node [shape=box, style=rounded, fontsize=11];
+  v [label=&quot;頂点データ&quot;];
+  vs [label=&quot;頂点処理\n（頂点シェーダー）&quot;, style=&quot;rounded,filled&quot;, fillcolor=&quot;#e8f0fe&quot;];
+  pa [label=&quot;プリミティブ\n組み立て&quot;];
+  ra [label=&quot;ラスタライズ&quot;];
+  fs [label=&quot;フラグメント処理\n（フラグメント\nシェーダー）&quot;, style=&quot;rounded,filled&quot;, fillcolor=&quot;#e8f0fe&quot;];
+  om [label=&quot;深度テスト・\n合成&quot;];
+  fb [label=&quot;フレーム\nバッファ&quot;];
+  v -&gt; vs -&gt; pa -&gt; ra -&gt; fs -&gt; om -&gt; fb;
+}</p></object></div>
+<figcaption>
+<p><span class="caption-number">図 16.1 </span><span class="caption-text">グラフィックスパイプラインの概略</span><a class="headerlink" href="#id45" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<ol class="arabic simple">
+<li><p><strong>頂点処理</strong>：3 次元の物体は、三角形の集まり（ポリゴン）で表されます。頂点処理では、各頂点の座標に 4×4 の行列を掛けて、物体の座標系から画面の座標系に変換し、光の当たり方などを計算します。</p></li>
+<li><p><strong>ラスタライズ</strong>：画面上の三角形が、どのピクセルを覆うかを求め、ピクセルごとの断片（フラグメント）を生成します。頂点の属性（色やテクスチャ座標）は三角形の内部で補間されます。</p></li>
+<li><p><strong>フラグメント処理</strong>：フラグメントごとに、テクスチャを読み出し、光の計算を行って色を決めます。最後に、奥行き（深度）を比較して手前のものだけを残し、半透明の合成をしてフレームバッファに書き込みます。</p></li>
+</ol>
+<p>この処理には、大量並列に向いた次の性質があります。</p>
+<ul class="simple">
+<li><p>仕事の数が非常に多いことです。1920×1080 の画面は約 207 万ピクセル、3840×2160（4K）なら約 830 万ピクセルあり、毎秒 60 フレーム描くなら、4K では毎秒約 5 億個のフラグメントを処理します。1 個あたり数百命令を実行すれば、毎秒 <span class="math notranslate nohighlight">\(10^{11}\)</span> 命令を超えます。</p></li>
+<li><p>仕事が互いに独立していることです。ある頂点の変換や、あるピクセルの色の計算は、ほかの頂点やピクセルの結果を必要としません。</p></li>
+<li><p>すべての仕事に同じプログラム（シェーダー）を適用することです。命令の取り出しと解読を多数のデータで共有できます。</p></li>
+<li><p>個々の仕事のレイテンシは問題にならないことです。1 フレーム（60 fps なら約 16.7 ms）の中ですべてが終わればよく、1 つのピクセルが遅れてもかまいません。</p></li>
+</ul>
+<p>つまり、グラフィックスは典型的なデータ並列でスループット重視の処理です。GPU のアーキテクチャはこの性質に合わせて発展し、同じ性質を持つ行列計算や深層学習にも適していたのです。</p>
+</section>
+<section id="id11">
+<h2><span class="section-number">16.4. </span>GPU の構成<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>ここでは NVIDIA の GPU を例に、ハードウェアの構成を説明します。AMD や Intel の GPU も、名前は異なりますが基本的な考え方は同じです。</p>
+<section id="id12">
+<h3><span class="section-number">16.4.1. </span>全体の構成<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>GPU のチップは、多数の<strong>ストリーミングマルチプロセッサ</strong>（Streaming Multiprocessor：SM）と、すべての SM が共有する L2 キャッシュ、メモリコントローラ、ホスト（CPU）とのインターフェースからなります。SM は、CPU のコアに相当する単位です。SM はいくつかずつまとめられて GPC（Graphics Processing Cluster）を構成します。ホストから起動された仕事は、ブロック単位で SM に割り振られます。</p>
+<figure class="align-center" id="id46">
+<div class="graphviz"><object data="_images/graphviz-72186b18bb3fc98565baf9f5af2c4a49e2672d43.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph gpu {
+  rankdir=TB;
+  node [shape=box, fontsize=10];
+  host [label=&quot;ホスト（CPU と主記憶）&quot;, style=rounded];
+  subgraph cluster_gpu {
+    label=&quot;GPU チップ&quot;; fontsize=11;
+    pcie [label=&quot;PCIe / NVLink インターフェース&quot;];
+    sched [label=&quot;ブロックの割り振り（ワークディストリビューター）&quot;];
+    subgraph cluster_gpc0 {
+      label=&quot;GPC&quot;; style=dashed;
+      sm0 [label=&quot;SM&quot;]; sm1 [label=&quot;SM&quot;]; sm2 [label=&quot;SM&quot;]; smd0 [label=&quot;…&quot;, shape=plaintext];
+    }
+    subgraph cluster_gpc1 {
+      label=&quot;GPC&quot;; style=dashed;
+      sm3 [label=&quot;SM&quot;]; sm4 [label=&quot;SM&quot;]; sm5 [label=&quot;SM&quot;]; smd1 [label=&quot;…&quot;, shape=plaintext];
+    }
+    l2 [label=&quot;L2 キャッシュ（全 SM で共有）&quot;, width=4];
+    mc [label=&quot;メモリコントローラ群&quot;];
+  }
+  mem [label=&quot;HBM / GDDR（デバイスメモリ）&quot;, style=rounded];
+  host -&gt; pcie [dir=both];
+  pcie -&gt; sched;
+  sched -&gt; sm0; sched -&gt; sm4;
+  sm1 -&gt; l2 [dir=both]; sm4 -&gt; l2 [dir=both];
+  l2 -&gt; mc [dir=both];
+  mc -&gt; mem [dir=both];
+}</p></object></div>
+<figcaption>
+<p><span class="caption-number">図 16.2 </span><span class="caption-text">GPU の全体の構成（NVIDIA の GPU を簡略化）</span><a class="headerlink" href="#id46" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>代表的なデータセンター向け GPU の規模を示します。数値は公表されている仕様の概数で、同じ世代でも製品によって異なります。</p>
+<table class="docutils align-default" id="id47">
+<caption><span class="caption-number">表 16.3 </span><span class="caption-text">NVIDIA のデータセンター向け GPU の例（概数）</span><a class="headerlink" href="#id47" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 13.0%" />
+<col style="width: 13.0%" />
+<col style="width: 26.0%" />
+<col style="width: 26.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>製品（アーキテクチャ）</p></th>
+<th class="head"><p>発表年</p></th>
+<th class="head"><p>SM 数</p></th>
+<th class="head"><p>メモリ</p></th>
+<th class="head"><p>メモリ帯域</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>V100（Volta）</p></td>
+<td><p>2017</p></td>
+<td><p>80</p></td>
+<td><p>HBM2</p></td>
+<td><p>約 0.9 TB/s</p></td>
+</tr>
+<tr class="row-odd"><td><p>A100（Ampere）</p></td>
+<td><p>2020</p></td>
+<td><p>108</p></td>
+<td><p>HBM2/HBM2e</p></td>
+<td><p>約 1.6〜2 TB/s</p></td>
+</tr>
+<tr class="row-even"><td><p>H100 SXM（Hopper）</p></td>
+<td><p>2022</p></td>
+<td><p>132</p></td>
+<td><p>HBM3</p></td>
+<td><p>約 3.35 TB/s</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="sm">
+<h3><span class="section-number">16.4.2. </span>ストリーミングマルチプロセッサ（SM）<a class="headerlink" href="#sm" title="Link to this heading"></a></h3>
+<p>Volta 以降の SM は、4 つの<strong>処理ブロック</strong>（processing block、サブパーティション）に分かれています。各処理ブロックは、ワープスケジューラ、レジスタファイル、演算器を持ち、1 サイクルに 1 つのワープの命令を発行できます。SM 全体では、L1 キャッシュと共有メモリ（後述）を共有します。</p>
+<figure class="align-center" id="id48">
+<div class="graphviz"><object data="_images/graphviz-b5664f5a8ee70055768f82701d3aa81a60c9403e.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph sm {
+  rankdir=TB;
+  node [shape=box, fontsize=10];
+  subgraph cluster_sm {
+    label=&quot;SM&quot;; fontsize=11;
+    icache [label=&quot;命令キャッシュ&quot;];
+    subgraph cluster_pb {
+      label=&quot;処理ブロック（SM に 4 個）&quot;; style=dashed;
+      ws [label=&quot;ワープスケジューラ／ディスパッチ&quot;];
+      rf [label=&quot;レジスタファイル（64 KB）&quot;];
+      fp [label=&quot;FP32 / INT32 演算器\n（CUDA コア）&quot;];
+      tc [label=&quot;Tensor コア&quot;];
+      ldst [label=&quot;ロード／ストア&quot;];
+      sfu [label=&quot;SFU\n（特殊関数）&quot;];
+      ws -&gt; rf;
+      rf -&gt; fp; rf -&gt; tc; rf -&gt; ldst; rf -&gt; sfu;
+    }
+    l1 [label=&quot;L1 データキャッシュ ／ 共有メモリ（共用の SRAM）&quot;];
+    icache -&gt; ws;
+    ldst -&gt; l1 [dir=both];
+  }
+}</p></object></div>
+<figcaption>
+<p><span class="caption-number">図 16.3 </span><span class="caption-text">SM の内部構成（Volta 以降の NVIDIA の GPU を簡略化）</span><a class="headerlink" href="#id48" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>主な要素は次のとおりです。</p>
+<ul class="simple">
+<li><p><strong>CUDA コア</strong>：NVIDIA が FP32 や INT32 の演算器の 1 レーンを指して使う名前です。CPU の「コア」とは異なり、独自の命令の取り出しやデコードの機能は持たず、ワープの 1 スレッド分の演算を担当する演算器です。製品の「CUDA コア数」は、SM 数と SM あたりの FP32 演算器の数の積です。</p></li>
+<li><p><strong>Tensor コア</strong>：小さな行列の積和演算 <span class="math notranslate nohighlight">\(D = A \times B + C\)</span> を行う専用の演算器です（後の節で説明します）。</p></li>
+<li><p><strong>SFU</strong>（Special Function Unit）：sin、cos、逆数、平方根などを近似計算する演算器です。</p></li>
+<li><p><strong>ロード／ストアユニット</strong>：メモリアクセスのアドレスを計算し、L1 キャッシュや共有メモリにアクセスします。</p></li>
+<li><p><strong>ワープスケジューラ</strong>：実行可能なワープの中から、毎サイクル 1 つを選んで命令を発行します。</p></li>
+</ul>
+</section>
+<section id="id13">
+<h3><span class="section-number">16.4.3. </span>非常に大きなレジスタファイル<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>GPU の大きな特徴の 1 つが、巨大な<strong>レジスタファイル</strong>です。Volta、Ampere、Hopper の SM は、32 ビットのレジスタを 65,536 個（256 KB）持ちます。1 スレッドは最大 255 個のレジスタを使えます。H100 の 132 個の SM の合計では約 33 MB になり、L2 キャッシュ（約 50 MB）に匹敵する容量がレジスタに使われています。CPU のコアの物理レジスタファイルが数 KB〜数十 KB 程度であるのと比べると、桁違いの大きさです。</p>
+<p>なぜこれほど大きなレジスタファイルが必要なのでしょうか。GPU は、メモリのレイテンシを隠すために、多数のスレッドを SM 上に同時に置いておき、待たされたスレッドの代わりに別のスレッドを実行します（後の節で説明します）。スレッドを切り替えるたびにレジスタの内容を退避・復元していたら間に合わないので、SM 上のすべてのスレッドのレジスタを同時にレジスタファイルに保持しています。このおかげで、GPU のスレッドの切り替えには時間がかかりません。</p>
+</section>
+</section>
+<section id="id14">
+<h2><span class="section-number">16.5. </span>実行モデル<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<section id="id15">
+<h3><span class="section-number">16.5.1. </span>スレッド・ブロック・グリッドの階層<a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<p>CUDA では、GPU で実行する関数を<strong>カーネル</strong>（kernel）と呼びます。カーネルを起動すると、多数の<strong>スレッド</strong>（thread）が同じカーネルを実行します。スレッドは次のように階層的にまとめられます。</p>
+<ul class="simple">
+<li><p><strong>スレッドブロック</strong>（thread block、単にブロック）：最大 1024 個のスレッドの集まりです。1 つのブロックは 1 つの SM で実行され、ブロック内のスレッドは共有メモリを使ってデータを交換し、バリア同期（<code class="docutils literal notranslate"><span class="pre">__syncthreads()</span></code>）で足並みを揃えられます。</p></li>
+<li><p><strong>グリッド</strong>（grid）：1 回のカーネル起動で生成されるブロックの集まりです。ブロックは互いに独立で、どの順序で、どの SM で実行されてもよいことになっています。</p></li>
+</ul>
+<p>各スレッドは、組み込み変数 <code class="docutils literal notranslate"><span class="pre">threadIdx</span></code>（ブロック内の番号）、<code class="docutils literal notranslate"><span class="pre">blockIdx</span></code>（ブロックの番号）、<code class="docutils literal notranslate"><span class="pre">blockDim</span></code>（ブロックの大きさ）を使って、自分が担当するデータを決めます。これらは 3 次元まで指定でき、画像や行列を自然に分割できます。</p>
+<figure class="align-center" id="id49">
+<div class="graphviz"><object data="_images/graphviz-994c0ef9f606994198aa1fa00bd9e6179c0cd344.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph hier {
+  rankdir=TB;
+  nodesep=1.2;
+  node [shape=box, fontsize=10, width=2.4];
+  hsw [label=&quot;ソフトウェアの単位&quot;, shape=plaintext, fontsize=11];
+  hhw [label=&quot;ハードウェアの単位&quot;, shape=plaintext, fontsize=11];
+  grid [label=&quot;グリッド（カーネル 1 回の起動）&quot;];
+  block [label=&quot;スレッドブロック（最大 1024 スレッド）&quot;];
+  warp [label=&quot;ワープ（32 スレッド）&quot;];
+  thread [label=&quot;スレッド&quot;];
+  gpu [label=&quot;GPU 全体&quot;];
+  sm [label=&quot;SM&quot;];
+  pb [label=&quot;処理ブロックのワープスケジューラ&quot;];
+  lane [label=&quot;演算器の 1 レーン&quot;];
+  hsw -&gt; grid [style=invis];
+  hhw -&gt; gpu [style=invis];
+  grid -&gt; block -&gt; warp -&gt; thread;
+  gpu -&gt; sm -&gt; pb -&gt; lane;
+  {rank=same; hsw; hhw;}
+  {rank=same; grid; gpu;}
+  {rank=same; block; sm;}
+  {rank=same; warp; pb;}
+  {rank=same; thread; lane;}
+  grid -&gt; gpu [style=dotted, arrowhead=none, label=&quot;実行&quot;];
+  block -&gt; sm [style=dotted, arrowhead=none, label=&quot;割り当て&quot;];
+  warp -&gt; pb [style=dotted, arrowhead=none, label=&quot;発行&quot;];
+  thread -&gt; lane [style=dotted, arrowhead=none, label=&quot;実行&quot;];
+}</p></object></div>
+<figcaption>
+<p><span class="caption-number">図 16.4 </span><span class="caption-text">スレッドの階層とハードウェアへの対応</span><a class="headerlink" href="#id49" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>ブロックが互いに独立であることは重要な設計判断です。SM が 20 個の GPU でも 132 個の GPU でも、同じプログラムがブロックを SM に割り振るだけで動き、SM が多いほど速く終わります。つまり、プログラムを書き換えずに GPU の規模に応じて性能が伸びるのです。</p>
+</section>
+<section id="simt">
+<h3><span class="section-number">16.5.2. </span>SIMT とワープ<a class="headerlink" href="#simt" title="Link to this heading"></a></h3>
+<p>ハードウェアの中では、ブロック内のスレッドは連続する 32 個ずつの<strong>ワープ</strong>（warp）にまとめられて実行されます。ワープの 32 スレッドは、同じ命令を同時に（それぞれ自分のレジスタとデータに対して）実行します。命令の取り出しと発行はワープ単位で 1 回だけ行われます。このように、プログラマーには独立したスレッドとして見せながら、ハードウェアでは複数のスレッドに同じ命令を実行させる方式を、NVIDIA は <strong>SIMT</strong>（Single Instruction, Multiple Threads）と呼んでいます。「ワープ」という名前は、機織りの縦糸（warp）に由来します。</p>
+<p>ワープの大きさは、NVIDIA の GPU では一貫して 32 スレッドです。AMD の GPU では同じ単位を<strong>ウェーブフロント</strong>（wavefront）と呼び、GCN アーキテクチャやデータセンター向けの CDNA アーキテクチャでは 64 スレッド、グラフィックス向けの RDNA アーキテクチャでは 32 スレッド（64 スレッドのモードも持つ）です。ワープの大きさはハードウェアの実装に依存するので、移植性の高いプログラムでは、決め打ちせずに問い合わせて使います。</p>
+<p>ブロックの大きさは、ワープの大きさの倍数（たとえば 128 や 256）にするのが普通です。ブロックが 100 スレッドだと、4 つ目のワープは 4 スレッドしか持たず、残りの 28 レーンは何もしないまま命令の発行枠を使ってしまうからです。</p>
+</section>
+<section id="simd-simt">
+<h3><span class="section-number">16.5.3. </span>SIMD と SIMT の違い<a class="headerlink" href="#simd-simt" title="Link to this heading"></a></h3>
+<p>SIMT のハードウェアは、物理的には「<a class="reference internal" href="15_parallel.html"><span class="doc">並列アーキテクチャ</span></a>」で説明した SIMD とよく似ています。1 つの命令で 32 レーン分の演算を行うので、32 要素の SIMD ユニットと見ることもできます（実装によっては、16 レーンの演算器で 2 サイクルかけて 1 ワープ分を処理します）。違いは、主にプログラミングモデルと、それを支えるハードウェアの機能にあります。</p>
+<table class="docutils align-default" id="id50">
+<caption><span class="caption-number">表 16.4 </span><span class="caption-text">SIMD 命令と SIMT の比較</span><a class="headerlink" href="#id50" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 39.0%" />
+<col style="width: 39.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>観点</p></th>
+<th class="head"><p>SIMD 命令（AVX、NEON など）</p></th>
+<th class="head"><p>SIMT（GPU）</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>プログラムの書き方</p></td>
+<td><p>1 つのスレッドが幅の広いベクトルレジスタを操作します。プログラマーかコンパイラがベクトル化します。</p></td>
+<td><p>1 つのスレッドの処理をスカラーのコードとして書きます。ハードウェアがスレッドをワープにまとめます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>幅</p></td>
+<td><p>命令に現れます（128、256、512 ビットなど）。SVE や RVV では実装が選びます。</p></td>
+<td><p>プログラムには現れません（実際にはワープの大きさを意識した最適化が多いです）。</p></td>
+</tr>
+<tr class="row-even"><td><p>分岐</p></td>
+<td><p>マスク付き命令や選択（blend）命令で、プログラマーかコンパイラが明示的に処理します。</p></td>
+<td><p>スレッドごとに普通に if 文を書けます。ハードウェアがアクティブマスクを管理します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>メモリアクセス</p></td>
+<td><p>連続するアドレスのロード・ストアが基本。ばらばらのアドレスには gather／scatter 命令を使います。</p></td>
+<td><p>各スレッドが任意のアドレスにアクセスできます。ハードウェアがまとめて（合体して）処理します。</p></td>
+</tr>
+<tr class="row-even"><td><p>レイテンシの隠し方</p></td>
+<td><p>アウトオブオーダー実行とキャッシュ</p></td>
+<td><p>多数のワープの切り替え</p></td>
+</tr>
+<tr class="row-odd"><td><p>スレッドの状態</p></td>
+<td><p>ベクトルの各要素は独立したスレッドではありません。</p></td>
+<td><p>各スレッドが自分のレジスタと（論理的には）自分のプログラムカウンタを持ちます。</p></td>
+</tr>
+</tbody>
+</table>
+<p>まとめると、SIMT は「SIMD のハードウェアに、スレッドとして書けるプログラミングモデルを組み合わせたもの」といえます。SIMD 命令でも AVX-512 のマスクレジスタや SVE の述語レジスタによって分岐を扱いやすくなっており、逆に、SPMD 形式のプログラムを SIMD 命令に変換するコンパイラ（Intel の ISPC など）もあります。両者は同じ考え方の、異なる見せ方だといえます。</p>
+</section>
+</section>
+<section id="id16">
+<h2><span class="section-number">16.6. </span>レイテンシの隠蔽<a class="headerlink" href="#id16" title="Link to this heading"></a></h2>
+<section id="id17">
+<h3><span class="section-number">16.6.1. </span>多数のワープを切り替える<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<p>GPU のデバイスメモリへのアクセスには、数百サイクルのレイテンシがかかります（目安として 400〜800 サイクル程度）。CPU は大きなキャッシュとアウトオブオーダー実行でこれを隠しますが、GPU は別の方法を使います。</p>
+<p>SM には、同時に多数のワープが割り当てられています（V100、A100、H100 では SM あたり最大 64 ワープ、2048 スレッド。ゲーム向けの製品ではこれより少ないものもあります）。ワープスケジューラは毎サイクル、オペランドが揃って実行できる状態のワープを 1 つ選んで命令を発行します。あるワープがメモリの読み出しを待っている間は、別のワープの命令を発行します。前の節で述べたとおり、すべてのワープのレジスタがレジスタファイルにあるので、ワープの切り替えにはコストがかかりません。十分な数のワープがあれば、演算器は休まずに働き続け、メモリのレイテンシはほかのワープの実行の陰に隠れます。これを<strong>レイテンシの隠蔽</strong>（latency hiding）と呼びます。</p>
+<p>これは、複数のスレッドの状態をハードウェアに保持しておき、命令を発行するスレッドをサイクルごとに切り替えるハードウェアマルチスレッディングを、大規模にしたものと考えられます。「<a class="reference internal" href="11_ilp.html"><span class="doc">命令レベル並列性</span></a>」で説明した CPU の同時マルチスレッディング（SMT）も同じ考え方ですが、SMT が 1 コアあたり 2 スレッド程度なのに対し、GPU は 1 つの処理ブロックあたり最大 16 ワープ（512 スレッド）を切り替えます。</p>
+</section>
+<section id="id18">
+<h3><span class="section-number">16.6.2. </span>必要な並列度の見積もり<a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<p>どれだけのワープがあればレイテンシを隠せるかは、<strong>リトルの法則</strong>（Little's law）で見積もれます。</p>
+<div class="math notranslate nohighlight">
+\[\text{同時に処理中の量} = \text{レイテンシ} \times \text{スループット}\]</div>
+<p>たとえば、メモリ帯域が 3 TB/s、メモリアクセスのレイテンシが約 500 ns の GPU では、帯域を使い切るために、常に <span class="math notranslate nohighlight">\(3 \times 10^{12} \times 500 \times 10^{-9} = 1.5 \times 10^{6}\)</span> バイト、つまり約 1.5 MB のデータを読み出し中にしておく必要があります。SM が 132 個なら、SM あたり約 11 KB です。1 つのワープが 1 回のロード命令で 128 バイト（32 スレッド×4 バイト）を読むとすれば、SM あたり約 90 個のロード命令が常に処理中でなければなりません。1 ワープが同時に複数のロードを発行できるとしても、数十のワープが必要なことが分かります。GPU が SM あたり数十のワープを保持する理由はここにあります。</p>
+</section>
+<section id="id19">
+<h3><span class="section-number">16.6.3. </span>占有率<a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<p>SM に同時に割り当てられているワープの数の、最大数に対する割合を<strong>占有率</strong>（オキュパンシー、occupancy）と呼びます。占有率は、SM の資源のうち最も厳しいものによって制限されます。</p>
+<ul class="simple">
+<li><p>レジスタ：SM のレジスタは 65,536 個です。1 スレッドが 32 個のレジスタを使うなら <span class="math notranslate nohighlight">\(65536 / 32 = 2048\)</span> スレッド（64 ワープ）を置けて、占有率は 100% です。64 個使うと 1024 スレッド（32 ワープ）で 50%、128 個使うと 512 スレッド（16 ワープ）で 25% に下がります。</p></li>
+<li><p>共有メモリ：ブロックが 48 KB の共有メモリを使い、SM の共有メモリが 100 KB 程度なら、SM に置けるブロックは 2 個までです。</p></li>
+<li><p>ブロック数とスレッド数の上限：SM に置けるブロック数（たとえば 32 個）とスレッド数（2048 個）にも上限があります。</p></li>
+</ul>
+<p>占有率が低いと、レイテンシを隠すためのワープが足りなくなります。ただし、占有率は高いほどよいとは限りません。1 スレッドがより多くのレジスタを使って、データを再利用したり、独立した命令を多く並べたり（命令レベル並列性）すれば、少ないワープでもレイテンシを隠せることがあります。高性能な行列積のカーネルは、あえて占有率を下げて、レジスタを多く使う設計になっていることがよくあります。</p>
+</section>
+</section>
+<section id="id20">
+<h2><span class="section-number">16.7. </span>分岐ダイバージェンス<a class="headerlink" href="#id20" title="Link to this heading"></a></h2>
+<section id="id21">
+<h3><span class="section-number">16.7.1. </span>マスクによる実行<a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<p>ワープの 32 スレッドは同じ命令を実行します。では、スレッドごとに条件が異なる if 文はどう実行されるのでしょうか。</p>
+<div class="highlight-cuda notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">2</span><span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sqrtf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span><span class="w">   </span><span class="cm">/* then 側 */</span>
+<span class="linenos">3</span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">4</span><span class="w">    </span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span><span class="w">          </span><span class="cm">/* else 側 */</span>
+<span class="linenos">5</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>ワープ内のスレッドの条件の結果が分かれることを<strong>分岐ダイバージェンス</strong>（branch divergence、ワープダイバージェンス）と呼びます。このとき GPU は、ワープの各レーンが実行中かどうかを表す<strong>アクティブマスク</strong>（active mask）を使い、まず条件が真のスレッドだけを有効にして then 側を実行し、次に条件が偽のスレッドだけを有効にして else 側を実行します。無効なレーンは命令を受け取っても結果を書き込みません。両方の経路が終わると、ワープは再び 32 スレッド揃って実行を続けます（再収束）。</p>
+<p>結果として、ダイバージェンスが起きると、ワープは then 側と else 側の<strong>両方の</strong>命令の時間を使います。ワープのすべてのスレッドが同じ側に進めば、もう一方の経路は丸ごと飛ばせるので、ダイバージェンスは起きません。重要なのは、分岐の条件がスレッド全体でばらばらかどうかではなく、<strong>1 つのワープの中で</strong>揃っているかどうかです。</p>
+</section>
+<section id="id22">
+<h3><span class="section-number">16.7.2. </span>性能への影響を確かめる<a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<p>サンプル <a class="reference download internal" download="" href="_downloads/1770b81adc56048c9164d658f18abfe8/gpu_simt_sim.py"><code class="xref download docutils literal notranslate"><span class="pre">gpu_simt_sim.py</span></code></a> は、ワープが if 文を含むカーネルを実行するときのサイクル数を、マスク付き実行のモデルで数えます。分岐の前後に 10 命令ずつの共通部分があり、then 側と else 側がそれぞれ 20 命令であるとし、4 ワープ（128 スレッド）分の合計を比べます。</p>
+<div class="literal-block-wrapper docutils container" id="id51">
+<div class="code-block-caption"><span class="caption-number">リスト 16.1 </span><span class="caption-text">gpu_simt_sim.py</span><a class="headerlink" href="#id51" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;SIMT の分岐ダイバージェンスのシミュレーター。</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">ワープ（32 スレッド）が次のようなカーネルを実行するときのサイクル数を数えます。</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="sd">    共通の処理（COMMON 命令）</span>
+<span class="linenos"> 6</span><span class="sd">    if (条件) { THEN 命令 } else { ELSE 命令 }</span>
+<span class="linenos"> 7</span><span class="sd">    共通の処理（COMMON 命令）</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">モデル: ワープは 1 サイクルに 1 命令を 32 レーンに同時に発行します。</span>
+<span class="linenos">10</span><span class="sd">分岐の両側に実行すべきスレッドがいれば、両方の経路を順に実行し、</span>
+<span class="linenos">11</span><span class="sd">条件を満たさないレーンはマスク（アクティブマスク）で止めておきます。</span>
+<span class="linenos">12</span><span class="sd">条件の異なる 4 種類の分岐について、4 ワープ（128 スレッド）分の</span>
+<span class="linenos">13</span><span class="sd">サイクル数とレーンの利用率を比べます。</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="sd">実行方法: python gpu_simt_sim.py</span>
+<span class="linenos">16</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="n">WARP_SIZE</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="linenos">21</span><span class="n">NUM_WARPS</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="linenos">22</span><span class="n">COMMON</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># 分岐の前後の共通部分の命令数（前後それぞれ）</span>
+<span class="linenos">23</span><span class="n">THEN</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># if 側の命令数</span>
+<span class="linenos">24</span><span class="n">ELSE</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># else 側の命令数</span>
+<span class="linenos">25</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span><span class="k">def</span><span class="w"> </span><span class="nf">run_warp</span><span class="p">(</span><span class="n">warp</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cond</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span>
+<span class="linenos">28</span>             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="linenos">29</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;1 ワープを実行し、（サイクル数、有効なレーン×サイクル）を返す。&quot;&quot;&quot;</span>
+<span class="linenos">30</span>    <span class="n">tids</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">warp</span> <span class="o">*</span> <span class="n">WARP_SIZE</span><span class="p">,</span> <span class="p">(</span><span class="n">warp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">WARP_SIZE</span><span class="p">)</span>
+<span class="linenos">31</span>    <span class="c1"># 条件を満たすレーンのビットを立てたマスク（ビット i がレーン i）</span>
+<span class="linenos">32</span>    <span class="n">mask</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">33</span>    <span class="k">for</span> <span class="n">lane</span><span class="p">,</span> <span class="n">tid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tids</span><span class="p">):</span>
+<span class="linenos">34</span>        <span class="k">if</span> <span class="n">cond</span><span class="p">(</span><span class="n">tid</span><span class="p">):</span>
+<span class="linenos">35</span>            <span class="n">mask</span> <span class="o">|=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">lane</span>
+<span class="linenos">36</span>    <span class="n">full</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">WARP_SIZE</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="linenos">37</span>    <span class="c1"># （区間名、命令数、アクティブマスク）の列。空のマスクの経路は飛ばす</span>
+<span class="linenos">38</span>    <span class="n">phases</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;共通&quot;</span><span class="p">,</span> <span class="n">COMMON</span><span class="p">,</span> <span class="n">full</span><span class="p">)]</span>
+<span class="linenos">39</span>    <span class="k">if</span> <span class="n">mask</span><span class="p">:</span>
+<span class="linenos">40</span>        <span class="n">phases</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;then&quot;</span><span class="p">,</span> <span class="n">THEN</span><span class="p">,</span> <span class="n">mask</span><span class="p">))</span>
+<span class="linenos">41</span>    <span class="k">if</span> <span class="n">mask</span> <span class="o">!=</span> <span class="n">full</span><span class="p">:</span>
+<span class="linenos">42</span>        <span class="n">phases</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;else&quot;</span><span class="p">,</span> <span class="n">ELSE</span><span class="p">,</span> <span class="n">full</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">mask</span><span class="p">))</span>
+<span class="linenos">43</span>    <span class="n">phases</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;共通&quot;</span><span class="p">,</span> <span class="n">COMMON</span><span class="p">,</span> <span class="n">full</span><span class="p">))</span>
+<span class="linenos">44</span>    <span class="n">cycles</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">45</span>    <span class="n">useful</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">46</span>    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">active</span> <span class="ow">in</span> <span class="n">phases</span><span class="p">:</span>
+<span class="linenos">47</span>        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+<span class="linenos">48</span>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  マスク 0x</span><span class="si">{</span><span class="n">active</span><span class="si">:</span><span class="s2">08X</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> サイクル  </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">49</span>        <span class="n">cycles</span> <span class="o">+=</span> <span class="n">n</span>
+<span class="linenos">50</span>        <span class="n">useful</span> <span class="o">+=</span> <span class="n">n</span> <span class="o">*</span> <span class="nb">bin</span><span class="p">(</span><span class="n">active</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+<span class="linenos">51</span>    <span class="k">return</span> <span class="n">cycles</span><span class="p">,</span> <span class="n">useful</span>
+<span class="linenos">52</span>
+<span class="linenos">53</span>
+<span class="linenos">54</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">55</span>    <span class="n">cases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos">56</span>        <span class="p">(</span><span class="s2">&quot;分岐なし（全員 then）&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="kc">True</span><span class="p">),</span>
+<span class="linenos">57</span>        <span class="p">(</span><span class="s2">&quot;半分ずつ（レーン &lt; 16）&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">%</span> <span class="n">WARP_SIZE</span> <span class="o">&lt;</span> <span class="mi">16</span><span class="p">),</span>
+<span class="linenos">58</span>        <span class="p">(</span><span class="s2">&quot;偶奇（tid % 2 == 0）&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span>
+<span class="linenos">59</span>        <span class="p">(</span><span class="s2">&quot;ワープ単位（warp % 2 == 0）&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span><span class="n">t</span> <span class="o">//</span> <span class="n">WARP_SIZE</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span>
+<span class="linenos">60</span>    <span class="p">]</span>
+<span class="linenos">61</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ワープ 0 の実行の様子（偶奇で分岐する場合）&quot;</span><span class="p">)</span>
+<span class="linenos">62</span>    <span class="n">run_warp</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cases</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">63</span>    <span class="nb">print</span><span class="p">()</span>
+<span class="linenos">64</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">NUM_WARPS</span><span class="si">}</span><span class="s2"> ワープ（</span><span class="si">{</span><span class="n">NUM_WARPS</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">WARP_SIZE</span><span class="si">}</span><span class="s2"> スレッド）の合計&quot;</span><span class="p">)</span>
+<span class="linenos">65</span>    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">cond</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span>
+<span class="linenos">66</span>        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">67</span>        <span class="n">useful</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">68</span>        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_WARPS</span><span class="p">):</span>
+<span class="linenos">69</span>            <span class="n">c</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">run_warp</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">cond</span><span class="p">)</span>
+<span class="linenos">70</span>            <span class="n">total</span> <span class="o">+=</span> <span class="n">c</span>
+<span class="linenos">71</span>            <span class="n">useful</span> <span class="o">+=</span> <span class="n">u</span>
+<span class="linenos">72</span>        <span class="n">util</span> <span class="o">=</span> <span class="n">useful</span> <span class="o">/</span> <span class="p">(</span><span class="n">total</span> <span class="o">*</span> <span class="n">WARP_SIZE</span><span class="p">)</span>
+<span class="linenos">73</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2"> サイクル  レーン利用率 </span><span class="si">{</span><span class="n">util</span><span class="si">:</span><span class="s2">6.1%</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">74</span>
+<span class="linenos">75</span>
+<span class="linenos">76</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">77</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>要点は次のとおりです。</p>
+<ul class="simple">
+<li><p>30〜35 行目：ワープの各レーン（スレッド）について条件を評価し、条件が真のレーンのビットを立てたアクティブマスクを作ります。</p></li>
+<li><p>38〜43 行目：実行する区間の列を作ります。マスクが 0 でなければ then 側を、すべてのビットが立っていなければ else 側を、それぞれのマスクで実行します。どちらかのマスクが空なら、その経路は飛ばします。</p></li>
+<li><p>46〜50 行目：各区間の命令数をサイクル数に加え、有効なレーン数×サイクル数を数えて、レーンの利用率を求めます。</p></li>
+<li><p>56〜59 行目：比べる 4 つの条件です。「ワープ単位」の条件はワープ番号だけで決まるので、ワープ内では全員が同じ側に進みます。</p></li>
+</ul>
+<p>実行結果は次のとおりです。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>ワープ 0 の実行の様子（偶奇で分岐する場合）
+<span class="linenos"> 2</span>  マスク 0xFFFFFFFF  10 サイクル  共通
+<span class="linenos"> 3</span>  マスク 0x55555555  20 サイクル  then
+<span class="linenos"> 4</span>  マスク 0xAAAAAAAA  20 サイクル  else
+<span class="linenos"> 5</span>  マスク 0xFFFFFFFF  10 サイクル  共通
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span>4 ワープ（128 スレッド）の合計
+<span class="linenos"> 8</span>   160 サイクル  レーン利用率 100.0%  分岐なし（全員 then）
+<span class="linenos"> 9</span>   240 サイクル  レーン利用率  66.7%  半分ずつ（レーン &lt; 16）
+<span class="linenos">10</span>   240 サイクル  レーン利用率  66.7%  偶奇（tid % 2 == 0）
+<span class="linenos">11</span>   160 サイクル  レーン利用率 100.0%  ワープ単位（warp % 2 == 0）
+</pre></div>
+</div>
+<p>偶奇で分岐する場合、ワープ 0 では偶数番のレーン（マスク <code class="docutils literal notranslate"><span class="pre">0x55555555</span></code>）が then 側を、奇数番のレーン（<code class="docutils literal notranslate"><span class="pre">0xAAAAAAAA</span></code>）が else 側を実行し、それぞれの区間では半分のレーンが遊んでいます。ワープあたり <span class="math notranslate nohighlight">\(10 + 20 + 20 + 10 = 60\)</span> サイクルかかり、分岐しない場合の 40 サイクルの 1.5 倍です。</p>
+<p>注目すべきは、「半分ずつ」と「ワープ単位」の違いです。どちらもスレッド全体のちょうど半分が then 側に進みますが、レーン番号 16 未満で分けるとすべてのワープの中でダイバージェンスが起きるのに対し、ワープ番号で分けるとワープ内の条件が揃うので、分岐しない場合と同じ 160 サイクルで済みます。条件の判定がスレッド番号に依存する場合は、ワープ単位で揃うようにデータや仕事の割り当てを工夫すると、ダイバージェンスを避けられます。</p>
+<p>then 側と else 側の命令数が少ない場合は、コンパイラが分岐を使わずに両方を計算して結果を選ぶ命令（述語付き実行、選択命令）に変換することもあります。また、ループの繰り返し回数がスレッドごとに異なる場合も、最も長いスレッドが終わるまでワープ全体が付き合うことになり、同じ問題が起きます。</p>
+</section>
+<section id="id23">
+<h3><span class="section-number">16.7.3. </span>独立スレッドスケジューリング<a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
+<p>従来の GPU は、分岐した経路の一方を最後まで実行してから他方に移るため、ワープ内のスレッド同士がロックなどで互いを待つと、デッドロックすることがありました。Volta 以降の NVIDIA の GPU は、スレッドごとにプログラムカウンタと呼び出しスタックを持つ<strong>独立スレッドスケジューリング</strong>（independent thread scheduling）を採用し、分岐した経路を交互に進められるようになりました。これにより、ワープ内のスレッド間で同期するアルゴリズムも正しく動きます。ただし、異なる経路を同時に実行するわけではないので、ダイバージェンスによる性能の低下はなくなりません。</p>
+</section>
+</section>
+<section id="id24">
+<h2><span class="section-number">16.8. </span>メモリ階層<a class="headerlink" href="#id24" title="Link to this heading"></a></h2>
+<p>GPU のメモリ階層を、性能の目安とともにまとめます。数値は世代や製品によって大きく異なるので、桁の感覚をつかむための<strong>目安</strong>です。</p>
+<table class="docutils align-default" id="id52">
+<caption><span class="caption-number">表 16.5 </span><span class="caption-text">GPU のメモリ階層（数値はすべて目安）</span><a class="headerlink" href="#id52" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 18.0%" />
+<col style="width: 18.0%" />
+<col style="width: 22.0%" />
+<col style="width: 18.0%" />
+<col style="width: 24.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>階層</p></th>
+<th class="head"><p>共有する範囲</p></th>
+<th class="head"><p>容量の目安</p></th>
+<th class="head"><p>レイテンシの目安</p></th>
+<th class="head"><p>帯域の目安</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>レジスタ</p></td>
+<td><p>スレッド</p></td>
+<td><p>SM あたり 256 KB</p></td>
+<td><p>数サイクル</p></td>
+<td><p>演算器に直結</p></td>
+</tr>
+<tr class="row-odd"><td><p>共有メモリ／L1</p></td>
+<td><p>ブロック／SM</p></td>
+<td><p>SM あたり 128〜256 KB 程度（共用）</p></td>
+<td><p>約 20〜30 サイクル</p></td>
+<td><p>SM あたり 128 バイト／サイクル</p></td>
+</tr>
+<tr class="row-even"><td><p>L2 キャッシュ</p></td>
+<td><p>GPU 全体</p></td>
+<td><p>数 MB〜数十 MB</p></td>
+<td><p>約 200 サイクル</p></td>
+<td><p>数 TB/s〜10 TB/s 程度</p></td>
+</tr>
+<tr class="row-odd"><td><p>グローバルメモリ（HBM、GDDR）</p></td>
+<td><p>GPU 全体とホスト</p></td>
+<td><p>数 GB〜百数十 GB</p></td>
+<td><p>約 400〜800 サイクル</p></td>
+<td><p>約 1〜8 TB/s</p></td>
+</tr>
+<tr class="row-even"><td><p>ホストの主記憶（PCIe 経由）</p></td>
+<td><p>CPU と GPU</p></td>
+<td><p>数十 GB〜数 TB</p></td>
+<td><p>数 µs</p></td>
+<td><p>約 32〜64 GB/s（片方向）</p></td>
+</tr>
+</tbody>
+</table>
+<p>各階層の役割は次のとおりです。</p>
+<ul class="simple">
+<li><p><strong>レジスタ</strong>：各スレッドの局所変数が置かれます。最も高速ですが、使いすぎると占有率が下がります。足りない分はローカルメモリ（実体はグローバルメモリ）にあふれ（スピル）、遅くなります。</p></li>
+<li><p><strong>共有メモリ</strong>（shared memory）：ブロック内のスレッドが共有する、プログラムで明示的に管理する SRAM です。CPU のキャッシュとは違い、何をいつ置くかをプログラマーが決める「手動のキャッシュ」であり、<strong>スクラッチパッドメモリ</strong>（scratchpad memory）とも呼ばれます。L1 キャッシュと同じ SRAM を共用しており、その割合を設定できます。</p></li>
+<li><p><strong>L1 キャッシュ</strong>：SM ごとのキャッシュです。グローバルメモリのアクセスを、128 バイトのキャッシュラインと 32 バイトの<strong>セクタ</strong>（sector）の単位で扱います。</p></li>
+<li><p><strong>L2 キャッシュ</strong>：全 SM が共有するキャッシュで、すべてのグローバルメモリのアクセスが通ります。SM の間のデータの一貫性は、L2 で保たれます。GPU の L1 は CPU のようなハードウェアのコヒーレンスを持たないことが多く、ブロックをまたいだデータの受け渡しには、アトミック操作やメモリフェンス、カーネルの終了を使います。</p></li>
+<li><p><strong>グローバルメモリ</strong>（global memory）：GPU のボードやパッケージ上の DRAM で、すべてのスレッドとホストからアクセスできます。</p></li>
+</ul>
+<section id="hbm-gddr">
+<h3><span class="section-number">16.8.1. </span>HBM と GDDR<a class="headerlink" href="#hbm-gddr" title="Link to this heading"></a></h3>
+<p>GPU は膨大な数の演算器にデータを供給するため、CPU の DDR メモリよりはるかに広い帯域のメモリを使います。</p>
+<ul class="simple">
+<li><p><strong>GDDR</strong>（Graphics DDR）：グラフィックス向けに高いクロックで動かす DRAM です。チップ 1 個のデータ幅は 32 ビット程度で、GPU の周りの基板上に多数のチップを並べ、上位の製品では合計で 256〜512 ビット程度のバス幅にします。GDDR6、GDDR6X、GDDR7 などの世代があり、ゲーム向けの GPU で使われます。ハイエンドのゲーム向け GPU で約 1〜2 TB/s の帯域が得られます。</p></li>
+<li><p><strong>HBM</strong>（High Bandwidth Memory）：複数の DRAM のダイを積み重ねて GPU と同じパッケージに収め、1 つの積層あたり 1024 ビット以上という非常に広いデータ幅で接続するメモリです。配線が短く本数が多いので、低いクロックでも広い帯域が得られ、ビットあたりの電力も小さくなります。データセンター向けの GPU では、数個の HBM の積層を並べて約 2〜8 TB/s の帯域を実現しています。製造が難しく高価で、容量も GDDR より増やしにくいという欠点があります。積層と実装の構造は「<a class="reference internal" href="17_accelerators.html"><span class="doc">アクセラレーターとヘテロジニアス構成</span></a>」で説明します。</p></li>
+</ul>
+</section>
+</section>
+<section id="id25">
+<h2><span class="section-number">16.9. </span>メモリアクセスの合体とバンクコンフリクト<a class="headerlink" href="#id25" title="Link to this heading"></a></h2>
+<p>GPU の性能は、メモリをどれだけ効率よく使えるかに大きく依存します。ここでは、グローバルメモリと共有メモリのそれぞれで、ワープの 32 スレッドのアクセスのしかたが性能にどう影響するかを説明します。</p>
+<section id="id26">
+<h3><span class="section-number">16.9.1. </span>メモリアクセスの合体（コアレッシング）<a class="headerlink" href="#id26" title="Link to this heading"></a></h3>
+<p>ワープの 32 スレッドがロード命令を実行すると、ハードウェアは 32 個のアドレスを調べ、同じセクタ（またはキャッシュライン）に入るものをまとめて、できるだけ少ない数のメモリトランザクションにします。これを<strong>メモリアクセスの合体</strong>（memory coalescing、コアレッシング）と呼びます。</p>
+<p>たとえば、スレッド <code class="docutils literal notranslate"><span class="pre">i</span></code> が <code class="docutils literal notranslate"><span class="pre">a[i]</span></code>（4 バイトの <code class="docutils literal notranslate"><span class="pre">float</span></code>）を読むと、32 スレッドのアクセスは連続する 128 バイトに収まり、32 バイトのセクタ 4 個で済みます。一方、スレッド <code class="docutils literal notranslate"><span class="pre">i</span></code> が <code class="docutils literal notranslate"><span class="pre">a[32*i]</span></code> を読むと、アドレスは 128 バイトずつ離れるので、32 個のセクタが必要になります。転送するのは 1024 バイトなのに、使うのは 128 バイトだけで、帯域の 8 分の 7 が無駄になります。</p>
+<p>このため GPU では、2 次元の配列を処理するとき、連続するスレッドが連続するアドレス（行優先の配列なら同じ行の隣り合う列）にアクセスするように仕事を割り当てます。構造体の配列（Array of Structures：AoS）より、要素ごとの配列を持つ構造体（Structure of Arrays：SoA）が好まれるのも同じ理由です。AoS では、各スレッドが構造体の同じメンバを読むと、アクセスが構造体の大きさのストライドになってしまいます。</p>
+</section>
+<section id="id27">
+<h3><span class="section-number">16.9.2. </span>共有メモリのバンクコンフリクト<a class="headerlink" href="#id27" title="Link to this heading"></a></h3>
+<p>共有メモリは、同時に多数のアクセスを処理できるように、32 個の<strong>バンク</strong>（bank）に分けられています。各バンクの幅は 4 バイトで、連続する 4 バイトのワードが順に別のバンクに割り当てられます。つまり、ワード番号を 32 で割った余りがバンクの番号です。ワープの 32 スレッドが異なる 32 個のバンクにアクセスすれば、1 サイクル（1 回の処理）ですべてのアクセスが終わります。</p>
+<p>同じバンクの<strong>異なる</strong>ワードに複数のスレッドがアクセスすると、そのアクセスは順番に処理されます。これを<strong>バンクコンフリクト</strong>（bank conflict）と呼びます。<span class="math notranslate nohighlight">\(k\)</span> 個のスレッドが同じバンクの異なるワードにアクセスすると、処理に <span class="math notranslate nohighlight">\(k\)</span> 回かかります（<span class="math notranslate nohighlight">\(k\)</span>-way のバンクコンフリクト）。ただし、複数のスレッドが同じワードを読む場合は、1 回の読み出しで全員に配られる（ブロードキャスト）ので、コンフリクトになりません。</p>
+<p>典型的な問題は、32×32 の <code class="docutils literal notranslate"><span class="pre">float</span></code> の 2 次元配列 <code class="docutils literal notranslate"><span class="pre">tile[32][32]</span></code> を列方向に読む場合です。スレッド <code class="docutils literal notranslate"><span class="pre">i</span></code> が <code class="docutils literal notranslate"><span class="pre">tile[i][0]</span></code> を読むと、ワード番号は <code class="docutils literal notranslate"><span class="pre">32*i</span></code> で、すべて 32 の倍数なので全員がバンク 0 にアクセスし、32-way のコンフリクトになります。配列を <code class="docutils literal notranslate"><span class="pre">tile[32][33]</span></code> のように 1 列余分に確保すると、ワード番号が <code class="docutils literal notranslate"><span class="pre">33*i</span></code> になり、バンク番号が <code class="docutils literal notranslate"><span class="pre">i</span></code> ずつずれるので、コンフリクトがなくなります。行列の転置などでよく使われる、このパディングの技法は、「<a class="reference internal" href="15_parallel.html"><span class="doc">並列アーキテクチャ</span></a>」の false sharing の対策と似た発想です。</p>
+</section>
+<section id="id28">
+<h3><span class="section-number">16.9.3. </span>合体とバンクコンフリクトを数える<a class="headerlink" href="#id28" title="Link to this heading"></a></h3>
+<p>サンプル <a class="reference download internal" download="" href="_downloads/e3f1d8dc803990aa98a587156c5d57af/gpu_coalescing.py"><code class="xref download docutils literal notranslate"><span class="pre">gpu_coalescing.py</span></code></a> は、ワープの 32 スレッドのアクセスのアドレスから、必要なメモリトランザクションの数と、共有メモリのバンクコンフリクトの回数を数えます。グローバルメモリについては、「アクセスが触れる 32 バイトのセクタの数がトランザクションの数」という単純なモデルを使います。これは近年の NVIDIA の GPU の L1/L2 キャッシュのセクタの単位に合わせたもので、実際のハードウェアの動作をすべて表すものではありません。</p>
+<div class="literal-block-wrapper docutils container" id="id53">
+<div class="code-block-caption"><span class="caption-number">リスト 16.2 </span><span class="caption-text">gpu_coalescing.py</span><a class="headerlink" href="#id53" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;GPU のメモリアクセスの合体とバンクコンフリクトを数えるサンプル。</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">(1) グローバルメモリ: ワープ内の 32 スレッドがそれぞれ 4 バイトを読むとき、</span>
+<span class="linenos"> 4</span><span class="sd">    触れる 32 バイトのセクタの数をメモリトランザクションの数とみなします</span>
+<span class="linenos"> 5</span><span class="sd">    （近年の NVIDIA GPU の L1/L2 キャッシュのセクタ単位に合わせた単純な</span>
+<span class="linenos"> 6</span><span class="sd">    モデルです）。効率 = 必要なバイト数 / 実際に転送するバイト数。</span>
+<span class="linenos"> 7</span><span class="sd">(2) 共有メモリ: 4 バイト幅のバンクが 32 個あり、ワード番号 % 32 がバンク</span>
+<span class="linenos"> 8</span><span class="sd">    番号になるとします。同じバンクの異なるワードへのアクセスは順番に処理</span>
+<span class="linenos"> 9</span><span class="sd">    され（バンクコンフリクト）、同じワードへのアクセスは 1 回で配られる</span>
+<span class="linenos">10</span><span class="sd">    （ブロードキャスト）とします。</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="sd">実行方法: python gpu_coalescing.py</span>
+<span class="linenos">13</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="n">WARP_SIZE</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="linenos">18</span><span class="n">ELEM</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># 1 スレッドが読むバイト数（float 1 個）</span>
+<span class="linenos">19</span><span class="n">SECTOR</span> <span class="o">=</span> <span class="mi">32</span>  <span class="c1"># メモリトランザクションの単位（バイト）</span>
+<span class="linenos">20</span><span class="n">NUM_BANKS</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span><span class="k">def</span><span class="w"> </span><span class="nf">sectors</span><span class="p">(</span><span class="n">addrs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">24</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;アドレスの列が触れる 32 バイトセクタの数を返す。&quot;&quot;&quot;</span>
+<span class="linenos">25</span>    <span class="n">touched</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="linenos">26</span>    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">addrs</span><span class="p">:</span>
+<span class="linenos">27</span>        <span class="c1"># 4 バイトの要素がまたぐセクタをすべて数える</span>
+<span class="linenos">28</span>        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">ELEM</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">29</span>            <span class="n">touched</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">b</span> <span class="o">//</span> <span class="n">SECTOR</span><span class="p">)</span>
+<span class="linenos">30</span>    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">touched</span><span class="p">)</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="k">def</span><span class="w"> </span><span class="nf">bank_passes</span><span class="p">(</span><span class="n">word_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">34</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;共有メモリのアクセスに必要な処理の回数（1 ならコンフリクトなし）。&quot;&quot;&quot;</span>
+<span class="linenos">35</span>    <span class="n">words_in_bank</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">36</span>    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">word_indices</span><span class="p">:</span>
+<span class="linenos">37</span>        <span class="n">words_in_bank</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">w</span> <span class="o">%</span> <span class="n">NUM_BANKS</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+<span class="linenos">38</span>    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span> <span class="k">for</span> <span class="n">ws</span> <span class="ow">in</span> <span class="n">words_in_bank</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="linenos">39</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">42</span>    <span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># 毎回同じ結果になるよう乱数の種を固定する</span>
+<span class="linenos">43</span>    <span class="n">tids</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">WARP_SIZE</span><span class="p">)</span>
+<span class="linenos">44</span>    <span class="n">global_cases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos">45</span>        <span class="p">(</span><span class="s2">&quot;連続（a[tid]）&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ELEM</span> <span class="o">*</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">46</span>        <span class="p">(</span><span class="s2">&quot;連続、4 バイトずれ&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ELEM</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">4</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">47</span>        <span class="p">(</span><span class="s2">&quot;ストライド 2（a[2*tid]）&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ELEM</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">48</span>        <span class="p">(</span><span class="s2">&quot;ストライド 4（a[4*tid]）&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ELEM</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">49</span>        <span class="p">(</span><span class="s2">&quot;ストライド 8（a[8*tid]）&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ELEM</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">50</span>        <span class="p">(</span><span class="s2">&quot;ランダム（1 MiB の範囲）&quot;</span><span class="p">,</span>
+<span class="linenos">51</span>         <span class="p">[</span><span class="n">ELEM</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">18</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">52</span>    <span class="p">]</span>
+<span class="linenos">53</span>    <span class="n">need</span> <span class="o">=</span> <span class="n">WARP_SIZE</span> <span class="o">*</span> <span class="n">ELEM</span>
+<span class="linenos">54</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(1) グローバルメモリ（1 ワープで </span><span class="si">{</span><span class="n">need</span><span class="si">}</span><span class="s2"> バイトを読む）&quot;</span><span class="p">)</span>
+<span class="linenos">55</span>    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">addrs</span> <span class="ow">in</span> <span class="n">global_cases</span><span class="p">:</span>
+<span class="linenos">56</span>        <span class="n">n</span> <span class="o">=</span> <span class="n">sectors</span><span class="p">(</span><span class="n">addrs</span><span class="p">)</span>
+<span class="linenos">57</span>        <span class="n">eff</span> <span class="o">=</span> <span class="n">need</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">SECTOR</span><span class="p">)</span>
+<span class="linenos">58</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  セクタ </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> 個  </span><span class="si">{</span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">SECTOR</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2"> バイト転送  &quot;</span>
+<span class="linenos">59</span>              <span class="sa">f</span><span class="s2">&quot;効率 </span><span class="si">{</span><span class="n">eff</span><span class="si">:</span><span class="s2">6.1%</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">60</span>
+<span class="linenos">61</span>    <span class="n">shared_cases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos">62</span>        <span class="p">(</span><span class="s2">&quot;s[tid]&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">tids</span><span class="p">)),</span>
+<span class="linenos">63</span>        <span class="p">(</span><span class="s2">&quot;s[2*tid]&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">64</span>        <span class="p">(</span><span class="s2">&quot;s[0]（全員同じワード）&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">65</span>        <span class="p">(</span><span class="s2">&quot;tile[tid][0]（32 列）&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">32</span> <span class="o">*</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">66</span>        <span class="p">(</span><span class="s2">&quot;tile[tid][0]（33 列）&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">33</span> <span class="o">*</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tids</span><span class="p">]),</span>
+<span class="linenos">67</span>    <span class="p">]</span>
+<span class="linenos">68</span>    <span class="nb">print</span><span class="p">()</span>
+<span class="linenos">69</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(2) 共有メモリ（32 バンク、4 バイト幅）&quot;</span><span class="p">)</span>
+<span class="linenos">70</span>    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">words</span> <span class="ow">in</span> <span class="n">shared_cases</span><span class="p">:</span>
+<span class="linenos">71</span>        <span class="n">p</span> <span class="o">=</span> <span class="n">bank_passes</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+<span class="linenos">72</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  処理 </span><span class="si">{</span><span class="n">p</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> 回  コンフリクト </span><span class="si">{</span><span class="n">p</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> 回  </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">73</span>
+<span class="linenos">74</span>
+<span class="linenos">75</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">76</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>要点は次のとおりです。</p>
+<ul class="simple">
+<li><p>23〜30 行目：各スレッドが読む 4 バイトの先頭と末尾のアドレスを 32 で割り、触れたセクタの番号を集合に入れて数えます。要素がセクタの境界をまたぐ場合も考慮しています。</p></li>
+<li><p>33〜38 行目：ワード番号を 32 で割った余りでバンクに分け、バンクごとに異なるワードの数を数えます。その最大値が必要な処理の回数です。同じワードは集合で 1 つにまとめられるので、ブロードキャストが表現されます。</p></li>
+<li><p>44〜52 行目：グローバルメモリのアクセスパターンです。ランダムなアクセスは、乱数の種を固定して毎回同じ結果になるようにしています。</p></li>
+<li><p>61〜67 行目：共有メモリのアクセスパターンです。最後の 2 つは、32 列と 33 列の 2 次元配列を列方向に読む場合です。</p></li>
+</ul>
+<p>実行結果は次のとおりです。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>(1) グローバルメモリ（1 ワープで 128 バイトを読む）
+<span class="linenos"> 2</span>  セクタ  4 個    128 バイト転送  効率 100.0%  連続（a[tid]）
+<span class="linenos"> 3</span>  セクタ  5 個    160 バイト転送  効率  80.0%  連続、4 バイトずれ
+<span class="linenos"> 4</span>  セクタ  8 個    256 バイト転送  効率  50.0%  ストライド 2（a[2*tid]）
+<span class="linenos"> 5</span>  セクタ 16 個    512 バイト転送  効率  25.0%  ストライド 4（a[4*tid]）
+<span class="linenos"> 6</span>  セクタ 32 個   1024 バイト転送  効率  12.5%  ストライド 8（a[8*tid]）
+<span class="linenos"> 7</span>  セクタ 32 個   1024 バイト転送  効率  12.5%  ランダム（1 MiB の範囲）
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>(2) 共有メモリ（32 バンク、4 バイト幅）
+<span class="linenos">10</span>  処理  1 回  コンフリクト  0 回  s[tid]
+<span class="linenos">11</span>  処理  2 回  コンフリクト  1 回  s[2*tid]
+<span class="linenos">12</span>  処理  1 回  コンフリクト  0 回  s[0]（全員同じワード）
+<span class="linenos">13</span>  処理 32 回  コンフリクト 31 回  tile[tid][0]（32 列）
+<span class="linenos">14</span>  処理  1 回  コンフリクト  0 回  tile[tid][0]（33 列）
+</pre></div>
+</div>
+<p>グローバルメモリでは、連続アクセスなら効率は 100% です。先頭が 4 バイトずれただけでも、128 バイトが 5 個のセクタにまたがり、効率は 80% に下がります。ストライドが 2、4 と倍になるごとに効率は半分になり、ストライドが 8 要素（32 バイト）以上になると、各スレッドが別々のセクタを使うので効率は 12.5% で底を打ちます。ランダムなアクセスも同じで、必要な 8 倍のデータを転送することになります。メモリ帯域で性能が決まるカーネルでは、これはそのまま 8 倍の速度の差になります。</p>
+<p>共有メモリでは、<code class="docutils literal notranslate"><span class="pre">s[2*tid]</span></code> のように 2 ワードおきにアクセスすると、スレッド 0 と 16 がバンク 0 を、スレッド 1 と 17 がバンク 2 を使うというように 2 スレッドずつが同じバンクに当たり、2-way のコンフリクトになります。全員が同じワードを読む場合はブロードキャストなのでコンフリクトはありません。32 列の配列の列方向のアクセスは 32-way のコンフリクトで 32 倍の時間がかかりますが、1 列のパディングで解消されます。</p>
+</section>
+</section>
+<section id="id29">
+<h2><span class="section-number">16.10. </span>プログラミングモデル<a class="headerlink" href="#id29" title="Link to this heading"></a></h2>
+<section id="id30">
+<h3><span class="section-number">16.10.1. </span>ホストとデバイス<a class="headerlink" href="#id30" title="Link to this heading"></a></h3>
+<p>CUDA のプログラムでは、CPU とその主記憶を<strong>ホスト</strong>（host）、GPU とそのメモリを<strong>デバイス</strong>（device）と呼びます。典型的な処理の流れは次のとおりです。</p>
+<ol class="arabic simple">
+<li><p>ホストの主記憶に入力データを用意します。</p></li>
+<li><p>デバイスのメモリを確保し、入力データをホストからデバイスに転送します。</p></li>
+<li><p>カーネルを起動し、GPU で計算します。</p></li>
+<li><p>結果をデバイスからホストに転送します。</p></li>
+<li><p>デバイスのメモリを解放します。</p></li>
+</ol>
+<p>ホストとデバイスは、通常は別々のメモリを持ち、PCIe などのバスでつながっているので、2 と 4 の転送には無視できない時間がかかります。これについては後の節で見積もります。</p>
+</section>
+<section id="id31">
+<h3><span class="section-number">16.10.2. </span>ベクトル加算の例<a class="headerlink" href="#id31" title="Link to this heading"></a></h3>
+<p>2 つのベクトルの和を計算する CUDA のプログラムを示します。CUDA C++ は C++ を拡張した言語です。エラー処理は省略しています。</p>
+<div class="highlight-cuda notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span>
+<span class="linenos"> 2</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdlib&gt;</span>
+<span class="linenos"> 3</span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cuda_runtime.h&gt;</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="c1">// カーネル：GPU の各スレッドが 1 要素を担当する</span>
+<span class="linenos"> 6</span><span class="kr">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">vec_add</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="linenos"> 7</span><span class="p">{</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">blockDim</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span><span class="w">  </span><span class="c1">// 全体での通し番号</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">                                    </span><span class="c1">// 範囲外のスレッドは何もしない</span>
+<span class="linenos">10</span><span class="w">        </span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="linenos">11</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">12</span><span class="p">}</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="kt">int</span><span class="w"> </span><span class="n">main</span><span class="p">()</span>
+<span class="linenos">15</span><span class="p">{</span>
+<span class="linenos">16</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span><span class="w">                  </span><span class="c1">// 約 100 万要素</span>
+<span class="linenos">17</span><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">bytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">);</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="w">    </span><span class="c1">// 1. ホストのメモリを確保して初期化する</span>
+<span class="linenos">20</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">h_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">bytes</span><span class="p">);</span>
+<span class="linenos">21</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">h_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">bytes</span><span class="p">);</span>
+<span class="linenos">22</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">h_c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">bytes</span><span class="p">);</span>
+<span class="linenos">23</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">24</span><span class="w">        </span><span class="n">h_a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="linenos">25</span><span class="w">        </span><span class="n">h_b</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0f</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="linenos">26</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="w">    </span><span class="c1">// 2. デバイスのメモリを確保し、入力を転送する</span>
+<span class="linenos">29</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">d_a</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">d_b</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">d_c</span><span class="p">;</span>
+<span class="linenos">30</span><span class="w">    </span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_a</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">);</span>
+<span class="linenos">31</span><span class="w">    </span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_b</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">);</span>
+<span class="linenos">32</span><span class="w">    </span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_c</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">);</span>
+<span class="linenos">33</span><span class="w">    </span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_a</span><span class="p">,</span><span class="w"> </span><span class="n">h_a</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">cudaMemcpyHostToDevice</span><span class="p">);</span>
+<span class="linenos">34</span><span class="w">    </span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_b</span><span class="p">,</span><span class="w"> </span><span class="n">h_b</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">cudaMemcpyHostToDevice</span><span class="p">);</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span><span class="w">    </span><span class="c1">// 3. カーネルを起動する（256 スレッドのブロックを必要な数だけ）</span>
+<span class="linenos">37</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">threads</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">256</span><span class="p">;</span>
+<span class="linenos">38</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">threads</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">threads</span><span class="p">;</span>
+<span class="linenos">39</span><span class="w">    </span><span class="n">vec_add</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocks</span><span class="p">,</span><span class="w"> </span><span class="n">threads</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_a</span><span class="p">,</span><span class="w"> </span><span class="n">d_b</span><span class="p">,</span><span class="w"> </span><span class="n">d_c</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="w">    </span><span class="c1">// 4. 結果をホストに転送する（カーネルの終了を待ってから転送される）</span>
+<span class="linenos">42</span><span class="w">    </span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">h_c</span><span class="p">,</span><span class="w"> </span><span class="n">d_c</span><span class="p">,</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">cudaMemcpyDeviceToHost</span><span class="p">);</span>
+<span class="linenos">43</span><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;c[100] = %f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">h_c</span><span class="p">[</span><span class="mi">100</span><span class="p">]);</span><span class="w">      </span><span class="c1">// 300.000000 と表示される</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span><span class="w">    </span><span class="c1">// 5. メモリを解放する</span>
+<span class="linenos">46</span><span class="w">    </span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d_a</span><span class="p">);</span><span class="w"> </span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d_b</span><span class="p">);</span><span class="w"> </span><span class="n">cudaFree</span><span class="p">(</span><span class="n">d_c</span><span class="p">);</span>
+<span class="linenos">47</span><span class="w">    </span><span class="n">free</span><span class="p">(</span><span class="n">h_a</span><span class="p">);</span><span class="w"> </span><span class="n">free</span><span class="p">(</span><span class="n">h_b</span><span class="p">);</span><span class="w"> </span><span class="n">free</span><span class="p">(</span><span class="n">h_c</span><span class="p">);</span>
+<span class="linenos">48</span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="linenos">49</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>要点は次のとおりです。</p>
+<ul class="simple">
+<li><p>6 行目：<code class="docutils literal notranslate"><span class="pre">__global__</span></code> は、ホストから起動されてデバイスで実行される関数（カーネル）であることを示します。</p></li>
+<li><p>8 行目：各スレッドは、ブロックの番号、ブロックの大きさ、ブロック内の番号から、自分が担当する要素の番号 <code class="docutils literal notranslate"><span class="pre">i</span></code> を計算します。連続するスレッドが連続する要素を担当するので、メモリアクセスは合体されます。</p></li>
+<li><p>9 行目：要素数がブロックの大きさの倍数でない場合、最後のブロックには担当する要素がないスレッドができるので、範囲を確認します。この if 文によるダイバージェンスは、最後のワープだけで起きるので問題になりません。</p></li>
+<li><p>30〜34 行目：<code class="docutils literal notranslate"><span class="pre">cudaMalloc</span></code> でデバイスのメモリを確保し、<code class="docutils literal notranslate"><span class="pre">cudaMemcpy</span></code> でホストからデバイスに転送します。</p></li>
+<li><p>37〜39 行目：<code class="docutils literal notranslate"><span class="pre">&lt;&lt;&lt;ブロック数,</span> <span class="pre">ブロックあたりのスレッド数&gt;&gt;&gt;</span></code> という記法でカーネルを起動します。<span class="math notranslate nohighlight">\(2^{20} / 256 = 4096\)</span> 個のブロック、合計約 100 万個のスレッドが生成されます。カーネルの起動は非同期で、ホストは完了を待たずに次に進みます。</p></li>
+<li><p>42 行目：結果をデバイスからホストに転送します。この転送は、先に起動したカーネルの完了を待ってから行われます。</p></li>
+</ul>
+<p>CPU のプログラムなら 1 つのループで書く処理を、「1 要素を処理する関数」として書き、それを要素の数だけのスレッドで実行するのが CUDA の考え方です。100 万個のスレッドは、ハードウェアの数千個の演算器よりはるかに多いですが、これでよいのです。ハードウェアはブロックを SM に順次割り振り、多数のワープを切り替えながら実行します。</p>
+</section>
+<section id="id32">
+<h3><span class="section-number">16.10.3. </span>メモリ転送の工夫<a class="headerlink" href="#id32" title="Link to this heading"></a></h3>
+<p>ホストとデバイスの間の転送の効率を上げるために、次のような工夫が使われます。</p>
+<ul class="simple">
+<li><p><strong>ピン留めメモリ</strong>（pinned memory、ページロックメモリ）：ホストのメモリをページアウトされないように固定すると、GPU の DMA コントローラが直接転送でき、転送が速くなります。通常のメモリからの転送では、いったんピン留めされた一時領域にコピーされます。</p></li>
+<li><p><strong>非同期転送とストリーム</strong>：データを分割し、ある部分の転送と別の部分の計算を同時に行うことで、転送時間を隠します。CUDA では、順序を持つ処理の列を<strong>ストリーム</strong>（stream）と呼び、複数のストリームを使って転送と計算を重ねます。</p></li>
+<li><p><strong>データを GPU に置いたままにする</strong>：複数のカーネルを続けて実行する場合、途中の結果をホストに戻さずにデバイスのメモリに置いたまま処理します。</p></li>
+</ul>
+</section>
+</section>
+<section id="id33">
+<h2><span class="section-number">16.11. </span>行列積の高速化<a class="headerlink" href="#id33" title="Link to this heading"></a></h2>
+<p>行列積は、深層学習や科学技術計算の中心的な計算であり、GPU の性能を最も引き出せる処理です。<span class="math notranslate nohighlight">\(n \times n\)</span> の行列 <span class="math notranslate nohighlight">\(A\)</span>、<span class="math notranslate nohighlight">\(B\)</span> の積 <span class="math notranslate nohighlight">\(C = AB\)</span> は、<span class="math notranslate nohighlight">\(2n^3\)</span> 回の浮動小数点演算（乗算と加算）を必要とし、入出力のデータは <span class="math notranslate nohighlight">\(3n^2\)</span> 要素です。データの量に対して計算の量が多いので、うまく実装すれば演算性能を使い切れます。</p>
+<section id="id34">
+<h3><span class="section-number">16.11.1. </span>素朴な実装<a class="headerlink" href="#id34" title="Link to this heading"></a></h3>
+<p>最も素朴な実装では、1 つのスレッドが <span class="math notranslate nohighlight">\(C\)</span> の 1 要素を担当し、<span class="math notranslate nohighlight">\(A\)</span> の 1 行と <span class="math notranslate nohighlight">\(B\)</span> の 1 列の内積を計算します。内側のループの 1 回の繰り返しで、<span class="math notranslate nohighlight">\(A\)</span> と <span class="math notranslate nohighlight">\(B\)</span> から 1 要素ずつ（合計 8 バイト）を読み、乗算と加算の 2 回の演算をします。グローバルメモリの読み出し 1 バイトあたりの演算は <span class="math notranslate nohighlight">\(2 / 8 = 0.25\)</span> 回にすぎません。同じ要素をほかのスレッドも何度も読むので、キャッシュに当たる分はありますが、メモリ帯域が性能を制限します。</p>
+</section>
+<section id="id35">
+<h3><span class="section-number">16.11.2. </span>タイリングと共有メモリ<a class="headerlink" href="#id35" title="Link to this heading"></a></h3>
+<p>そこで、行列を小さな正方形の<strong>タイル</strong>（tile）に分け、ブロック内のスレッドが協力してタイルを共有メモリに読み込み、それを繰り返し使います。これを<strong>タイリング</strong>（tiling）と呼びます。</p>
+<div class="highlight-cuda notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="cp">#define TILE 32</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="c1">// C = A * B（n×n、行優先、n は TILE の倍数とする）</span>
+<span class="linenos"> 4</span><span class="c1">// ブロックは TILE×TILE スレッドで、C の 1 つのタイルを計算する</span>
+<span class="linenos"> 5</span><span class="kr">__global__</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">matmul_tiled</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="linenos"> 6</span><span class="p">{</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="kt">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">TILE</span><span class="p">][</span><span class="n">TILE</span><span class="p">];</span><span class="w">   </span><span class="c1">// A のタイル（共有メモリ）</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="kt">__shared__</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">TILE</span><span class="p">][</span><span class="n">TILE</span><span class="p">];</span><span class="w">   </span><span class="c1">// B のタイル（共有メモリ）</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">tx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">ty</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="linenos">10</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TILE</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ty</span><span class="p">;</span>
+<span class="linenos">11</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TILE</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tx</span><span class="p">;</span>
+<span class="linenos">12</span><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">TILE</span><span class="p">;</span><span class="w"> </span><span class="n">t</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">15</span><span class="w">        </span><span class="c1">// ブロックの全スレッドで 1 要素ずつ読み込み、タイルを作る</span>
+<span class="linenos">16</span><span class="w">        </span><span class="n">As</span><span class="p">[</span><span class="n">ty</span><span class="p">][</span><span class="n">tx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TILE</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">tx</span><span class="p">];</span>
+<span class="linenos">17</span><span class="w">        </span><span class="n">Bs</span><span class="p">[</span><span class="n">ty</span><span class="p">][</span><span class="n">tx</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">B</span><span class="p">[(</span><span class="n">t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">TILE</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ty</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">];</span>
+<span class="linenos">18</span><span class="w">        </span><span class="nf">__syncthreads</span><span class="p">();</span><span class="w">               </span><span class="c1">// タイルが揃うまで待つ</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">TILE</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos">21</span><span class="w">            </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">As</span><span class="p">[</span><span class="n">ty</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">Bs</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">tx</span><span class="p">];</span>
+<span class="linenos">22</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">23</span><span class="w">        </span><span class="nf">__syncthreads</span><span class="p">();</span><span class="w">               </span><span class="c1">// 全員が使い終わるまで待つ</span>
+<span class="linenos">24</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">25</span><span class="w">    </span><span class="n">C</span><span class="p">[</span><span class="n">row</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">col</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<span class="linenos">26</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>要点は次のとおりです。</p>
+<ul class="simple">
+<li><p>7〜8 行目：<code class="docutils literal notranslate"><span class="pre">__shared__</span></code> で宣言した配列は、ブロック内のスレッドが共有する共有メモリに置かれます。2 つのタイルで 8 KB です。</p></li>
+<li><p>16〜17 行目：ブロックの 1024 スレッドが 1 要素ずつ読み込み、<span class="math notranslate nohighlight">\(A\)</span> と <span class="math notranslate nohighlight">\(B\)</span> のタイルを作ります。<code class="docutils literal notranslate"><span class="pre">tx</span></code> が連続するスレッド（同じワープ）は連続するアドレスを読むので、グローバルメモリのアクセスは合体されます。</p></li>
+<li><p>18 行目と 23 行目：<code class="docutils literal notranslate"><span class="pre">__syncthreads()</span></code> はブロック内のすべてのスレッドが到達するまで待つバリア同期です。タイルが揃う前に計算を始めたり、使い終わる前に次のタイルで上書きしたりしないようにします。</p></li>
+<li><p>20〜22 行目：共有メモリ上のタイルを使って部分和を計算します。<code class="docutils literal notranslate"><span class="pre">As[ty][k]</span></code> はワープ内の全スレッドが同じワードを読む（同じワープは <code class="docutils literal notranslate"><span class="pre">ty</span></code> が同じ）のでブロードキャストになり、<code class="docutils literal notranslate"><span class="pre">Bs[k][tx]</span></code> は連続するワードなので、どちらもバンクコンフリクトは起きません。</p></li>
+</ul>
+<p>タイリングの効果を計算します。<span class="math notranslate nohighlight">\(T \times T\)</span> のタイルを 1 組読み込むと、グローバルメモリから <span class="math notranslate nohighlight">\(2T^2\)</span> 要素（<span class="math notranslate nohighlight">\(8T^2\)</span> バイト）を読み、<span class="math notranslate nohighlight">\(T^2\)</span> 個のスレッドがそれぞれ <span class="math notranslate nohighlight">\(T\)</span> 回の積和、合計 <span class="math notranslate nohighlight">\(2T^3\)</span> 回の演算をします。読み出し 1 バイトあたりの演算は <span class="math notranslate nohighlight">\(2T^3 / 8T^2 = T/4\)</span> 回になり、<span class="math notranslate nohighlight">\(T = 32\)</span> なら 8 回です。素朴な実装の 0.25 回の 32 倍で、グローバルメモリへのアクセスが 32 分の 1 に減ったことになります。実用的なライブラリ（NVIDIA の cuBLAS や CUTLASS など）では、さらに各スレッドが複数の要素をレジスタに保持して計算する<strong>レジスタタイリング</strong>、次のタイルの読み込みと計算を重ねるダブルバッファリング、Tensor コアの利用などを組み合わせて、ピークに近い性能を得ています。</p>
+</section>
+<section id="id36">
+<h3><span class="section-number">16.11.3. </span>Tensor コア<a class="headerlink" href="#id36" title="Link to this heading"></a></h3>
+<p><strong>Tensor コア</strong>は、小さな行列の積和演算 <span class="math notranslate nohighlight">\(D = A \times B + C\)</span> を専用に行う演算器です。Volta の Tensor コアは、1 サイクルに <span class="math notranslate nohighlight">\(4 \times 4\)</span> の FP16 の行列 <span class="math notranslate nohighlight">\(A\)</span>、<span class="math notranslate nohighlight">\(B\)</span> の積を求め、FP16 または FP32 の <span class="math notranslate nohighlight">\(C\)</span> に加えます。これは 64 回の積和演算に相当します。プログラムからは、ワープ全体で 1 つの命令を実行し、ワープの 32 スレッドのレジスタに分散して置かれた、たとえば <span class="math notranslate nohighlight">\(16 \times 16\)</span> の行列の積和を計算するという形で使います。</p>
+<p>通常の FP32 の演算器は、1 つの命令で 1 回の積和しか行いません。Tensor コアは、行列積の構造を利用して、オペランドを読み出す回数あたりの演算回数を増やし、レジスタファイルからのデータの供給やデコードのコストを多数の演算で分け合います。この結果、同じ面積と電力でずっと多くの演算ができます。たとえば A100 の約 19.5 TFLOPS の FP32 の演算性能に対し、Tensor コアの FP16 の行列演算性能は約 312 TFLOPS（疎行列の機能を使わない場合）と、約 16 倍です。これは「<a class="reference internal" href="17_accelerators.html"><span class="doc">アクセラレーターとヘテロジニアス構成</span></a>」で説明するドメイン特化型アーキテクチャの考え方を GPU の中に取り込んだものといえます。</p>
+</section>
+<section id="id37">
+<h3><span class="section-number">16.11.4. </span>低精度演算<a class="headerlink" href="#id37" title="Link to this heading"></a></h3>
+<p>深層学習では、数値の精度を下げても学習や推論の結果がほとんど変わらないことが知られています。精度を下げると、乗算器の回路が小さくなり（乗算器の面積は仮数部のビット数のおよそ 2 乗に比例します）、同じメモリ帯域でより多くの数を運べます。そこで GPU は、さまざまな低精度の浮動小数点数の形式に対応してきました。浮動小数点数の形式については「<a class="reference internal" href="05_data_representation.html"><span class="doc">データの表現</span></a>」を参照してください。</p>
+<table class="docutils align-default" id="id54">
+<caption><span class="caption-number">表 16.6 </span><span class="caption-text">深層学習で使われる浮動小数点数の形式</span><a class="headerlink" href="#id54" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 16.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 48.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>形式</p></th>
+<th class="head"><p>符号</p></th>
+<th class="head"><p>指数部</p></th>
+<th class="head"><p>仮数部</p></th>
+<th class="head"><p>特徴</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>FP32</p></td>
+<td><p>1</p></td>
+<td><p>8</p></td>
+<td><p>23</p></td>
+<td><p>IEEE 754 の単精度。従来の標準。</p></td>
+</tr>
+<tr class="row-odd"><td><p>TF32</p></td>
+<td><p>1</p></td>
+<td><p>8</p></td>
+<td><p>10</p></td>
+<td><p>Ampere で導入された Tensor コアの内部形式。FP32 と同じ範囲で精度を FP16 並みにしたもの（記憶には 32 ビットを使います）。</p></td>
+</tr>
+<tr class="row-even"><td><p>FP16</p></td>
+<td><p>1</p></td>
+<td><p>5</p></td>
+<td><p>10</p></td>
+<td><p>IEEE 754 の半精度。表せる範囲が狭く（最大約 65504）、学習では値の大きさを調整する工夫が必要です。</p></td>
+</tr>
+<tr class="row-odd"><td><p>BF16</p></td>
+<td><p>1</p></td>
+<td><p>8</p></td>
+<td><p>7</p></td>
+<td><p>Google が提案した形式。FP32 と同じ範囲を持ち、FP32 の上位 16 ビットに相当します。学習で広く使われます。</p></td>
+</tr>
+<tr class="row-even"><td><p>FP8（E4M3）</p></td>
+<td><p>1</p></td>
+<td><p>4</p></td>
+<td><p>3</p></td>
+<td><p>Hopper で導入。精度を重視した 8 ビット形式。主に推論や学習の順方向に使います。</p></td>
+</tr>
+<tr class="row-odd"><td><p>FP8（E5M2）</p></td>
+<td><p>1</p></td>
+<td><p>5</p></td>
+<td><p>2</p></td>
+<td><p>Hopper で導入。範囲を重視した 8 ビット形式。主に学習の勾配に使います。</p></td>
+</tr>
+</tbody>
+</table>
+<p>精度が半分になるごとに、Tensor コアの演算性能はおおむね 2 倍になります。Blackwell 世代（2024 年発表）では、さらに 4 ビットの浮動小数点数形式にも対応しています。また、推論では INT8 や INT4 などの整数形式も使われます。乗算は低精度で行い、積の累積はより高い精度（FP32 など）で行う<strong>混合精度</strong>（mixed precision）の演算が一般的です。</p>
+</section>
+</section>
+<section id="id38">
+<h2><span class="section-number">16.12. </span>性能を考える<a class="headerlink" href="#id38" title="Link to this heading"></a></h2>
+<section id="id39">
+<h3><span class="section-number">16.12.1. </span>ルーフラインモデル<a class="headerlink" href="#id39" title="Link to this heading"></a></h3>
+<p>GPU のプログラムの性能を見積もるのに便利なのが<strong>ルーフラインモデル</strong>（roofline model）です。2009 年に Samuel Williams、Andrew Waterman、David Patterson が提案しました。このモデルでは、プログラムの性質を<strong>演算強度</strong>（arithmetic intensity：メモリから読み書きする 1 バイトあたりの演算回数、単位は FLOP/byte）で表し、到達可能な性能を次の式で見積もります。</p>
+<div class="math notranslate nohighlight">
+\[\text{到達可能な性能} = \min\left(\text{ピーク演算性能},\ \text{メモリ帯域} \times \text{演算強度}\right)\]</div>
+<p>演算強度が低いプログラムは、メモリ帯域で性能が決まり（<strong>メモリ律速</strong>、memory-bound）、演算強度が高いプログラムは、演算性能で性能が決まります（<strong>演算律速</strong>、compute-bound）。両者の境界の演算強度は、ピーク演算性能をメモリ帯域で割った値です。グラフに描くと、境界より左が斜めの直線、右が水平の直線となり、屋根（roof）のような形になることが名前の由来です。</p>
+<p>数値例で考えます。ピーク演算性能が 60 TFLOPS（FP32）、メモリ帯域が 3 TB/s の GPU を仮定します。境界の演算強度は次のとおりです。</p>
+<div class="math notranslate nohighlight">
+\[\frac{60 \times 10^{12}\ \text{FLOP/s}}{3 \times 10^{12}\ \text{byte/s}} = 20\ \text{FLOP/byte}\]</div>
+<p>つまり、メモリから 1 バイト読むごとに 20 回以上の演算をしなければ、演算器を使い切れません。いくつかの処理に当てはめてみます。</p>
+<table class="docutils align-default" id="id55">
+<caption><span class="caption-number">表 16.7 </span><span class="caption-text">仮想的な GPU（60 TFLOPS、3 TB/s）での到達可能な性能</span><a class="headerlink" href="#id55" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 34.0%" />
+<col style="width: 22.0%" />
+<col style="width: 22.0%" />
+<col style="width: 22.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>処理</p></th>
+<th class="head"><p>演算強度（FLOP/byte）</p></th>
+<th class="head"><p>到達可能な性能</p></th>
+<th class="head"><p>ピークに対する割合</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ベクトル加算 <code class="docutils literal notranslate"><span class="pre">c[i]</span> <span class="pre">=</span> <span class="pre">a[i]</span> <span class="pre">+</span> <span class="pre">b[i]</span></code></p></td>
+<td><p>1/12 ≈ 0.083</p></td>
+<td><p>約 0.25 TFLOPS</p></td>
+<td><p>約 0.4%</p></td>
+</tr>
+<tr class="row-odd"><td><p>素朴な行列積（キャッシュを無視）</p></td>
+<td><p>0.25</p></td>
+<td><p>約 0.75 TFLOPS</p></td>
+<td><p>約 1.3%</p></td>
+</tr>
+<tr class="row-even"><td><p>タイリングした行列積（<span class="math notranslate nohighlight">\(T = 32\)</span>）</p></td>
+<td><p>8</p></td>
+<td><p>約 24 TFLOPS</p></td>
+<td><p>約 40%</p></td>
+</tr>
+<tr class="row-odd"><td><p>行列積の理論値（<span class="math notranslate nohighlight">\(n = 8192\)</span>）</p></td>
+<td><p>約 1365</p></td>
+<td><p>60 TFLOPS</p></td>
+<td><p>100%</p></td>
+</tr>
+</tbody>
+</table>
+<p>ベクトル加算は、1 要素ごとに 12 バイト（2 つ読んで 1 つ書く）を転送して 1 回の加算しかしないので、どれほど演算器が速くてもピークの 0.4% しか出ません。このような処理では、メモリ帯域の何割を使えているかで性能を評価すべきです。行列積は、入出力 <span class="math notranslate nohighlight">\(3n^2 \times 4\)</span> バイトに対して <span class="math notranslate nohighlight">\(2n^3\)</span> 回の演算をするので、理論上の演算強度は <span class="math notranslate nohighlight">\(n/6\)</span> と非常に高く、演算律速にできます。ただし、それはデータを再利用する実装（タイリング）をした場合に限られます。</p>
+<p>Tensor コアを使うと、ピーク演算性能が 1 桁以上上がるので、境界の演算強度も数百 FLOP/byte に上がります。演算器が速くなるほど、メモリ律速になる処理が増えるのです。大規模言語モデルの推論で、1 トークンずつ生成する処理がその典型です。バッチの大きさが 1 なら、モデルのすべての重みを 1 回読むごとに、重み 1 個あたり 1 回の積和（2 回の演算）しかしません。FP16（2 バイト）の重みなら演算強度は約 1 FLOP/byte で、完全にメモリ律速です。たとえば 70 億パラメータのモデルの重みは FP16 で約 14 GB なので、帯域 3 TB/s の GPU でも 1 トークンの生成に少なくとも約 4.7 ms かかり、毎秒約 200 トークンが上限になります。推論でバッチを大きくしたり、重みを 8 ビットや 4 ビットに量子化したりするのは、この演算強度を上げる、またはデータ量を減らすためです。</p>
+</section>
+<section id="pcie">
+<h3><span class="section-number">16.12.2. </span>PCIe 転送のボトルネック<a class="headerlink" href="#pcie" title="Link to this heading"></a></h3>
+<p>ルーフラインモデルは GPU のメモリの中での話ですが、データがホストにある場合は、PCIe の転送も考えなければなりません。PCIe 4.0 の x16 の帯域は片方向で約 32 GB/s（実効では 25 GB/s 程度）で、GPU のメモリ帯域の 100 分の 1 程度しかありません。</p>
+<p>1 億要素（<span class="math notranslate nohighlight">\(10^8\)</span> 個）の <code class="docutils literal notranslate"><span class="pre">float</span></code> のベクトル加算を考えます。入力の 2 つのベクトル（800 MB）をホストからデバイスに送り、結果（400 MB）を戻すと、合計 1.2 GB の転送に、25 GB/s で約 48 ms かかります。一方、GPU の中での計算は、1.2 GB のメモリアクセスを 3 TB/s で行うので約 0.4 ms です。転送の時間が計算の 100 倍以上になり、CPU で計算したほうが速いことすらあります（CPU のメモリ帯域が 100 GB/s なら約 12 ms）。</p>
+<p>GPU を有効に使うには、転送したデータに対して十分な量の計算をすること、データを GPU に置いたまま多くの処理を続けること、転送と計算を重ねることが重要です。行列積なら、<span class="math notranslate nohighlight">\(n = 8192\)</span> で転送は約 800 MB（約 32 ms）ですが、演算は約 <span class="math notranslate nohighlight">\(1.1 \times 10^{12}\)</span> 回で、60 TFLOPS でも約 18 ms かかるので、転送に見合う計算量があります。</p>
+</section>
+</section>
+<section id="cpu-gpu">
+<h2><span class="section-number">16.13. </span>CPU と GPU の接続<a class="headerlink" href="#cpu-gpu" title="Link to this heading"></a></h2>
+<p>GPU と CPU、あるいは GPU 同士の接続は、性能に大きく影響します。</p>
+<ul class="simple">
+<li><p><strong>PCIe</strong>：パソコンやサーバーで、拡張カードの GPU を CPU と接続する標準的なバスです。x16 の帯域は、PCIe 4.0 で片方向約 32 GB/s、PCIe 5.0 で約 63 GB/s です。PCIe については「<a class="reference internal" href="14_io.html"><span class="doc">入出力とバス</span></a>」で説明しています。</p></li>
+<li><p><strong>NVLink</strong>：NVIDIA が開発した、GPU 同士（一部の製品では CPU と GPU）を接続する高速なリンクです。2016 年の Pascal 世代（P100）で導入されました。H100 の第 4 世代 NVLink は、GPU あたり合計約 900 GB/s（双方向の合計）の帯域を持ちます。NVSwitch という専用のスイッチを使うと、サーバー内の 8 個などの GPU が互いに全帯域で通信できます。大規模な学習では、多数の GPU の間で重みや勾配をやりとりするので、この帯域が重要になります。</p></li>
+<li><p><strong>統合メモリ</strong>（Unified Memory）：CUDA 6（2014 年）で導入された、ホストとデバイスが 1 つのアドレス空間を共有する仕組みです。プログラマーは <code class="docutils literal notranslate"><span class="pre">cudaMallocManaged</span></code> で確保したメモリを、ホストとデバイスのどちらからも同じポインタで使えます。実際には、アクセスされたページがドライバによって必要に応じて移動されます（ページフォールトを利用したページの移動。仮想記憶については「<a class="reference internal" href="13_virtual_memory.html"><span class="doc">仮想記憶</span></a>」を参照）。プログラムは書きやすくなりますが、物理的な転送がなくなるわけではありません。</p></li>
+<li><p><strong>物理メモリの共有</strong>：Apple シリコン（2020 年の M1 以降）などでは、CPU と GPU が同じチップ（パッケージ）にあり、同じ物理メモリを共有します。Apple はこれをユニファイドメモリと呼んでいますが、上の CUDA の統合メモリ（ページを移動して 1 つのアドレス空間に見せる仕組み）とは異なり、物理的に同じメモリを使います。データを転送する必要がなく、CPU が準備したデータを GPU がそのまま使えます。GPU が使えるメモリが大きいことから、大きなモデルの推論にも使われます。ただし、メモリ帯域は CPU と GPU で分け合うことになり、データセンター向けの HBM を使った GPU より小さくなります。</p></li>
+<li><p><strong>統合 GPU</strong>（integrated GPU）：パソコン向けの多くの CPU は、同じチップに GPU を内蔵しており、主記憶を CPU と共有します。拡張カードの<strong>ディスクリート GPU</strong>（discrete GPU）に比べて性能は低いですが、消費電力と価格が小さく、画面表示や動画の再生、軽い計算には十分です。</p></li>
+</ul>
+<p>データセンター向けでも、CPU と GPU の距離を縮める製品が登場しています。AMD の MI300A（2023 年）は CPU と GPU を 1 つのパッケージに収めて HBM を共有し、NVIDIA の Grace Hopper は CPU と GPU を NVLink-C2C という高速なリンクで接続して、互いのメモリにキャッシュコヒーレントにアクセスできるようにしています。</p>
+</section>
+<section id="id40">
+<h2><span class="section-number">16.14. </span>GPU のプログラミング環境<a class="headerlink" href="#id40" title="Link to this heading"></a></h2>
+<p>GPU をプログラムする環境には、次のようなものがあります。</p>
+<table class="docutils align-default" id="id56">
+<caption><span class="caption-number">表 16.8 </span><span class="caption-text">GPU の主なプログラミング環境</span><a class="headerlink" href="#id56" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 20.0%" />
+<col style="width: 58.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>名前</p></th>
+<th class="head"><p>提供元</p></th>
+<th class="head"><p>特徴</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CUDA</p></td>
+<td><p>NVIDIA</p></td>
+<td><p>NVIDIA の GPU 専用。C++ を拡張した言語と、cuBLAS（線形代数）、cuDNN（深層学習）などの豊富なライブラリを持ちます。事実上の標準になっています。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ROCm、HIP</p></td>
+<td><p>AMD</p></td>
+<td><p>ROCm は AMD の GPU 向けのソフトウェア基盤。HIP は CUDA とほぼ同じ書き方ができる言語で、CUDA のコードを変換するツールもあります。</p></td>
+</tr>
+<tr class="row-even"><td><p>OpenCL</p></td>
+<td><p>Khronos Group</p></td>
+<td><p>ベンダーに依存しない標準。CPU、GPU、FPGA などで動きますが、最適化はベンダーごとの差が大きいです。</p></td>
+</tr>
+<tr class="row-odd"><td><p>SYCL</p></td>
+<td><p>Khronos Group</p></td>
+<td><p>標準の C++ で異種のプロセッサをプログラムする仕様。Intel の oneAPI（DPC++）が代表的な実装。</p></td>
+</tr>
+<tr class="row-even"><td><p>コンピュートシェーダー</p></td>
+<td><p>Vulkan、Metal、DirectX</p></td>
+<td><p>グラフィックス API の中で汎用の計算を行う仕組み。ゲームなどでグラフィックスと計算を組み合わせるときに使います。Metal は Apple のプラットフォームの標準です。</p></td>
+</tr>
+<tr class="row-odd"><td><p>Python のライブラリ</p></td>
+<td><p>各種</p></td>
+<td><p>CuPy（NumPy 互換の GPU 配列）、PyTorch や JAX（深層学習のフレームワーク）、Numba（Python の関数を GPU のカーネルにコンパイル）、Triton（ブロック単位でカーネルを書く言語）など</p></td>
+</tr>
+</tbody>
+</table>
+<p>多くのエンジニアにとって、GPU を使う最も身近な方法は、CUDA のカーネルを自分で書くことではなく、PyTorch や CuPy などのライブラリを使うことです。たとえば CuPy では、NumPy の配列を CuPy の配列に置き換えるだけで、行列演算が GPU で実行されます。ただし、この章で説明したメモリアクセスや転送の性質を理解しておくと、なぜ遅いのか、どこを直せば速くなるのかを判断できます。</p>
+<p>CUDA が NVIDIA の GPU にしか対応しないにもかかわらず広く使われていることは、ハードウェアの性能だけでなく、ライブラリやツール、開発者のコミュニティを含むソフトウェアの蓄積が、プロセッサの競争力を左右することを示しています。この点は「<a class="reference internal" href="17_accelerators.html"><span class="doc">アクセラレーターとヘテロジニアス構成</span></a>」でも取り上げます。</p>
+</section>
+<section id="id41">
+<h2><span class="section-number">16.15. </span>GPU が向く処理と向かない処理<a class="headerlink" href="#id41" title="Link to this heading"></a></h2>
+<p>この章の内容をもとに、GPU が向く処理と向かない処理を整理します。</p>
+<table class="docutils align-default" id="id57">
+<caption><span class="caption-number">表 16.9 </span><span class="caption-text">GPU が向く処理と向かない処理</span><a class="headerlink" href="#id57" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 35.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>観点</p></th>
+<th class="head"><p>向く処理</p></th>
+<th class="head"><p>向かない処理</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>並列度</p></td>
+<td><p>数万以上の独立した仕事があります（大きな配列、画像、行列）。</p></td>
+<td><p>並列度が小さいか、逐次的な依存関係が強いです。</p></td>
+</tr>
+<tr class="row-odd"><td><p>分岐</p></td>
+<td><p>すべての要素に同じ処理をします。</p></td>
+<td><p>要素ごとに処理の流れが大きく異なります（ダイバージェンス）。</p></td>
+</tr>
+<tr class="row-even"><td><p>メモリアクセス</p></td>
+<td><p>連続した規則的なアクセスで、データの再利用が多いです。</p></td>
+<td><p>ポインタをたどるような不規則なアクセス（連結リスト、木の探索）</p></td>
+</tr>
+<tr class="row-odd"><td><p>演算強度</p></td>
+<td><p>高いです（行列積、畳み込み、物理シミュレーション）。</p></td>
+<td><p>低い処理を単独で行います（転送の時間に見合いません）。</p></td>
+</tr>
+<tr class="row-even"><td><p>データの大きさと転送</p></td>
+<td><p>データを GPU に置いたまま多くの処理を続けられます。</p></td>
+<td><p>小さなデータを頻繁に CPU と行き来させます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>レイテンシの要求</p></td>
+<td><p>全体のスループットが重要です（バッチ処理、学習）。</p></td>
+<td><p>1 件ごとの応答時間が非常に短いことが求められます。</p></td>
+</tr>
+<tr class="row-even"><td><p>例</p></td>
+<td><p>深層学習、画像・動画処理、流体や分子のシミュレーション、暗号資産の採掘、レイトレーシング</p></td>
+<td><p>OS やコンパイラ、データベースのトランザクション処理、構文解析、多くの業務アプリケーション</p></td>
+</tr>
+</tbody>
+</table>
+<p>実際のシステムでは、CPU が全体の制御や逐次的な処理を担当し、データ並列の重い計算を GPU に任せる、という分担が一般的です。このように性質の異なるプロセッサを組み合わせる構成については、「<a class="reference internal" href="17_accelerators.html"><span class="doc">アクセラレーターとヘテロジニアス構成</span></a>」で説明します。</p>
+</section>
+<section id="id42">
+<h2><span class="section-number">16.16. </span>この章のまとめ<a class="headerlink" href="#id42" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>CPU は 1 つのスレッドのレイテンシを短くすることを、GPU は全体のスループットを高めることを目標にしています。GPU は複雑な制御やキャッシュを減らし、そのトランジスタを多数の演算器に回しています。</p></li>
+<li><p>GPU は固定機能のグラフィックスアクセラレーターから始まり、プログラマブルシェーダー、統合シェーダーアーキテクチャ（2006 年）、CUDA（2007 年）を経て汎用の並列プロセッサになりました。2012 年の AlexNet 以降は深層学習の中心となり、2017 年には Tensor コアが導入されました。</p></li>
+<li><p>グラフィックスの処理は、大量の独立した仕事に同じプログラムを適用し、個々のレイテンシが問題にならないという、大量並列に向いた性質を持っています。</p></li>
+<li><p>NVIDIA の GPU は多数の SM からなり、各 SM はワープスケジューラ、巨大なレジスタファイル、FP32 の演算器（CUDA コア）、Tensor コア、共有メモリを持ちます。</p></li>
+<li><p>プログラムはスレッド・ブロック・グリッドの階層で書かれ、ハードウェアは 32 スレッドのワープ単位で同じ命令を実行します（SIMT）。SIMT は SIMD のハードウェアにスレッドとして書けるプログラミングモデルを組み合わせたものです。</p></li>
+<li><p>GPU は多数のワープを切り替えてメモリのレイテンシを隠します。必要なワープの数はリトルの法則で見積もれ、占有率はレジスタや共有メモリの使用量で制限されます。</p></li>
+<li><p>ワープ内で分岐の条件が分かれると、両方の経路をマスク付きで実行するため性能が下がります。条件をワープ単位で揃えることが重要です。</p></li>
+<li><p>ワープのメモリアクセスが連続していれば少数のトランザクションに合体されますが、ストライドやランダムなアクセスでは効率が大きく下がります。共有メモリでは、同じバンクの異なるワードへのアクセスがバンクコンフリクトになり、パディングで避けられます。</p></li>
+<li><p>行列積は、タイリングで共有メモリやレジスタ上のデータを再利用することで演算強度が上がり、Tensor コアと低精度の形式（FP16、BF16、FP8 など）で桁違いの性能が得られます。</p></li>
+<li><p>ルーフラインモデルで、演算強度から性能の上限とメモリ律速か演算律速かを判断できます。ホストとの PCIe 転送は GPU のメモリより桁違いに遅く、ボトルネックになりやすいので注意が必要です。</p></li>
+<li><p>CPU と GPU は PCIe や NVLink で接続され、統合メモリや物理メモリの共有によって 1 つのアドレス空間で扱えるようになってきています。プログラミング環境は CUDA が中心で、ROCm/HIP、OpenCL、コンピュートシェーダー、Python のライブラリなどがあります。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="15_parallel.html" class="btn btn-neutral float-left" title="15. 並列アーキテクチャ" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="17_accelerators.html" class="btn btn-neutral float-right" title="17. アクセラレーターとヘテロジニアス構成" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

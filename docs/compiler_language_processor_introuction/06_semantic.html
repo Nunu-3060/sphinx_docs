@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 6 章 意味解析 &mdash; コンパイラ・言語処理系入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=01529632" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 7 章 インタプリタ" href="07_interpreter.html" />
+    <link rel="prev" title="第 5 章 抽象構文木と Tiny の構文解析器" href="05_ast.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンパイラ・言語処理系入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_overview.html">第 1 章 言語処理系の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_language.html">第 2 章 題材言語 Tiny の定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_lexer.html">第 3 章 字句解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_parsing.html">第 4 章 構文解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_ast.html">第 5 章 抽象構文木と Tiny の構文解析器</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 6 章 意味解析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">意味解析の役割</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">名前解決とスコープ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">型検査</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">期待される型を使う検査</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#return">return の検査</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">エラーメッセージ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#python-symtable">Python の symtable モジュール</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="07_interpreter.html">第 7 章 インタプリタ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_ir.html">第 8 章 中間表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_vm.html">第 10 章 コード生成と仮想マシン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_runtime.html">第 11 章 実行時環境とネイティブコード生成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_advanced.html">第 12 章 発展的な話題</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_examples.html">付録 A サンプルコード</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_glossary.html">付録 B 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_references.html">付録 C 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンパイラ・言語処理系入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 6 章 意味解析</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 6 章 意味解析<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>構文解析が成功しても、プログラムが正しいとは限りません。<code class="docutils literal notranslate"><span class="pre">let</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">1</span> <span class="pre">+</span> <span class="pre">&quot;a&quot;;</span></code> は文法上は正しい文ですが、整数と文字列を足すことはできません。この章では、文法では表せない規則を検査する<a class="reference internal" href="appendix_b_glossary.html#term-3"><span class="xref std std-term">意味解析</span></a>を実装します。</p>
+<section id="id2">
+<h2>意味解析の役割<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>文脈自由文法は、「変数は使う前に宣言されていなければならない」「<code class="docutils literal notranslate"><span class="pre">+</span></code> の両辺は同じ型でなければならない」といった、離れた場所どうしの関係に関する規則を表せません。意味解析は、抽象構文木をたどりながら、このような規則を検査します。Tiny の意味解析器（<code class="docutils literal notranslate"><span class="pre">tiny_checker.py</span></code>）は次のことを行います。</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="appendix_b_glossary.html#term-55"><span class="xref std std-term">名前解決</span></a>：変数や関数の名前が、どの宣言を指しているかを決めます。宣言されていない名前を使っていればエラーにします。</p></li>
+<li><p><a class="reference internal" href="appendix_b_glossary.html#term-7"><span class="xref std std-term">型検査</span></a>：各式の型を求め、演算子・代入・関数呼び出しの型が合っているかを検査します。求めた型は、式のノードの <code class="docutils literal notranslate"><span class="pre">ty</span></code> 属性に書き込みます。</p></li>
+<li><p>その他の検査：<code class="docutils literal notranslate"><span class="pre">main</span></code> 関数の有無、値を返す関数がすべての経路で <code class="docutils literal notranslate"><span class="pre">return</span></code> しているか、などを検査します。</p></li>
+</ul>
+<p>意味解析を通過したプログラムは、実行時に型の誤りが起きないことが保証されます。そのため、後の段階（インタプリタやコード生成）は型の検査を省略できます。</p>
+</section>
+<section id="id3">
+<h2>名前解決とスコープ<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>変数の宣言が有効な範囲を<a class="reference internal" href="appendix_b_glossary.html#term-37"><span class="xref std std-term">スコープ</span></a>と呼びます。Tiny では、ブロック <code class="docutils literal notranslate"><span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code> ごとに新しいスコープができ、変数はその宣言からブロックの終わりまで有効です。</p>
+<div class="highlight-tiny notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">fn</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="linenos">2</span>    <span class="k">let</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="linenos">3</span>    <span class="p">{</span>
+<span class="linenos">4</span>        <span class="k">let</span> <span class="n">x</span> <span class="o">=</span> <span class="s">&quot;inner&quot;</span><span class="p">;</span>  <span class="c1">// 外側の x を隠す</span>
+<span class="linenos">5</span>        <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>         <span class="c1">// inner</span>
+<span class="linenos">6</span>    <span class="p">}</span>
+<span class="linenos">7</span>    <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>             <span class="c1">// 1</span>
+<span class="linenos">8</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>ソースコード上の位置だけでどの宣言を指すかが決まるこのようなスコープを、静的スコープ（レキシカルスコープ）と呼びます。</p>
+<p>名前と、それに関する情報（ここでは型）の対応表を<a class="reference internal" href="appendix_b_glossary.html#term-12"><span class="xref std std-term">記号表</span></a>と呼びます。Tiny の意味解析器では、ブロックごとに <code class="docutils literal notranslate"><span class="pre">Scope</span></code> オブジェクトを作り、外側のスコープへの参照 <code class="docutils literal notranslate"><span class="pre">parent</span></code> を持たせます。名前を探すときは、内側のスコープから外側に向かって順にたどります。</p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">tiny_checker.py（記号表）</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">24</span><span class="k">class</span><span class="w"> </span><span class="nc">Scope</span><span class="p">:</span>
+<span class="linenos">25</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;記号表。ブロックごとに 1 つ作り、外側のスコープへの参照を持つ。&quot;&quot;&quot;</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">Scope</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">28</span>        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+<span class="linenos">29</span>        <span class="bp">self</span><span class="o">.</span><span class="n">symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Type</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span>    <span class="k">def</span><span class="w"> </span><span class="nf">declare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ty</span><span class="p">:</span> <span class="n">Type</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">32</span>        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbols</span><span class="p">:</span>
+<span class="linenos">33</span>            <span class="k">raise</span> <span class="n">TypeCheckError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;変数 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> はこのスコープで宣言済みです&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+<span class="linenos">34</span>        <span class="bp">self</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ty</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span>    <span class="k">def</span><span class="w"> </span><span class="nf">lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">37</span>        <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="bp">self</span>
+<span class="linenos">38</span>        <span class="k">while</span> <span class="n">scope</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">39</span>            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">scope</span><span class="o">.</span><span class="n">symbols</span><span class="p">:</span>
+<span class="linenos">40</span>                <span class="k">return</span> <span class="n">scope</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="linenos">41</span>            <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">parent</span>
+<span class="linenos">42</span>        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</div>
+<p>同じスコープで同じ名前を 2 度宣言するとエラーになりますが、内側のスコープでは同じ名前を宣言できます。</p>
+</section>
+<section id="id4">
+<h2>型検査<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>型検査の規則は、<a class="reference internal" href="appendix_b_glossary.html#term-8"><span class="xref std std-term">型付け規則</span></a>という形で書くと簡潔に表せます。次の規則は、「環境 <span class="math notranslate nohighlight">\(\Gamma\)</span> のもとで <span class="math notranslate nohighlight">\(e_1\)</span> と <span class="math notranslate nohighlight">\(e_2\)</span> の型がどちらも <code class="docutils literal notranslate"><span class="pre">int</span></code> ならば、<span class="math notranslate nohighlight">\(e_1 + e_2\)</span> の型は <code class="docutils literal notranslate"><span class="pre">int</span></code> である」という意味です。横線の上が前提、下が結論です。</p>
+<div class="math notranslate nohighlight">
+\[\frac{\Gamma \vdash e_1 : \mathtt{int} \qquad \Gamma \vdash e_2 : \mathtt{int}}
+     {\Gamma \vdash e_1 + e_2 : \mathtt{int}}\]</div>
+<p>環境 <span class="math notranslate nohighlight">\(\Gamma\)</span> は記号表にあたり、変数の名前から型への対応です。Tiny の主な型付け規則を示します。</p>
+<div class="math notranslate nohighlight">
+\[\frac{\Gamma \vdash e_1 : \mathtt{str} \qquad \Gamma \vdash e_2 : \mathtt{str}}
+     {\Gamma \vdash e_1 + e_2 : \mathtt{str}}
+\qquad
+\frac{\Gamma \vdash e_1 : \mathtt{int} \qquad \Gamma \vdash e_2 : \mathtt{int}}
+     {\Gamma \vdash e_1 &lt; e_2 : \mathtt{bool}}\]</div>
+<div class="math notranslate nohighlight">
+\[\frac{\Gamma \vdash e_1 : T \qquad \Gamma \vdash e_2 : T}
+     {\Gamma \vdash e_1 == e_2 : \mathtt{bool}}
+\qquad
+\frac{\Gamma \vdash a : [T] \qquad \Gamma \vdash i : \mathtt{int}}
+     {\Gamma \vdash a[i] : T}
+\qquad
+\frac{\Gamma \vdash s : \mathtt{str} \qquad \Gamma \vdash i : \mathtt{int}}
+     {\Gamma \vdash s[i] : \mathtt{str}}
+\qquad
+\frac{\Gamma \vdash s : \mathtt{str} \qquad \Gamma \vdash i : \mathtt{int}}
+     {\Gamma \vdash s[i] : \mathtt{str}}
+\qquad
+\frac{x : T \in \Gamma}{\Gamma \vdash x : T}\]</div>
+<p>意味解析器は、これらの規則を式の構造に沿って再帰的に適用します。式の種類ごとの処理は <code class="docutils literal notranslate"><span class="pre">infer</span></code> メソッドにまとめています。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">tiny_checker.py（式の型を求める）</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">162</span>    <span class="k">def</span><span class="w"> </span><span class="nf">infer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="n">Type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">:</span>
+<span class="linenos">163</span>        <span class="k">match</span> <span class="n">expr</span><span class="p">:</span>
+<span class="linenos">164</span>            <span class="k">case</span> <span class="n">IntLit</span><span class="p">():</span>
+<span class="linenos">165</span>                <span class="k">return</span> <span class="n">INT</span>
+<span class="linenos">166</span>            <span class="k">case</span> <span class="n">BoolLit</span><span class="p">():</span>
+<span class="linenos">167</span>                <span class="k">return</span> <span class="n">BOOL</span>
+<span class="linenos">168</span>            <span class="k">case</span> <span class="n">StrLit</span><span class="p">():</span>
+<span class="linenos">169</span>                <span class="k">return</span> <span class="n">STR</span>
+<span class="linenos">170</span>            <span class="k">case</span> <span class="n">Name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="linenos">171</span>                <span class="n">ty</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<span class="linenos">172</span>                <span class="k">if</span> <span class="n">ty</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">173</span>                    <span class="k">raise</span> <span class="n">TypeCheckError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;変数 </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> は宣言されていません&quot;</span><span class="p">,</span>
+<span class="linenos">174</span>                                         <span class="n">expr</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">175</span>                <span class="k">return</span> <span class="n">ty</span>
+<span class="linenos">176</span>            <span class="k">case</span> <span class="n">ArrayLit</span><span class="p">(</span><span class="n">elements</span><span class="p">):</span>
+<span class="linenos">177</span>                <span class="n">hint</span> <span class="o">=</span> <span class="n">expected</span><span class="o">.</span><span class="n">element</span> \
+<span class="linenos">178</span>                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">ArrayType</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<span class="linenos">179</span>                <span class="n">first</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scope</span><span class="p">,</span> <span class="n">hint</span><span class="p">)</span>
+<span class="linenos">180</span>                <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+<span class="linenos">181</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">first</span><span class="p">)</span>
+<span class="linenos">182</span>                <span class="k">return</span> <span class="n">ArrayType</span><span class="p">(</span><span class="n">first</span><span class="p">)</span>
+<span class="linenos">183</span>            <span class="k">case</span> <span class="n">Index</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="linenos">184</span>                <span class="n">target_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span>
+<span class="linenos">185</span>                <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">INT</span><span class="p">)</span>
+<span class="linenos">186</span>                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_type</span><span class="p">,</span> <span class="n">ArrayType</span><span class="p">):</span>
+<span class="linenos">187</span>                    <span class="k">return</span> <span class="n">target_type</span><span class="o">.</span><span class="n">element</span>
+<span class="linenos">188</span>                <span class="k">if</span> <span class="n">target_type</span> <span class="o">==</span> <span class="n">STR</span><span class="p">:</span>
+<span class="linenos">189</span>                    <span class="k">return</span> <span class="n">STR</span>
+<span class="linenos">190</span>                <span class="k">raise</span> <span class="n">TypeCheckError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;型 </span><span class="si">{</span><span class="n">target_type</span><span class="si">}</span><span class="s2"> の値は添字で参照できません&quot;</span><span class="p">,</span>
+<span class="linenos">191</span>                                     <span class="n">expr</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">192</span>            <span class="k">case</span> <span class="n">Unary</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">operand</span><span class="p">):</span>
+<span class="linenos">193</span>                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">operand</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span>
+<span class="linenos">194</span>                                       <span class="n">INT</span> <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span> <span class="k">else</span> <span class="n">BOOL</span><span class="p">)</span>
+<span class="linenos">195</span>            <span class="k">case</span> <span class="n">Binary</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+<span class="linenos">196</span>                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_binary</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span>
+<span class="linenos">197</span>            <span class="k">case</span> <span class="n">Call</span><span class="p">():</span>
+<span class="linenos">198</span>                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span>
+<span class="linenos">199</span>        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>二項演算子の規則は <code class="docutils literal notranslate"><span class="pre">check_binary</span></code> で検査します。<code class="docutils literal notranslate"><span class="pre">+</span></code> は左辺の型によって、整数の加算と文字列の連結のどちらかに決まります。</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">tiny_checker.py（二項演算子の型検査）</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">201</span>    <span class="k">def</span><span class="w"> </span><span class="nf">check_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span>
+<span class="linenos">202</span>                     <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">:</span>
+<span class="linenos">203</span>        <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">LOGICAL_OPS</span><span class="p">:</span>
+<span class="linenos">204</span>            <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">BOOL</span><span class="p">)</span>
+<span class="linenos">205</span>            <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">BOOL</span><span class="p">)</span>
+<span class="linenos">206</span>            <span class="k">return</span> <span class="n">BOOL</span>
+<span class="linenos">207</span>        <span class="n">left_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span>
+<span class="linenos">208</span>        <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">EQUALITY_OPS</span><span class="p">:</span>
+<span class="linenos">209</span>            <span class="k">if</span> <span class="n">left_type</span> <span class="o">==</span> <span class="n">VOID</span><span class="p">:</span>
+<span class="linenos">210</span>                <span class="k">raise</span> <span class="n">TypeCheckError</span><span class="p">(</span><span class="s2">&quot;値を持たない式は比較できません&quot;</span><span class="p">,</span>
+<span class="linenos">211</span>                                     <span class="n">left</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">212</span>            <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">left_type</span><span class="p">)</span>
+<span class="linenos">213</span>            <span class="k">return</span> <span class="n">BOOL</span>
+<span class="linenos">214</span>        <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;+&quot;</span> <span class="ow">and</span> <span class="n">left_type</span> <span class="o">==</span> <span class="n">STR</span><span class="p">:</span>
+<span class="linenos">215</span>            <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">STR</span><span class="p">)</span>
+<span class="linenos">216</span>            <span class="k">return</span> <span class="n">STR</span>
+<span class="linenos">217</span>        <span class="k">if</span> <span class="n">left_type</span> <span class="o">!=</span> <span class="n">INT</span><span class="p">:</span>
+<span class="linenos">218</span>            <span class="k">raise</span> <span class="n">TypeCheckError</span><span class="p">(</span>
+<span class="linenos">219</span>                <span class="sa">f</span><span class="s2">&quot;演算子 </span><span class="si">{</span><span class="n">op</span><span class="si">}</span><span class="s2"> は型 </span><span class="si">{</span><span class="n">left_type</span><span class="si">}</span><span class="s2"> に使えません&quot;</span><span class="p">,</span> <span class="n">left</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">220</span>        <span class="bp">self</span><span class="o">.</span><span class="n">check_expr</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">INT</span><span class="p">)</span>
+<span class="linenos">221</span>        <span class="k">return</span> <span class="n">BOOL</span> <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">COMPARISON_OPS</span> <span class="k">else</span> <span class="n">INT</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id5">
+<h2>期待される型を使う検査<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>型は通常、式の内側から外側に向かって決まります（<code class="docutils literal notranslate"><span class="pre">1</span></code> が <code class="docutils literal notranslate"><span class="pre">int</span></code> なので <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2</span></code> も <code class="docutils literal notranslate"><span class="pre">int</span></code>）。しかし、空の配列リテラル <code class="docutils literal notranslate"><span class="pre">[]</span></code> は要素がないため、内側から型を決められません。そこで Tiny の意味解析器では、式を検査するときに「その位置で期待される型」を外側から渡せるようにしています。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">tiny_checker.py（期待される型を使う検査）</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">141</span>    <span class="k">def</span><span class="w"> </span><span class="nf">check_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Expr</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">,</span>
+<span class="linenos">142</span>                   <span class="n">expected</span><span class="p">:</span> <span class="n">Type</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">:</span>
+<span class="linenos">143</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;式の型を求めて expr.ty に記録する。</span>
+<span class="linenos">144</span>
+<span class="linenos">145</span><span class="sd">        expected が与えられたら、式の型がそれと一致することを確かめる。</span>
+<span class="linenos">146</span><span class="sd">        空の配列リテラル [] の要素型は expected から決める。</span>
+<span class="linenos">147</span><span class="sd">        &quot;&quot;&quot;</span>
+<span class="linenos">148</span>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ArrayLit</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">expr</span><span class="o">.</span><span class="n">elements</span><span class="p">:</span>
+<span class="linenos">149</span>            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">ArrayType</span><span class="p">):</span>
+<span class="linenos">150</span>                <span class="k">raise</span> <span class="n">TypeCheckError</span><span class="p">(</span><span class="s2">&quot;空の配列の型を決められません&quot;</span><span class="p">,</span>
+<span class="linenos">151</span>                                     <span class="n">expr</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">152</span>            <span class="n">ty</span><span class="p">:</span> <span class="n">Type</span> <span class="o">=</span> <span class="n">expected</span>
+<span class="linenos">153</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos">154</span>            <span class="n">ty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+<span class="linenos">155</span>        <span class="k">if</span> <span class="n">expected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ty</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+<span class="linenos">156</span>            <span class="k">raise</span> <span class="n">TypeCheckError</span><span class="p">(</span>
+<span class="linenos">157</span>                <span class="sa">f</span><span class="s2">&quot;型 </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2"> が必要ですが、型 </span><span class="si">{</span><span class="n">ty</span><span class="si">}</span><span class="s2"> の式があります&quot;</span><span class="p">,</span>
+<span class="linenos">158</span>                <span class="n">expr</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">159</span>        <span class="n">expr</span><span class="o">.</span><span class="n">ty</span> <span class="o">=</span> <span class="n">ty</span>
+<span class="linenos">160</span>        <span class="k">return</span> <span class="n">ty</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">let</span> <span class="pre">a:</span> <span class="pre">[int]</span> <span class="pre">=</span> <span class="pre">[];</span></code> では型注釈の <code class="docutils literal notranslate"><span class="pre">[int]</span></code> が、<code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">[];</span></code> では関数の戻り値の型が、<code class="docutils literal notranslate"><span class="pre">f([])</span></code> では引数の型が、期待される型として渡されます。このように、型を内側から求める処理と、外側から与える処理を組み合わせる方法を双方向の型検査と呼びます。</p>
+</section>
+<section id="return">
+<h2>return の検査<a class="headerlink" href="#return" title="Link to this heading"></a></h2>
+<p>値を返す関数で <code class="docutils literal notranslate"><span class="pre">return</span></code> を書き忘れると、関数の末尾に達したときに返す値がありません。意味解析器は、関数の本体が必ず <code class="docutils literal notranslate"><span class="pre">return</span></code> で終わるかを判定します。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">tiny_checker.py（必ず return するかの判定）</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">51</span><span class="k">def</span><span class="w"> </span><span class="nf">always_returns</span><span class="p">(</span><span class="n">stmt</span><span class="p">:</span> <span class="n">Stmt</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos">52</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;文の実行が必ず return で終わるかを（保守的に）判定する。&quot;&quot;&quot;</span>
+<span class="linenos">53</span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">Return</span><span class="p">):</span>
+<span class="linenos">54</span>        <span class="k">return</span> <span class="kc">True</span>
+<span class="linenos">55</span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">Block</span><span class="p">):</span>
+<span class="linenos">56</span>        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">always_returns</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stmt</span><span class="o">.</span><span class="n">stmts</span><span class="p">)</span>
+<span class="linenos">57</span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">If</span><span class="p">):</span>
+<span class="linenos">58</span>        <span class="k">return</span> <span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">else_body</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">always_returns</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">then_body</span><span class="p">)</span>
+<span class="linenos">59</span>                <span class="ow">and</span> <span class="n">always_returns</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">else_body</span><span class="p">))</span>
+<span class="linenos">60</span>    <span class="k">return</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</div>
+<p>この判定は保守的です。<code class="docutils literal notranslate"><span class="pre">while</span> <span class="pre">(true)</span> <span class="pre">{</span> <span class="pre">return</span> <span class="pre">1;</span> <span class="pre">}</span></code> のように実際には必ず <code class="docutils literal notranslate"><span class="pre">return</span></code> する場合でも、<code class="docutils literal notranslate"><span class="pre">while</span></code> 文は「必ず return する」とはみなしません。プログラムが実際にどう動くかを完全に判定することは一般には不可能なので、意味解析では「誤りを見逃さない代わりに、正しいプログラムを拒否することがある」という保守的な近似を使うのがふつうです。</p>
+</section>
+<section id="id6">
+<h2>エラーメッセージ<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>意味解析器が報告するエラーの例を示します。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">programs/type_error.tiny</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-tiny notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1">// 意味解析でエラーになるプログラム</span>
+<span class="linenos">2</span><span class="k">fn</span> <span class="n">twice</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="kt">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">int</span> <span class="p">{</span>
+<span class="linenos">3</span>    <span class="k">return</span> <span class="n">n</span> <span class="o">*</span> <span class="mi">2</span><span class="p">;</span>
+<span class="linenos">4</span><span class="p">}</span>
+<span class="linenos">5</span>
+<span class="linenos">6</span><span class="k">fn</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="linenos">7</span>    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="s">&quot;abc&quot;</span><span class="p">;</span>
+<span class="linenos">8</span>    <span class="nb">print</span><span class="p">(</span><span class="n">twice</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
+<span class="linenos">9</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>tiny.py<span class="w"> </span>check<span class="w"> </span>programs/type_error.tiny
+<span class="linenos">2</span><span class="go">programs/type_error.tiny:8: 型 int が必要ですが、型 str の式があります</span>
+</pre></div>
+</div>
+<p>ほかにも、次のような誤りを検出します（行番号は省略しています）。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 45.0%" />
+<col style="width: 55.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>プログラム</p></th>
+<th class="head"><p>エラーメッセージ</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">let</span> <span class="pre">a</span> <span class="pre">=</span> <span class="pre">[];</span></code></p></td>
+<td><p>空の配列の型を決められません</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">print(y);</span></code></p></td>
+<td><p>変数 y は宣言されていません</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">let</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">1;</span> <span class="pre">let</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">2;</span></code></p></td>
+<td><p>変数 x はこのスコープで宣言済みです</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">let</span> <span class="pre">s</span> <span class="pre">=</span> <span class="pre">&quot;abc&quot;;</span> <span class="pre">s[0]</span> <span class="pre">=</span> <span class="pre">&quot;x&quot;;</span></code></p></td>
+<td><p>文字列の要素には代入できません</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">(1)</span> <span class="pre">{</span> <span class="pre">}</span></code></p></td>
+<td><p>型 bool が必要ですが、型 int の式があります</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">else</span></code> のない <code class="docutils literal notranslate"><span class="pre">if</span></code> の中でだけ <code class="docutils literal notranslate"><span class="pre">return</span></code> する関数</p></td>
+<td><p>関数 f の末尾に return がありません</p></td>
+</tr>
+</tbody>
+</table>
+<p>Tiny の意味解析器は最初のエラーで処理を止めます。構文解析器と同じように複数のエラーを報告することもできますが、1 つの誤りから多数のエラーが連鎖的に発生しやすいので注意が必要です。たとえば宣言を誤った変数は、使うたびに「宣言されていません」というエラーになります。</p>
+</section>
+<section id="python-symtable">
+<h2>Python の symtable モジュール<a class="headerlink" href="#python-symtable" title="Link to this heading"></a></h2>
+<p>CPython も、バイトコードを生成する前に記号表を作り、各変数の種類を決めます。Python では、関数内で代入される変数は局所変数、代入されずに参照されるだけの変数は大域変数（または外側の関数の変数）になります。<code class="docutils literal notranslate"><span class="pre">symtable</span></code> モジュールを使うと、その結果を確認できます。</p>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">symtable モジュールの使用例</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">symtable</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="linenos"> 4</span><span class="s2">def f(a):</span>
+<span class="linenos"> 5</span><span class="s2">    b = a + g</span>
+<span class="linenos"> 6</span><span class="s2">    def h():</span>
+<span class="linenos"> 7</span><span class="s2">        return b</span>
+<span class="linenos"> 8</span><span class="s2">    return h</span>
+<span class="linenos"> 9</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="linenos">10</span><span class="n">table</span> <span class="o">=</span> <span class="n">symtable</span><span class="o">.</span><span class="n">symtable</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;&lt;example&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;exec&quot;</span><span class="p">)</span>
+<span class="linenos">11</span><span class="n">f</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">get_children</span><span class="p">()</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;f&quot;</span><span class="p">)</span>
+<span class="linenos">12</span><span class="n">h</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">get_children</span><span class="p">()</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;h&quot;</span><span class="p">)</span>
+<span class="linenos">13</span><span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+<span class="linenos">14</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;関数 </span><span class="si">{</span><span class="n">scope</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">15</span>    <span class="k">for</span> <span class="n">sym</span> <span class="ow">in</span> <span class="n">scope</span><span class="o">.</span><span class="n">get_symbols</span><span class="p">():</span>
+<span class="linenos">16</span>        <span class="n">kinds</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">ok</span> <span class="ow">in</span> <span class="p">[</span>
+<span class="linenos">17</span>            <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="n">sym</span><span class="o">.</span><span class="n">is_parameter</span><span class="p">()),</span> <span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="n">sym</span><span class="o">.</span><span class="n">is_local</span><span class="p">()),</span>
+<span class="linenos">18</span>            <span class="p">(</span><span class="s2">&quot;global&quot;</span><span class="p">,</span> <span class="n">sym</span><span class="o">.</span><span class="n">is_global</span><span class="p">()),</span> <span class="p">(</span><span class="s2">&quot;free&quot;</span><span class="p">,</span> <span class="n">sym</span><span class="o">.</span><span class="n">is_free</span><span class="p">())]</span> <span class="k">if</span> <span class="n">ok</span><span class="p">]</span>
+<span class="linenos">19</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">sym</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kinds</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>関数 f
+<span class="linenos">2</span>  a: parameter, local
+<span class="linenos">3</span>  b: local
+<span class="linenos">4</span>  g: global
+<span class="linenos">5</span>  h: local
+<span class="linenos">6</span>関数 h
+<span class="linenos">7</span>  b: free
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">h</span></code> の中の <code class="docutils literal notranslate"><span class="pre">b</span></code> は <code class="docutils literal notranslate"><span class="pre">free</span></code>（自由変数）になっています。自由変数は、外側の関数 <code class="docutils literal notranslate"><span class="pre">f</span></code> の局所変数を参照する変数で、クロージャを作るために使われます。Tiny にはクロージャがないので、関数の中から参照できるのは引数と局所変数だけです。</p>
+</section>
+<section id="id7">
+<h2>まとめ<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>意味解析は、名前解決や型検査など、文法では表せない規則を検査します。</p></li>
+<li><p>記号表はスコープごとに作り、内側から外側に向かって名前を探します。</p></li>
+<li><p>型検査の規則は型付け規則として書け、式の構造に沿って再帰的に適用します。</p></li>
+<li><p>期待される型を外側から渡すと、空の配列のように内側から型を決められない式も扱えます。</p></li>
+<li><p>意味解析の判定は保守的な近似であり、正しいプログラムを拒否する場合があります。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="05_ast.html" class="btn btn-neutral float-left" title="第 5 章 抽象構文木と Tiny の構文解析器" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="07_interpreter.html" class="btn btn-neutral float-right" title="第 7 章 インタプリタ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

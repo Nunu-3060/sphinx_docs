@@ -45,4 +45,5 @@ linkcheck_retries = 2
 linkcheck_ignore = [
     r'https://www\.acm\.org/code-of-ethics',
     r'https://laws\.e-gov\.go\.jp/',
+    r'https://publications\.parliament\.uk/',
 ]

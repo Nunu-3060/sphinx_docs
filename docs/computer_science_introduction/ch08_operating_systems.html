@@ -1,0 +1,769 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8. オペレーティングシステム &mdash; 計算機科学入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="9. 並行処理と入出力" href="ch09_concurrency_and_io.html" />
+    <link rel="prev" title="7. プログラミング言語処理系" href="ch07_programming_languages.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            計算機科学入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">はじめに</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">はじめに</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="ch01_data_representation.html">1. 情報の表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02_logic_circuits.html">2. 論理回路</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03_computer_architecture.html">3. コンピュータの構成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04_data_structures.html">4. データ構造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05_algorithms.html">5. アルゴリズムと計算量</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06_theory_of_computation.html">6. 計算理論</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07_programming_languages.html">7. プログラミング言語処理系</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">8. オペレーティングシステム</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#os">8.1. OS の役割</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">8.1.1. 抽象化と資源管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">8.1.2. カーネルとユーザモード</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">8.1.3. システムコール</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">8.1.4. 割り込み</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">8.2. プロセスとスレッド</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">8.2.1. プロセスとアドレス空間</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">8.2.2. 状態遷移</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">8.2.3. スレッド</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">8.2.4. コンテキストスイッチ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#unix-fork-exec">8.2.5. Unix のプロセス生成: fork と exec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">8.2.6. シグナル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">8.3. 仮想メモリ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id16">8.3.1. アドレス空間とページング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tlb">8.3.2. ページテーブルと TLB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">8.3.3. ページフォールトとスワップ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">8.3.4. ページ置換アルゴリズム</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id21">8.4. ファイルシステム</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id22">8.4.1. ファイルとディレクトリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#i">8.4.2. i ノードの考え方</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ch08-file-descriptor">8.4.3. ファイル記述子と「すべてはファイル」</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fsync">8.4.4. バッファリングと fsync</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id25">8.4.5. ジャーナリング</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id27">8.5. 仮想化とコンテナ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id28">8.5.1. 仮想化の目的とハイパーバイザ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id30">8.5.2. 仮想化の条件とハードウェア支援</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id32">8.5.3. コンテナ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vm">8.5.4. VM とコンテナの比較</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id33">8.6. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ch09_concurrency_and_io.html">9. 並行処理と入出力</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10_networks.html">10. コンピュータネットワーク</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11_databases.html">11. データベース</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12_distributed_systems.html">12. 分散システム</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13_security.html">13. 情報セキュリティと暗号</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14_application_security.html">14. 認証とアプリケーションのセキュリティ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">おわりに</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">おわりに</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">サンプルコード一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">計算機科学入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">8. </span>オペレーティングシステム</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="ch07_programming_languages.html" class="btn btn-neutral float-left" title="7. プログラミング言語処理系" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch09_concurrency_and_io.html" class="btn btn-neutral float-right" title="9. 並行処理と入出力" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">8. </span>オペレーティングシステム<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>プログラムを実行するとき、私たちは CPU が他のプログラムと共有されていることも、メモリの物理的な位置も、ファイルがディスクのどこに置かれているかも意識しない。こうした詳細を引き受けているのが<a class="reference internal" href="glossary.html#term-19"><span class="xref std std-term">オペレーティングシステム</span></a>（OS: Operating System）である。この章では、OS の役割とカーネルの仕組み、プロセスとスレッド（Unix の fork と exec、シグナルを含む）、CPU スケジューリング、仮想メモリとページ置換、ファイルシステム（ファイル記述子とジャーナリングを含む）を順に学び、最後に 1 台の計算機の上で複数の OS や実行環境を動かす仮想化とコンテナを紹介する。複数のスレッドや多数の入出力を同時に扱うプログラミングの問題（並行処理と同期、入出力のモデル）は、次の「<a class="reference internal" href="ch09_concurrency_and_io.html"><span class="doc">並行処理と入出力</span></a>」で扱う。いずれも、プログラムの性能や不具合の原因を考えるときに欠かせない知識である。全体の参考書としては <a class="reference internal" href="references.html#ostep" id="id2"><span>[OSTEP]</span></a> と <a class="reference internal" href="references.html#mos" id="id3"><span>[MOS]</span></a> を挙げておく。</p>
+<section id="os">
+<h2><span class="section-number">8.1. </span>OS の役割<a class="headerlink" href="#os" title="Link to this heading"></a></h2>
+<section id="id4">
+<h3><span class="section-number">8.1.1. </span>抽象化と資源管理<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>OS の役割は大きく 2 つに分けられる。1 つは<strong>抽象化</strong>である。ハードウェアの細部を隠し、扱いやすい概念を提供する。CPU は「プロセス」、メモリは「アドレス空間」、ディスクは「ファイル」、ネットワークは「ソケット」という抽象として見える。もう 1 つは<strong>資源管理</strong>である。複数のプログラムが同時に動くとき、CPU 時間、メモリ、ディスク、ネットワークといった資源を公平かつ効率よく割り当て、あるプログラムが他のプログラムの資源を勝手に使えないように保護する。</p>
+<p>次の表に、OS が提供する主な抽象と、その背後にあるハードウェア資源の対応を示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 25.0%" />
+<col style="width: 55.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ハードウェア資源</p></th>
+<th class="head"><p>OS が提供する抽象</p></th>
+<th class="head"><p>抽象によって得られるもの</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CPU</p></td>
+<td><p>プロセス、スレッド</p></td>
+<td><p>CPU が 1 つでも、多数のプログラムがそれぞれ CPU を占有しているかのように動ける</p></td>
+</tr>
+<tr class="row-odd"><td><p>主記憶（メモリ）</p></td>
+<td><p>仮想アドレス空間</p></td>
+<td><p>各プロセスが 0 番地から始まる専用の広いメモリを持っているかのように動ける</p></td>
+</tr>
+<tr class="row-even"><td><p>補助記憶</p></td>
+<td><p>ファイル、ディレクトリ</p></td>
+<td><p>ブロック番号ではなく名前でデータを読み書きできる</p></td>
+</tr>
+<tr class="row-odd"><td><p>ネットワーク機器</p></td>
+<td><p>ソケット</p></td>
+<td><p>パケットの送受信を意識せず、バイト列の送受信として通信できる</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id5">
+<h3><span class="section-number">8.1.2. </span>カーネルとユーザモード<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>OS の中核で、資源管理と保護を担う部分を<a class="reference internal" href="glossary.html#term-28"><span class="xref std std-term">カーネル</span></a>と呼ぶ。シェルやデスクトップ環境、各種のユーティリティも OS の一部として配布されるが、それらは通常のプログラムと同じ立場で動き、カーネルの機能を利用する側である。</p>
+<p>カーネルが他のプログラムを保護できるのは、CPU がハードウェアとして 2 つ以上の動作モードを持つからである。<strong>カーネルモード</strong>（特権モード）では、すべての命令を実行でき、すべてのメモリと入出力装置にアクセスできる。<strong>ユーザモード</strong>では、入出力装置の直接操作やメモリ保護の設定変更といった特権命令が禁止され、許可されたメモリにしかアクセスできない。アプリケーションはユーザモードで動くため、不正な操作をしようとすると CPU が例外を発生させ、制御がカーネルに移る。カーネルはそのプロセスを強制終了させる。Linux でよく見る <code class="docutils literal notranslate"><span class="pre">Segmentation</span> <span class="pre">fault</span></code> は、許可されていないアドレスにアクセスしたプロセスが、この仕組みによって終了させられたことを表す。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">8.1.3. </span>システムコール<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>ユーザモードのプログラムがファイルを開く、メモリを確保する、データを送信するといった操作をするには、カーネルに依頼する必要がある。この依頼の窓口が<a class="reference internal" href="glossary.html#term-87"><span class="xref std std-term">システムコール</span></a>である。プログラムは引数をレジスタに置き、システムコール専用の命令（x86-64 の <code class="docutils literal notranslate"><span class="pre">syscall</span></code>、RISC-V の <code class="docutils literal notranslate"><span class="pre">ecall</span></code> など）を実行する。CPU はカーネルモードに切り替わってカーネル内の決められた入口に飛び、カーネルは引数を検査したうえで処理を行い、結果を返してユーザモードに戻る。</p>
+<p>Python の <code class="docutils literal notranslate"><span class="pre">open()</span></code> や <code class="docutils literal notranslate"><span class="pre">print()</span></code> も、内部では最終的に <code class="docutils literal notranslate"><span class="pre">open</span></code> や <code class="docutils literal notranslate"><span class="pre">write</span></code> といったシステムコールを呼んでいる。モードの切り替えには通常の関数呼び出しより大きなコストがかかるため、小さな書き込みを何度もシステムコールにすると遅くなる。後述するバッファリングは、このコストを減らすための工夫でもある。Linux では <code class="docutils literal notranslate"><span class="pre">strace</span></code> コマンドで、プログラムが発行したシステムコールの一覧を観察できる。</p>
+</section>
+<section id="id7">
+<h3><span class="section-number">8.1.4. </span>割り込み<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-251"><span class="xref std std-term">割り込み</span></a>は、実行中の命令の流れを中断して、カーネルの処理に制御を移す仕組みである。キーボードの入力、ディスクの読み込み完了、ネットワークカードへのパケット到着のように、外部の装置が CPU に知らせる<strong>ハードウェア割り込み</strong>と、ゼロ除算や不正なメモリアクセスのように、実行中の命令が原因で起きる<strong>例外</strong>がある（ここでいう例外は CPU の仕組みであり、第 7 章で扱うプログラミング言語の例外処理とは別の概念である）。システムコールの命令も、意図的に例外を起こしてカーネルに入る仕組みと見なせる。</p>
+<p>特に重要なのが<strong>タイマ割り込み</strong>である。CPU に付属するタイマは一定間隔で割り込みを発生させ、そのたびにカーネルが制御を取り戻す。これにより、無限ループに陥ったプログラムがあっても、カーネルは CPU を取り上げて別のプログラムに割り当てられる。もし割り込みが無ければ、カーネルはプログラムが自発的にシステムコールを呼ぶまで何もできない。</p>
+</section>
+</section>
+<section id="id8">
+<h2><span class="section-number">8.2. </span>プロセスとスレッド<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<section id="id9">
+<h3><span class="section-number">8.2.1. </span>プロセスとアドレス空間<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-198"><span class="xref std std-term">プロセス</span></a>は実行中のプログラムである。ディスク上のプログラムファイルは命令とデータの並びにすぎないが、OS がそれをメモリに読み込み、レジスタの値、プログラムカウンタ、開いているファイルの一覧などの状態を与えて実行を始めると、1 つのプロセスになる。同じプログラムを 2 回起動すれば、2 つの独立したプロセスができる。</p>
+<p>各プロセスは自分専用の仮想アドレス空間を持つ。あるプロセスが書き換えられるのは自分のアドレス空間だけであり、他のプロセスのメモリを直接読み書きすることはできない。これを<strong>プロセス間の分離</strong>と呼ぶ。分離のおかげで、1 つのプロセスがバグで異常終了しても他のプロセスは影響を受けない。プロセス同士でデータをやり取りするには、パイプ、ソケット、共有メモリといった OS が提供するプロセス間通信（IPC: Inter-Process Communication）の機能を明示的に使う。</p>
+</section>
+<section id="id10">
+<h3><span class="section-number">8.2.2. </span>状態遷移<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>プロセスは生成されてから終了するまでに、いくつかの状態を行き来する。代表的な状態を次の表に示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>状態</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>新規（new）</p></td>
+<td><p>生成中で、まだ実行の候補になっていない</p></td>
+</tr>
+<tr class="row-odd"><td><p>実行可能（ready）</p></td>
+<td><p>CPU が割り当てられれば、すぐに実行できる</p></td>
+</tr>
+<tr class="row-even"><td><p>実行中（running）</p></td>
+<td><p>CPU 上で命令を実行している</p></td>
+</tr>
+<tr class="row-odd"><td><p>待ち（blocked）</p></td>
+<td><p>入出力の完了やロックの解放など、何らかの事象を待っており、CPU を割り当てても進めない</p></td>
+</tr>
+<tr class="row-even"><td><p>終了（terminated）</p></td>
+<td><p>実行を終え、親プロセスが終了状態を回収するのを待っている</p></td>
+</tr>
+</tbody>
+</table>
+<p>状態は次のように遷移する。新規のプロセスは準備が整うと実行可能になる。スケジューラが選ぶと実行中になる。実行中のプロセスは、タイマ割り込みによって割り当て時間を使い切ると実行可能に戻り、ファイルの読み込みのように完了を待つ処理を始めると待ちになる。待っていた事象が起きると、待ちから実行可能に移る。待ちから直接実行中に移ることはない点に注意してほしい。事象が起きても、CPU が割り当てられるまでは実行可能の列に並ぶ。</p>
+</section>
+<section id="id11">
+<h3><span class="section-number">8.2.3. </span>スレッド<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-106"><span class="xref std std-term">スレッド</span></a>はプロセスの中の実行の流れである。1 つのプロセスは複数のスレッドを持つことができ、それらはアドレス空間、開いているファイル、大域変数を共有する。一方、プログラムカウンタ、レジスタの値、スタックはスレッドごとに持つ。スレッド同士はメモリを共有しているので、データのやり取りは速く簡単だが、同じデータを同時に書き換えると、次章「<a class="reference internal" href="ch09_concurrency_and_io.html"><span class="doc">並行処理と入出力</span></a>」で扱う競合状態が起きる。プロセスとスレッドの違いを次の表にまとめる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>観点</p></th>
+<th class="head"><p>プロセス</p></th>
+<th class="head"><p>スレッド</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>メモリ</p></td>
+<td><p>互いに独立している</p></td>
+<td><p>同じプロセス内で共有する</p></td>
+</tr>
+<tr class="row-odd"><td><p>生成と切り替えのコスト</p></td>
+<td><p>大きい</p></td>
+<td><p>比較的小さい</p></td>
+</tr>
+<tr class="row-even"><td><p>データのやり取り</p></td>
+<td><p>IPC が必要</p></td>
+<td><p>共有メモリを直接読み書きできる</p></td>
+</tr>
+<tr class="row-odd"><td><p>障害の影響範囲</p></td>
+<td><p>そのプロセスに閉じる</p></td>
+<td><p>1 つのスレッドの異常がプロセス全体を止め得る</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id12">
+<h3><span class="section-number">8.2.4. </span>コンテキストスイッチ<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>CPU を別のプロセスやスレッドに切り替える処理を<a class="reference internal" href="glossary.html#term-75"><span class="xref std std-term">コンテキストスイッチ</span></a>と呼ぶ。カーネルは、実行中のものの状態（レジスタ、プログラムカウンタ、スタックポインタなど）をメモリに保存し、次に実行するものの状態を読み込んで再開する。別のプロセスに切り替える場合はアドレス空間も切り替わるため、後述する TLB の内容が使えなくなり、さらにキャッシュの内容も入れ替わっていく。そのため、コンテキストスイッチの本当のコストは、保存と復元の時間よりも、切り替え後しばらく続くキャッシュミスにあることが多い。キャッシュについては「<a class="reference internal" href="ch03_computer_architecture.html"><span class="doc">コンピュータの構成</span></a>」を参照してほしい。スレッドを必要以上に増やすと、計算よりも切り替えに時間を使うようになる。</p>
+</section>
+<section id="unix-fork-exec">
+<span id="ch08-fork-exec"></span><h3><span class="section-number">8.2.5. </span>Unix のプロセス生成: fork と exec<a class="headerlink" href="#unix-fork-exec" title="Link to this heading"></a></h3>
+<p>Unix 系の OS では、新しいプロセスは 2 つのシステムコールの組み合わせで作られる。<code class="docutils literal notranslate"><span class="pre">fork</span></code> は、呼び出したプロセス（親プロセス）とほぼ同じ複製（子プロセス）を作る。子プロセスは親のアドレス空間、開いているファイル、カレントディレクトリなどを引き継ぎ、<code class="docutils literal notranslate"><span class="pre">fork</span></code> の呼び出しから戻ったところで実行を続ける。両者を区別するのは戻り値で、親には子のプロセス ID が、子には 0 が返る。アドレス空間の複製は、実際にはすぐにはコピーせず、どちらかが書き込んだページだけをその時点でコピーする<a class="reference internal" href="glossary.html#term-72"><span class="xref std std-term">コピーオンライト</span></a>で行う。そのため、大きなプロセスでも <code class="docutils literal notranslate"><span class="pre">fork</span></code> 自体は速い。</p>
+<p><code class="docutils literal notranslate"><span class="pre">exec</span></code> 系のシステムコール（<code class="docutils literal notranslate"><span class="pre">execve</span></code> など）は、呼び出したプロセスのアドレス空間を捨て、指定したプログラムを読み込んで最初から実行させる（読み込みの手順は「<a class="reference internal" href="ch07_programming_languages.html#ch07-linker-loader"><span class="std std-ref">リンカとローダ</span></a>」を参照）。プロセス ID と開いているファイルはそのまま引き継がれる。シェルがコマンドを実行するときは、<code class="docutils literal notranslate"><span class="pre">fork</span></code> で子を作り、子の中で <code class="docutils literal notranslate"><span class="pre">exec</span></code> してコマンドに置き換え、親は <code class="docutils literal notranslate"><span class="pre">wait</span></code>（または <code class="docutils literal notranslate"><span class="pre">waitpid</span></code>）で子の終了を待つ。生成と置き換えが分かれていることには利点がある。<code class="docutils literal notranslate"><span class="pre">fork</span></code> と <code class="docutils literal notranslate"><span class="pre">exec</span></code> の間で、子は自分の標準出力を別のファイルにつなぎ替えるなどの準備ができる。<code class="docutils literal notranslate"><span class="pre">ls</span> <span class="pre">&gt;</span> <span class="pre">out.txt</span></code> のようなリダイレクトや、<code class="docutils literal notranslate"><span class="pre">ls</span> <span class="pre">|</span> <span class="pre">wc</span> <span class="pre">-l</span></code> のようなパイプは、この隙間で後述の<a class="reference internal" href="#ch08-file-descriptor"><span class="std std-ref">ファイル記述子</span></a>を操作して実現されている <a class="reference internal" href="references.html#kerrisk" id="id13"><span>[Kerrisk]</span></a>。</p>
+<p>終了した子プロセスは、親が <code class="docutils literal notranslate"><span class="pre">wait</span></code> で終了状態を回収するまで、状態遷移の表の「終了」の状態で残る。この状態のプロセスを<strong>ゾンビ</strong>と呼ぶ。親が回収を怠るとゾンビがたまり、プロセス表を圧迫する。親が先に終了した子は、Linux では通常 init（プロセス ID 1）などの別のプロセスに引き取られ、そこで回収される。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>Windows には <code class="docutils literal notranslate"><span class="pre">fork</span></code> に相当する機能が無く、<code class="docutils literal notranslate"><span class="pre">CreateProcess</span></code> が新しいプロセスの生成とプログラムの読み込みを 1 回で行う。Python の <code class="docutils literal notranslate"><span class="pre">os.fork()</span></code> は Unix 系でしか使えないので、移植性のあるプログラムでは <code class="docutils literal notranslate"><span class="pre">subprocess</span></code> モジュールを使う。<code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> も、Windows と macOS では新しいインタプリタを起動する <code class="docutils literal notranslate"><span class="pre">spawn</span></code> 方式が既定であり、Linux では Python 3.14 から <code class="docutils literal notranslate"><span class="pre">forkserver</span></code> 方式が既定になった（それまでは <code class="docutils literal notranslate"><span class="pre">fork</span></code>）。複数のスレッドを持つプロセスで <code class="docutils literal notranslate"><span class="pre">fork</span></code> すると、子には呼び出したスレッドだけが複製され、他のスレッドが持っていたロックが取得されたまま残ることがある。これが、<code class="docutils literal notranslate"><span class="pre">fork</span></code> が既定から外された理由の 1 つである。</p>
+</div>
+</section>
+<section id="id14">
+<h3><span class="section-number">8.2.6. </span>シグナル<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-85"><span class="xref std std-term">シグナル</span></a>は、カーネルがプロセスに非同期に事象を知らせる仕組みである。割り込みがハードウェアからカーネルへの通知だとすれば、シグナルはカーネルからプロセスへの通知にあたる。シグナルを受けたプロセスは、シグナルごとに決まった既定の動作（終了、停止、無視など）をするか、あらかじめ登録したハンドラ関数を実行する。代表的なシグナルを次の表に示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 18.0%" />
+<col style="width: 42.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>シグナル</p></th>
+<th class="head"><p>送られる場面</p></th>
+<th class="head"><p>既定の動作と注意</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SIGINT</span></code></p></td>
+<td><p>端末で Ctrl+C を押したとき</p></td>
+<td><p>終了。Python では <code class="docutils literal notranslate"><span class="pre">KeyboardInterrupt</span></code> 例外になる</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SIGTERM</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">kill</span></code> コマンドの既定。サービスの停止時</p></td>
+<td><p>終了。ハンドラで後始末をしてから終了するのが行儀よい</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SIGKILL</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">kill</span> <span class="pre">-9</span></code>、OOM killer</p></td>
+<td><p>強制終了。捕捉も無視もできない</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SIGSEGV</span></code></p></td>
+<td><p>許可されていないアドレスにアクセスしたとき</p></td>
+<td><p>終了。<code class="docutils literal notranslate"><span class="pre">Segmentation</span> <span class="pre">fault</span></code> の正体である</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SIGCHLD</span></code></p></td>
+<td><p>子プロセスが終了したとき</p></td>
+<td><p>無視。親が <code class="docutils literal notranslate"><span class="pre">wait</span></code> する契機に使う</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SIGPIPE</span></code></p></td>
+<td><p>読み手のいなくなったパイプやソケットに書き込んだとき</p></td>
+<td><p>終了。サーバでは無視する設定にすることが多い</p></td>
+</tr>
+</tbody>
+</table>
+<p>ハンドラは、プログラムのどの命令の途中でも割り込んで実行され得るので、ハンドラの中でロックを取ったり複雑な処理をしたりすると、デッドロックや状態の破壊を招く。ハンドラではフラグを立てるだけにして、本来の処理の流れの中でそのフラグを確かめるのが定石である。Python の <code class="docutils literal notranslate"><span class="pre">signal</span></code> モジュールのハンドラは、インタプリタがバイトコードの区切りでメインスレッドの中で実行するので、この制約はいくらか緩い。Windows のシグナルは C 言語の標準が定めるごく一部（<code class="docutils literal notranslate"><span class="pre">SIGINT</span></code>、<code class="docutils literal notranslate"><span class="pre">SIGTERM</span></code> など）しかなく、コンソールの Ctrl+C などは別の仕組みで通知される。
+CPU スケジューリング
+--------------------</p>
+<p>実行可能なプロセスが CPU の数より多いとき、次にどれを実行するかを決めるのが<a class="reference internal" href="glossary.html#term-98"><span class="xref std std-term">スケジューラ</span></a>である。スケジューラの評価にはいくつかの指標があるが、ここでは<strong>待ち時間</strong>、すなわちプロセスが到着してから終了するまでに、実行可能の列で待っていた時間の合計を用いる。プロセス <span class="math notranslate nohighlight">\(i\)</span> の到着時刻を <span class="math notranslate nohighlight">\(a_i\)</span>、実行に必要な CPU 時間（CPU バースト）を <span class="math notranslate nohighlight">\(b_i\)</span>、終了時刻を <span class="math notranslate nohighlight">\(f_i\)</span> とすると、待ち時間 <span class="math notranslate nohighlight">\(w_i\)</span> と平均待ち時間 <span class="math notranslate nohighlight">\(\bar{w}\)</span> は次の式で表される。</p>
+<div class="math notranslate nohighlight">
+\[w_i = f_i - a_i - b_i, \qquad \bar{w} = \frac{1}{n} \sum_{i=1}^{n} w_i\]</div>
+<p>代表的な 3 つの方式を次の表に示す。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>方式</p></th>
+<th class="head"><p>選び方</p></th>
+<th class="head"><p>特徴</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>FCFS（First-Come, First-Served）</p></td>
+<td><p>到着順に選び、終わるまで実行する</p></td>
+<td><p>単純で公平だが、長いプロセスの後ろに短いプロセスが並ぶと平均待ち時間が長くなる</p></td>
+</tr>
+<tr class="row-odd"><td><p>SJF（Shortest Job First）</p></td>
+<td><p>到着済みのうち CPU バーストが最短のものを選び、終わるまで実行する</p></td>
+<td><p>平均待ち時間が短いが、実行時間を事前に知る必要があり、長いプロセスが後回しにされ続けることがある</p></td>
+</tr>
+<tr class="row-even"><td><p>ラウンドロビン</p></td>
+<td><p>到着順の列から選び、一定時間（クォンタム）だけ実行して列の末尾に戻す</p></td>
+<td><p>応答が速く公平だが、切り替えが多く、平均待ち時間は長くなりやすい</p></td>
+</tr>
+</tbody>
+</table>
+<p>FCFS で長いプロセスの後ろに短いプロセスが並ぶ現象は<strong>コンボイ効果</strong>と呼ばれる。すべてのプロセスが同時に到着する場合、SJF は平均待ち時間を最小にすることが知られている。ただし、実際の OS はプロセスの実行時間を事前に知らないため、過去の実行時間から次の CPU バーストを推定するなどの工夫が必要になる。</p>
+<p><a class="reference internal" href="glossary.html#term-233"><span class="xref std std-term">ラウンドロビン</span></a>は、タイマ割り込みで実行中のプロセスから CPU を取り上げる<strong>プリエンプティブ</strong>な方式である。FCFS と SJF は、ここでは一度実行を始めたら終わるまで取り上げない非プリエンプティブな方式として扱う。対話的なプログラムでは、平均待ち時間よりも、入力してから最初に反応が返るまでの応答時間が重要であり、ラウンドロビンはこれを短く保てる。実際の OS は、優先度を組み合わせたより複雑な方式を使っている。例えば Linux のスケジューラは、各プロセスが受け取った CPU 時間を記録し、受け取りが少ないものを優先することで公平性を保つ。</p>
+<p>次のサンプルは、4 つのプロセスを 3 つの方式で実行し、平均待ち時間を比較する。乱数は使わないので、結果は毎回同じになる。ここではラウンドロビンの関数だけを示す。</p>
+<div class="literal-block-wrapper docutils container" id="id34">
+<div class="code-block-caption"><span class="caption-text">ch08_scheduler.py</span><a class="headerlink" href="#id34" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">58</span><span class="k">def</span><span class="w"> </span><span class="nf">round_robin</span><span class="p">(</span><span class="n">procs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Proc</span><span class="p">],</span> <span class="n">quantum</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Timeline</span><span class="p">:</span>
+<span class="linenos">59</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;各プロセスを最大 quantum だけ実行し、終わらなければ列の末尾へ戻す。</span>
+<span class="linenos">60</span>
+<span class="linenos">61</span><span class="sd">    実行を中断した時刻に到着したプロセスは、中断したプロセスより先に</span>
+<span class="linenos">62</span><span class="sd">    列へ入れる。</span>
+<span class="linenos">63</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">64</span>    <span class="n">timeline</span><span class="p">:</span> <span class="n">Timeline</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">65</span>    <span class="n">pending</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">procs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival</span><span class="p">))</span>
+<span class="linenos">66</span>    <span class="n">remaining</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">burst</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">}</span>
+<span class="linenos">67</span>    <span class="n">queue</span><span class="p">:</span> <span class="n">deque</span><span class="p">[</span><span class="n">Proc</span><span class="p">]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+<span class="linenos">68</span>    <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">69</span>    <span class="k">while</span> <span class="n">pending</span> <span class="ow">or</span> <span class="n">queue</span><span class="p">:</span>
+<span class="linenos">70</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">queue</span><span class="p">:</span>
+<span class="linenos">71</span>            <span class="n">t</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">pending</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">arrival</span><span class="p">)</span>
+<span class="linenos">72</span>        <span class="k">while</span> <span class="n">pending</span> <span class="ow">and</span> <span class="n">pending</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">arrival</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">:</span>
+<span class="linenos">73</span>            <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pending</span><span class="o">.</span><span class="n">popleft</span><span class="p">())</span>
+<span class="linenos">74</span>        <span class="n">p</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+<span class="linenos">75</span>        <span class="n">run</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">quantum</span><span class="p">,</span> <span class="n">remaining</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+<span class="linenos">76</span>        <span class="n">timeline</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span> <span class="o">+</span> <span class="n">run</span><span class="p">))</span>
+<span class="linenos">77</span>        <span class="n">t</span> <span class="o">+=</span> <span class="n">run</span>
+<span class="linenos">78</span>        <span class="n">remaining</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">-=</span> <span class="n">run</span>
+<span class="linenos">79</span>        <span class="k">while</span> <span class="n">pending</span> <span class="ow">and</span> <span class="n">pending</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">arrival</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">:</span>
+<span class="linenos">80</span>            <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pending</span><span class="o">.</span><span class="n">popleft</span><span class="p">())</span>
+<span class="linenos">81</span>        <span class="k">if</span> <span class="n">remaining</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">82</span>            <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">83</span>    <span class="k">return</span> <span class="n">timeline</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/bec43cd0ce019607fc52aebc23f58021/ch08_scheduler.py"><code class="xref download docutils literal notranslate"><span class="pre">ch08_scheduler.py</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">pending</span></code> はまだ到着していないプロセス、<code class="docutils literal notranslate"><span class="pre">queue</span></code> は実行可能の列である。75 行目でクォンタムと残り時間の小さい方だけ実行し、79〜80 行目でその間に到着したプロセスを列に加えてから、81〜82 行目で終わっていないプロセスを列の末尾に戻す。到着と中断が同時に起きたときにどちらを先に並べるかは方式の細部であり、ここでは到着したプロセスを先にしている。実行結果を次に示す。括弧内は実行した時間帯である。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>プロセス: A(到着 0, バースト 8), B(到着 1, バースト 4), C(到着 2, バースト 9), D(到着 3, バースト 5)
+<span class="linenos"> 2</span>[FCFS]
+<span class="linenos"> 3</span>  実行順序: A(0-8) B(8-12) C(12-21) D(21-26)
+<span class="linenos"> 4</span>  待ち時間: A=0, B=7, C=10, D=18
+<span class="linenos"> 5</span>  平均待ち時間: 8.75
+<span class="linenos"> 6</span>[SJF]
+<span class="linenos"> 7</span>  実行順序: A(0-8) B(8-12) D(12-17) C(17-26)
+<span class="linenos"> 8</span>  待ち時間: A=0, B=7, C=15, D=9
+<span class="linenos"> 9</span>  平均待ち時間: 7.75
+<span class="linenos">10</span>[ラウンドロビン（クォンタム 3）]
+<span class="linenos">11</span>  実行順序: A(0-3) B(3-6) C(6-9) D(9-12) A(12-15) B(15-16) C(16-19) D(19-21) A(21-23) C(23-26)
+<span class="linenos">12</span>  待ち時間: A=15, B=11, C=15, D=13
+<span class="linenos">13</span>  平均待ち時間: 13.50
+</pre></div>
+</div>
+<p>SJF では、時刻 12 の時点で到着済みの C（バースト 9）と D（バースト 5）のうち短い D を先に実行するので、FCFS より平均待ち時間が 1 短くなる。ラウンドロビンは平均待ち時間では最も悪いが、どのプロセスも到着から 6 以内に最初の実行が始まっている。FCFS では D が最初に実行されるまで 18 待つ。どの指標を重視するかで、最適な方式は変わる。</p>
+</section>
+</section>
+<section id="id15">
+<h2><span class="section-number">8.3. </span>仮想メモリ<a class="headerlink" href="#id15" title="Link to this heading"></a></h2>
+<section id="id16">
+<h3><span class="section-number">8.3.1. </span>アドレス空間とページング<a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-24"><span class="xref std std-term">仮想メモリ</span></a>は、プログラムが使うアドレス（仮想アドレス）と、主記憶上の実際の位置（物理アドレス）を分離する仕組みである。プログラムは自分専用の仮想アドレス空間だけを見ており、仮想アドレスから物理アドレスへの変換は、CPU 内の MMU（Memory Management Unit）が命令の実行のたびに行う。変換の規則は OS が設定し、プロセスごとに異なる。そのため、2 つのプロセスが同じ仮想アドレスを使っていても、実際には異なる物理メモリを指しており、互いに干渉しない。これがプロセス間の分離の土台である。</p>
+<p>変換は、アドレス空間を固定長の<strong>ページ</strong>に区切って行う。この方式を<a class="reference internal" href="glossary.html#term-211"><span class="xref std std-term">ページング</span></a>と呼ぶ。物理メモリも同じ大きさの<strong>ページフレーム</strong>に区切られ、仮想ページごとに、どのページフレームに対応するかを記録する。ページの大きさは 4 KiB（<span class="math notranslate nohighlight">\(2^{12}\)</span> バイト）が一般的である。この場合、仮想アドレスの下位 12 ビットがページ内の位置（オフセット）、残りの上位ビットがページ番号になる。例えば仮想アドレス <code class="docutils literal notranslate"><span class="pre">0x12345</span></code> は、ページ番号 <code class="docutils literal notranslate"><span class="pre">0x12</span></code> のページの、オフセット <code class="docutils literal notranslate"><span class="pre">0x345</span></code> の位置を指す。</p>
+<div class="math notranslate nohighlight">
+\[p = \left\lfloor \frac{v}{4096} \right\rfloor, \qquad d = v \bmod 4096\]</div>
+<p>ここで <span class="math notranslate nohighlight">\(v\)</span> は仮想アドレス、<span class="math notranslate nohighlight">\(p\)</span> はページ番号、<span class="math notranslate nohighlight">\(d\)</span> はオフセットである。変換ではページ番号だけを置き換え、オフセットはそのまま使う。</p>
+</section>
+<section id="tlb">
+<h3><span class="section-number">8.3.2. </span>ページテーブルと TLB<a class="headerlink" href="#tlb" title="Link to this heading"></a></h3>
+<p>仮想ページ番号からページフレーム番号への対応表を<a class="reference internal" href="glossary.html#term-209"><span class="xref std std-term">ページテーブル</span></a>と呼ぶ。各要素には、フレーム番号のほかに、そのページが主記憶に存在するか、書き込みを許すか、ユーザモードからアクセスできるかといった属性ビットが入る。64 ビットの CPU ではアドレス空間が非常に広いため、1 枚の表にするとそれだけで巨大になる。そこで、ページテーブル自体を木構造にした多段のページテーブルを使い、実際に使っている部分だけを用意する。x86-64 では通常 4 段の表をたどる。</p>
+<p>ページテーブルは主記憶に置かれるので、そのままではメモリアクセスのたびに、表を引くための追加のアクセスが何回も発生する。これを避けるため、MMU は最近使った変換結果を <a class="reference internal" href="glossary.html#term-TLB"><span class="xref std std-term">TLB</span></a>（Translation Lookaside Buffer）と呼ばれる小さなキャッシュに保持する。プログラムのアクセスには局所性があるため、TLB の命中率は通常非常に高い。逆に、広い範囲のメモリにランダムにアクセスするプログラムは、データのキャッシュミスに加えて TLB ミスでも遅くなる。大量のメモリを使うデータベースなどでは、2 MiB のような大きなページ（ヒュージページ）を使って TLB の効率を上げることがある。</p>
+</section>
+<section id="id17">
+<h3><span class="section-number">8.3.3. </span>ページフォールトとスワップ<a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<p>アクセスしたページが主記憶に無い、または許可されていない操作をしたとき、MMU は<a class="reference internal" href="glossary.html#term-210"><span class="xref std std-term">ページフォールト</span></a>と呼ばれる例外を発生させ、カーネルに制御を移す。カーネルは原因を調べ、正当なアクセスであればページを用意して命令をやり直させ、不正なアクセスであればプロセスを終了させる。ページフォールトは異常ではなく、仮想メモリの通常の動作の一部である。例えば OS は、プログラムを起動したときにすべてのページを読み込まず、初めてアクセスされたときにページフォールトを契機として読み込む。これを<strong>デマンドページング</strong>と呼ぶ。</p>
+<p>主記憶が足りなくなると、OS はしばらく使われていないページの内容を補助記憶上の<strong>スワップ領域</strong>に書き出し、そのページフレームを別の用途に回す。書き出したページに再びアクセスがあると、ページフォールトが起き、補助記憶から読み戻す。補助記憶へのアクセスは主記憶より桁違いに遅いため、作業に必要なページが主記憶に収まらなくなると、ページの書き出しと読み戻しばかりが続いて処理がほとんど進まなくなる。この状態を<strong>スラッシング</strong>と呼ぶ。サーバの応答が急に極端に遅くなったときは、メモリ不足によるスワップの発生を疑うとよい。Linux では、それでもメモリが足りなければ、カーネルがプロセスを選んで強制終了させる（OOM killer）。</p>
+</section>
+<section id="id18">
+<h3><span class="section-number">8.3.4. </span>ページ置換アルゴリズム<a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<p>空いているページフレームが無いときにページフォールトが起きると、OS はどれか 1 つのページを主記憶から追い出して場所を空けなければならない。どのページを追い出すかを決める規則を<a class="reference internal" href="glossary.html#term-208"><span class="xref std std-term">ページ置換アルゴリズム</span></a>と呼ぶ。追い出したページがすぐにまた必要になれば、そのたびに補助記憶へのアクセスが発生するので、選び方はそのまま性能に響く。なお、追い出すページが読み込み後に書き換えられていなければ（ページテーブルの変更ビットが立っていなければ）、補助記憶に同じ内容があるので書き出しを省ける。代表的なアルゴリズムを次の表に示す <a class="reference internal" href="references.html#ostep" id="id19"><span>[OSTEP]</span></a>。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 43.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>アルゴリズム</p></th>
+<th class="head"><p>追い出すページ</p></th>
+<th class="head"><p>特徴</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>FIFO</p></td>
+<td><p>最も早く主記憶に読み込んだページ</p></td>
+<td><p>実装は簡単だが、よく使われているページも古ければ追い出す</p></td>
+</tr>
+<tr class="row-odd"><td><p>LRU（Least Recently Used）</p></td>
+<td><p>最後に使われたのが最も古いページ</p></td>
+<td><p>参照の局所性があれば性能がよい。正確に実装するにはアクセスのたびに記録の更新が必要で重い</p></td>
+</tr>
+<tr class="row-even"><td><p>最適置換（OPT）</p></td>
+<td><p>次に使われるのが最も遠い未来であるページ</p></td>
+<td><p>フォールト回数が理論上最小になるが、未来の参照を知る必要があるので実現できない。他の方式を評価する基準に使う</p></td>
+</tr>
+<tr class="row-odd"><td><p>クロック法</p></td>
+<td><p>参照ビットが 0 のページを、時計の針のように循環しながら探す</p></td>
+<td><p>LRU の近似。実際の OS で広く使われる</p></td>
+</tr>
+</tbody>
+</table>
+<p>クロック法は、ハードウェアの支援を使って LRU を安く近似する。MMU は、ページにアクセスがあるとページテーブルの要素の<strong>参照ビット</strong>を 1 にする。OS はページフレームを輪の形に並べ、追い出す候補を探すときは針の位置のページを調べる。参照ビットが 1 なら「最近使われた」とみなして 0 に戻し、針を次へ進める。0 のページが見つかったら、それを追い出す。一巡する間に一度も使われなかったページが選ばれるので、最近使われたページはおおむね残る。</p>
+<p>次のサンプルは、同じ参照列に対する FIFO、LRU、OPT のページフォールト回数を数える。参照列は <a class="reference internal" href="references.html#ostep" id="id20"><span>[OSTEP]</span></a> などの教科書でよく使われる例と同じものである。</p>
+<div class="literal-block-wrapper docutils container" id="id35">
+<div class="code-block-caption"><span class="caption-text">ch08_page_replacement.py</span><a class="headerlink" href="#id35" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">18</span><span class="k">def</span><span class="w"> </span><span class="nf">fifo</span><span class="p">(</span><span class="n">refs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">19</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;最も早く読み込んだページを追い出す。フォールト回数を返す。&quot;&quot;&quot;</span>
+<span class="linenos">20</span>    <span class="n">resident</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="linenos">21</span>    <span class="n">order</span><span class="p">:</span> <span class="n">deque</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>  <span class="c1"># 読み込んだ順</span>
+<span class="linenos">22</span>    <span class="n">faults</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">23</span>    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">:</span>
+<span class="linenos">24</span>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">resident</span><span class="p">:</span>
+<span class="linenos">25</span>            <span class="k">continue</span>  <span class="c1"># 命中しても順序は変えない</span>
+<span class="linenos">26</span>        <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">27</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">resident</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+<span class="linenos">28</span>            <span class="n">resident</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">popleft</span><span class="p">())</span>
+<span class="linenos">29</span>        <span class="n">resident</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+<span class="linenos">30</span>        <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+<span class="linenos">31</span>    <span class="k">return</span> <span class="n">faults</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span><span class="k">def</span><span class="w"> </span><span class="nf">lru</span><span class="p">(</span><span class="n">refs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">35</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;最も長く使われていないページを追い出す。フォールト回数を返す。&quot;&quot;&quot;</span>
+<span class="linenos">36</span>    <span class="n">resident</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>  <span class="c1"># 先頭が最も古い</span>
+<span class="linenos">37</span>    <span class="n">faults</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">38</span>    <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">:</span>
+<span class="linenos">39</span>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">resident</span><span class="p">:</span>
+<span class="linenos">40</span>            <span class="n">resident</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>  <span class="c1"># 使ったので最新にする</span>
+<span class="linenos">41</span>            <span class="k">continue</span>
+<span class="linenos">42</span>        <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">43</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">resident</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+<span class="linenos">44</span>            <span class="n">resident</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos">45</span>        <span class="n">resident</span><span class="p">[</span><span class="n">page</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos">46</span>    <span class="k">return</span> <span class="n">faults</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span>
+<span class="linenos">49</span><span class="k">def</span><span class="w"> </span><span class="nf">opt</span><span class="p">(</span><span class="n">refs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">50</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;次に使われるのが最も遠いページを追い出す。フォールト回数を返す。&quot;&quot;&quot;</span>
+<span class="linenos">51</span>    <span class="n">resident</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="linenos">52</span>    <span class="n">faults</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">53</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">page</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">refs</span><span class="p">):</span>
+<span class="linenos">54</span>        <span class="k">if</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">resident</span><span class="p">:</span>
+<span class="linenos">55</span>            <span class="k">continue</span>
+<span class="linenos">56</span>        <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">57</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">resident</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+<span class="linenos">58</span>            <span class="n">future</span> <span class="o">=</span> <span class="n">refs</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span>            <span class="k">def</span><span class="w"> </span><span class="nf">next_use</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">61</span><span class="w">                </span><span class="sd">&quot;&quot;&quot;p が次に参照される位置（参照されなければ無限大扱い）。&quot;&quot;&quot;</span>
+<span class="linenos">62</span>                <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">future</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+<span class="linenos">63</span>
+<span class="linenos">64</span>            <span class="n">resident</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">resident</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">next_use</span><span class="p">))</span>
+<span class="linenos">65</span>        <span class="n">resident</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+<span class="linenos">66</span>    <span class="k">return</span> <span class="n">faults</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/15a0e29b9c5804ff4e2d9fbd8e1c1117/ch08_page_replacement.py"><code class="xref download docutils literal notranslate"><span class="pre">ch08_page_replacement.py</span></code></a></p>
+<p>FIFO は 21 行目の <code class="docutils literal notranslate"><span class="pre">deque</span></code> に読み込んだ順を記録し、28 行目で最も古いものを追い出す。命中しても順序を変えない点が LRU との違いである。LRU は第 4 章の「<a class="reference internal" href="ch04_data_structures.html#ch04-lru-cache"><span class="std std-ref">LRU キャッシュ: データ構造を組み合わせる</span></a>」と同じく <code class="docutils literal notranslate"><span class="pre">OrderedDict</span></code> を使い、40 行目で使ったページを末尾（最新）に移し、44 行目で先頭（最も古い）を追い出す。OPT は 58 行目でこれから先の参照列を取り出し、64 行目で次に参照される位置が最も遠いページを追い出す。二度と参照されないページが複数あるときにどれを選んでも回数は変わらないが、64 行目では <code class="docutils literal notranslate"><span class="pre">sorted</span></code> で選び方を一定にしている。実行結果を次に示す。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>参照列: 7 0 1 2 0 3 0 4 2 3 0 3 2 1 2 0 1 7 0 1
+<span class="linenos">2</span>フレーム数 3: FIFO 15 回, LRU 12 回, OPT 9 回
+<span class="linenos">3</span>フレーム数 4: FIFO 10 回, LRU 8 回, OPT 8 回
+<span class="linenos">4</span>Belady の異常の参照列: 1 2 3 4 1 2 5 1 2 3 4 5
+<span class="linenos">5</span>  FIFO, フレーム数 3: 9 回
+<span class="linenos">6</span>  FIFO, フレーム数 4: 10 回
+</pre></div>
+</div>
+<p>最初の参照で空のフレームを埋めるフォールトは、どの方式でも避けられない。この参照列には 6 種類のページがあるので、少なくとも 6 回は起きる。フレーム数 3 では、OPT の 9 回に対して LRU は 12 回、FIFO は 15 回である。LRU は「最近使われたページは近いうちにまた使われる」という参照の局所性に賭けており、過去から未来を推測することで OPT に近づいている。</p>
+<p>4〜6 行目は <a class="reference internal" href="glossary.html#term-Belady"><span class="xref std std-term">Belady の異常</span></a>の例である。直感的にはフレームを増やせばフォールトは減るはずだが、FIFO ではこの参照列でフレームを 3 から 4 に増やすと、フォールトが 9 回から 10 回に増える。LRU と OPT では、フレーム数 <span class="math notranslate nohighlight">\(k\)</span> のときに主記憶にあるページの集合が、常にフレーム数 <span class="math notranslate nohighlight">\(k+1\)</span> のときの集合に含まれるという性質があるため、この異常は起きない。</p>
+</section>
+</section>
+<section id="id21">
+<h2><span class="section-number">8.4. </span>ファイルシステム<a class="headerlink" href="#id21" title="Link to this heading"></a></h2>
+<section id="id22">
+<h3><span class="section-number">8.4.1. </span>ファイルとディレクトリ<a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<p>補助記憶は、固定長のブロックが番号順に並んだ装置にすぎない。その上に、名前の付いたファイルと、ファイルをまとめるディレクトリの階層を構成するのが<a class="reference internal" href="glossary.html#term-185"><span class="xref std std-term">ファイルシステム</span></a>である。ファイルシステムは、どのブロックがどのファイルに属するか、どのブロックが空いているかを管理し、<code class="docutils literal notranslate"><span class="pre">/home/user/report.txt</span></code> のようなパス名からファイルの中身にたどり着けるようにする。代表的なものに、Linux の ext4 や XFS、Windows の NTFS がある。</p>
+</section>
+<section id="i">
+<h3><span class="section-number">8.4.2. </span>i ノードの考え方<a class="headerlink" href="#i" title="Link to this heading"></a></h3>
+<p>Unix 系のファイルシステムでは、ファイルの管理情報を <a class="reference internal" href="glossary.html#term-i"><span class="xref std std-term">i ノード</span></a>に格納する。i ノードには、ファイルの大きさ、所有者、アクセス権、更新時刻、そしてデータが置かれたブロックの位置が記録されている。ここで重要なのは、i ノードにはファイルの<strong>名前が含まれない</strong>ことである。名前は、ディレクトリの中に「名前と i ノード番号の組」として記録されている。つまりディレクトリは、名前から i ノード番号への対応表を中身とする特別なファイルである。</p>
+<p>この構造から、いくつかの性質が説明できる。1 つの i ノードを複数のディレクトリ項目から指せば、同じファイルに複数の名前を付けられる。これをハードリンクと呼ぶ。ファイルの名前を変える <code class="docutils literal notranslate"><span class="pre">rename</span></code> は、データを動かさずディレクトリ項目を書き換えるだけなので、大きなファイルでも一瞬で終わる。また、ファイルを削除するとディレクトリ項目が消えるが、そのファイルを開いているプロセスがあれば、i ノードとデータは閉じられるまで残る。ログファイルを削除してもディスクの空き容量が増えないときは、まだそのファイルを開いているプロセスがあることを疑うとよい。</p>
+</section>
+<section id="ch08-file-descriptor">
+<span id="id23"></span><h3><span class="section-number">8.4.3. </span>ファイル記述子と「すべてはファイル」<a class="headerlink" href="#ch08-file-descriptor" title="Link to this heading"></a></h3>
+<p>Unix 系の OS では、プロセスがファイルを <code class="docutils literal notranslate"><span class="pre">open</span></code> すると、カーネルは小さな非負の整数を返す。これを<a class="reference internal" href="glossary.html#term-184"><span class="xref std std-term">ファイル記述子</span></a>と呼ぶ。以後の <code class="docutils literal notranslate"><span class="pre">read</span></code>、<code class="docutils literal notranslate"><span class="pre">write</span></code>、<code class="docutils literal notranslate"><span class="pre">close</span></code> は、パス名ではなくこの番号を指定して行う。カーネルの中では、プロセスごとのファイル記述子の表が「開いているファイル」の情報（読み書きの現在位置やモード）を指し、それがさらに i ノードを指している。0 番、1 番、2 番は、それぞれ標準入力、標準出力、標準エラー出力として起動時から開かれている。Python では、ファイルオブジェクトの <code class="docutils literal notranslate"><span class="pre">fileno()</span></code> でファイル記述子を取り出せ、<code class="docutils literal notranslate"><span class="pre">os.read()</span></code> や <code class="docutils literal notranslate"><span class="pre">os.write()</span></code> で直接システムコールを呼べる。</p>
+<p>ファイル記述子は通常のファイルだけでなく、パイプ、ソケット、端末、デバイス（<code class="docutils literal notranslate"><span class="pre">/dev/null</span></code> など）にも割り当てられ、どれも同じ <code class="docutils literal notranslate"><span class="pre">read</span></code> と <code class="docutils literal notranslate"><span class="pre">write</span></code> で読み書きできる。この設計は「すべてはファイル」と表現される。<code class="docutils literal notranslate"><span class="pre">cat</span></code> のような単純なプログラムが、ファイルにもパイプにも端末にも同じように使えるのはこのためである。ファイル記述子は <code class="docutils literal notranslate"><span class="pre">fork</span></code> で子に複製され、<code class="docutils literal notranslate"><span class="pre">exec</span></code> の後も引き継がれる。「<a class="reference internal" href="#ch08-fork-exec"><span class="std std-ref">Unix のプロセス生成: fork と exec</span></a>」で触れたシェルのリダイレクト <code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">out.txt</span></code> は、子プロセスの中で <code class="docutils literal notranslate"><span class="pre">out.txt</span></code> を開き、<code class="docutils literal notranslate"><span class="pre">dup2</span></code> でそれを 1 番に付け替えてから <code class="docutils literal notranslate"><span class="pre">exec</span></code> する、という手順で実現される <a class="reference internal" href="references.html#kerrisk" id="id24"><span>[Kerrisk]</span></a>。また、ソケットもファイル記述子であることは、次章の <a class="reference internal" href="ch09_concurrency_and_io.html#ch09-io-multiplexing"><span class="std std-ref">I/O 多重化</span></a>で「多数のファイル記述子のうち、読み書きできるものを教えてもらう」という形で生きてくる。</p>
+<p>1 つのプロセスが同時に開けるファイル記述子の数には上限がある。Linux の既定値は 1,024 であることが多く、<code class="docutils literal notranslate"><span class="pre">ulimit</span> <span class="pre">-n</span></code> で確認や変更ができる。多数の接続を同時に受け付けるサーバでは、この上限に達して <code class="docutils literal notranslate"><span class="pre">Too</span> <span class="pre">many</span> <span class="pre">open</span> <span class="pre">files</span></code> のエラーになることがあるので、上限を引き上げるとともに、使い終わったファイルやソケットを確実に閉じる（Python では <code class="docutils literal notranslate"><span class="pre">with</span></code> 文を使う）ことが大切である。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p>Windows では、ファイルやプロセスなどのカーネルの資源を<strong>ハンドル</strong>と呼ばれる値で指す。考え方はファイル記述子に近いが、ソケットとファイルは別の API で扱われ、パイプとソケットとファイルを一様に扱う Unix ほどの統一性は無い。Python の <code class="docutils literal notranslate"><span class="pre">fileno()</span></code> は Windows でも使えるが、例えば <code class="docutils literal notranslate"><span class="pre">select.select()</span></code> は Windows ではソケットにしか使えない。</p>
+</div>
+</section>
+<section id="fsync">
+<h3><span class="section-number">8.4.4. </span>バッファリングと fsync<a class="headerlink" href="#fsync" title="Link to this heading"></a></h3>
+<p>プログラムがファイルに書き込んだデータは、すぐには補助記憶に届かない。書き込みは次の段階を経て進む。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 40.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>段階</p></th>
+<th class="head"><p>データの置き場所</p></th>
+<th class="head"><p>次の段階に進める操作</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>プログラム内のバッファ</p></td>
+<td><p>Python のファイルオブジェクトなど、プロセスのメモリ</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">flush()</span></code>、<code class="docutils literal notranslate"><span class="pre">close()</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>OS のページキャッシュ</p></td>
+<td><p>カーネルが管理する主記憶</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">os.fsync()</span></code>（または OS による定期的な書き出し）</p></td>
+</tr>
+<tr class="row-even"><td><p>補助記憶</p></td>
+<td><p>SSD や HDD</p></td>
+<td><p>―</p></td>
+</tr>
+</tbody>
+</table>
+<p>各段階のバッファは、小さな書き込みをまとめて、システムコールや装置へのアクセスの回数を減らすためにある。<code class="docutils literal notranslate"><span class="pre">write()</span></code> や <code class="docutils literal notranslate"><span class="pre">close()</span></code> が成功しても、データはまだ OS のページキャッシュにあるだけかもしれない。この状態で電源が落ちたり OS が停止したりすると、データは失われる。プロセスが異常終了しただけなら、ページキャッシュに届いたデータは失われない。</p>
+<p>確実に補助記憶へ書き込みたい場合は、<code class="docutils literal notranslate"><span class="pre">os.fsync()</span></code> を呼ぶ。<code class="docutils literal notranslate"><span class="pre">fsync</span></code> は、そのファイルのデータがページキャッシュから装置に書き込まれるまで戻らない。設定ファイルの保存のように、書き込み途中で障害が起きても古い内容か新しい内容のどちらかが必ず残ってほしい場合は、一時ファイルに書いて <code class="docutils literal notranslate"><span class="pre">fsync</span></code> し、<code class="docutils literal notranslate"><span class="pre">os.replace()</span></code> で本来の名前に置き換えるのが定石である。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="linenos">2</span>
+<span class="linenos">3</span><span class="k">def</span><span class="w"> </span><span class="nf">save_atomically</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">4</span>    <span class="n">tmp</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;.tmp&quot;</span>
+<span class="linenos">5</span>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="linenos">6</span>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="linenos">7</span>        <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>             <span class="c1"># Python のバッファから OS へ</span>
+<span class="linenos">8</span>        <span class="n">os</span><span class="o">.</span><span class="n">fsync</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>  <span class="c1"># OS から補助記憶へ</span>
+<span class="linenos">9</span>    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>     <span class="c1"># 名前を置き換える</span>
+</pre></div>
+</div>
+<p>POSIX では、同じファイルシステム内での名前の置き換えは不可分に行われるので、読み手は古いファイルか新しいファイルのどちらかを必ず見る。なお、名前の置き換えはディレクトリの更新なので、置き換え自体を確実に永続化するには、Linux ではディレクトリも開いて <code class="docutils literal notranslate"><span class="pre">fsync</span></code> する必要がある。一方で <code class="docutils literal notranslate"><span class="pre">fsync</span></code> は装置への書き込みを待つため遅い。ログを 1 行書くたびに <code class="docutils literal notranslate"><span class="pre">fsync</span></code> すると、性能が大きく落ちる。データベースは、複数の更新をまとめて 1 回の <code class="docutils literal notranslate"><span class="pre">fsync</span></code> で永続化するなどの工夫で、安全性と性能を両立させている。詳しくは「<a class="reference internal" href="ch11_databases.html"><span class="doc">データベース</span></a>」で扱う。</p>
+</section>
+<section id="id25">
+<h3><span class="section-number">8.4.5. </span>ジャーナリング<a class="headerlink" href="#id25" title="Link to this heading"></a></h3>
+<p>ファイルシステムの 1 つの操作は、補助記憶上の複数の場所の更新からなる。例えばファイルの末尾にデータを 1 ブロック追加するには、データブロックの書き込み、空きブロックを管理する表（ビットマップ）の更新、i ノードの大きさとブロック位置の更新が必要である。これらの書き込みの途中で電源が落ちると、「ビットマップでは使用中なのにどのファイルにも属さないブロック」や「i ノードが、まだ中身の書かれていないブロックを指している」といった不整合が残る。この問題を<strong>クラッシュ整合性</strong>の問題と呼ぶ。古いファイルシステムは、起動時に <code class="docutils literal notranslate"><span class="pre">fsck</span></code> でディスク全体を走査して不整合を修復していたが、ディスクが大きくなると何時間もかかる。</p>
+<p>現在の多くのファイルシステム（ext4、XFS、NTFS など）は<a class="reference internal" href="glossary.html#term-91"><span class="xref std std-term">ジャーナリング</span></a>でこの問題を解決している。更新を本来の場所に書く前に、これから行う一連の更新をジャーナル（ログ）と呼ばれる専用の領域にまとめて書き、最後に「この更新は完結した」という印（コミット記録）を書く。その後で、本来の場所に書き込む。クラッシュした後は、ジャーナルを調べ、コミット記録まで書かれた更新はやり直し、書かれていない更新は捨てる。こうすれば、一連の更新は「全部行われた」か「まったく行われなかった」かのどちらかになり、確認はジャーナルの範囲だけで済む <a class="reference internal" href="references.html#ostep" id="id26"><span>[OSTEP]</span></a>。これは「<a class="reference internal" href="ch11_databases.html"><span class="doc">データベース</span></a>」で扱うログ先行書き込みと同じ考え方であり、ファイルシステムはメタデータの更新をトランザクションとして扱っていると見なせる。</p>
+<p>すべてのデータをジャーナルに書くと、データを 2 回書くことになり遅い。そこで多くのファイルシステムは、i ノードやビットマップなどのメタデータだけをジャーナルに書く<strong>メタデータジャーナリング</strong>を既定にしている。ext4 の既定の動作では、データブロックを先に本来の場所に書いてから、それを指すメタデータをジャーナルにコミットする。この順序によって、i ノードがゴミの入ったブロックを指すことは避けられる。ただし、ジャーナリングが守るのはファイルシステムの構造の整合性であって、アプリケーションのデータが最新であることまでは保証しない。前の小節で述べた <code class="docutils literal notranslate"><span class="pre">fsync</span></code> と <code class="docutils literal notranslate"><span class="pre">os.replace()</span></code> の手順は、ジャーナリングのあるファイルシステムでも必要である。</p>
+<p>もう 1 つの方式が<strong>コピーオンライト型</strong>のファイルシステムである。ZFS、Btrfs、macOS の APFS などは、既存のブロックを上書きせず、変更した内容を常に空いている別の場所に書き、最後にファイルシステムの根を指すポインタを 1 か所だけ不可分に切り替える。切り替えの前にクラッシュすれば古い状態が、後なら新しい状態が見えるので、ジャーナルを使わずに整合性を保てる。古いブロックをすぐに解放せずに残しておけば、ある時点の状態をほとんど費用をかけずに保存する<strong>スナップショット</strong>も実現できる。</p>
+</section>
+</section>
+<section id="id27">
+<h2><span class="section-number">8.5. </span>仮想化とコンテナ<a class="headerlink" href="#id27" title="Link to this heading"></a></h2>
+<p>ここまでに見たプロセスの分離は、同じ OS の上で動くプログラム同士を分けるものだった。この節では、さらに進んで、1 台の物理的な計算機の上で複数の OS を丸ごと動かす仮想化と、OS のカーネルを共有しながら実行環境を分けるコンテナを紹介する。どちらも、クラウドや現在のソフトウェアの配備を支える基盤技術である。なお、「<a class="reference internal" href="ch07_programming_languages.html"><span class="doc">プログラミング言語処理系</span></a>」で扱った Java 仮想マシンのような言語処理系の仮想マシンとは別のものである。</p>
+<section id="id28">
+<h3><span class="section-number">8.5.1. </span>仮想化の目的とハイパーバイザ<a class="headerlink" href="#id28" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-23"><span class="xref std std-term">仮想化</span></a>は、ハードウェアを模した<strong>仮想マシン</strong>（VM: Virtual Machine）をソフトウェアで作り、その上で OS（ゲスト OS）をそのまま動かす技術である。主な目的は次のとおりである。</p>
+<ul class="simple">
+<li><p>集約: 負荷の低い多数のサーバを 1 台の物理マシンにまとめ、ハードウェアと電力を節約する。</p></li>
+<li><p>分離: 1 つの VM の障害や侵害が、同じ物理マシン上の他の VM に及ばないようにする。</p></li>
+<li><p>柔軟な運用: VM の状態をファイルとして保存（スナップショット）したり、動かしたまま別の物理マシンに移したり（ライブマイグレーション）できる。</p></li>
+<li><p>互換性: Windows の上で Linux を動かすなど、異なる OS を同時に使える。</p></li>
+</ul>
+<p>VM を作り出して管理するソフトウェアを<a class="reference internal" href="glossary.html#term-162"><span class="xref std std-term">ハイパーバイザ</span></a>（仮想マシンモニタ、VMM とも呼ぶ）と呼ぶ。ハイパーバイザは、OS がプロセスに CPU やメモリを分け与えるのと同じように、VM に CPU、メモリ、入出力装置を分け与える。ハイパーバイザは、置かれる位置によって 2 種類に分けられる <a class="reference internal" href="references.html#mos" id="id29"><span>[MOS]</span></a>。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>種類</p></th>
+<th class="head"><p>構成</p></th>
+<th class="head"><p>例と用途</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>タイプ 1（ベアメタル型）</p></td>
+<td><p>ハードウェアの上で直接動き、ハイパーバイザ自身が OS の役割を担う</p></td>
+<td><p>Xen、VMware ESXi、Microsoft Hyper-V、Linux の KVM。データセンタやクラウドのサーバ</p></td>
+</tr>
+<tr class="row-odd"><td><p>タイプ 2（ホスト型）</p></td>
+<td><p>通常の OS（ホスト OS）の上で、1 つのアプリケーションとして動く</p></td>
+<td><p>VirtualBox、VMware Workstation。開発者の手元での検証</p></td>
+</tr>
+</tbody>
+</table>
+<p>KVM は Linux カーネルのモジュールとして動き、Linux 自体をハイパーバイザにするので、どちらに分類するかは見方によるが、ハードウェアを直接制御する点でタイプ 1 に含めることが多い。</p>
+</section>
+<section id="id30">
+<h3><span class="section-number">8.5.2. </span>仮想化の条件とハードウェア支援<a class="headerlink" href="#id30" title="Link to this heading"></a></h3>
+<p>ゲスト OS は、自分がカーネルモードで動いていると思っている。しかし、本当にカーネルモードで動かすと、ゲスト OS がハードウェアを直接操作し、ハイパーバイザや他の VM を壊してしまう。そこで、ゲスト OS はユーザモード（あるいはそれに準じる低い特権）で動かし、ゲストが特権命令を実行しようとしたら CPU の例外でハイパーバイザに制御を移し、ハイパーバイザがその命令の効果を模倣する。この方式を<strong>トラップとエミュレート</strong>と呼ぶ。</p>
+<p>Popek と Goldberg は 1974 年の論文で、効率のよい仮想マシンモニタが満たすべき性質として、VM 上のプログラムが実機と同じように振る舞うこと（等価性）、VM が自分に割り当てられた資源しか使えないこと（資源の管理）、大部分の命令がハイパーバイザを介さず直接実行されること（効率性）の 3 つを挙げた。そして、システムの状態を読み書きする「センシティブ命令」がすべて、ユーザモードで実行すると例外を起こす特権命令に含まれていれば、トラップとエミュレートでそのような仮想マシンモニタを作れることを示した <a class="reference internal" href="references.html#popekgoldberg1974" id="id31"><span>[PopekGoldberg1974]</span></a>。</p>
+<p>かつての x86 はこの条件を満たしていなかった。ユーザモードで実行しても例外を起こさず、黙って異なる動作をするセンシティブ命令がいくつかあったからである（例えば <code class="docutils literal notranslate"><span class="pre">POPF</span></code> 命令は、ユーザモードでは割り込みの許可フラグの変更を例外を起こさずに無視する）。そのため、初期の x86 の仮想化では、ゲスト OS の問題のある命令を実行前に安全な命令列に書き換える<strong>バイナリ変換</strong>（VMware）や、ゲスト OS 自体を書き換えて、ハイパーバイザを明示的に呼び出させる<strong>準仮想化</strong>（Xen）といった工夫が使われた。</p>
+<p>2005〜2006 年に、Intel は VT-x、AMD は AMD-V という<strong>ハードウェア支援</strong>の仕組みを CPU に加えた。これらは、ハイパーバイザ用とゲスト用の実行モードを新たに設け、ゲストがセンシティブな操作をすると CPU が自動的にハイパーバイザに制御を移す。これにより、ゲスト OS を書き換えずにそのまま動かす<strong>完全仮想化</strong>が、高い効率で実現できるようになった。さらに、ゲストの物理アドレスからホストの物理アドレスへの変換をハードウェアが行う拡張ページテーブル（Intel の EPT、AMD の NPT）により、メモリの仮想化のコストも下がった。現在のクラウドの VM は、このハードウェア支援の上に成り立っている。なお、ディスクやネットワークの入出力については、ゲストに専用の準仮想化ドライバ（virtio など）を入れて高速化するのが一般的である。</p>
+</section>
+<section id="id32">
+<h3><span class="section-number">8.5.3. </span>コンテナ<a class="headerlink" href="#id32" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="glossary.html#term-76"><span class="xref std std-term">コンテナ</span></a>は、OS のカーネルを共有したまま、プロセスの集まりに独立した実行環境を見せる技術である。VM がハードウェアを仮想化するのに対し、コンテナは OS を仮想化すると言える。コンテナの中のプロセスは、ホストから見れば普通のプロセスにすぎないが、カーネルの次の 2 つの機能によって、他のプロセスから隔てられている（以下は Linux の場合）。</p>
+<ul class="simple">
+<li><p>名前空間（namespaces）: プロセスから見える資源の範囲を分ける。PID 名前空間ではコンテナの中だけのプロセス ID が振られ（コンテナ内の最初のプロセスは ID 1 になる）、マウント名前空間では独自のファイルシステムの木が、ネットワーク名前空間では独自のネットワークインタフェースとポート番号の空間が見える。ホスト名、ユーザ ID、IPC についての名前空間もある。</p></li>
+<li><p>cgroups（control groups）: プロセスの集まりが使える CPU 時間、メモリ、入出力の帯域の上限を決め、使用量を計測する。あるコンテナがメモリを使い尽くしても、他のコンテナに影響しないようにする。</p></li>
+</ul>
+<p>つまり、名前空間は「何が見えるか」を、cgroups は「どれだけ使えるか」を制限する。カーネルを共有しているので、コンテナは OS の起動を伴わず、プロセスの起動と同じくらい速く（通常 1 秒未満で）始まり、主記憶の消費も小さい。その反面、すべてのコンテナが 1 つのカーネルに依存するので、カーネルの脆弱性があれば分離が破られるおそれがあり、VM ほど強い分離は得られない。また、ホストと異なるカーネルは動かせない。Windows や macOS で Linux のコンテナを動かすツールは、実際には裏で Linux の VM を動かしている。</p>
+<p>コンテナの中身は<strong>イメージ</strong>として配布される。イメージは、アプリケーションとそれが必要とするライブラリ、設定ファイルなどを含むファイルシステムの内容であり、読み取り専用の<strong>レイヤ</strong>を積み重ねた構造になっている。例えば「OS の基本的なファイル」のレイヤの上に「Python の処理系」のレイヤ、その上に「アプリケーションのコード」のレイヤを重ねる。共通のレイヤは複数のイメージで共有でき、更新したレイヤだけを配布すればよい。コンテナを起動すると、イメージの上に書き込み可能なレイヤが 1 枚加わり、ファイルの変更はコピーオンライトでそのレイヤに記録される（Linux では OverlayFS などの重ね合わせのファイルシステムが使われる）。イメージの形式は OCI（Open Container Initiative）という仕様として標準化されており、Docker や Podman などの複数のツールで共通に使える。多数のコンテナを複数のマシンに配置して管理するには、Kubernetes のようなオーケストレーションのシステムを使う。</p>
+</section>
+<section id="vm">
+<h3><span class="section-number">8.5.4. </span>VM とコンテナの比較<a class="headerlink" href="#vm" title="Link to this heading"></a></h3>
+<p>VM とコンテナの違いを次の表にまとめる。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>観点</p></th>
+<th class="head"><p>仮想マシン（VM）</p></th>
+<th class="head"><p>コンテナ</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>仮想化する対象</p></td>
+<td><p>ハードウェア</p></td>
+<td><p>OS（カーネルの提供する資源の見え方）</p></td>
+</tr>
+<tr class="row-odd"><td><p>カーネル</p></td>
+<td><p>VM ごとに独自のゲスト OS のカーネルを持つ</p></td>
+<td><p>ホストのカーネルを共有する</p></td>
+</tr>
+<tr class="row-even"><td><p>動かせる OS</p></td>
+<td><p>ホストと異なる OS も動かせる</p></td>
+<td><p>ホストと同じカーネルの上で動くものに限られる</p></td>
+</tr>
+<tr class="row-odd"><td><p>起動時間</p></td>
+<td><p>OS の起動を伴うので数秒〜数十秒</p></td>
+<td><p>プロセスの起動と同程度で、通常 1 秒未満</p></td>
+</tr>
+<tr class="row-even"><td><p>大きさと集約度</p></td>
+<td><p>OS 全体を含むので数 GB 程度になり、1 台に載せられる数は少ない</p></td>
+<td><p>アプリケーションと依存物だけなので数十 MB〜数百 MB 程度で、1 台に多数載せられる</p></td>
+</tr>
+<tr class="row-odd"><td><p>分離の強さ</p></td>
+<td><p>強い。ハードウェア支援による境界で隔てられる</p></td>
+<td><p>VM より弱い。カーネルの脆弱性が全体に影響し得る</p></td>
+</tr>
+<tr class="row-even"><td><p>主な用途</p></td>
+<td><p>クラウドの計算資源の提供、異なる OS の同居、強い分離が必要な環境</p></td>
+<td><p>アプリケーションの配布と配備、開発環境と本番環境の差の解消、マイクロサービス</p></td>
+</tr>
+</tbody>
+</table>
+<p>両者は対立するものではなく、組み合わせて使われることが多い。クラウドでは、利用者ごとに VM で強く分離し、その VM の中で多数のコンテナを動かすのが一般的な構成である。さらに、VM の分離の強さとコンテナの軽さを両立させるため、コンテナごとに小さな VM を割り当てる軽量 VM の技術も使われている。</p>
+</section>
+</section>
+<section id="id33">
+<h2><span class="section-number">8.6. </span>まとめ<a class="headerlink" href="#id33" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>OS は、CPU、メモリ、補助記憶、ネットワークをプロセス、アドレス空間、ファイル、ソケットとして抽象化し、資源を管理・保護する。</p></li>
+<li><p>CPU のユーザモードとカーネルモードによって、アプリケーションはシステムコールを通じてのみカーネルの機能を使う。割り込みによって、カーネルは外部の事象に応じて制御を取り戻す。</p></li>
+<li><p>プロセスは互いに分離されたアドレス空間を持ち、スレッドは同じプロセス内でメモリを共有する。Unix 系ではプロセスを <code class="docutils literal notranslate"><span class="pre">fork</span></code> で複製し <code class="docutils literal notranslate"><span class="pre">exec</span></code> でプログラムを置き換えて生成し、カーネルはシグナルでプロセスに事象を知らせる。</p></li>
+<li><p>スケジューリングの方式によって平均待ち時間や応答時間が変わる。SJF は平均待ち時間を短くし、ラウンドロビンは応答時間を短く保つ。</p></li>
+<li><p>仮想メモリは、ページテーブルによる仮想アドレスから物理アドレスへの変換で、プロセスの分離とデマンドページングを実現する。TLB は変換を高速化し、主記憶が不足するとスワップが起きる。追い出すページは、OPT を理想として、LRU やその近似であるクロック法で選ぶ。FIFO では Belady の異常が起こり得る。</p></li>
+<li><p>ファイルシステムは i ノードとディレクトリで名前とデータを結び付け、プロセスはファイル記述子を通じてファイル、パイプ、ソケットを同じように扱う。書き込みを確実に永続化するには <code class="docutils literal notranslate"><span class="pre">fsync</span></code> が必要であり、クラッシュ時の構造の整合性はジャーナリングやコピーオンライトで保たれる。</p></li>
+<li><p>仮想化はハイパーバイザがハードウェアを仮想化して複数の OS を動かし、コンテナは名前空間と cgroups によってカーネルを共有したまま実行環境を分ける。VM は分離が強く、コンテナは軽く速い。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ch07_programming_languages.html" class="btn btn-neutral float-left" title="7. プログラミング言語処理系" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ch09_concurrency_and_io.html" class="btn btn-neutral float-right" title="9. 並行処理と入出力" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

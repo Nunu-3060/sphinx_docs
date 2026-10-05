@@ -1,0 +1,408 @@
+################################################################
+第 8 章 中間表現
+################################################################
+
+この章からはコンパイラの「後半」に入ります。まず、抽象構文木を、機械の命令に近い単純な命令の列である\ :term:`中間表現`\ （IR: Intermediate Representation）に変換します。さらに、制御フローグラフ、支配関係、SSA 形式という、現代のコンパイラの最適化を支える概念を実装しながら学びます。
+
+中間表現の役割
+================================================================
+
+抽象構文木はソースコードの構造をよく表していますが、最適化やコード生成には向いていません。たとえば ``a[i + 1] = a[i] * 2 + f(x)`` という 1 つの文の中にも、加算、添字の読み出し、乗算、関数呼び出し、添字への書き込みという複数の計算が入れ子になっています。「同じ計算を 2 回していないか」「この値はもう使われないか」といった分析をするには、計算を 1 つずつばらばらにして、順序と値の流れを明示した形のほうが便利です。
+
+中間表現には抽象度の異なるさまざまな種類があります。
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 45 30
+
+   * - 水準
+     - 特徴
+     - 例
+   * - 高水準
+     - 抽象構文木に近く、ループや配列などの構造を残す
+     - GCC の GENERIC、MLIR の高水準の方言
+   * - 中水準
+     - 単純な命令と制御フローグラフで表し、ソース言語にも機械にも依存しない
+     - LLVM IR、GCC の GIMPLE、本書の IR
+   * - 低水準
+     - 機械の命令にほぼ 1 対 1 で対応する
+     - GCC の RTL、LLVM の MachineInstr
+
+本書では中水準の IR を設計し、``tiny_ir.py`` に実装します。
+
+三番地コード
+================================================================
+
+本書の IR は\ :term:`三番地コード`\ と呼ばれる形式です。各命令は ``x = y + z`` のように、最大 3 つの番地（変数や定数）しか扱いません。入れ子になった式は、:term:`一時変数`\ を使って分解します。一時変数は ``%1``、``%2`` のように ``%`` で始まる名前にして、ソースコードの変数と区別します。
+
+.. list-table:: 本書の IR の命令
+   :header-rows: 1
+   :widths: 35 65
+
+   * - 命令
+     - 意味
+   * - ``x = y``
+     - コピー
+   * - ``x = y op z``
+     - 二項演算（``op`` は ``+``、``<`` など）
+   * - ``x = op y``
+     - 単項演算（``op`` は ``-`` または ``!``）
+   * - ``x = call f(a, b)``
+     - 関数呼び出し（結果を使わない場合は ``x =`` を省略）
+   * - ``x = [a, b, c]``
+     - 配列の生成
+   * - ``x = a[i]``
+     - 添字の読み出し（配列と文字列）
+   * - ``a[i] = x``
+     - 添字への書き込み
+   * - ``x = phi(B1: a, B2: b)``
+     - φ 関数（SSA 形式で使う、後述）
+   * - ``jump L``
+     - 基本ブロック ``L`` へ無条件に移る
+   * - ``branch c, L1, L2``
+     - ``c`` が真なら ``L1`` へ、偽なら ``L2`` へ移る
+   * - ``return x``
+     - 関数から戻る
+
+被演算子（オペランド）は、変数を表す ``Var`` か定数を表す ``Const`` です。命令はデータクラスで表し、命令の種類の集まりを ``Union`` で定義しています。
+
+.. literalinclude:: ../examples/tiny_ir.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :lines: 57-113
+   :caption: tiny_ir.py（命令の定義）
+
+基本ブロックと制御フローグラフ
+================================================================
+
+途中に分岐も合流もなく、先頭から末尾まで一直線に実行される命令の列を\ :term:`基本ブロック`\ と呼びます。基本ブロックの末尾には、次にどこへ進むかを表す終端命令（``jump``、``branch``、``return``）を 1 つだけ置きます。基本ブロックを節点とし、実行が移りうる関係を辺としたグラフを\ :term:`制御フローグラフ`\ （CFG: Control Flow Graph）と呼びます。
+
+.. literalinclude:: ../examples/tiny_ir.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :lines: 138-174
+   :caption: tiny_ir.py（基本ブロックと関数）
+
+次の関数 ``sum`` を例にします。
+
+.. literalinclude:: ../examples/programs/sum.tiny
+   :language: tiny
+   :linenos:
+   :caption: programs/sum.tiny
+
+この関数を IR に変換すると、次の制御フローグラフになります。``while`` 文が、条件を判定するブロック ``cond1`` と、本体のブロック ``body1`` からなるループになっています。
+
+.. graphviz::
+   :caption: 関数 sum の制御フローグラフ
+
+   digraph "sum" {
+     node [shape=box, fontname="monospace"];
+     "entry" [label="entry:\l    s = 0\l    i = 1\l    jump cond1\l"];
+     "cond1" [label="cond1:\l    %1 = i <= n\l    branch %1, body1, endwhile1\l"];
+     "body1" [label="body1:\l    %2 = s + i\l    s = %2\l    %3 = i + 1\l    i = %3\l    jump cond1\l"];
+     "endwhile1" [label="endwhile1:\l    return s\l"];
+     "entry" -> "cond1";
+     "cond1" -> "body1" [label="true"];
+     "cond1" -> "endwhile1" [label="false"];
+     "body1" -> "cond1";
+   }
+
+この図は、``tiny.py`` の ``--dot`` オプションで出力した DOT 言語のテキストを Graphviz で描画したものです。
+
+.. code-block:: console
+   :linenos:
+
+   $ python tiny.py ir --dot sum programs/sum.tiny > sum.dot
+   $ dot -Tsvg sum.dot -o sum.svg
+
+抽象構文木から IR への変換
+================================================================
+
+抽象構文木から IR への変換は ``Lowering`` クラスが行います。``Lowering`` は「組み立て中の基本ブロック」を持ち、``emit`` で命令を追加し、``terminate`` で終端命令を置いてブロックを閉じ、``start_block`` で新しいブロックを始めます。
+
+式の変換
+----------------------------------------------------------------
+
+式の変換 ``lower_expr`` は、式の値を計算する命令を出力し、その値を表すオペランドを返します。リテラルなら定数を、変数ならその変数を返し、演算なら一時変数に結果を入れる命令を出力してその一時変数を返します。
+
+.. literalinclude:: ../examples/tiny_ir.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: Lowering.lower_expr
+   :caption: tiny_ir.py（式の変換）
+
+``&&`` と ``||`` は、短絡評価を表すために分岐に変換します。``a && b`` では、``a`` が偽なら ``b`` を評価せずに終わり、``a`` が真なら ``b`` の値が結果になります。結果を入れる一時変数には、2 つのブロックで値を代入しています。
+
+.. literalinclude:: ../examples/tiny_ir.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: Lowering.lower_logical
+   :caption: tiny_ir.py（短絡評価の変換）
+
+文の変換
+----------------------------------------------------------------
+
+``if`` 文と ``while`` 文は、条件分岐と基本ブロックの組み合わせに変換します。1 つの文から作るラベルには同じ番号を付けて、対応が分かるようにしています（``then1``、``else1``、``endif1`` など）。
+
+.. literalinclude:: ../examples/tiny_ir.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :start-at: case A.If(cond, then_body, else_body):
+   :end-before: case A.Return(value):
+   :caption: tiny_ir.py（if 文と while 文の変換）
+
+内側のブロックで外側と同じ名前の変数を宣言した場合は、``x#2`` のように名前を変えて区別します。IR には入れ子のスコープがないので、別の変数には別の名前を付ける必要があるからです。また、``return`` 文の後ろに書かれた到達不能な命令は、変換の最後に ``remove_unreachable`` で取り除きます。
+
+IR インタプリタ
+================================================================
+
+変換した IR が正しいかを確かめるため、IR を直接実行する ``IRInterpreter`` も用意しています。基本ブロックの命令を順に実行し、終端命令に従って次のブロックに移ります。``steps`` には実行した命令の数を数えており、:doc:`第 9 章 <09_optimization>`\ で最適化の効果を測るのに使います。
+
+.. code-block:: console
+   :linenos:
+
+   $ python tiny.py ir --exec programs/sum.tiny
+   55
+
+支配関係
+================================================================
+
+制御フローグラフの分析で基本となるのが\ :term:`支配`\ の関係です。
+
+入口から基本ブロック :math:`n` に至るすべての経路が基本ブロック :math:`d` を通るとき、「:math:`d` は :math:`n` を支配する」といい、:math:`d \mathrel{\mathrm{dom}} n` と書きます。どの基本ブロックも自分自身を支配します。:math:`n` 以外で :math:`n` を支配するブロックのうち、:math:`n` に最も近いものを :math:`n` の直接支配ブロック（:math:`\mathrm{idom}(n)`）と呼びます。各ブロックからその直接支配ブロックへ辺を張ると木になり、これを\ :term:`支配木`\ と呼びます。
+
+次の関数 ``sign`` を例に考えます。
+
+.. literalinclude:: ../examples/programs/sign.tiny
+   :language: tiny
+   :linenos:
+   :caption: programs/sign.tiny
+
+``sign`` の制御フローグラフと支配木は次のようになります。
+
+.. graphviz::
+   :caption: 関数 sign の制御フローグラフ（左）と支配木（右）
+
+   digraph sign {
+     node [shape=box, fontname="monospace"];
+     subgraph cluster_cfg {
+       label="制御フローグラフ"; fontname="sans-serif"; style=invis;
+       "entry" [label="entry:\l    r = 0\l    %1 = x < 0\l    branch %1, then1, else1\l"];
+       "then1" [label="then1:\l    %2 = - 1\l    r = %2\l    jump endif1\l"];
+       "else1" [label="else1:\l    %3 = x > 0\l    branch %3, then2, endif2\l"];
+       "then2" [label="then2:\l    r = 1\l    jump endif2\l"];
+       "endif2" [label="endif2:\l    jump endif1\l"];
+       "endif1" [label="endif1:\l    return r\l"];
+       "entry" -> "then1" [label="true"];
+       "entry" -> "else1" [label="false"];
+       "then1" -> "endif1";
+       "else1" -> "then2" [label="true"];
+       "else1" -> "endif2" [label="false"];
+       "then2" -> "endif2";
+       "endif2" -> "endif1";
+     }
+     subgraph cluster_dom {
+       label="支配木"; fontname="sans-serif"; style=invis;
+       node [shape=ellipse];
+       d_entry [label="entry"]; d_then1 [label="then1"]; d_else1 [label="else1"];
+       d_then2 [label="then2"]; d_endif2 [label="endif2"]; d_endif1 [label="endif1"];
+       d_entry -> d_then1; d_entry -> d_else1; d_entry -> d_endif1;
+       d_else1 -> d_then2; d_else1 -> d_endif2;
+     }
+   }
+
+``endif1`` には ``then1`` を通る経路と ``else1`` を通る経路があるので、``then1`` も ``else1`` も ``endif1`` を支配しません。``endif1`` を支配するのは ``entry`` と ``endif1`` 自身だけです。一方、``endif2`` に至る経路はすべて ``else1`` を通るので、``else1`` は ``endif2`` を支配します。
+
+支配関係を使うと、「ブロック :math:`d` で計算した値は、:math:`d` が支配するブロックでは必ず計算済みである」と言えます。この性質は、:doc:`第 9 章 <09_optimization>`\ の共通部分式除去などで使います。
+
+支配木の計算
+----------------------------------------------------------------
+
+本書では、Cooper、Harvey、Kennedy による反復アルゴリズムで直接支配ブロックを求めます [Cooper2001]_。基本ブロックを逆後順（深さ優先探索の帰りがけ順の逆）に並べ、各ブロックの直接支配ブロックを「処理済みの先行ブロックたちの、支配木上の共通の祖先」として更新することを、変化がなくなるまで繰り返します。
+
+.. literalinclude:: ../examples/tiny_ssa.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: immediate_dominators
+   :caption: tiny_ssa.py（直接支配ブロックの計算）
+
+``intersect`` は、2 つのブロックから支配木を上にたどり、合流する点を探します。逆後順の番号が大きいほうを親に置き換えていくと、いずれ共通の祖先で一致します。
+
+SSA 形式
+================================================================
+
+:term:`SSA 形式`\ （Static Single Assignment form、静的単一代入形式）は、「すべての変数は、プログラム上でちょうど 1 か所でだけ代入される」という制約を満たす中間表現の形式です。LLVM IR や GCC の GIMPLE をはじめ、現代のほとんどの最適化コンパイラが SSA 形式を使っています。
+
+SSA 形式の利点は、変数の名前を見るだけで、その値がどこで定義されたかが分かることです。通常の IR では、``x`` が使われているか所の値がどの代入から来たのかを知るには、制御フローを分析する必要があります。SSA 形式では ``x.2`` の定義は 1 つしかないので、分析が不要になります。これにより、定数伝播などの最適化を簡単かつ高速に実装できます。
+
+φ 関数
+----------------------------------------------------------------
+
+一直線のコードなら、代入のたびに変数の名前を変えるだけで SSA 形式にできます。
+
+.. code-block:: text
+   :linenos:
+
+   x = 1           x.1 = 1
+   x = x + 2   =>  x.2 = x.1 + 2
+   y = x * 3       y.1 = x.2 * 3
+
+問題は、制御フローが合流する場所です。関数 ``sign`` の ``endif1`` で ``return r`` の ``r`` は、``then1`` から来た場合は ``-1``、``endif2`` から来た場合は ``0`` または ``1`` です。どちらの名前を使えばよいかは、実行時にどこから来たかによって決まります。
+
+そこで :term:`φ 関数`\ という特別な命令を導入します。``r.5 = phi(then1: r.4, endif2: r.3)`` は、「直前に ``then1`` を実行していたら ``r.4`` を、``endif2`` を実行していたら ``r.3`` を ``r.5`` とする」という意味です。φ 関数は基本ブロックの先頭に置き、そのブロックの φ 関数はすべて同時に評価します。
+
+φ 関数を置く場所：支配辺境
+----------------------------------------------------------------
+
+φ 関数は、異なる定義が合流するブロックに置く必要があります。その場所は\ :term:`支配辺境`\ を使って求められます [Cytron1991]_。ブロック :math:`n` の支配辺境 :math:`\mathrm{DF}(n)` は、「:math:`n` が支配する範囲から一歩出たところ」にあたるブロックの集合です。
+
+.. math::
+
+   \mathrm{DF}(n) = \{\, m \mid n \text{ が } m \text{ のある先行ブロックを支配し、かつ } n \text{ は } m \text{ を真に支配しない} \,\}
+
+ここで「真に支配する」とは、自分自身以外を支配することです。ブロック :math:`n` で変数 :math:`x` を定義すると、その定義は :math:`n` が支配するブロックには必ず届きますが、:math:`\mathrm{DF}(n)` のブロックでは別の経路から来た定義と合流します。したがって、:math:`x` を定義するすべてのブロックの支配辺境に :math:`x` の φ 関数を置けばよいことになります。φ 関数自体も :math:`x` の新しい定義なので、置いたブロックの支配辺境にも、さらに φ 関数を置きます（反復支配辺境）。
+
+関数 ``sign`` の各ブロックの直接支配ブロックと支配辺境は次のとおりです。
+
+.. code-block:: console
+   :linenos:
+
+   $ python tiny_ssa.py programs/sign.tiny  # 出力の先頭部分
+   function sign
+     entry        idom=entry        DF=[]
+     then1        idom=entry        DF=['endif1']
+     else1        idom=entry        DF=['endif1']
+     then2        idom=else1        DF=['endif2']
+     endif2       idom=else1        DF=['endif1']
+     endif1       idom=entry        DF=[]
+
+``r`` は ``entry``、``then1``、``then2`` で定義されています。``then1`` の支配辺境 ``endif1`` と、``then2`` の支配辺境 ``endif2`` に φ 関数を置きます。``endif2`` に置いた φ 関数も ``r`` の定義なので、その支配辺境 ``endif1`` にも φ 関数が必要ですが、すでに置いてあります。
+
+支配辺境は、合流するブロックの先行ブロックから、合流するブロックの直接支配ブロックに達するまで支配木をたどることで計算できます。
+
+.. literalinclude:: ../examples/tiny_ssa.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: dominance_frontiers
+   :caption: tiny_ssa.py（支配辺境の計算）
+
+名前の付け替え
+----------------------------------------------------------------
+
+φ 関数を置いた後、支配木を根から深さ優先でたどりながら、変数の名前を付け替えます。変数ごとに「現在有効な名前」のスタックを持ち、定義を見つけたら新しい名前（``r.1``、``r.2``、…）を作ってスタックに積み、使用を見つけたらスタックの先頭の名前に置き換えます。また、各ブロックの処理の最後に、後続ブロックの φ 関数の引数を、現在有効な名前で埋めます。子ブロックの処理が終わったら、そのブロックで積んだ名前をスタックから降ろします。
+
+.. literalinclude:: ../examples/tiny_ssa.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :start-at: # 3. 支配木をたどりながら名前を付け替える。
+   :end-at: rename(func.entry)
+   :caption: tiny_ssa.py（名前の付け替え）
+
+本書の実装では、定義が 1 か所しかない変数は名前を付け替えず、φ 関数も置きません。Tiny では変数を宣言してから使うので、定義が 1 か所しかない変数は、その定義がすべての使用を支配しているからです。これにより、ほとんどの一時変数は元の名前のまま残り、出力が読みやすくなります。
+
+関数 ``sign`` を SSA 形式に変換した結果を示します。番号は、名前の付け替えで定義を訪れた順に付いています。
+
+.. code-block:: console
+   :linenos:
+
+   $ python tiny.py ir --ssa programs/sign.tiny
+   function sign(x)
+   entry:
+       r.1 = 0
+       %1 = x < 0
+       branch %1, then1, else1
+   then1:
+       %2 = - 1
+       r.4 = %2
+       jump endif1
+   else1:
+       %3 = x > 0
+       branch %3, then2, endif2
+   then2:
+       r.2 = 1
+       jump endif2
+   endif2:
+       r.3 = phi(else1: r.1, then2: r.2)
+       jump endif1
+   endif1:
+       r.5 = phi(then1: r.4, endif2: r.3)
+       return r.5
+
+ループを含む関数 ``sum`` では、ループの先頭 ``cond1`` に φ 関数が置かれます。``s.2`` は、最初に ``entry`` から来たときは ``s.1``\ （つまり 0）、ループを 1 周して ``body1`` から戻ってきたときは ``s.3`` になります。
+
+.. graphviz::
+   :caption: SSA 形式に変換した関数 sum
+
+   digraph "sum" {
+     node [shape=box, fontname="monospace"];
+     "entry" [label="entry:\l    s.1 = 0\l    i.1 = 1\l    jump cond1\l"];
+     "cond1" [label="cond1:\l    s.2 = phi(entry: s.1, body1: s.3)\l    i.2 = phi(entry: i.1, body1: i.3)\l    %1 = i.2 <= n\l    branch %1, body1, endwhile1\l"];
+     "body1" [label="body1:\l    %2 = s.2 + i.2\l    s.3 = %2\l    %3 = i.2 + 1\l    i.3 = %3\l    jump cond1\l"];
+     "endwhile1" [label="endwhile1:\l    return s.2\l"];
+     "entry" -> "cond1";
+     "cond1" -> "body1" [label="true"];
+     "cond1" -> "endwhile1" [label="false"];
+     "body1" -> "cond1";
+   }
+
+ループの中で宣言し、さらに代入し直す変数のように、一部の経路でしか定義されない変数の φ 関数では、定義のない経路の引数が ``undef``\ （未定義値）になります。このような φ 関数の結果は実際には使われないので、:doc:`第 9 章 <09_optimization>`\ の不要コード除去で取り除かれます。必要な場所にだけ φ 関数を置くように、生存変数の情報を使って φ 関数の配置を絞り込む方法（pruned SSA）もあります。
+
+SSA 形式からの復帰
+================================================================
+
+実際の機械には φ 関数がないので、コード生成の前に φ 関数を通常の命令に戻す必要があります。素朴な方法は、``x = phi(B1: a, B2: b)`` に対して、``B1`` の末尾に ``x = a`` を、``B2`` の末尾に ``x = b`` を置くことです。しかし、最適化で SSA 形式の変数どうしのコピーを取り除いた後では、この方法は誤った結果を生むことがあります。たとえば、ループの先頭に ``a.2 = phi(..., body: b.2)`` と ``b.2 = phi(..., body: a.2)`` という 2 つの φ 関数がある場合（2 つの変数の値を交換するループ）、``body`` の末尾に ``a.2 = b.2`` と ``b.2 = a.2`` を順に置くと、2 つ目のコピーが書き換え後の ``a.2`` を読んでしまいます。これは swap 問題と呼ばれます。
+
+本書では、φ 関数ごとに新しい変数 ``x'`` を用意して、2 段階でコピーすることでこの問題を避けます。先行ブロックの末尾で ``x' = a`` とし、φ 関数があった位置で ``x = x'`` とします。φ 関数の引数はすべて先行ブロックで読み終えてから書き込まれるので、φ 関数を同時に評価するという意味が保たれます。
+
+.. literalinclude:: ../examples/tiny_ssa.py
+   :language: python
+   :linenos:
+   :lineno-match:
+   :pyobject: from_ssa
+   :caption: tiny_ssa.py（SSA 形式からの復帰）
+
+.. code-block:: text
+   :linenos:
+   :caption: 関数 sum を SSA 形式から戻した結果
+
+   function sum(n)
+   entry:
+       s.1 = 0
+       i.1 = 1
+       s.2' = s.1
+       i.2' = i.1
+       jump cond1
+   cond1:
+       s.2 = s.2'
+       i.2 = i.2'
+       %1 = i.2 <= n
+       branch %1, body1, endwhile1
+   body1:
+       %2 = s.2 + i.2
+       s.3 = %2
+       %3 = i.2 + 1
+       i.3 = %3
+       s.2' = s.3
+       i.2' = i.3
+       jump cond1
+   endwhile1:
+       return s.2
+
+この方法ではコピー命令が増えます。余分なコピーは、レジスタ割り当ての段階でコピー元とコピー先に同じレジスタを割り当てれば取り除けます。この技法をコピーの合併と呼びます（:doc:`第 11 章 <11_runtime>`\ で説明します）。
+
+まとめ
+================================================================
+
+* 中間表現は、入れ子の式を一時変数で分解した単純な命令の列で、最適化とコード生成の対象になります。
+* 命令の列は基本ブロックに分け、制御フローグラフで実行の流れを表します。
+* 入口からのすべての経路が :math:`d` を通るとき、:math:`d` は :math:`n` を支配します。支配関係は支配木で表せます。
+* SSA 形式ではすべての変数の定義が 1 か所になり、合流点では φ 関数で値を選びます。φ 関数は支配辺境に置きます。
+* SSA 形式から戻すときは、φ 関数を先行ブロックでのコピーに置き換えます。

@@ -1,0 +1,919 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7. CPU スケジューリング &mdash; オペレーティングシステム入門 1.0</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=fc4766ba" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="8. メモリ管理" href="08_memory.html" />
+    <link rel="prev" title="6. スレッドと並行性" href="06_thread.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            オペレーティングシステム入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. はじめに</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id2">1.1. 本書の目的</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id3">1.2. 対象読者</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id4">1.3. 本書の構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id5">1.4. サンプルコードの使い方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_introduction.html#id6">1.5. 表記について</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="02_what_is_os.html">2. OS とは何か</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id1">2.1. OS の定義</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_os.html#id2">2.1.1. 拡張機械としての OS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_os.html#id3">2.1.2. 資源管理者としての OS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id4">2.2. OS がない世界</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id5">2.3. カーネルとユーザーランド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id6">2.4. OS が提供する抽象化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id7">2.5. OS の主な機能</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id8">2.6. 機構と方針の分離</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id9">2.7. OS の設計目標とトレードオフ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id10">2.8. OS の種類</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id11">2.9. OS のインターフェース</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_os.html#id12">2.9.1. 利用者に対するインターフェース</a></li>
+<li class="toctree-l3"><a class="reference internal" href="02_what_is_os.html#id13">2.9.2. アプリケーションに対するインターフェース</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#python-os">2.10. Python のプログラムから見た OS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_what_is_os.html#id14">2.11. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="03_history.html">3. OS の歴史</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id1">3.1. 年表</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id2">3.2. OS 以前の時代</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id3">3.3. バッチ処理の時代</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id4">3.3.1. 保護の必要性</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id5">3.4. マルチプログラミング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#os-360">3.4.1. OS/360 とソフトウェア開発の難しさ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id6">3.5. タイムシェアリング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#ctss">3.5.1. CTSS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#multics">3.5.2. Multics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#the">3.5.3. THE とダイクストラ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id7">3.5.4. 仮想記憶の誕生</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#unix">3.6. UNIX の誕生</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#c">3.6.1. C 言語による書き直し</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id8">3.6.2. UNIX の設計思想</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id9">3.6.3. UNIX の普及と分裂</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id10">3.7. パーソナルコンピュータの OS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#cp-m-ms-dos">3.7.1. CP/M と MS-DOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#gui">3.7.2. GUI の登場</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#windows-nt">3.7.3. Windows NT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#macos">3.7.4. macOS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id11">3.8. オープンソースの OS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#gnu">3.8.1. GNU プロジェクト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#minix-linux">3.8.2. MINIX と Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#bsd-os">3.8.3. BSD 系 OS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#os-tron">3.9. 日本の OS：TRON</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id12">3.10. モバイル OS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id13">3.11. 仮想化とクラウドの時代</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id14">3.11.1. 仮想化の起源</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#x86">3.11.2. x86 の仮想化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="03_history.html#id15">3.11.3. クラウドとコンテナ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id16">3.12. 歴史から見える流れ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_history.html#id17">3.13. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="04_hardware_and_kernel.html">4. ハードウェアとカーネル</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#cpu">4.1. CPU の特権モード</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id2">4.2. 割り込みと例外</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id3">4.2.1. タイマー割り込み</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id4">4.3. システムコール</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id5">4.3.1. システムコールの流れ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id6">4.3.2. 主なシステムコール</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id7">4.3.3. システムコールの費用</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id8">4.3.4. システムコールを観察する</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id9">4.4. 起動の流れ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id10">4.5. カーネルの構成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id11">4.5.1. モノリシックカーネル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id12">4.5.2. マイクロカーネル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="04_hardware_and_kernel.html#id13">4.5.3. ハイブリッドカーネル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="04_hardware_and_kernel.html#id14">4.6. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="05_process.html">5. プロセス</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id2">5.1. プログラムとプロセス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id3">5.2. プロセスのアドレス空間</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id4">5.3. プロセスの状態</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id5">5.4. プロセス制御ブロック</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id6">5.4.1. 自分のプロセスの情報を見る</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id7">5.5. プロセスの作成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#unix-os-fork-exec">5.5.1. UNIX 系 OS：fork と exec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#windows-createprocess">5.5.2. Windows：CreateProcess</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id8">5.6. プロセスの終了</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id9">5.6.1. ゾンビプロセスと孤児プロセス</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id10">5.7. プロセス間通信</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id11">5.7.1. パイプ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id12">5.7.2. シグナル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="05_process.html#id13">5.7.3. 共有メモリ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="05_process.html#id14">5.8. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="06_thread.html">6. スレッドと並行性</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id2">6.1. スレッドとは</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id3">6.1.1. なぜスレッドを使うのか</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id4">6.1.2. 並行と並列</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id5">6.2. ユーザースレッドとカーネルスレッド</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id6">6.3. 競合状態</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id7">6.4. クリティカルセクションと排他制御</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id8">6.4.1. アトミック命令</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id9">6.4.2. ミューテックス</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id10">6.4.3. セマフォ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id11">6.4.4. 条件変数</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id12">6.5. デッドロック</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id13">6.5.1. デッドロックの 4 条件</a></li>
+<li class="toctree-l3"><a class="reference internal" href="06_thread.html#id14">6.5.2. デッドロックへの対処</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id15">6.6. その他の問題</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#python-gil">6.7. Python のスレッドと GIL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_thread.html#id16">6.8. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">7. CPU スケジューリング</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">7.1. コンテキストスイッチ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">7.2. スケジューリングの基本</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">7.2.1. CPU バーストと入出力バースト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">7.2.2. スケジューリングのきっかけ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">7.2.3. 評価指標</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">7.3. スケジューリングのアルゴリズム</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fcfs">7.3.1. FCFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sjf">7.3.2. SJF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">7.3.3. ラウンドロビン</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">7.3.4. シミュレーターによる比較</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">7.3.5. 優先度スケジューリング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">7.3.6. 多段フィードバックキュー</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#os">7.4. 実際の OS のスケジューラ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#linux">7.4.1. Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#windows">7.4.2. Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">7.5. マルチコアのスケジューリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">7.6. リアルタイムスケジューリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">7.7. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="08_memory.html">8. メモリ管理</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="08_memory.html#id2">8.1. 物理アドレスと論理アドレス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_memory.html#id3">8.2. 単純な方式とその問題</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id4">8.2.1. ベースレジスタとリミットレジスタ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id5">8.2.2. セグメンテーション</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="08_memory.html#id6">8.3. ページング</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id7">8.3.1. アドレス変換</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id8">8.3.2. ページテーブルのエントリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id9">8.3.3. 多段のページテーブル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#tlb">8.3.4. TLB</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="08_memory.html#id10">8.4. 仮想記憶</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id11">8.4.1. デマンドページング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id12">8.4.2. ページ置換</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id13">8.4.3. ワーキングセットとスラッシング</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="08_memory.html#id14">8.5. ページングの応用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id15">8.5.1. コピーオンライト</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id16">8.5.2. 共有ライブラリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id17">8.5.3. メモリマップトファイル</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="08_memory.html#id18">8.6. メモリの割り当てとメモリ不足</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id19">8.6.1. ユーザー空間でのメモリの割り当て</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#id20">8.6.2. メモリの使用量の指標</a></li>
+<li class="toctree-l3"><a class="reference internal" href="08_memory.html#oom-killer">8.6.3. オーバーコミットと OOM Killer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="08_memory.html#id21">8.7. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="09_storage_and_filesystem.html">9. ストレージとファイルシステム</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id2">9.1. ストレージ装置</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id3">9.1.1. ブロックデバイス</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id4">9.2. ファイルとディレクトリ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id5">9.2.1. ファイル</a></li>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id6">9.2.2. ディレクトリ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id7">9.2.3. リンク</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id8">9.3. ファイルディスクリプタ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id9">9.4. ファイルシステムの構造</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id10">9.4.1. データの配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id11">9.5. ページキャッシュと書き込み</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id12">9.6. クラッシュへの備え</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id13">9.6.1. ジャーナリング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id14">9.6.2. コピーオンライトのファイルシステム</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id15">9.7. 主なファイルシステム</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="09_storage_and_filesystem.html#id16">9.7.1. 仮想ファイルシステム</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id17">9.8. アクセス権</a></li>
+<li class="toctree-l2"><a class="reference internal" href="09_storage_and_filesystem.html#id18">9.9. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="10_io_and_device.html">10. 入出力とデバイス</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#id2">10.1. デバイスドライバ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#id3">10.1.1. デバイスの種類</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#cpu">10.2. CPU と装置のやり取り</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#id4">10.3. 入出力スケジューリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#id5">10.4. アプリケーションから見た入出力の方式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#i-o">10.4.1. ブロッキング I/O</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#id6">10.4.2. ノンブロッキング I/O</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#id7">10.4.3. I/O 多重化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="10_io_and_device.html#id8">10.4.4. 非同期 I/O</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="10_io_and_device.html#id9">10.5. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="11_network.html">11. OS とネットワーク</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id1">11.1. ソケット</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#tcp">11.1.1. TCP のサーバーとクライアント</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#id2">11.1.2. ポート番号</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id3">11.2. カーネルの中のプロトコルスタック</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#id4">11.2.1. 送信の流れ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#id5">11.2.2. 受信の流れ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="11_network.html#id6">11.2.3. ループバック</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id7">11.3. ネットワークの高速化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id8">11.4. 通信の状態を観察する</a></li>
+<li class="toctree-l2"><a class="reference internal" href="11_network.html#id9">11.5. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="12_security.html">12. セキュリティと保護</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id2">12.1. 保護とセキュリティの目標</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id3">12.2. 利用者と権限</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id4">12.2.1. 利用者の識別と認証</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id5">12.2.2. 管理者と最小権限の原則</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id6">12.3. アクセス制御</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id7">12.4. 攻撃と防御機構</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id8">12.4.1. バッファオーバーフロー</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id9">12.4.2. 防御機構</a></li>
+<li class="toctree-l3"><a class="reference internal" href="12_security.html#id10">12.4.3. カーネルの保護</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id11">12.5. サンドボックス</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id12">12.6. 起動の検証</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id13">12.7. 更新の重要性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="12_security.html#id14">12.8. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="13_virtualization.html">13. 仮想化とコンテナ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id2">13.1. 仮想化とは</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id3">13.2. ハイパーバイザー</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#cpu">13.2.1. CPU の仮想化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#id4">13.2.2. メモリの仮想化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#id5">13.2.3. 入出力の仮想化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id6">13.3. コンテナ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#namespace">13.3.1. namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#cgroup">13.3.2. cgroup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="13_virtualization.html#id7">13.3.3. コンテナイメージ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id8">13.4. 仮想マシンとコンテナの比較</a></li>
+<li class="toctree-l2"><a class="reference internal" href="13_virtualization.html#id9">13.5. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="14_practice.html">14. OS を観察する</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id1">14.1. 観察の道具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id2">14.2. プロセスを観察する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#ps-top">14.2.1. ps と top</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#proc">14.2.2. /proc ファイルシステム</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id3">14.3. システムの概況を観察する</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#id4">14.3.1. ロードアベレージ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#vmstat">14.3.2. vmstat</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id5">14.4. 性能の問題を切り分ける</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#use">14.4.1. USE メソッド</a></li>
+<li class="toctree-l3"><a class="reference internal" href="14_practice.html#id6">14.4.2. よくある症状と原因</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="14_practice.html#id7">14.5. まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="15_summary.html">15. まとめ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="15_summary.html#id2">15.1. 各章の要点</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_summary.html#id3">15.2. 本書を貫く考え方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="15_summary.html#id4">15.3. 次に学ぶべきこと</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_references.html">参考文献</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#os">OS の教科書</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#linux-windows">Linux と Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id2">歴史</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#id3">論文</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_references.html#web">Web サイト</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_examples.html">サンプルコード一覧</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="appendix_examples.html#id2">コードの品質について</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appendix_examples.html#id3">実行時の注意</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">オペレーティングシステム入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">7. </span>CPU スケジューリング</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cpu">
+<h1><span class="section-number">7. </span>CPU スケジューリング<a class="headerlink" href="#cpu" title="Link to this heading"></a></h1>
+<p>実行可能なスレッドの数は、たいてい CPU コアの数よりも多くなります。どのスレッドに、いつ、どれだけの時間 CPU を割り当てるかを決めることを CPU スケジューリングと呼び、それを担うカーネルの部分をスケジューラと呼びます。この章では、CPU の切り替えの仕組みと、代表的なスケジューリングのアルゴリズム、実際の OS のスケジューラを説明します。</p>
+<p>なお、現在の OS が CPU を割り当てる単位はスレッドですが、スケジューリングの議論では伝統的に「プロセス」という言葉が使われるため、この章でもプロセスと呼ぶことがあります。</p>
+<section id="id1">
+<h2><span class="section-number">7.1. </span>コンテキストスイッチ<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>CPU で実行するスレッドを切り替える操作をコンテキストスイッチと呼びます。コンテキストスイッチでは、カーネルは次のことを行います。</p>
+<ol class="arabic simple">
+<li><p>実行中のスレッドのレジスタの値（プログラムカウンタ、スタックポインタなど）を、そのスレッドの管理領域に保存する。</p></li>
+<li><p>スケジューラが、次に実行するスレッドを選ぶ。</p></li>
+<li><p>選んだスレッドが別のプロセスに属していれば、アドレス空間を切り替える（ページテーブルを切り替える）。</p></li>
+<li><p>選んだスレッドの管理領域から、レジスタの値を復元する。</p></li>
+<li><p>選んだスレッドの実行を再開する。</p></li>
+</ol>
+<p>コンテキストスイッチの間、CPU はアプリケーションの役に立つ仕事をしていません。また、切り替えの直接の費用に加えて、間接的な費用も生じます。切り替え後のスレッドは、CPU のキャッシュや TLB（第 8 章で説明します）に自分のデータが載っていない状態から始めることになり、しばらくの間は処理が遅くなります。コンテキストスイッチ自体はマイクロ秒程度で終わりますが、あまりに頻繁に切り替えると、この費用が無視できなくなります。</p>
+</section>
+<section id="id2">
+<h2><span class="section-number">7.2. </span>スケジューリングの基本<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3><span class="section-number">7.2.1. </span>CPU バーストと入出力バースト<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>プロセスの実行は、CPU で計算を行う期間（CPU バースト）と、入出力の完了を待つ期間（入出力バースト）を交互に繰り返します。CPU バーストの長さによって、プロセスはおおまかに次の 2 種類に分けられます。</p>
+<ul class="simple">
+<li><p>CPU バウンド：CPU バーストが長いプロセス。科学技術計算、動画のエンコード、コンパイルなど。</p></li>
+<li><p>I/O バウンド：CPU バーストが短く、すぐに入出力の待ちに入るプロセス。エディタ、Web サーバー、データベースなど。</p></li>
+</ul>
+<p>I/O バウンドのプロセスには、待ちから戻ったらすぐに CPU を割り当てるのが望ましいといえます。短い計算を済ませて次の入出力を早く始められれば、入出力装置も効率よく使われ、利用者への応答も速くなるからです。</p>
+</section>
+<section id="id4">
+<h3><span class="section-number">7.2.2. </span>スケジューリングのきっかけ<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>スケジューラが次に実行するプロセスを選ぶのは、次のような場合です。</p>
+<ol class="arabic simple">
+<li><p>実行中のプロセスが待ちの状態に入る（入出力の要求など）。</p></li>
+<li><p>実行中のプロセスが終了する。</p></li>
+<li><p>待ちの状態のプロセスが実行可能になる。</p></li>
+<li><p>タイマー割り込みが起きる。</p></li>
+</ol>
+<p>1 と 2 の場合だけスケジューリングを行う方式を非プリエンプティブ（横取りなし）、3 と 4 の場合にも実行中のプロセスから CPU を取り上げることがある方式をプリエンプティブ（横取りあり）と呼びます。現在の汎用 OS のスケジューラはすべてプリエンプティブです。</p>
+</section>
+<section id="id5">
+<h3><span class="section-number">7.2.3. </span>評価指標<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>スケジューリングのアルゴリズムの良し悪しは、次のような指標で評価します。</p>
+<table class="docutils align-default" id="id14">
+<caption><span class="caption-number">表 7.1 </span><span class="caption-text">スケジューリングの評価指標</span><a class="headerlink" href="#id14" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 50.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>指標</p></th>
+<th class="head"><p>定義</p></th>
+<th class="head"><p>望ましい方向</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CPU 利用率</p></td>
+<td><p>CPU が仕事をしている時間の割合</p></td>
+<td><p>高い</p></td>
+</tr>
+<tr class="row-odd"><td><p>スループット</p></td>
+<td><p>単位時間あたりに完了するプロセスの数</p></td>
+<td><p>多い</p></td>
+</tr>
+<tr class="row-even"><td><p>ターンアラウンド時間</p></td>
+<td><p>プロセスが到着してから終了するまでの時間</p></td>
+<td><p>短い</p></td>
+</tr>
+<tr class="row-odd"><td><p>待ち時間</p></td>
+<td><p>プロセスが実行可能キューで待っていた時間の合計</p></td>
+<td><p>短い</p></td>
+</tr>
+<tr class="row-even"><td><p>応答時間</p></td>
+<td><p>プロセスが到着してから、初めて CPU を割り当てられるまでの時間</p></td>
+<td><p>短い</p></td>
+</tr>
+</tbody>
+</table>
+<p>プロセス <span class="math notranslate nohighlight">\(i\)</span> の到着時刻を <span class="math notranslate nohighlight">\(A_i\)</span>、終了時刻を <span class="math notranslate nohighlight">\(F_i\)</span>、CPU バースト時間を <span class="math notranslate nohighlight">\(B_i\)</span> とすると、入出力の待ちがない場合、ターンアラウンド時間 <span class="math notranslate nohighlight">\(T_i\)</span> と待ち時間 <span class="math notranslate nohighlight">\(W_i\)</span> は次の式で表されます。</p>
+<div class="math notranslate nohighlight">
+\[T_i = F_i - A_i, \qquad W_i = T_i - B_i\]</div>
+<p>どの指標を重視するかは用途によって異なり、すべての指標を同時に最良にするアルゴリズムはありません。例えば、バッチ処理ではスループットやターンアラウンド時間が、対話的な利用では応答時間が重視されます。</p>
+</section>
+</section>
+<section id="id6">
+<h2><span class="section-number">7.3. </span>スケジューリングのアルゴリズム<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>代表的なアルゴリズムを、次の 4 つのプロセスを例に比べます。時間の単位は任意です。</p>
+<table class="docutils align-default" id="id15">
+<caption><span class="caption-number">表 7.2 </span><span class="caption-text">例に用いるプロセス</span><a class="headerlink" href="#id15" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 35.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>プロセス</p></th>
+<th class="head"><p>到着時刻</p></th>
+<th class="head"><p>CPU バースト時間</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>P1</p></td>
+<td><p>0</p></td>
+<td><p>7</p></td>
+</tr>
+<tr class="row-odd"><td><p>P2</p></td>
+<td><p>2</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-even"><td><p>P3</p></td>
+<td><p>4</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>P4</p></td>
+<td><p>5</p></td>
+<td><p>4</p></td>
+</tr>
+</tbody>
+</table>
+<section id="fcfs">
+<h3><span class="section-number">7.3.1. </span>FCFS<a class="headerlink" href="#fcfs" title="Link to this heading"></a></h3>
+<p>FCFS（First-Come, First-Served：先着順）は、到着した順に CPU を割り当て、各プロセスを最後まで実行する非プリエンプティブな方式です。実装は単純ですが、CPU バーストの長いプロセスが先に到着すると、後から来た短いプロセスが長く待たされます。この現象は、遅いトラックの後ろに乗用車の列ができる様子にたとえて、護送船団効果（convoy effect）と呼ばれます。上の例では、CPU バースト時間が 1 しかない P3 が、7 も待たされます。</p>
+</section>
+<section id="sjf">
+<h3><span class="section-number">7.3.2. </span>SJF<a class="headerlink" href="#sjf" title="Link to this heading"></a></h3>
+<p>SJF（Shortest Job First）は、実行可能なプロセスのうち、CPU バースト時間が最も短いものを選ぶ方式です。到着済みのプロセスの集まりに対して、SJF は平均待ち時間を最小にすることが知られています。短いプロセスを先に片付ければ、待たされるプロセスの数が早く減るからです。</p>
+<p>SJF の問題は、CPU バースト時間を事前に知ることが一般にはできない点です。実際には、過去の CPU バースト時間から次の値を予測します。よく使われるのは、次の指数移動平均による予測です。</p>
+<div class="math notranslate nohighlight">
+\[\tau_{n+1} = \alpha \, t_n + (1 - \alpha) \, \tau_n \qquad (0 \leq \alpha \leq 1)\]</div>
+<p>ここで <span class="math notranslate nohighlight">\(t_n\)</span> は <span class="math notranslate nohighlight">\(n\)</span> 回目の CPU バーストの実際の長さ、<span class="math notranslate nohighlight">\(\tau_n\)</span> はその予測値です。<span class="math notranslate nohighlight">\(\alpha\)</span> を大きくするほど、直近の実績を重視した予測になります。</p>
+<p>また、CPU バースト時間の長いプロセスは、短いプロセスが次々に到着すると、いつまでも実行されない飢餓に陥るおそれがあります。</p>
+<p>SJF をプリエンプティブにした方式は、SRTF（Shortest Remaining Time First）と呼ばれます。新しいプロセスが到着したとき、その CPU バースト時間が実行中のプロセスの残り時間より短ければ、CPU を横取りして新しいプロセスに割り当てます。</p>
+</section>
+<section id="id7">
+<h3><span class="section-number">7.3.3. </span>ラウンドロビン<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>ラウンドロビン（RR）は、実行可能なプロセスを待ち行列に並べ、先頭のプロセスにタイムクォンタム（タイムスライス）と呼ばれる一定の時間だけ CPU を割り当てる方式です。タイムクォンタムを使い切ったプロセスは、待ち行列の最後尾に戻ります。どのプロセスも一定時間内に必ず順番が回ってくるため、応答時間が短く、対話的な利用に向いています。</p>
+<p>ラウンドロビンの性能は、タイムクォンタムの長さに大きく左右されます。</p>
+<ul class="simple">
+<li><p>タイムクォンタムが長すぎると、FCFS に近づき、応答時間が長くなる。</p></li>
+<li><p>タイムクォンタムが短すぎると、コンテキストスイッチの回数が増え、その費用の割合が大きくなる。</p></li>
+</ul>
+<p>実際の OS では、タイムクォンタムは数ミリ秒から数十ミリ秒程度に設定されています。</p>
+</section>
+<section id="id8">
+<h3><span class="section-number">7.3.4. </span>シミュレーターによる比較<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p>サンプルコード <a class="reference download internal" download="" href="_downloads/04bdffed859b5c9e2319e1f3378f2434/scheduler_sim.py"><code class="xref download docutils literal notranslate"><span class="pre">scheduler_sim.py</span></code></a> は、上の例のプロセスに FCFS、SJF（横取りなし）、ラウンドロビン（タイムクォンタム 2）を適用し、ガントチャートと評価指標を表示するものです。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-number">リスト 7.1 </span><span class="caption-text">scheduler_sim.py</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="sd">&quot;&quot;&quot;CPU スケジューリングのシミュレーター。</span>
+<span class="linenos">  2</span>
+<span class="linenos">  3</span><span class="sd">到着時刻と CPU バースト時間 (CPU を使う時間) が決まった</span>
+<span class="linenos">  4</span><span class="sd">プロセスの集まりに対して、次の 3 つのアルゴリズムを適用し、</span>
+<span class="linenos">  5</span><span class="sd">実行の順序 (ガントチャート) と評価指標を比べます。</span>
+<span class="linenos">  6</span>
+<span class="linenos">  7</span><span class="sd">* FCFS: 到着順に実行する (横取りなし)</span>
+<span class="linenos">  8</span><span class="sd">* SJF: CPU バースト時間が最も短いものから実行する (横取りなし)</span>
+<span class="linenos">  9</span><span class="sd">* RR: タイムクォンタムごとに順番に実行する (横取りあり)</span>
+<span class="linenos"> 10</span>
+<span class="linenos"> 11</span><span class="sd">時間は 1 単位ずつ進めます。入出力による待ちはないものとします。</span>
+<span class="linenos"> 12</span>
+<span class="linenos"> 13</span><span class="sd">実行方法::</span>
+<span class="linenos"> 14</span>
+<span class="linenos"> 15</span><span class="sd">    python scheduler_sim.py</span>
+<span class="linenos"> 16</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos"> 17</span>
+<span class="linenos"> 18</span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
+<span class="linenos"> 19</span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="linenos"> 20</span>
+<span class="linenos"> 21</span>
+<span class="linenos"> 22</span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos"> 23</span><span class="k">class</span><span class="w"> </span><span class="nc">Process</span><span class="p">:</span>
+<span class="linenos"> 24</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;スケジューリングの対象となるプロセス。&quot;&quot;&quot;</span>
+<span class="linenos"> 25</span>
+<span class="linenos"> 26</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos"> 27</span>    <span class="n">arrival</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 到着時刻</span>
+<span class="linenos"> 28</span>    <span class="n">burst</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># CPU バースト時間</span>
+<span class="linenos"> 29</span>
+<span class="linenos"> 30</span>
+<span class="linenos"> 31</span><span class="nd">@dataclass</span>
+<span class="linenos"> 32</span><span class="k">class</span><span class="w"> </span><span class="nc">Result</span><span class="p">:</span>
+<span class="linenos"> 33</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;1 つのプロセスについてのシミュレーション結果。&quot;&quot;&quot;</span>
+<span class="linenos"> 34</span>
+<span class="linenos"> 35</span>    <span class="n">process</span><span class="p">:</span> <span class="n">Process</span>
+<span class="linenos"> 36</span>    <span class="n">first_run</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 初めて CPU を割り当てられた時刻</span>
+<span class="linenos"> 37</span>    <span class="n">finish</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 終了時刻</span>
+<span class="linenos"> 38</span>
+<span class="linenos"> 39</span>    <span class="nd">@property</span>
+<span class="linenos"> 40</span>    <span class="k">def</span><span class="w"> </span><span class="nf">turnaround</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos"> 41</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;ターンアラウンド時間 = 終了時刻 - 到着時刻。&quot;&quot;&quot;</span>
+<span class="linenos"> 42</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finish</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">arrival</span>
+<span class="linenos"> 43</span>
+<span class="linenos"> 44</span>    <span class="nd">@property</span>
+<span class="linenos"> 45</span>    <span class="k">def</span><span class="w"> </span><span class="nf">waiting</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos"> 46</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;待ち時間 = ターンアラウンド時間 - CPU バースト時間。&quot;&quot;&quot;</span>
+<span class="linenos"> 47</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">turnaround</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">burst</span>
+<span class="linenos"> 48</span>
+<span class="linenos"> 49</span>    <span class="nd">@property</span>
+<span class="linenos"> 50</span>    <span class="k">def</span><span class="w"> </span><span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos"> 51</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;応答時間 = 初めて実行された時刻 - 到着時刻。&quot;&quot;&quot;</span>
+<span class="linenos"> 52</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_run</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">arrival</span>
+<span class="linenos"> 53</span>
+<span class="linenos"> 54</span>
+<span class="linenos"> 55</span><span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span>
+<span class="linenos"> 56</span>    <span class="n">processes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Process</span><span class="p">],</span> <span class="n">timeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="linenos"> 57</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Result</span><span class="p">]:</span>
+<span class="linenos"> 58</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;時刻ごとの実行プロセス名の列から、プロセスごとの結果を求める。&quot;&quot;&quot;</span>
+<span class="linenos"> 59</span>    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 60</span>    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">processes</span><span class="p">:</span>
+<span class="linenos"> 61</span>        <span class="n">times</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">timeline</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+<span class="linenos"> 62</span>        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Result</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">first_run</span><span class="o">=</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">finish</span><span class="o">=</span><span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="linenos"> 63</span>    <span class="k">return</span> <span class="n">results</span>
+<span class="linenos"> 64</span>
+<span class="linenos"> 65</span>
+<span class="linenos"> 66</span><span class="k">def</span><span class="w"> </span><span class="nf">fcfs</span><span class="p">(</span><span class="n">processes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Process</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="linenos"> 67</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;FCFS で実行した場合の、時刻ごとの実行プロセス名の列を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 68</span>    <span class="n">timeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 69</span>    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival</span><span class="p">):</span>
+<span class="linenos"> 70</span>        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">timeline</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival</span><span class="p">:</span>
+<span class="linenos"> 71</span>            <span class="n">timeline</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>  <span class="c1"># CPU が空いている</span>
+<span class="linenos"> 72</span>        <span class="n">timeline</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="o">.</span><span class="n">burst</span><span class="p">)</span>
+<span class="linenos"> 73</span>    <span class="k">return</span> <span class="n">timeline</span>
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span>
+<span class="linenos"> 76</span><span class="k">def</span><span class="w"> </span><span class="nf">sjf</span><span class="p">(</span><span class="n">processes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Process</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="linenos"> 77</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;横取りなしの SJF で実行した場合の、時刻ごとの実行プロセス名の列を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 78</span>    <span class="n">timeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 79</span>    <span class="n">waiting</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">processes</span><span class="p">)</span>
+<span class="linenos"> 80</span>    <span class="k">while</span> <span class="n">waiting</span><span class="p">:</span>
+<span class="linenos"> 81</span>        <span class="n">now</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">timeline</span><span class="p">)</span>
+<span class="linenos"> 82</span>        <span class="n">ready</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">waiting</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival</span> <span class="o">&lt;=</span> <span class="n">now</span><span class="p">]</span>
+<span class="linenos"> 83</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ready</span><span class="p">:</span>
+<span class="linenos"> 84</span>            <span class="n">timeline</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+<span class="linenos"> 85</span>            <span class="k">continue</span>
+<span class="linenos"> 86</span>        <span class="c1"># 到着済みのうち、CPU バースト時間が最も短いものを選ぶ</span>
+<span class="linenos"> 87</span>        <span class="n">chosen</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ready</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">burst</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival</span><span class="p">))</span>
+<span class="linenos"> 88</span>        <span class="n">timeline</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">chosen</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">*</span> <span class="n">chosen</span><span class="o">.</span><span class="n">burst</span><span class="p">)</span>
+<span class="linenos"> 89</span>        <span class="n">waiting</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span>
+<span class="linenos"> 90</span>    <span class="k">return</span> <span class="n">timeline</span>
+<span class="linenos"> 91</span>
+<span class="linenos"> 92</span>
+<span class="linenos"> 93</span><span class="k">def</span><span class="w"> </span><span class="nf">round_robin</span><span class="p">(</span><span class="n">processes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Process</span><span class="p">],</span> <span class="n">quantum</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="linenos"> 94</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ラウンドロビンで実行した場合の、時刻ごとの実行プロセス名の列を返す。&quot;&quot;&quot;</span>
+<span class="linenos"> 95</span>    <span class="n">timeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 96</span>    <span class="n">remaining</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">burst</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">processes</span><span class="p">}</span>
+<span class="linenos"> 97</span>    <span class="n">not_arrived</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">arrival</span><span class="p">)</span>
+<span class="linenos"> 98</span>    <span class="n">queue</span><span class="p">:</span> <span class="n">deque</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+<span class="linenos"> 99</span>
+<span class="linenos">100</span>    <span class="k">def</span><span class="w"> </span><span class="nf">admit</span><span class="p">(</span><span class="n">now</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">101</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;時刻 now までに到着したプロセスを実行可能キューに入れる。&quot;&quot;&quot;</span>
+<span class="linenos">102</span>        <span class="k">while</span> <span class="n">not_arrived</span> <span class="ow">and</span> <span class="n">not_arrived</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">arrival</span> <span class="o">&lt;=</span> <span class="n">now</span><span class="p">:</span>
+<span class="linenos">103</span>            <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">not_arrived</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="linenos">104</span>
+<span class="linenos">105</span>    <span class="n">admit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos">106</span>    <span class="k">while</span> <span class="n">queue</span> <span class="ow">or</span> <span class="n">not_arrived</span><span class="p">:</span>
+<span class="linenos">107</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">queue</span><span class="p">:</span>
+<span class="linenos">108</span>            <span class="n">timeline</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+<span class="linenos">109</span>            <span class="n">admit</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timeline</span><span class="p">))</span>
+<span class="linenos">110</span>            <span class="k">continue</span>
+<span class="linenos">111</span>        <span class="n">name</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+<span class="linenos">112</span>        <span class="n">run</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">quantum</span><span class="p">,</span> <span class="n">remaining</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+<span class="linenos">113</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">run</span><span class="p">):</span>
+<span class="linenos">114</span>            <span class="n">timeline</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<span class="linenos">115</span>            <span class="n">admit</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timeline</span><span class="p">))</span>  <span class="c1"># 実行中に到着したプロセスを先に並べる</span>
+<span class="linenos">116</span>        <span class="n">remaining</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">-=</span> <span class="n">run</span>
+<span class="linenos">117</span>        <span class="k">if</span> <span class="n">remaining</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">118</span>            <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>  <span class="c1"># 使い切れなかったら最後尾に戻る</span>
+<span class="linenos">119</span>    <span class="k">return</span> <span class="n">timeline</span>
+<span class="linenos">120</span>
+<span class="linenos">121</span>
+<span class="linenos">122</span><span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span>
+<span class="linenos">123</span>    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">processes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Process</span><span class="p">],</span> <span class="n">timeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="linenos">124</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">125</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ガントチャートと評価指標を表示する。&quot;&quot;&quot;</span>
+<span class="linenos">126</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;=== </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2"> ===&quot;</span><span class="p">)</span>
+<span class="linenos">127</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;時刻 : &quot;</span> <span class="o">+</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">10</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timeline</span><span class="p">))))</span>
+<span class="linenos">128</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;実行 : &quot;</span> <span class="o">+</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">timeline</span><span class="p">))</span>
+<span class="linenos">129</span>    <span class="n">results</span> <span class="o">=</span> <span class="n">summarize</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="n">timeline</span><span class="p">)</span>
+<span class="linenos">130</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;プロセス  到着  バースト  終了  ターンアラウンド  待ち  応答&quot;</span><span class="p">)</span>
+<span class="linenos">131</span>    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+<span class="linenos">132</span>        <span class="n">p</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">process</span>
+<span class="linenos">133</span>        <span class="nb">print</span><span class="p">(</span>
+<span class="linenos">134</span>            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">arrival</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">burst</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">finish</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="linenos">135</span>            <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">turnaround</span><span class="si">:</span><span class="s2">&gt;16</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">waiting</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">response</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="linenos">136</span>        <span class="p">)</span>
+<span class="linenos">137</span>    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<span class="linenos">138</span>    <span class="nb">print</span><span class="p">(</span>
+<span class="linenos">139</span>        <span class="sa">f</span><span class="s2">&quot;平均ターンアラウンド時間 </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">turnaround</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">results</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="linenos">140</span>        <span class="sa">f</span><span class="s2">&quot; / 平均待ち時間 </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">waiting</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">results</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="linenos">141</span>        <span class="sa">f</span><span class="s2">&quot; / 平均応答時間 </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">response</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">results</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="linenos">142</span>    <span class="p">)</span>
+<span class="linenos">143</span>    <span class="nb">print</span><span class="p">()</span>
+<span class="linenos">144</span>
+<span class="linenos">145</span>
+<span class="linenos">146</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">147</span>    <span class="n">processes</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos">148</span>        <span class="n">Process</span><span class="p">(</span><span class="s2">&quot;P1&quot;</span><span class="p">,</span> <span class="n">arrival</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">burst</span><span class="o">=</span><span class="mi">7</span><span class="p">),</span>
+<span class="linenos">149</span>        <span class="n">Process</span><span class="p">(</span><span class="s2">&quot;P2&quot;</span><span class="p">,</span> <span class="n">arrival</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">burst</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+<span class="linenos">150</span>        <span class="n">Process</span><span class="p">(</span><span class="s2">&quot;P3&quot;</span><span class="p">,</span> <span class="n">arrival</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">burst</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+<span class="linenos">151</span>        <span class="n">Process</span><span class="p">(</span><span class="s2">&quot;P4&quot;</span><span class="p">,</span> <span class="n">arrival</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">burst</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+<span class="linenos">152</span>    <span class="p">]</span>
+<span class="linenos">153</span>    <span class="n">report</span><span class="p">(</span><span class="s2">&quot;FCFS&quot;</span><span class="p">,</span> <span class="n">processes</span><span class="p">,</span> <span class="n">fcfs</span><span class="p">(</span><span class="n">processes</span><span class="p">))</span>
+<span class="linenos">154</span>    <span class="n">report</span><span class="p">(</span><span class="s2">&quot;SJF&quot;</span><span class="p">,</span> <span class="n">processes</span><span class="p">,</span> <span class="n">sjf</span><span class="p">(</span><span class="n">processes</span><span class="p">))</span>
+<span class="linenos">155</span>    <span class="n">report</span><span class="p">(</span><span class="s2">&quot;RR (タイムクォンタム 2)&quot;</span><span class="p">,</span> <span class="n">processes</span><span class="p">,</span> <span class="n">round_robin</span><span class="p">(</span><span class="n">processes</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="linenos">156</span>
+<span class="linenos">157</span>
+<span class="linenos">158</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">159</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>実行結果は次のとおりです。「実行」の行は、各時刻に実行されたプロセスの番号を表します。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>=== FCFS ===
+時刻 : 0123456789012345
+実行 : 1111111222234444
+プロセス  到着  バースト  終了  ターンアラウンド  待ち  応答
+      P1     0         7     7                 7     0     0
+      P2     2         4    11                 9     5     5
+      P3     4         1    12                 8     7     7
+      P4     5         4    16                11     7     7
+平均ターンアラウンド時間 8.75 / 平均待ち時間 4.75 / 平均応答時間 4.75
+
+=== SJF ===
+時刻 : 0123456789012345
+実行 : 1111111322224444
+プロセス  到着  バースト  終了  ターンアラウンド  待ち  応答
+      P1     0         7     7                 7     0     0
+      P2     2         4    12                10     6     6
+      P3     4         1     8                 4     3     3
+      P4     5         4    16                11     7     7
+平均ターンアラウンド時間 8.00 / 平均待ち時間 4.00 / 平均応答時間 4.00
+
+=== RR (タイムクォンタム 2) ===
+時刻 : 0123456789012345
+実行 : 1122113224411441
+プロセス  到着  バースト  終了  ターンアラウンド  待ち  応答
+      P1     0         7    16                16     9     0
+      P2     2         4     9                 7     3     0
+      P3     4         1     7                 3     2     2
+      P4     5         4    15                10     6     4
+平均ターンアラウンド時間 9.00 / 平均待ち時間 5.00 / 平均応答時間 1.50
+</pre></div>
+</div>
+<p>平均待ち時間は SJF が最も短く、平均応答時間はラウンドロビンが圧倒的に短いことが分かります。一方、ラウンドロビンでは CPU バースト時間の長い P1 が最後まで終わらず、平均ターンアラウンド時間は最も長くなっています。どのアルゴリズムにも得意な指標と不得意な指標があることが確かめられます。</p>
+</section>
+<section id="id9">
+<h3><span class="section-number">7.3.5. </span>優先度スケジューリング<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>優先度スケジューリングは、プロセスごとに優先度を設定し、最も優先度の高いプロセスに CPU を割り当てる方式です。SJF も、CPU バースト時間が短いほど優先度が高いとみなせば、優先度スケジューリングの一種です。</p>
+<p>優先度スケジューリングでも、優先度の低いプロセスが飢餓に陥るおそれがあります。これを防ぐ方法として、待ち時間が長くなるにつれて優先度を徐々に上げるエージングがあります。</p>
+</section>
+<section id="id10">
+<h3><span class="section-number">7.3.6. </span>多段フィードバックキュー<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<p>多段フィードバックキュー（MLFQ：Multi-Level Feedback Queue）は、優先度の異なる複数の待ち行列を用意し、プロセスのふるまいに応じて待ち行列の間を移動させる方式です。典型的な規則は次のとおりです。</p>
+<ul class="simple">
+<li><p>新しいプロセスは、最も優先度の高い待ち行列に入る。</p></li>
+<li><p>優先度の高い待ち行列ほど、タイムクォンタムを短くする。</p></li>
+<li><p>タイムクォンタムを使い切ったプロセスは、CPU バウンドとみなして 1 つ下の待ち行列に移す。</p></li>
+<li><p>タイムクォンタムを使い切る前に入出力の待ちに入ったプロセスは、I/O バウンドとみなして同じ待ち行列にとどめる。</p></li>
+<li><p>一定時間ごとに、すべてのプロセスを最上位の待ち行列に戻す（飢餓の防止）。</p></li>
+</ul>
+<p>この方式では、CPU バースト時間を事前に知らなくても、実際のふるまいから I/O バウンドのプロセスを見分けて優先できます。SJF の考え方を、予測なしに近似しているといえます。多くの OS のスケジューラは、この考え方を土台にしています。</p>
+</section>
+</section>
+<section id="os">
+<h2><span class="section-number">7.4. </span>実際の OS のスケジューラ<a class="headerlink" href="#os" title="Link to this heading"></a></h2>
+<section id="linux">
+<h3><span class="section-number">7.4.1. </span>Linux<a class="headerlink" href="#linux" title="Link to this heading"></a></h3>
+<p>Linux は、目的の異なる複数のスケジューリングクラスを持っています。主なものを次の表に示します。</p>
+<table class="docutils align-default" id="id17">
+<caption><span class="caption-number">表 7.3 </span><span class="caption-text">Linux の主なスケジューリングクラス</span><a class="headerlink" href="#id17" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 50.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ポリシー</p></th>
+<th class="head"><p>内容</p></th>
+<th class="head"><p>用途</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SCHED_OTHER</span></code>、別名 <code class="docutils literal notranslate"><span class="pre">SCHED_NORMAL</span></code></p></td>
+<td><p>通常のプロセス向けの、公平性を重視した方式</p></td>
+<td><p>ほとんどのプロセス</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SCHED_FIFO</span></code></p></td>
+<td><p>優先度順で、同じ優先度の中では先着順。横取りされるのは、より優先度の高いプロセスが来たときだけ</p></td>
+<td><p>リアルタイム処理</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SCHED_RR</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SCHED_FIFO</span></code> に、同じ優先度の中でのラウンドロビンを加えたもの</p></td>
+<td><p>リアルタイム処理</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SCHED_DEADLINE</span></code></p></td>
+<td><p>締め切りに基づく方式（後述の EDF）</p></td>
+<td><p>周期的なリアルタイム処理</p></td>
+</tr>
+</tbody>
+</table>
+<p>通常のプロセス向けの方式として、Linux は 2007 年のバージョン 2.6.23 から CFS（Completely Fair Scheduler）を使ってきました。CFS は、各プロセスがこれまでに使った CPU 時間を、優先度に応じて重み付けした仮想実行時間（vruntime）として記録し、常に仮想実行時間が最も小さいプロセスを選んで実行します。こうすることで、すべてのプロセスに優先度に応じた公平な CPU 時間を配分します。仮想実行時間の小さいプロセスを素早く見つけるため、実行可能なプロセスは赤黒木と呼ばれる平衡二分探索木で管理されます。</p>
+<p>2023 年のバージョン 6.6 からは、CFS に代わって EEVDF（Earliest Eligible Virtual Deadline First）と呼ばれる方式が使われています。EEVDF は公平性の考え方を受け継ぎつつ、応答時間の短さを求めるプロセスをより適切に扱えるようにしたものです。</p>
+<p>通常のプロセスの優先度は、nice 値と呼ばれる -20 から 19 までの値で調整できます。nice 値が大きいほど優先度が低くなり（他のプロセスに「親切に（nice）」譲る、という意味です）、受け取る CPU 時間の割合が小さくなります。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>nice<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span><span class="w"> </span>python<span class="w"> </span>heavy_task.py
+</pre></div>
+</div>
+</section>
+<section id="windows">
+<h3><span class="section-number">7.4.2. </span>Windows<a class="headerlink" href="#windows" title="Link to this heading"></a></h3>
+<p>Windows のスケジューラは、0 から 31 までの 32 段階の優先度に基づくプリエンプティブな優先度スケジューリングです。16 から 31 はリアルタイム用、1 から 15 は通常のスレッド用、0 はシステムが使います。同じ優先度のスレッドの間では、ラウンドロビンで CPU を割り当てます。</p>
+<p>また Windows は、入出力が完了したスレッドや、前面に表示されているウィンドウのスレッドの優先度を一時的に引き上げる優先度ブーストを行います。これにより、I/O バウンドのスレッドや利用者が操作しているアプリケーションの応答性を高めています。</p>
+</section>
+</section>
+<section id="id11">
+<h2><span class="section-number">7.5. </span>マルチコアのスケジューリング<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>複数の CPU コアを持つ計算機では、「どのスレッドを実行するか」に加えて「どのコアで実行するか」も決める必要があります。</p>
+<ul class="simple">
+<li><p>コアごとの実行可能キュー：すべてのコアが 1 つの待ち行列を共有すると、その待ち行列へのアクセスの奪い合いが性能の妨げになります。そのため現在の OS は、コアごとに実行可能キューを持たせています。</p></li>
+<li><p>負荷分散：コアごとの待ち行列の長さに偏りが生じたら、混んでいるコアから空いているコアにスレッドを移します。</p></li>
+<li><p>プロセッサ親和性（アフィニティ）：スレッドを別のコアに移すと、元のコアのキャッシュに載っていたデータが使えなくなります。そのため OS は、なるべく同じコアでスレッドを実行し続けようとします。利用者がスレッドを実行するコアを明示的に指定することもできます。</p></li>
+<li><p>異種コア：近年の CPU には、高性能なコア（P コア）と省電力なコア（E コア）を組み合わせたものがあります。OS は、スレッドの性質や優先度に応じて、適したコアに割り当てる必要があります。</p></li>
+</ul>
+</section>
+<section id="id12">
+<h2><span class="section-number">7.6. </span>リアルタイムスケジューリング<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<p>リアルタイムシステムでは、処理を締め切りまでに完了させることが求められます。締め切りを守れなかった場合の扱いによって、次の 2 つに分けられます。</p>
+<ul class="simple">
+<li><p>ハードリアルタイム：締め切りを 1 度でも守れなければ、システムの失敗とみなす。エアバッグや航空機の制御など。</p></li>
+<li><p>ソフトリアルタイム：締め切りを守れないことがまれにあっても許されるが、品質が低下する。動画や音声の再生など。</p></li>
+</ul>
+<p>周期的に実行されるタスクのスケジューリングには、次の 2 つの方式がよく知られています。</p>
+<ul class="simple">
+<li><p>レートモノトニック（RM）：周期の短いタスクほど高い固定の優先度を与える。</p></li>
+<li><p>EDF（Earliest Deadline First）：締め切りが最も近いタスクを優先する。優先度は動的に変わる。</p></li>
+</ul>
+<p>タスク <span class="math notranslate nohighlight">\(i\)</span> の周期を <span class="math notranslate nohighlight">\(P_i\)</span>、1 周期あたりの実行時間を <span class="math notranslate nohighlight">\(C_i\)</span> とすると、CPU の利用率 <span class="math notranslate nohighlight">\(U\)</span> は次の式で表されます。</p>
+<div class="math notranslate nohighlight">
+\[U = \sum_{i=1}^{n} \frac{C_i}{P_i}\]</div>
+<p>EDF では <span class="math notranslate nohighlight">\(U \leq 1\)</span> であれば、すべてのタスクが締め切りを守れます。レートモノトニックでは、<span class="math notranslate nohighlight">\(n\)</span> 個のタスクについて次の条件を満たせば、すべてのタスクが締め切りを守れることが保証されます。</p>
+<div class="math notranslate nohighlight">
+\[U \leq n \left( 2^{1/n} - 1 \right)\]</div>
+<p>右辺は <span class="math notranslate nohighlight">\(n = 1\)</span> のとき 1、<span class="math notranslate nohighlight">\(n = 2\)</span> のとき約 0.83 で、<span class="math notranslate nohighlight">\(n\)</span> が大きくなると <span class="math notranslate nohighlight">\(\ln 2 \approx 0.69\)</span> に近づきます。レートモノトニックは実装が単純で振る舞いを予測しやすい一方、EDF は CPU をより無駄なく使えます。</p>
+</section>
+<section id="id13">
+<h2><span class="section-number">7.7. </span>まとめ<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>コンテキストスイッチは、実行中のスレッドの状態を保存し、別のスレッドの状態を復元する操作です。直接の費用に加えて、キャッシュの効果が失われる間接的な費用もあります。</p></li>
+<li><p>スケジューリングのアルゴリズムは、CPU 利用率、スループット、ターンアラウンド時間、待ち時間、応答時間などの指標で評価され、すべてを同時に最良にする方式はありません。</p></li>
+<li><p>FCFS は単純だが護送船団効果があり、SJF は平均待ち時間を最小にするが CPU バースト時間の予測が必要で、ラウンドロビンは応答時間を短くできます。</p></li>
+<li><p>Linux は公平性を重視した CFS や EEVDF を、Windows は優先度ブーストを伴う優先度スケジューリングを使っています。</p></li>
+<li><p>リアルタイムスケジューリングでは、締め切りを守ることが最も重要であり、レートモノトニックや EDF が使われます。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="06_thread.html" class="btn btn-neutral float-left" title="6. スレッドと並行性" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="08_memory.html" class="btn btn-neutral float-right" title="8. メモリ管理" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,249 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 12 章 発展的な話題 &mdash; コンパイラ・言語処理系入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=01529632" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="付録 A サンプルコード" href="appendix_a_examples.html" />
+    <link rel="prev" title="第 11 章 実行時環境とネイティブコード生成" href="11_runtime.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンパイラ・言語処理系入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_overview.html">第 1 章 言語処理系の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_language.html">第 2 章 題材言語 Tiny の定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_lexer.html">第 3 章 字句解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_parsing.html">第 4 章 構文解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_ast.html">第 5 章 抽象構文木と Tiny の構文解析器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_semantic.html">第 6 章 意味解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_interpreter.html">第 7 章 インタプリタ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_ir.html">第 8 章 中間表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_vm.html">第 10 章 コード生成と仮想マシン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_runtime.html">第 11 章 実行時環境とネイティブコード生成</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 12 章 発展的な話題</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#jit">JIT コンパイル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#llvm">LLVM の利用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#peg">構文解析器生成系と PEG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">言語サーバ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">セルフホスティング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">演習課題</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">さらに学ぶために</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">まとめ</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_examples.html">付録 A サンプルコード</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_glossary.html">付録 B 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_references.html">付録 C 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンパイラ・言語処理系入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 12 章 発展的な話題</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 12 章 発展的な話題<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>本書では、言語処理系の基本的な部品をひととおり作りました。この章では、本書で扱えなかった話題を紹介し、さらに学ぶための道筋を示します。</p>
+<section id="jit">
+<h2>JIT コンパイル<a class="headerlink" href="#jit" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="appendix_b_glossary.html#term-JIT"><span class="xref std std-term">JIT コンパイル</span></a>（Just-In-Time コンパイル）は、プログラムの実行中に機械語を生成する方式です。インタプリタで実行しながら、頻繁に実行される関数やループ（ホットスポット）を見つけ、その部分だけを機械語にコンパイルします。</p>
+<p>JIT コンパイルには、事前のコンパイル（AOT コンパイル）にはない利点があります。実行時に観測した情報を最適化に使えることです。たとえば Python の <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">+</span> <span class="pre">b</span></code> は、<code class="docutils literal notranslate"><span class="pre">a</span></code> と <code class="docutils literal notranslate"><span class="pre">b</span></code> の型によって整数の加算にも文字列の連結にもなりますが、実行時に「この <code class="docutils literal notranslate"><span class="pre">+</span></code> にはいつも整数が来る」と分かれば、整数の加算の機械語を生成できます。予想が外れた場合に備えて型の検査を残し、外れたらインタプリタに戻ります（脱最適化）。JavaScript の V8 や Java の HotSpot は、このような方法で高い性能を実現しています。</p>
+<p>CPython も 3.13 から実験的な JIT コンパイラを備えています <a class="reference internal" href="appendix_c_references.html#pep744" id="id2"><span>[PEP744]</span></a>。あらかじめ用意した機械語の断片（テンプレート）をつなぎ合わせ、アドレスなどの穴を埋めて機械語を作る「コピー &amp; パッチ」という方式で、機械語の生成を高速に行います。</p>
+</section>
+<section id="llvm">
+<h2>LLVM の利用<a class="headerlink" href="#llvm" title="Link to this heading"></a></h2>
+<p>本書では IR、最適化、コード生成をすべて自作しましたが、実用的な言語を作る場合は、既存のコンパイラ基盤を使うのが一般的です。代表的なものが <a class="reference internal" href="appendix_b_glossary.html#term-LLVM"><span class="xref std std-term">LLVM</span></a> です。フロントエンドが LLVM IR を生成すれば、LLVM が高度な最適化と多数の CPU 向けのコード生成を行ってくれます。</p>
+<p>LLVM IR は、本書の IR と同じく SSA 形式の三番地コードです。関数 <code class="docutils literal notranslate"><span class="pre">sum</span></code> を LLVM IR で書くと、たとえば次のようになります。本書の IR と見比べてみてください。</p>
+<div class="highlight-llvm notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">define</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="vg">@sum</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv">%n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="linenos"> 2</span><span class="nl">entry:</span>
+<span class="linenos"> 3</span><span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%cond</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="nl">cond:</span>
+<span class="linenos"> 6</span><span class="w">  </span><span class="nv">%s</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">phi</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="nv">%entry</span><span class="w"> </span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nv">%s.next</span><span class="p">,</span><span class="w"> </span><span class="nv">%body</span><span class="w"> </span><span class="p">]</span>
+<span class="linenos"> 7</span><span class="w">  </span><span class="nv">%i</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">phi</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="nv">%entry</span><span class="w"> </span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nv">%i.next</span><span class="p">,</span><span class="w"> </span><span class="nv">%body</span><span class="w"> </span><span class="p">]</span>
+<span class="linenos"> 8</span><span class="w">  </span><span class="nv">%c</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">icmp</span><span class="w"> </span><span class="k">sle</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv">%i</span><span class="p">,</span><span class="w"> </span><span class="nv">%n</span>
+<span class="linenos"> 9</span><span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv">%c</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%body</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%end</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="nl">body:</span>
+<span class="linenos">12</span><span class="w">  </span><span class="nv">%s.next</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">add</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv">%s</span><span class="p">,</span><span class="w"> </span><span class="nv">%i</span>
+<span class="linenos">13</span><span class="w">  </span><span class="nv">%i.next</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">add</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv">%i</span><span class="p">,</span><span class="w"> </span><span class="m">1</span>
+<span class="linenos">14</span><span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%cond</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="nl">end:</span>
+<span class="linenos">17</span><span class="w">  </span><span class="k">ret</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv">%s</span>
+<span class="linenos">18</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>LLVM IR には型があり（<code class="docutils literal notranslate"><span class="pre">i64</span></code> は 64 ビット整数、<code class="docutils literal notranslate"><span class="pre">i1</span></code> は真偽値）、基本ブロック、φ 関数、条件分岐の構造は本書の IR とほぼ同じです。Python からは llvmlite などのライブラリを使って LLVM IR を生成し、JIT コンパイルして実行できます。</p>
+</section>
+<section id="peg">
+<h2>構文解析器生成系と PEG<a class="headerlink" href="#peg" title="Link to this heading"></a></h2>
+<p>本書では構文解析器を手で書きましたが、文法の定義から構文解析器を自動生成する<a class="reference internal" href="appendix_b_glossary.html#term-20"><span class="xref std std-term">構文解析器生成系</span></a>も広く使われています。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ツール</p></th>
+<th class="head"><p>方式</p></th>
+<th class="head"><p>特徴</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>yacc、Bison</p></td>
+<td><p>LALR(1)</p></td>
+<td><p>C 言語向けの古典的なツールで、多くの言語処理系で使われてきた</p></td>
+</tr>
+<tr class="row-odd"><td><p>ANTLR</p></td>
+<td><p>ALL(*)</p></td>
+<td><p>Java、Python など多くの言語に対応した構文解析器を生成する</p></td>
+</tr>
+<tr class="row-even"><td><p>Lark</p></td>
+<td><p>Earley、LALR(1)</p></td>
+<td><p>Python のライブラリで、文法を書くだけですぐに使える</p></td>
+</tr>
+<tr class="row-odd"><td><p>pegen</p></td>
+<td><p>PEG</p></td>
+<td><p>CPython の構文解析器の生成に使われている</p></td>
+</tr>
+</tbody>
+</table>
+<p>文法を宣言的に書けることや、文法の誤り（曖昧さなど）を生成系が検出してくれることが利点です。一方、分かりやすいエラーメッセージを出すことや、エラー回復を細かく制御することは、手書きの構文解析器のほうが得意です。</p>
+</section>
+<section id="id3">
+<h2>言語サーバ<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>現代のプログラミング言語では、コンパイラだけでなく、エディタでの補完、定義へのジャンプ、エラーの即時表示といった開発支援の機能が重視されています。これらの機能をエディタに依存しない形で提供するための通信規約が LSP（Language Server Protocol）です <a class="reference internal" href="appendix_c_references.html#lsp" id="id4"><span>[LSP]</span></a>。言語ごとに 1 つの<a class="reference internal" href="appendix_b_glossary.html#term-17"><span class="xref std std-term">言語サーバ</span></a>を作れば、LSP に対応した多くのエディタで同じ機能を使えます。</p>
+<p>言語サーバは、コンパイラのフロントエンド（字句解析、構文解析、意味解析）を再利用して作ります。ただし、編集途中の不完全なプログラムを扱う必要があるため、エラー回復の能力が特に重要になります。また、キー入力のたびに解析し直すので、変更された部分だけを解析し直す差分解析の工夫も必要です。</p>
+</section>
+<section id="id5">
+<h2>セルフホスティング<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>ある言語のコンパイラを、その言語自身で書くことを<a class="reference internal" href="appendix_b_glossary.html#term-44"><span class="xref std std-term">セルフホスティング</span></a>と呼びます。C コンパイラの GCC は C（現在は C++）で、Rust のコンパイラは Rust で、Go のコンパイラは Go で書かれています。最初のコンパイラは別の言語で書く必要があり、そのコンパイラで自分自身をコンパイルできるようになるまでの過程をブートストラップと呼びます。</p>
+<p>セルフホスティングは、言語が実用的なプログラムを書けるほど成熟したことの証になるとともに、コンパイラの開発者が自分の言語を日常的に使うことで、言語の問題点に気付きやすくなるという利点があります。</p>
+</section>
+<section id="id6">
+<h2>演習課題<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>本書の Tiny 処理系を拡張して、理解を深めてみましょう。多くの課題では、字句解析から仮想マシンまでの複数の段階に手を入れる必要があります。変更後は <code class="docutils literal notranslate"><span class="pre">test_tiny.py</span></code> を実行して、すべての実行方式の結果が一致することを確かめてください。</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">for</span></code> 文、<code class="docutils literal notranslate"><span class="pre">break</span></code> 文、<code class="docutils literal notranslate"><span class="pre">continue</span></code> 文を追加してください。<code class="docutils literal notranslate"><span class="pre">break</span></code> は IR では「ループの出口のブロックへの <code class="docutils literal notranslate"><span class="pre">jump</span></code>」になります。</p></li>
+<li><p>浮動小数点数の型 <code class="docutils literal notranslate"><span class="pre">float</span></code> を追加してください。整数との混在した演算をどう扱うか（暗黙の変換を許すか）も決める必要があります。</p></li>
+<li><p>意味解析器が、最初のエラーで止まらずに複数のエラーを報告するようにしてください。</p></li>
+<li><p>最適化器に、ループ不変式の移動を追加してください。ループを見つけるには、辺の行き先のブロックが辺の出発元のブロックを支配しているような辺（後退辺、back edge）を探します。</p></li>
+<li><p>線形走査法にコピーの合併を追加し、関数 <code class="docutils literal notranslate"><span class="pre">sum</span></code> のスピルとコピー命令がどれだけ減るかを確かめてください。</p></li>
+<li><p>関数を値として扱えるようにし、クロージャを追加してください。<a class="reference internal" href="06_semantic.html"><span class="doc">第 6 章</span></a>で紹介した自由変数を、どのように実行時に保持するかが課題になります。</p></li>
+</ol>
+</section>
+<section id="id7">
+<h2>さらに学ぶために<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>本書の内容をさらに深く学ぶための資料を<a class="reference internal" href="appendix_c_references.html"><span class="doc">付録 C</span></a> に挙げました。目的別に、次の順で読むことをお勧めします。</p>
+<ul class="simple">
+<li><p>インタプリタを作りながら言語の実装を学びたい場合は、<a class="reference internal" href="appendix_c_references.html#nystrom2021" id="id8"><span>[Nystrom2021]</span></a> が最適です。木構造インタプリタとバイトコード仮想マシンの両方を、一から丁寧に作ります。</p></li>
+<li><p>コンパイラの理論を体系的に学びたい場合は、<a class="reference internal" href="appendix_c_references.html#aho2006" id="id9"><span>[Aho2006]</span></a> が定番の教科書です。字句解析と構文解析の理論が特に詳しく書かれています。</p></li>
+<li><p>最適化とコード生成を深く学びたい場合は、<a class="reference internal" href="appendix_c_references.html#cooper2022" id="id10"><span>[Cooper2022]</span></a> や <a class="reference internal" href="appendix_c_references.html#appel1998" id="id11"><span>[Appel1998]</span></a> を読むとよいでしょう。SSA 形式、データフロー解析、レジスタ割り当てが詳しく解説されています。</p></li>
+<li><p>実在する処理系のしくみを知りたい場合は、CPython のソースコードや LLVM の文書を読むのが近道です。本書で学んだ概念の多くが、そのまま使われていることが分かるはずです。</p></li>
+</ul>
+</section>
+<section id="id12">
+<h2>まとめ<a class="headerlink" href="#id12" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>JIT コンパイルは、実行時の情報を使って最適化した機械語を生成します。</p></li>
+<li><p>実用的な言語の実装では、LLVM のようなコンパイラ基盤や構文解析器生成系を活用できます。</p></li>
+<li><p>言語サーバは、コンパイラのフロントエンドを開発支援に応用したものです。</p></li>
+<li><p>本書の Tiny 処理系を拡張することで、各段階の理解をさらに深められます。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="11_runtime.html" class="btn btn-neutral float-left" title="第 11 章 実行時環境とネイティブコード生成" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="appendix_a_examples.html" class="btn btn-neutral float-right" title="付録 A サンプルコード" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

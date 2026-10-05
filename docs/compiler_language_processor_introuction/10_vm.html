@@ -1,0 +1,655 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 10 章 コード生成と仮想マシン &mdash; コンパイラ・言語処理系入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=01529632" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 11 章 実行時環境とネイティブコード生成" href="11_runtime.html" />
+    <link rel="prev" title="第 9 章 最適化" href="09_optimization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンパイラ・言語処理系入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_overview.html">第 1 章 言語処理系の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_language.html">第 2 章 題材言語 Tiny の定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_lexer.html">第 3 章 字句解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_parsing.html">第 4 章 構文解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05_ast.html">第 5 章 抽象構文木と Tiny の構文解析器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_semantic.html">第 6 章 意味解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_interpreter.html">第 7 章 インタプリタ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_ir.html">第 8 章 中間表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 10 章 コード生成と仮想マシン</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">コード生成の対象</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">スタックマシンとレジスタマシン</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">命令セットの設計</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">バイトコードの生成</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">局所変数のスロット</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">式の生成</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">制御構文とバックパッチ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">逆アセンブル</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">仮想マシンの実装</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">値スタックとフレーム</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">命令の実行ループ</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">性能の比較</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id14">ディスパッチの高速化</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#python-dis">Python の dis モジュール</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id16">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="11_runtime.html">第 11 章 実行時環境とネイティブコード生成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_advanced.html">第 12 章 発展的な話題</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_examples.html">付録 A サンプルコード</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_glossary.html">付録 B 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_references.html">付録 C 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンパイラ・言語処理系入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 10 章 コード生成と仮想マシン</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>第 10 章 コード生成と仮想マシン<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p><a class="reference internal" href="appendix_b_glossary.html#term-22"><span class="xref std std-term">コード生成</span></a>は、プログラムを実際に実行できる形式に変換する段階です。この章では、Tiny のプログラムを<a class="reference internal" href="appendix_b_glossary.html#term-56"><span class="xref std std-term">バイトコード</span></a>に変換するコード生成器（<code class="docutils literal notranslate"><span class="pre">tiny_bytecode.py</span></code>）と、それを実行する<a class="reference internal" href="appendix_b_glossary.html#term-6"><span class="xref std std-term">仮想マシン</span></a>（<code class="docutils literal notranslate"><span class="pre">tiny_vm.py</span></code>）を作ります。CPython や Java の処理系と同じ方式です。</p>
+<section id="id2">
+<h2>コード生成の対象<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>コード生成で出力する形式（目的コード）には、いくつかの選択肢があります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 45.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>目的コード</p></th>
+<th class="head"><p>特徴</p></th>
+<th class="head"><p>例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>機械語</p></td>
+<td><p>CPU が直接実行するので最も速いが、CPU ごとにバックエンドが必要</p></td>
+<td><p>GCC、Clang、rustc</p></td>
+</tr>
+<tr class="row-odd"><td><p>仮想マシンのバイトコード</p></td>
+<td><p>仮想マシンさえ移植すればどこでも動くが、機械語より遅い</p></td>
+<td><p>CPython、Java、Lua</p></td>
+</tr>
+<tr class="row-even"><td><p>他の高水準言語</p></td>
+<td><p>既存の処理系を利用できる</p></td>
+<td><p>TypeScript から JavaScript、Nim から C</p></td>
+</tr>
+</tbody>
+</table>
+<p>本書では、仮想マシンのバイトコードを生成します。仮想マシンを Python で書けるので、ここまでの章と同じく Python だけで完結し、実行結果を確かめやすいからです。機械語を生成する場合に特有の問題（レジスタ割り当てなど）は<a class="reference internal" href="11_runtime.html"><span class="doc">第 11 章</span></a>で扱います。</p>
+</section>
+<section id="id3">
+<h2>スタックマシンとレジスタマシン<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>仮想マシンの設計には、大きく 2 つの方式があります。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"><p>スタックマシン</p></th>
+<th class="head"><p>レジスタマシン</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>被演算子の場所</p></td>
+<td><p>値のスタックの上部</p></td>
+<td><p>命令で指定したレジスタ</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">+</span> <span class="pre">b</span> <span class="pre">*</span> <span class="pre">c</span></code> の命令列</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">LOAD</span> <span class="pre">a;</span> <span class="pre">LOAD</span> <span class="pre">b;</span> <span class="pre">LOAD</span> <span class="pre">c;</span> <span class="pre">MUL;</span> <span class="pre">ADD</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">MUL</span> <span class="pre">r3,</span> <span class="pre">r1,</span> <span class="pre">r2;</span> <span class="pre">ADD</span> <span class="pre">r4,</span> <span class="pre">r0,</span> <span class="pre">r3</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>長所</p></td>
+<td><p>命令が短く、コード生成が簡単</p></td>
+<td><p>命令の数が少ない</p></td>
+</tr>
+<tr class="row-odd"><td><p>例</p></td>
+<td><p>CPython、Java（JVM）、WebAssembly</p></td>
+<td><p>Lua 5、Android の Dalvik</p></td>
+</tr>
+</tbody>
+</table>
+<p><a class="reference internal" href="appendix_b_glossary.html#term-39"><span class="xref std std-term">スタックマシン</span></a>では、命令は被演算子をスタックから取り出し、結果をスタックに積みます。式の構文木を帰りがけ順（子を先に、親を後に）にたどって命令を出力するだけで正しい命令列になるため、コード生成がとても簡単です。本書の仮想マシンもスタックマシンにします。</p>
+</section>
+<section id="id4">
+<h2>命令セットの設計<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>命令は「命令の種類」と「整数の引数」の組 <code class="docutils literal notranslate"><span class="pre">(Op,</span> <span class="pre">int)</span></code> で表します。引数の意味は命令によって異なり、定数表の番号、局所変数の番号、ジャンプ先の番地などを表します。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">tiny_bytecode.py（命令の種類）</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">18</span><span class="k">class</span><span class="w"> </span><span class="nc">Op</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="linenos">19</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;仮想マシンの命令。引数を取る命令は、その意味をコメントに書く。&quot;&quot;&quot;</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span>    <span class="n">CONST</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>          <span class="c1"># 定数表の arg 番目の値を積む</span>
+<span class="linenos">22</span>    <span class="n">LOAD</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>           <span class="c1"># 局所変数 arg の値を積む</span>
+<span class="linenos">23</span>    <span class="n">STORE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>          <span class="c1"># 値を降ろして局所変数 arg に書き込む</span>
+<span class="linenos">24</span>    <span class="n">ADD</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">25</span>    <span class="n">SUB</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">26</span>    <span class="n">MUL</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">27</span>    <span class="n">DIV</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">28</span>    <span class="n">MOD</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">29</span>    <span class="n">EQ</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">30</span>    <span class="n">NE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">31</span>    <span class="n">LT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">32</span>    <span class="n">LE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">33</span>    <span class="n">GT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">34</span>    <span class="n">GE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">35</span>    <span class="n">NEG</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">36</span>    <span class="n">NOT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">37</span>    <span class="n">JUMP</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>           <span class="c1"># arg 番地へ飛ぶ</span>
+<span class="linenos">38</span>    <span class="n">JUMP_IF_FALSE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># 値を降ろし、偽なら arg 番地へ飛ぶ</span>
+<span class="linenos">39</span>    <span class="n">JUMP_IF_FALSE_OR_POP</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># 偽なら値を残して飛び、真なら降ろす</span>
+<span class="linenos">40</span>    <span class="n">JUMP_IF_TRUE_OR_POP</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>   <span class="c1"># 真なら値を残して飛び、偽なら降ろす</span>
+<span class="linenos">41</span>    <span class="n">BUILD_ARRAY</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>    <span class="c1"># 値を arg 個降ろして配列を作る</span>
+<span class="linenos">42</span>    <span class="n">INDEX</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>          <span class="c1"># 配列と添字を降ろし、要素を積む</span>
+<span class="linenos">43</span>    <span class="n">STORE_INDEX</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>    <span class="c1"># 配列・添字・値を降ろし、要素に書き込む</span>
+<span class="linenos">44</span>    <span class="n">CALL</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>           <span class="c1"># arg 番目の関数を呼ぶ</span>
+<span class="linenos">45</span>    <span class="n">PRINT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>          <span class="c1"># 値を arg 個降ろして表示する</span>
+<span class="linenos">46</span>    <span class="n">LEN</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">47</span>    <span class="n">PUSH</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">48</span>    <span class="n">TO_STR</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="linenos">49</span>    <span class="n">POP</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>            <span class="c1"># 値を 1 つ降ろして捨てる</span>
+<span class="linenos">50</span>    <span class="n">RETURN</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>         <span class="c1"># 値を降ろし、呼び出し元に戻る</span>
+</pre></div>
+</div>
+</div>
+<p>関数ごとのコンパイル結果は <code class="docutils literal notranslate"><span class="pre">CodeObject</span></code> にまとめます。命令列のほか、命令が参照する定数の表、引数と局所変数の数を持ちます。CPython の関数オブジェクトが持つ <code class="docutils literal notranslate"><span class="pre">__code__</span></code>（コードオブジェクト）も、同じような情報を持っています。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">tiny_bytecode.py（コードオブジェクト）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">65</span><span class="nd">@dataclass</span>
+<span class="linenos">66</span><span class="k">class</span><span class="w"> </span><span class="nc">CodeObject</span><span class="p">:</span>
+<span class="linenos">67</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;1 つの関数をコンパイルした結果。&quot;&quot;&quot;</span>
+<span class="linenos">68</span>
+<span class="linenos">69</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">70</span>    <span class="n">num_params</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos">71</span>    <span class="n">num_locals</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">72</span>    <span class="n">code</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Instruction</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<span class="linenos">73</span>    <span class="n">constants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<span class="linenos">74</span>    <span class="n">local_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id5">
+<h2>バイトコードの生成<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="id6">
+<h3>局所変数のスロット<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>木構造インタプリタでは、変数を名前で探していました。バイトコードでは、コンパイル時に各局所変数に番号（スロット）を割り当て、実行時は番号で直接アクセスします。引数は 0 番から順にスロットを割り当て、<code class="docutils literal notranslate"><span class="pre">let</span></code> で宣言した変数にはその次の番号を割り当てます。ブロックを抜けたら、そのブロックで宣言した変数のスロットは再利用します。</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">tiny_bytecode.py（ブロックとスロットの再利用）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">142</span>    <span class="k">def</span><span class="w"> </span><span class="nf">compile_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">A</span><span class="o">.</span><span class="n">Block</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">143</span>        <span class="c1"># ブロックを抜けたら、そのブロックの変数のスロットを再利用する。</span>
+<span class="linenos">144</span>        <span class="bp">self</span><span class="o">.</span><span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">({})</span>
+<span class="linenos">145</span>        <span class="n">saved</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_slot</span>
+<span class="linenos">146</span>        <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">stmts</span><span class="p">:</span>
+<span class="linenos">147</span>            <span class="bp">self</span><span class="o">.</span><span class="n">compile_stmt</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+<span class="linenos">148</span>        <span class="bp">self</span><span class="o">.</span><span class="n">next_slot</span> <span class="o">=</span> <span class="n">saved</span>
+<span class="linenos">149</span>        <span class="bp">self</span><span class="o">.</span><span class="n">scopes</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id7">
+<h3>式の生成<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">compile_expr</span></code> は「式の値を計算してスタックに 1 つ積む」命令列を生成します。二項演算なら、左辺の命令列、右辺の命令列、演算の命令を順に出力します。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">tiny_bytecode.py（式の生成）</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">200</span>    <span class="k">def</span><span class="w"> </span><span class="nf">compile_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">A</span><span class="o">.</span><span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">201</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;式の値を計算し、スタックに 1 つ積む命令を生成する。&quot;&quot;&quot;</span>
+<span class="linenos">202</span>        <span class="k">match</span> <span class="n">expr</span><span class="p">:</span>
+<span class="linenos">203</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">IntLit</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">|</span> <span class="n">A</span><span class="o">.</span><span class="n">BoolLit</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">|</span> <span class="n">A</span><span class="o">.</span><span class="n">StrLit</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="linenos">204</span>                <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">CONST</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+<span class="linenos">205</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="linenos">206</span>                <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">LOAD</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+<span class="linenos">207</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">ArrayLit</span><span class="p">(</span><span class="n">elements</span><span class="p">):</span>
+<span class="linenos">208</span>                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">:</span>
+<span class="linenos">209</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+<span class="linenos">210</span>                <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">BUILD_ARRAY</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">))</span>
+<span class="linenos">211</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="linenos">212</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+<span class="linenos">213</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+<span class="linenos">214</span>                <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">INDEX</span><span class="p">)</span>
+<span class="linenos">215</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">Unary</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">operand</span><span class="p">):</span>
+<span class="linenos">216</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">operand</span><span class="p">)</span>
+<span class="linenos">217</span>                <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">NEG</span> <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span> <span class="k">else</span> <span class="n">Op</span><span class="o">.</span><span class="n">NOT</span><span class="p">)</span>
+<span class="linenos">218</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">Binary</span><span class="p">(</span><span class="s2">&quot;&amp;&amp;&quot;</span> <span class="o">|</span> <span class="s2">&quot;||&quot;</span> <span class="k">as</span> <span class="n">op</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+<span class="linenos">219</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">left</span><span class="p">)</span>
+<span class="linenos">220</span>                <span class="n">jump</span> <span class="o">=</span> <span class="n">Op</span><span class="o">.</span><span class="n">JUMP_IF_FALSE_OR_POP</span> <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;&amp;&amp;&quot;</span> \
+<span class="linenos">221</span>                    <span class="k">else</span> <span class="n">Op</span><span class="o">.</span><span class="n">JUMP_IF_TRUE_OR_POP</span>
+<span class="linenos">222</span>                <span class="n">to_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">jump</span><span class="p">)</span>
+<span class="linenos">223</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">right</span><span class="p">)</span>
+<span class="linenos">224</span>                <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="n">to_end</span><span class="p">)</span>
+<span class="linenos">225</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">Binary</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+<span class="linenos">226</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">left</span><span class="p">)</span>
+<span class="linenos">227</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">right</span><span class="p">)</span>
+<span class="linenos">228</span>                <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">BINARY_OPS</span><span class="p">[</span><span class="n">op</span><span class="p">])</span>
+<span class="linenos">229</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">Call</span><span class="p">(</span><span class="n">callee</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="linenos">230</span>                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+<span class="linenos">231</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+<span class="linenos">232</span>                <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;print&quot;</span><span class="p">:</span>
+<span class="linenos">233</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">PRINT</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+<span class="linenos">234</span>                <span class="k">elif</span> <span class="n">callee</span> <span class="ow">in</span> <span class="n">BUILTIN_OPS</span><span class="p">:</span>
+<span class="linenos">235</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">BUILTIN_OPS</span><span class="p">[</span><span class="n">callee</span><span class="p">])</span>
+<span class="linenos">236</span>                <span class="k">else</span><span class="p">:</span>
+<span class="linenos">237</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">CALL</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_index</span><span class="p">[</span><span class="n">callee</span><span class="p">])</span>
+<span class="linenos">238</span>            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+<span class="linenos">239</span>                <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> には <code class="docutils literal notranslate"><span class="pre">JUMP_IF_FALSE_OR_POP</span></code> 命令を使います。左辺が偽ならその値（<code class="docutils literal notranslate"><span class="pre">false</span></code>）をスタックに残したまま右辺を飛び越し、真なら左辺の値を捨てて右辺を評価します。どちらの場合も、最後にスタックには式の値が 1 つ残ります。</p>
+</section>
+<section id="id8">
+<h3>制御構文とバックパッチ<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">if</span></code> 文や <code class="docutils literal notranslate"><span class="pre">while</span></code> 文では、前に進むジャンプ命令を出力する時点では、飛び先の番地がまだ決まっていません。そこで、とりあえず飛び先を 0 にしてジャンプ命令を出力し、その番地を覚えておきます。飛び先の命令を出力する直前に、覚えておいた命令の飛び先を書き換えます（<code class="docutils literal notranslate"><span class="pre">patch</span></code>）。この技法を<a class="reference internal" href="appendix_b_glossary.html#term-57"><span class="xref std std-term">バックパッチ</span></a>と呼びます。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">tiny_bytecode.py（バックパッチ）</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 98</span>    <span class="k">def</span><span class="w"> </span><span class="nf">patch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 99</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;address のジャンプ命令の飛び先を、次に生成する命令の番地にする。&quot;&quot;&quot;</span>
+<span class="linenos">100</span>        <span class="n">op</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">[</span><span class="n">address</span><span class="p">]</span>
+<span class="linenos">101</span>        <span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">[</span><span class="n">address</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">tiny_bytecode.py（if 文と while 文の生成）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">166</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">If</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">then_body</span><span class="p">,</span> <span class="n">else_body</span><span class="p">):</span>
+<span class="linenos">167</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">cond</span><span class="p">)</span>
+<span class="linenos">168</span>                <span class="n">to_else</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">JUMP_IF_FALSE</span><span class="p">)</span>
+<span class="linenos">169</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_block</span><span class="p">(</span><span class="n">then_body</span><span class="p">)</span>
+<span class="linenos">170</span>                <span class="k">if</span> <span class="n">else_body</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">171</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="n">to_else</span><span class="p">)</span>
+<span class="linenos">172</span>                <span class="k">elif</span> <span class="n">always_returns</span><span class="p">(</span><span class="n">then_body</span><span class="p">):</span>
+<span class="linenos">173</span>                    <span class="c1"># then 節が必ず return するなら、飛び越す命令は不要。</span>
+<span class="linenos">174</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="n">to_else</span><span class="p">)</span>
+<span class="linenos">175</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">compile_stmt</span><span class="p">(</span><span class="n">else_body</span><span class="p">)</span>
+<span class="linenos">176</span>                <span class="k">else</span><span class="p">:</span>
+<span class="linenos">177</span>                    <span class="n">to_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">JUMP</span><span class="p">)</span>
+<span class="linenos">178</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="n">to_else</span><span class="p">)</span>
+<span class="linenos">179</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">compile_stmt</span><span class="p">(</span><span class="n">else_body</span><span class="p">)</span>
+<span class="linenos">180</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="n">to_end</span><span class="p">)</span>
+<span class="linenos">181</span>            <span class="k">case</span> <span class="n">A</span><span class="o">.</span><span class="n">While</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
+<span class="linenos">182</span>                <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">)</span>
+<span class="linenos">183</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_expr</span><span class="p">(</span><span class="n">cond</span><span class="p">)</span>
+<span class="linenos">184</span>                <span class="n">to_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">JUMP_IF_FALSE</span><span class="p">)</span>
+<span class="linenos">185</span>                <span class="bp">self</span><span class="o">.</span><span class="n">compile_block</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+<span class="linenos">186</span>                <span class="bp">self</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="n">Op</span><span class="o">.</span><span class="n">JUMP</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+<span class="linenos">187</span>                <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="n">to_end</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">while</span></code> 文の末尾から条件の判定に戻るジャンプは後ろ向きなので、飛び先の番地（<code class="docutils literal notranslate"><span class="pre">start</span></code>）は出力の時点で分かっています。</p>
+</section>
+</section>
+<section id="id9">
+<h2>逆アセンブル<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>生成したバイトコードを人が読める形で表示する逆アセンブラも用意しました。関数 <code class="docutils literal notranslate"><span class="pre">sum</span></code> のバイトコードを表示してみます。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="gp">$ </span>python<span class="w"> </span>tiny.py<span class="w"> </span>bytecode<span class="w"> </span>programs/sum.tiny
+<span class="linenos"> 2</span><span class="go">function sum: params=1 locals=3</span>
+<span class="linenos"> 3</span><span class="go">   0  CONST                 0 (0)</span>
+<span class="linenos"> 4</span><span class="go">   1  STORE                 1 (s)</span>
+<span class="linenos"> 5</span><span class="go">   2  CONST                 1 (1)</span>
+<span class="linenos"> 6</span><span class="go">   3  STORE                 2 (i)</span>
+<span class="linenos"> 7</span><span class="go">   4  LOAD                  2 (i)</span>
+<span class="linenos"> 8</span><span class="go">   5  LOAD                  0 (n)</span>
+<span class="linenos"> 9</span><span class="go">   6  LE</span>
+<span class="linenos">10</span><span class="go">   7  JUMP_IF_FALSE        17</span>
+<span class="linenos">11</span><span class="go">   8  LOAD                  1 (s)</span>
+<span class="linenos">12</span><span class="go">   9  LOAD                  2 (i)</span>
+<span class="linenos">13</span><span class="go">  10  ADD</span>
+<span class="linenos">14</span><span class="go">  11  STORE                 1 (s)</span>
+<span class="linenos">15</span><span class="go">  12  LOAD                  2 (i)</span>
+<span class="linenos">16</span><span class="go">  13  CONST                 1 (1)</span>
+<span class="linenos">17</span><span class="go">  14  ADD</span>
+<span class="linenos">18</span><span class="go">  15  STORE                 2 (i)</span>
+<span class="linenos">19</span><span class="go">  16  JUMP                  4</span>
+<span class="linenos">20</span><span class="go">  17  LOAD                  1 (s)</span>
+<span class="linenos">21</span><span class="go">  18  RETURN</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span><span class="go">function main: params=0 locals=0</span>
+<span class="linenos">24</span><span class="go">   0  CONST                 0 (10)</span>
+<span class="linenos">25</span><span class="go">   1  CALL                  0 (sum)</span>
+<span class="linenos">26</span><span class="go">   2  PRINT                 1</span>
+<span class="linenos">27</span><span class="go">   3  POP</span>
+<span class="linenos">28</span><span class="go">   4  CONST                 1 (None)</span>
+<span class="linenos">29</span><span class="go">   5  RETURN</span>
+</pre></div>
+</div>
+<p>左から番地、命令、引数で、括弧内は引数が指す定数や変数の名前です。4 番地から 16 番地までが <code class="docutils literal notranslate"><span class="pre">while</span></code> ループで、7 番地の <code class="docutils literal notranslate"><span class="pre">JUMP_IF_FALSE</span></code> の飛び先 17 がバックパッチで書き込まれています。<code class="docutils literal notranslate"><span class="pre">main</span></code> の末尾の <code class="docutils literal notranslate"><span class="pre">CONST</span> <span class="pre">None</span></code> と <code class="docutils literal notranslate"><span class="pre">RETURN</span></code> は、値を返さない関数の終わりに自動的に追加したものです。<code class="docutils literal notranslate"><span class="pre">None</span></code> は Tiny の値ではなく「値なし」を表す内部の値です。</p>
+</section>
+<section id="id10">
+<h2>仮想マシンの実装<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<section id="id11">
+<h3>値スタックとフレーム<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>本書の仮想マシンは、すべての関数呼び出しで 1 本の値スタックを共有します。関数を呼び出すと、呼び出し元が積んだ引数の位置をそのまま局所変数の先頭とし、残りの局所変数の領域を確保します。局所変数の先頭位置を<a class="reference internal" href="appendix_b_glossary.html#term-62"><span class="xref std std-term">ベースポインタ</span></a>（<code class="docutils literal notranslate"><span class="pre">bp</span></code>）と呼び、局所変数 <code class="docutils literal notranslate"><span class="pre">k</span></code> 番は <code class="docutils literal notranslate"><span class="pre">stack[bp</span> <span class="pre">+</span> <span class="pre">k]</span></code> にあります。</p>
+<figure class="align-default" id="id23">
+<div class="graphviz"><object data="_images/graphviz-1a0e389e76397fa18810be959f1b1fe9b1d52aca.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph stack {
+  node [shape=record, fontname=&quot;monospace&quot;];
+  stack [label=&quot;{&lt;top&gt; 計算途中の値 ... | i | s | &lt;bp&gt; n = 10（引数） | ... | main の計算途中の値}&quot;];
+  frame [label=&quot;{sum のフレーム | pc | &lt;bp&gt; bp}&quot;];
+  frame:bp -&gt; stack:bp;
+}</p></object></div>
+<figcaption>
+<p><span class="caption-text">main から sum(10) を呼び出したときの値スタック（下が底）</span><a class="headerlink" href="#id23" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>関数呼び出し 1 回分の情報（実行中のコード、次に実行する番地 <code class="docutils literal notranslate"><span class="pre">pc</span></code>、ベースポインタ <code class="docutils literal notranslate"><span class="pre">bp</span></code>）を<a class="reference internal" href="appendix_b_glossary.html#term-38"><span class="xref std std-term">スタックフレーム</span></a>と呼び、フレームのリストで呼び出しの入れ子を管理します。</p>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">tiny_vm.py（フレームと関数の呼び出し）</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">30</span><span class="nd">@dataclass</span>
+<span class="linenos">31</span><span class="k">class</span><span class="w"> </span><span class="nc">Frame</span><span class="p">:</span>
+<span class="linenos">32</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;関数呼び出し 1 回分の情報（スタックフレーム）。&quot;&quot;&quot;</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span>    <span class="n">code</span><span class="p">:</span> <span class="n">CodeObject</span>
+<span class="linenos">35</span>    <span class="n">pc</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 次に実行する命令の番地</span>
+<span class="linenos">36</span>    <span class="n">bp</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 局所変数 0 番の値スタック上の位置</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span><span class="k">class</span><span class="w"> </span><span class="nc">VM</span><span class="p">:</span>
+<span class="linenos">40</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">program</span><span class="p">:</span> <span class="n">CompiledProgram</span><span class="p">,</span>
+<span class="linenos">41</span>                 <span class="n">out</span><span class="p">:</span> <span class="n">TextIO</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">42</span>        <span class="bp">self</span><span class="o">.</span><span class="n">program</span> <span class="o">=</span> <span class="n">program</span>
+<span class="linenos">43</span>        <span class="bp">self</span><span class="o">.</span><span class="n">out</span> <span class="o">=</span> <span class="n">out</span>
+<span class="linenos">44</span>        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">45</span>        <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Frame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">46</span>        <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># 実行した命令の数</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">49</span>        <span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">program</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">program</span><span class="o">.</span><span class="n">main</span><span class="p">])</span>
+<span class="linenos">50</span>        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="n">CodeObject</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">53</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;引数は値スタックに積まれている。残りの局所変数の領域を確保する。&quot;&quot;&quot;</span>
+<span class="linenos">54</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MAX_FRAMES</span><span class="p">:</span>
+<span class="linenos">55</span>            <span class="k">raise</span> <span class="n">TinyRuntimeError</span><span class="p">(</span><span class="s2">&quot;関数呼び出しが深すぎます&quot;</span><span class="p">)</span>
+<span class="linenos">56</span>        <span class="n">bp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">)</span> <span class="o">-</span> <span class="n">code</span><span class="o">.</span><span class="n">num_params</span>
+<span class="linenos">57</span>        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">num_locals</span> <span class="o">-</span> <span class="n">code</span><span class="o">.</span><span class="n">num_params</span><span class="p">))</span>
+<span class="linenos">58</span>        <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Frame</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bp</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id12">
+<h3>命令の実行ループ<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<p>仮想マシンの中心は、命令を 1 つ取り出しては実行することを繰り返すループです。これを命令の<a class="reference internal" href="appendix_b_glossary.html#term-51"><span class="xref std std-term">ディスパッチ</span></a>ループと呼びます。</p>
+<div class="literal-block-wrapper docutils container" id="id25">
+<div class="code-block-caption"><span class="caption-text">tiny_vm.py（命令の実行ループ）</span><a class="headerlink" href="#id25" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 60</span>    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 61</span>        <span class="n">stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span>
+<span class="linenos"> 62</span>        <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="linenos"> 63</span>        <span class="n">code</span><span class="p">,</span> <span class="n">constants</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">constants</span>
+<span class="linenos"> 64</span>        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="linenos"> 65</span>            <span class="n">op</span><span class="p">,</span> <span class="n">arg</span> <span class="o">=</span> <span class="n">code</span><span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">pc</span><span class="p">]</span>
+<span class="linenos"> 66</span>            <span class="n">frame</span><span class="o">.</span><span class="n">pc</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 67</span>            <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos"> 68</span>            <span class="k">match</span> <span class="n">op</span><span class="p">:</span>
+<span class="linenos"> 69</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">CONST</span><span class="p">:</span>
+<span class="linenos"> 70</span>                    <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constants</span><span class="p">[</span><span class="n">arg</span><span class="p">])</span>
+<span class="linenos"> 71</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">LOAD</span><span class="p">:</span>
+<span class="linenos"> 72</span>                    <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stack</span><span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">bp</span> <span class="o">+</span> <span class="n">arg</span><span class="p">])</span>
+<span class="linenos"> 73</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">STORE</span><span class="p">:</span>
+<span class="linenos"> 74</span>                    <span class="n">stack</span><span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">bp</span> <span class="o">+</span> <span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos"> 75</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">ADD</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">SUB</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">MUL</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">DIV</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">MOD</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">EQ</span> \
+<span class="linenos"> 76</span>                        <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">NE</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">LT</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">LE</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">GT</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">GE</span><span class="p">:</span>
+<span class="linenos"> 77</span>                    <span class="n">right</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos"> 78</span>                    <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">binary_op</span><span class="p">(</span><span class="n">BINARY_SYMBOLS</span><span class="p">[</span><span class="n">op</span><span class="p">],</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">right</span><span class="p">)</span>
+<span class="linenos"> 79</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">NEG</span><span class="p">:</span>
+<span class="linenos"> 80</span>                    <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">unary_op</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="linenos"> 81</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">NOT</span><span class="p">:</span>
+<span class="linenos"> 82</span>                    <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">unary_op</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="linenos"> 83</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">JUMP</span><span class="p">:</span>
+<span class="linenos"> 84</span>                    <span class="n">frame</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="n">arg</span>
+<span class="linenos"> 85</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">JUMP_IF_FALSE</span><span class="p">:</span>
+<span class="linenos"> 86</span>                    <span class="k">if</span> <span class="ow">not</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">():</span>
+<span class="linenos"> 87</span>                        <span class="n">frame</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="n">arg</span>
+<span class="linenos"> 88</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">JUMP_IF_FALSE_OR_POP</span><span class="p">:</span>
+<span class="linenos"> 89</span>                    <span class="k">if</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+<span class="linenos"> 90</span>                        <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos"> 91</span>                    <span class="k">else</span><span class="p">:</span>
+<span class="linenos"> 92</span>                        <span class="n">frame</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="n">arg</span>
+<span class="linenos"> 93</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">JUMP_IF_TRUE_OR_POP</span><span class="p">:</span>
+<span class="linenos"> 94</span>                    <span class="k">if</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+<span class="linenos"> 95</span>                        <span class="n">frame</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="n">arg</span>
+<span class="linenos"> 96</span>                    <span class="k">else</span><span class="p">:</span>
+<span class="linenos"> 97</span>                        <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos"> 98</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">BUILD_ARRAY</span><span class="p">:</span>
+<span class="linenos"> 99</span>                    <span class="n">elements</span> <span class="o">=</span> <span class="n">stack</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span> <span class="o">-</span> <span class="n">arg</span><span class="p">:]</span>
+<span class="linenos">100</span>                    <span class="k">del</span> <span class="n">stack</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span> <span class="o">-</span> <span class="n">arg</span><span class="p">:]</span>
+<span class="linenos">101</span>                    <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span>
+<span class="linenos">102</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">INDEX</span><span class="p">:</span>
+<span class="linenos">103</span>                    <span class="n">index</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos">104</span>                    <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_value</span><span class="p">(</span><span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">index</span><span class="p">)</span>
+<span class="linenos">105</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">STORE_INDEX</span><span class="p">:</span>
+<span class="linenos">106</span>                    <span class="n">value</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos">107</span>                    <span class="n">index</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos">108</span>                    <span class="n">store_index</span><span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">(),</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+<span class="linenos">109</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">PRINT</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">LEN</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">PUSH</span> <span class="o">|</span> <span class="n">Op</span><span class="o">.</span><span class="n">TO_STR</span><span class="p">:</span>
+<span class="linenos">110</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">builtin</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+<span class="linenos">111</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">POP</span><span class="p">:</span>
+<span class="linenos">112</span>                    <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos">113</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">CALL</span><span class="p">:</span>
+<span class="linenos">114</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">program</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="n">arg</span><span class="p">])</span>
+<span class="linenos">115</span>                    <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="linenos">116</span>                    <span class="n">code</span><span class="p">,</span> <span class="n">constants</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">constants</span>
+<span class="linenos">117</span>                <span class="k">case</span> <span class="n">Op</span><span class="o">.</span><span class="n">RETURN</span><span class="p">:</span>
+<span class="linenos">118</span>                    <span class="n">result</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos">119</span>                    <span class="k">del</span> <span class="n">stack</span><span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">bp</span><span class="p">:]</span>  <span class="c1"># 引数と局所変数を捨てる</span>
+<span class="linenos">120</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+<span class="linenos">121</span>                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">:</span>
+<span class="linenos">122</span>                        <span class="k">return</span>
+<span class="linenos">123</span>                    <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<span class="linenos">124</span>                    <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="linenos">125</span>                    <span class="n">code</span><span class="p">,</span> <span class="n">constants</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">code</span><span class="o">.</span><span class="n">constants</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">CALL</span></code> 命令は新しいフレームを積み、実行中のコードを呼び出し先に切り替えます。<code class="docutils literal notranslate"><span class="pre">RETURN</span></code> 命令は戻り値を取り出し、引数と局所変数をスタックから捨て、フレームを降ろして呼び出し元に戻ります。そして戻り値をスタックに積みます。Python の再帰呼び出しを使っていないので、Tiny の関数呼び出しの深さは Python の再帰の上限に制限されません（本書の実装では <code class="docutils literal notranslate"><span class="pre">MAX_FRAMES</span></code> で上限を設けています）。</p>
+</section>
+</section>
+<section id="id13">
+<h2>性能の比較<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">tiny_vm.py</span></code> を引数なしで実行すると、<code class="docutils literal notranslate"><span class="pre">fib(22)</span></code> の計算にかかった時間を、木構造インタプリタと仮想マシンで比べます。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>tiny_vm.py
+<span class="linenos">2</span><span class="go">17711</span>
+<span class="linenos">3</span><span class="go">木構造インタプリタ: 0.84 秒</span>
+<span class="linenos">4</span><span class="go">17711</span>
+<span class="linenos">5</span><span class="go">仮想マシン:         0.64 秒</span>
+</pre></div>
+</div>
+<p>筆者の環境（Python 3.14）では、仮想マシンのほうが 2 割から 3 割ほど速くなりました。変数の名前による探索がスロット番号によるアクセスに変わったことや、再帰的な評価の呼び出しがなくなったことが効いています。ただし、差はそれほど大きくありません。仮想マシンも Python で書かれているため、命令 1 つの実行にも <code class="docutils literal notranslate"><span class="pre">match</span></code> 文による分岐やリストの操作など多くの処理がかかるからです。C 言語で書かれた実用的な処理系では、木構造インタプリタと仮想マシンの差はより大きくなります。</p>
+<section id="id14">
+<h3>ディスパッチの高速化<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p>仮想マシンの性能は、命令のディスパッチの効率に大きく左右されます。代表的な高速化の手法を挙げます。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>手法</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>スレッデッドコード</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">switch</span></code> 文の代わりに、各命令の処理の末尾から次の命令の処理へ直接ジャンプする（CPython は C コンパイラの拡張機能 computed goto でこれを行っている）</p></td>
+</tr>
+<tr class="row-odd"><td><p>スーパー命令</p></td>
+<td><p>よく連続して現れる命令の組を 1 つの命令にまとめ、ディスパッチの回数を減らす（CPython 3.14 の <code class="docutils literal notranslate"><span class="pre">LOAD_FAST_BORROW_LOAD_FAST_BORROW</span></code> など）</p></td>
+</tr>
+<tr class="row-even"><td><p>特殊化</p></td>
+<td><p>実行時に観測した型に応じて、命令をより特殊で高速な命令に書き換える（CPython 3.11 以降の特殊化適応型インタプリタ <a class="reference internal" href="appendix_c_references.html#pep659" id="id15"><span>[PEP659]</span></a>）</p></td>
+</tr>
+<tr class="row-odd"><td><p>レジスタマシン化</p></td>
+<td><p>スタックへの積み降ろしを減らし、命令の数を減らす</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="python-dis">
+<h2>Python の dis モジュール<a class="headerlink" href="#python-dis" title="Link to this heading"></a></h2>
+<p>CPython のバイトコードは <code class="docutils literal notranslate"><span class="pre">dis</span></code> モジュールで逆アセンブルできます。Tiny の <code class="docutils literal notranslate"><span class="pre">sum</span></code> と同じ処理を Python で書いて、バイトコードを見てみましょう。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">dis</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="k">def</span><span class="w"> </span><span class="nf">total</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="linenos"> 5</span>    <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos"> 6</span>    <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="linenos"> 7</span>    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">n</span><span class="p">:</span>
+<span class="linenos"> 8</span>        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="n">i</span>
+<span class="linenos"> 9</span>        <span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="linenos">10</span>    <span class="k">return</span> <span class="n">s</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="n">dis</span><span class="o">.</span><span class="n">dis</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Python 3.14 では次のように表示されます。バイトコードは Python のバージョンによって異なります。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>  4           RESUME                   0
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span>  5           LOAD_SMALL_INT           0
+<span class="linenos"> 4</span>              STORE_FAST               1 (s)
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span>  6           LOAD_SMALL_INT           1
+<span class="linenos"> 7</span>              STORE_FAST               2 (i)
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span>  7   L1:     LOAD_FAST_BORROW_LOAD_FAST_BORROW 32 (i, n)
+<span class="linenos">10</span>              COMPARE_OP              58 (bool(&lt;=))
+<span class="linenos">11</span>              POP_JUMP_IF_FALSE       20 (to L2)
+<span class="linenos">12</span>              NOT_TAKEN
+<span class="linenos">13</span>
+<span class="linenos">14</span>  8           LOAD_FAST_BORROW_LOAD_FAST_BORROW 18 (s, i)
+<span class="linenos">15</span>              BINARY_OP                0 (+)
+<span class="linenos">16</span>              STORE_FAST               1 (s)
+<span class="linenos">17</span>
+<span class="linenos">18</span>  9           LOAD_FAST_BORROW         2 (i)
+<span class="linenos">19</span>              LOAD_SMALL_INT           1
+<span class="linenos">20</span>              BINARY_OP                0 (+)
+<span class="linenos">21</span>              STORE_FAST               2 (i)
+<span class="linenos">22</span>              JUMP_BACKWARD           25 (to L1)
+<span class="linenos">23</span>
+<span class="linenos">24</span> 10   L2:     LOAD_FAST_BORROW         1 (s)
+<span class="linenos">25</span>              RETURN_VALUE
+</pre></div>
+</div>
+<p>Tiny のバイトコードとよく似ていることが分かります。<code class="docutils literal notranslate"><span class="pre">STORE_FAST</span></code> と <code class="docutils literal notranslate"><span class="pre">LOAD_FAST_BORROW</span></code> が局所変数のスロット番号でのアクセス、<code class="docutils literal notranslate"><span class="pre">POP_JUMP_IF_FALSE</span></code> と <code class="docutils literal notranslate"><span class="pre">JUMP_BACKWARD</span></code> がループの分岐です。<code class="docutils literal notranslate"><span class="pre">LOAD_FAST_BORROW_LOAD_FAST_BORROW</span></code> は 2 つの局所変数を一度に積むスーパー命令です。左端の数字はソースコードの行番号で、CPython はエラーの報告のために命令と行番号の対応表を持っています。</p>
+</section>
+<section id="id16">
+<h2>まとめ<a class="headerlink" href="#id16" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>スタックマシンでは、構文木を帰りがけ順にたどって命令を出力するだけでコードを生成できます。</p></li>
+<li><p>局所変数にはコンパイル時にスロット番号を割り当て、実行時は番号でアクセスします。</p></li>
+<li><p>前に進むジャンプの飛び先は、バックパッチで後から書き込みます。</p></li>
+<li><p>仮想マシンは値スタックとスタックフレームを持ち、命令を 1 つずつディスパッチして実行します。</p></li>
+<li><p>仮想マシンの性能はディスパッチの効率に左右され、スレッデッドコードや特殊化などの高速化の手法があります。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="09_optimization.html" class="btn btn-neutral float-left" title="第 9 章 最適化" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="11_runtime.html" class="btn btn-neutral float-right" title="第 11 章 実行時環境とネイティブコード生成" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

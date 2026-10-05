@@ -1,0 +1,844 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. 認証と認可 &mdash; セキュリティ入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=6ebf494b" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="5. ネットワークセキュリティ" href="05_network.html" />
+    <link rel="prev" title="3. 暗号技術の基礎" href="03_cryptography.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            セキュリティ入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="01_introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_basic_concepts.html">2. セキュリティの基本概念</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_cryptography.html">3. 暗号技術の基礎</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">4. 認証と認可</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">4.1. 認証と認可の違い</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">4.2. パスワードの安全な保存</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">4.2.1. ハッシュ関数をそのまま使う問題</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">4.2.2. ソルトとストレッチング</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">4.2.3. パスワードの要件</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">4.3. ログイン処理への攻撃と対策</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">4.4. 多要素認証</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#totp">4.4.1. TOTP の仕組み</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">4.5. パスキー</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">4.6. セッション管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jwt">4.7. トークンによる認証（JWT）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oauth-2-0-openid-connect">4.8. OAuth 2.0 と OpenID Connect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">4.9. アクセス制御</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="05_network.html">5. ネットワークセキュリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06_web_application.html">6. Web アプリケーションのセキュリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_secure_coding.html">7. セキュアコーディング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_supply_chain.html">8. ソフトウェアサプライチェーン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_cloud_and_container.html">9. クラウドとコンテナのセキュリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_ai_llm.html">10. AI・LLM アプリケーションのセキュリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_testing_and_threat_modeling.html">11. セキュリティテストと脅威モデリング</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_operations.html">12. 運用とインシデント対応</a></li>
+<li class="toctree-l1"><a class="reference internal" href="13_summary.html">13. まとめ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">サンプルコード一覧</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">セキュリティ入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">4. </span>認証と認可</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1><span class="section-number">4. </span>認証と認可<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>この章では、利用者が誰なのかを確かめる仕組みと、その利用者に何を許すのかを決める仕組みを説明します。</p>
+<section id="id2">
+<h2><span class="section-number">4.1. </span>認証と認可の違い<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="glossary.html#term-28"><span class="xref std std-term">認証</span></a>と<a class="reference internal" href="glossary.html#term-27"><span class="xref std std-term">認可</span></a>は、名前は似ていますが別の処理です。</p>
+<table class="docutils align-default" id="id12">
+<caption><span class="caption-text">認証と認可の違い</span><a class="headerlink" href="#id12" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>処理</p></th>
+<th class="head"><p>確かめること</p></th>
+<th class="head"><p>例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>認証（Authentication）</p></td>
+<td><p>相手が主張どおりの本人であるか</p></td>
+<td><p>パスワードやパスキーによるログイン</p></td>
+</tr>
+<tr class="row-odd"><td><p>認可（Authorization）</p></td>
+<td><p>認証された相手に、その操作を許可してよいか</p></td>
+<td><p>一般の利用者は自分の注文だけを、管理者はすべての注文を参照できます。</p></td>
+</tr>
+</tbody>
+</table>
+<p>認証が正しくても、認可に不備があれば、ログインした利用者が他人のデータを参照できてしまいます。両方を正しく実装する必要があります。</p>
+<p>本人であることを確かめる手がかりは、次の 3 種類に分けられます。これを認証の 3 要素と呼びます。</p>
+<table class="docutils align-default" id="id13">
+<caption><span class="caption-text">認証の 3 要素</span><a class="headerlink" href="#id13" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 40.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>要素</p></th>
+<th class="head"><p>内容</p></th>
+<th class="head"><p>例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>知識情報</p></td>
+<td><p>本人だけが知っているもの</p></td>
+<td><p>パスワード、暗証番号</p></td>
+</tr>
+<tr class="row-odd"><td><p>所持情報</p></td>
+<td><p>本人だけが持っているもの</p></td>
+<td><p>スマートフォン、セキュリティキー</p></td>
+</tr>
+<tr class="row-even"><td><p>生体情報</p></td>
+<td><p>本人の身体的な特徴</p></td>
+<td><p>指紋、顔</p></td>
+</tr>
+</tbody>
+</table>
+<p>異なる要素を 2 つ以上組み合わせる認証を<a class="reference internal" href="glossary.html#term-22"><span class="xref std std-term">多要素認証</span></a>と呼びます。パスワードを 2 回入力させるような、同じ要素の組み合わせは多要素認証ではありません。</p>
+</section>
+<section id="id3">
+<h2><span class="section-number">4.2. </span>パスワードの安全な保存<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>パスワードをそのまま（平文で）データベースに保存してはいけません。データベースが漏えいした場合に、すべての利用者のパスワードが知られてしまいます。多くの人は複数のサービスで同じパスワードを使い回しているため、被害は他のサービスにも及びます。</p>
+<section id="id4">
+<h3><span class="section-number">4.2.1. </span>ハッシュ関数をそのまま使う問題<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>パスワードのハッシュ値を保存すれば元のパスワードは分からない、と考えるかもしれません。しかし、SHA-256 のような汎用のハッシュ関数をそのまま使うことには、次の 2 つの問題があります。</p>
+<ul class="simple">
+<li><p><strong>同じパスワードは同じハッシュ値になります。</strong>よく使われるパスワードのハッシュ値をあらかじめ計算した表（レインボーテーブルなど）を使えば、表を引くだけで元のパスワードが分かります。</p></li>
+<li><p><strong>計算が速すぎます。</strong>GPU を使えば、1 秒間に数十億回以上のハッシュ値を計算でき、短いパスワードは総当たりですぐに見つかります。</p></li>
+</ul>
+</section>
+<section id="id5">
+<h3><span class="section-number">4.2.2. </span>ソルトとストレッチング<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>1 つ目の問題には、利用者ごとに異なるランダムな値（<a class="reference internal" href="glossary.html#term-17"><span class="xref std std-term">ソルト</span></a>）をパスワードに加えてからハッシュ値を計算することで対処します。ソルトが異なれば、同じパスワードでもハッシュ値が変わるため、事前に計算した表が使えなくなります。</p>
+<p>2 つ目の問題には、ハッシュ値の計算を意図的に重くすることで対処します。これを<a class="reference internal" href="glossary.html#term-10"><span class="xref std std-term">ストレッチング</span></a>と呼びます。正規の利用者がログインする際の 0.1 秒程度の遅れは問題になりませんが、総当たりを試みる攻撃者にとっては、試行できる回数が大幅に減ります。</p>
+<p>パスワードの保存には、これらを組み込んだ専用の関数を使います。現在、OWASP が第一に推奨しているのは Argon2id です。Argon2id は計算時間だけでなく大量のメモリを必要とするため、GPU や専用のハードウェアによる並列計算も難しくなっています。</p>
+<p>次のサンプルでは、argon2-cffi ライブラリを使って、ソルトなしの SHA-256 と Argon2id を比較します。</p>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">password_hashing.py</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;パスワードの安全な保存方法を確認するサンプル.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">高速なハッシュ関数（SHA-256 など）をそのまま使うと、総当たりや</span>
+<span class="linenos"> 4</span><span class="sd">辞書攻撃で短時間に元のパスワードを特定されます。パスワードの保存には</span>
+<span class="linenos"> 5</span><span class="sd">Argon2id のような、意図的に計算を重くした専用の関数を使います。</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="sd">実行方法:</span>
+<span class="linenos"> 8</span><span class="sd">    python password_hashing.py</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="sd">必要なライブラリ:</span>
+<span class="linenos">11</span><span class="sd">    argon2-cffi（python -m pip install argon2-cffi）</span>
+<span class="linenos">12</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="linenos">15</span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="linenos">16</span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="linenos">17</span>
+<span class="linenos">18</span><span class="kn">from</span><span class="w"> </span><span class="nn">argon2</span><span class="w"> </span><span class="kn">import</span> <span class="n">PasswordHasher</span>
+<span class="linenos">19</span><span class="kn">from</span><span class="w"> </span><span class="nn">argon2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">VerifyMismatchError</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="c1"># 引数を省略すると、RFC 9106 が推奨するパラメーターが使われる</span>
+<span class="linenos">22</span><span class="n">password_hasher</span> <span class="o">=</span> <span class="n">PasswordHasher</span><span class="p">()</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="k">def</span><span class="w"> </span><span class="nf">naive_hash</span><span class="p">(</span><span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">26</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ソルトなしの SHA-256（悪い例）.&quot;&quot;&quot;</span>
+<span class="linenos">27</span>    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">password</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span><span class="k">def</span><span class="w"> </span><span class="nf">hash_password</span><span class="p">(</span><span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">31</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Argon2id でパスワードをハッシュ化する.</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="sd">    戻り値にはアルゴリズム名、パラメーター、ソルトも含まれるため、</span>
+<span class="linenos">34</span><span class="sd">    この文字列だけをデータベースに保存すればよい。</span>
+<span class="linenos">35</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">36</span>    <span class="k">return</span> <span class="n">password_hasher</span><span class="o">.</span><span class="n">hash</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span><span class="k">def</span><span class="w"> </span><span class="nf">verify_password</span><span class="p">(</span><span class="n">stored_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos">40</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;入力されたパスワードが保存済みのハッシュと一致するか確認する.&quot;&quot;&quot;</span>
+<span class="linenos">41</span>    <span class="k">try</span><span class="p">:</span>
+<span class="linenos">42</span>        <span class="n">password_hasher</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">stored_hash</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+<span class="linenos">43</span>    <span class="k">except</span> <span class="n">VerifyMismatchError</span><span class="p">:</span>
+<span class="linenos">44</span>        <span class="k">return</span> <span class="kc">False</span>
+<span class="linenos">45</span>    <span class="k">return</span> <span class="kc">True</span>
+<span class="linenos">46</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span><span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">49</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;関数を count 回実行し、1 回あたりの所要時間を表示する.&quot;&quot;&quot;</span>
+<span class="linenos">50</span>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<span class="linenos">51</span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">count</span><span class="p">):</span>
+<span class="linenos">52</span>        <span class="n">func</span><span class="p">()</span>
+<span class="linenos">53</span>    <span class="n">elapsed</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">/</span> <span class="n">count</span>
+<span class="linenos">54</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: 1 回あたり </span><span class="si">{</span><span class="n">elapsed</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ミリ秒&quot;</span><span class="p">)</span>
+<span class="linenos">55</span>
+<span class="linenos">56</span>
+<span class="linenos">57</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">58</span>    <span class="n">password</span> <span class="o">=</span> <span class="s2">&quot;correct horse battery staple&quot;</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[ソルトなしの SHA-256（悪い例）]&quot;</span><span class="p">)</span>
+<span class="linenos">61</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  1 回目: </span><span class="si">{</span><span class="n">naive_hash</span><span class="p">(</span><span class="n">password</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">62</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  2 回目: </span><span class="si">{</span><span class="n">naive_hash</span><span class="p">(</span><span class="n">password</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">63</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  -&gt; 同じパスワードは常に同じ値になります。&quot;</span><span class="p">)</span>
+<span class="linenos">64</span>
+<span class="linenos">65</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[Argon2id]&quot;</span><span class="p">)</span>
+<span class="linenos">66</span>    <span class="n">first</span> <span class="o">=</span> <span class="n">hash_password</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
+<span class="linenos">67</span>    <span class="n">second</span> <span class="o">=</span> <span class="n">hash_password</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
+<span class="linenos">68</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  1 回目: </span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">69</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  2 回目: </span><span class="si">{</span><span class="n">second</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">70</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  -&gt; ソルトが毎回異なるため、同じパスワードでも値が変わります。&quot;</span><span class="p">)</span>
+<span class="linenos">71</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  正しいパスワードの検証: </span><span class="si">{</span><span class="n">verify_password</span><span class="p">(</span><span class="n">first</span><span class="p">,</span><span class="w"> </span><span class="n">password</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">72</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  誤ったパスワードの検証: </span><span class="si">{</span><span class="n">verify_password</span><span class="p">(</span><span class="n">first</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;password&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">73</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  再ハッシュが必要か: </span><span class="si">{</span><span class="n">password_hasher</span><span class="o">.</span><span class="n">check_needs_rehash</span><span class="p">(</span><span class="n">first</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">74</span>
+<span class="linenos">75</span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[計算時間の比較]&quot;</span><span class="p">)</span>
+<span class="linenos">76</span>    <span class="n">measure</span><span class="p">(</span><span class="s2">&quot;SHA-256 &quot;</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">naive_hash</span><span class="p">(</span><span class="n">password</span><span class="p">))</span>
+<span class="linenos">77</span>    <span class="n">measure</span><span class="p">(</span><span class="s2">&quot;Argon2id&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">hash_password</span><span class="p">(</span><span class="n">password</span><span class="p">))</span>
+<span class="linenos">78</span>
+<span class="linenos">79</span>
+<span class="linenos">80</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">81</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/f8746f4897569c82e36cf446ffadd336/password_hashing.py"><code class="xref download docutils literal notranslate"><span class="pre">password_hashing.py</span> <span class="pre">をダウンロード</span></code></a></p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">実行結果の例（ソルトと計算時間は実行のたびに変わります）</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[ソルトなしの SHA-256（悪い例）]
+  1 回目: c4bbcb1fbec99d65bf59d85c8cb62ee2db963f0fe106f483d9afa73bd4e39a8a
+  2 回目: c4bbcb1fbec99d65bf59d85c8cb62ee2db963f0fe106f483d9afa73bd4e39a8a
+  -&gt; 同じパスワードは常に同じ値になります。
+[Argon2id]
+  1 回目: $argon2id$v=19$m=65536,t=3,p=4$owxnR+vf9mV5xz4NJP1MBw$b54UKHrPEJyqX/iECQu85XPJIOltQfzju7u19pE5zvU
+  2 回目: $argon2id$v=19$m=65536,t=3,p=4$85qImBhaXmcr8PeKqLQ6xw$Ks2p/9vmzTxun71flvyJTioSZBKo9a2/84KLOxSbSQk
+  -&gt; ソルトが毎回異なるため、同じパスワードでも値が変わります。
+  正しいパスワードの検証: True
+  誤ったパスワードの検証: False
+  再ハッシュが必要か: False
+[計算時間の比較]
+  SHA-256 : 1 回あたり 0.002 ミリ秒
+  Argon2id: 1 回あたり 73.473 ミリ秒
+</pre></div>
+</div>
+</div>
+<p>Argon2id の出力には、アルゴリズム名、パラメーター（<code class="docutils literal notranslate"><span class="pre">m</span></code> はメモリ量の KiB、<code class="docutils literal notranslate"><span class="pre">t</span></code> は反復回数、<code class="docutils literal notranslate"><span class="pre">p</span></code> は並列度）、ソルト、ハッシュ値がすべて含まれています。そのため、この文字列をそのまま保存すれば、後からパラメーターを強化しても、古いハッシュ値を検証できます。<code class="docutils literal notranslate"><span class="pre">check_needs_rehash()</span></code> が True を返した場合は、ログインに成功したときに新しいパラメーターでハッシュ値を計算し直して保存します。</p>
+<p>この例では、1 回の計算に約 70 ミリ秒かかっています。SHA-256 と比べて 3 万倍以上遅く、攻撃者が同じ時間で試せるパスワードの数もそれだけ少なくなります。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">4.2.3. </span>パスワードの要件<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>利用者に求めるパスワードの要件も、近年考え方が変わっています。米国 NIST のガイドライン SP 800-63B では、次のような方針が示されています。</p>
+<ul class="simple">
+<li><p>長さを重視します。長いパスワード（パスフレーズ）を入力できるようにします。</p></li>
+<li><p>大文字・小文字・記号の組み合わせなど、文字種の規則を強制しません。</p></li>
+<li><p>定期的な変更を強制しません。漏えいの疑いがある場合にだけ変更させます。</p></li>
+<li><p>過去に漏えいしたパスワードや、よく使われるパスワードの一覧と照合し、該当するものは拒否します。</p></li>
+</ul>
+<p>文字種の規則や定期的な変更を強制すると、利用者は「Password1!」のような推測しやすいパターンを使ったり、末尾の数字だけを変えたりするようになり、かえって安全性が下がることが分かってきたためです。</p>
+</section>
+</section>
+<section id="id7">
+<h2><span class="section-number">4.3. </span>ログイン処理への攻撃と対策<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>パスワードを安全に保存していても、ログイン画面から直接パスワードを試す攻撃は防げません。代表的な攻撃を次の表に示します。</p>
+<table class="docutils align-default" id="id16">
+<caption><span class="caption-text">ログイン処理への代表的な攻撃</span><a class="headerlink" href="#id16" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>攻撃</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>総当たり攻撃</p></td>
+<td><p>1 つのアカウントに対して、考えられるパスワードを順に試します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>パスワードスプレー攻撃</p></td>
+<td><p>よく使われる少数のパスワードを、多数のアカウントに対して試します。アカウントごとの失敗回数が少ないため、アカウント単位の制限では検知しにくい攻撃です。</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="glossary.html#term-32"><span class="xref std std-term">パスワードリスト攻撃</span></a></p></td>
+<td><p>他のサービスから漏えいした ID とパスワードの組をそのまま試します。パスワードの使い回しを狙った攻撃で、成功率が高いことが知られています。</p></td>
+</tr>
+</tbody>
+</table>
+<p>これらの攻撃には、次のような対策を組み合わせます。</p>
+<ul class="simple">
+<li><p><strong>試行回数を制限してください。</strong>アカウント単位と接続元 IP アドレス単位の両方で、短時間の失敗回数を制限します。</p></li>
+<li><p><strong>多要素認証を導入してください。</strong>パスワードが知られても、それだけではログインできなくなります。</p></li>
+<li><p><strong>漏えいパスワードと照合してください。</strong>パスワードの登録時や変更時に、既知の漏えいパスワードと照合します。</p></li>
+<li><p><strong>エラーメッセージを統一してください。</strong>「ユーザー名が存在しません」と「パスワードが違います」を区別すると、攻撃者に有効なユーザー名を教えてしまいます。どちらの場合も「ユーザー名またはパスワードが違います」と表示します。</p></li>
+<li><p><strong>異常を検知してください。</strong>普段と異なる国や端末からのログインを検知し、追加の確認を求めたり、利用者に通知したりします。</p></li>
+</ul>
+<p>試行回数を制限する方法の 1 つに、失敗が続くたびに次の試行までの待ち時間を延ばす方法があります。一定回数の失敗でアカウントを完全にロックする方法は、攻撃者が正規の利用者を意図的にロックアウトさせる攻撃に悪用されるおそれがあるため、待ち時間を延ばす方法のほうが扱いやすい場合があります。次のサンプルでは、連続して 3 回失敗した後は、待ち時間を 2 秒、4 秒、8 秒、と倍に延ばしていきます。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">login_throttle.py</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;ログイン試行の制限（スロットリング）のサンプル.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">同じアカウントへのログイン失敗が続いた場合に、次に試行できるまでの</span>
+<span class="linenos"> 4</span><span class="sd">待ち時間を指数関数的に延ばします。総当たり攻撃の速度を大きく落とせます。</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="sd">実行方法:</span>
+<span class="linenos"> 7</span><span class="sd">    python login_throttle.py</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">必要なライブラリ:</span>
+<span class="linenos">10</span><span class="sd">    なし（標準ライブラリのみ）</span>
+<span class="linenos">11</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="n">FREE_ATTEMPTS</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># 待ち時間なしで許す連続失敗回数</span>
+<span class="linenos">16</span><span class="n">BASE_DELAY</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># 待ち時間の基準値（秒）</span>
+<span class="linenos">17</span><span class="n">MAX_DELAY</span> <span class="o">=</span> <span class="mf">900.0</span>  <span class="c1"># 待ち時間の上限（秒）</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="nd">@dataclass</span>
+<span class="linenos">21</span><span class="k">class</span><span class="w"> </span><span class="nc">AccountState</span><span class="p">:</span>
+<span class="linenos">22</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;アカウントごとの失敗回数と、次に試行できる時刻.&quot;&quot;&quot;</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span>    <span class="n">failures</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">25</span>    <span class="n">locked_until</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="linenos">26</span>
+<span class="linenos">27</span>
+<span class="linenos">28</span><span class="nd">@dataclass</span>
+<span class="linenos">29</span><span class="k">class</span><span class="w"> </span><span class="nc">LoginThrottle</span><span class="p">:</span>
+<span class="linenos">30</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;アカウント単位でログイン試行を制限する.&quot;&quot;&quot;</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span>    <span class="n">states</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AccountState</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+<span class="linenos">33</span>
+<span class="linenos">34</span>    <span class="k">def</span><span class="w"> </span><span class="nf">is_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos">35</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;現在時刻 now にログインを試行してよいか判定する.&quot;&quot;&quot;</span>
+<span class="linenos">36</span>        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">account</span><span class="p">)</span>
+<span class="linenos">37</span>        <span class="k">return</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">now</span> <span class="o">&gt;=</span> <span class="n">state</span><span class="o">.</span><span class="n">locked_until</span>
+<span class="linenos">38</span>
+<span class="linenos">39</span>    <span class="k">def</span><span class="w"> </span><span class="nf">record_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="linenos">40</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;失敗を記録し、次に試行できるまでの待ち時間（秒）を返す.&quot;&quot;&quot;</span>
+<span class="linenos">41</span>        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="n">AccountState</span><span class="p">())</span>
+<span class="linenos">42</span>        <span class="n">state</span><span class="o">.</span><span class="n">failures</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">43</span>        <span class="n">over</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">failures</span> <span class="o">-</span> <span class="n">FREE_ATTEMPTS</span>
+<span class="linenos">44</span>        <span class="n">delay</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">over</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="n">BASE_DELAY</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">over</span><span class="p">,</span> <span class="n">MAX_DELAY</span><span class="p">)</span>
+<span class="linenos">45</span>        <span class="n">state</span><span class="o">.</span><span class="n">locked_until</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="n">delay</span>
+<span class="linenos">46</span>        <span class="k">return</span> <span class="n">delay</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span>    <span class="k">def</span><span class="w"> </span><span class="nf">record_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">account</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">49</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;成功したら失敗回数をリセットする.&quot;&quot;&quot;</span>
+<span class="linenos">50</span>        <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span>
+<span class="linenos">53</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">54</span>    <span class="n">throttle</span> <span class="o">=</span> <span class="n">LoginThrottle</span><span class="p">()</span>
+<span class="linenos">55</span>    <span class="n">duration</span> <span class="o">=</span> <span class="mi">3600</span>  <span class="c1"># 攻撃者が 1 秒に 1 回、1 時間試行し続けたとする</span>
+<span class="linenos">56</span>    <span class="n">accepted</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">57</span>
+<span class="linenos">58</span>    <span class="c1"># 説明のため、時刻は実時間ではなく数値で進める</span>
+<span class="linenos">59</span>    <span class="k">for</span> <span class="n">now</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">duration</span><span class="p">):</span>
+<span class="linenos">60</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">throttle</span><span class="o">.</span><span class="n">is_allowed</span><span class="p">(</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="n">now</span><span class="p">):</span>
+<span class="linenos">61</span>            <span class="k">continue</span>  <span class="c1"># ロック中の試行はパスワードを照合せずに拒否する</span>
+<span class="linenos">62</span>        <span class="n">accepted</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos">63</span>        <span class="n">delay</span> <span class="o">=</span> <span class="n">throttle</span><span class="o">.</span><span class="n">record_failure</span><span class="p">(</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+<span class="linenos">64</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">now</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2"> 秒: 照合して失敗。次の試行まで </span><span class="si">{</span><span class="n">delay</span><span class="si">:</span><span class="s2">4.0f</span><span class="si">}</span><span class="s2"> 秒待つ&quot;</span><span class="p">)</span>
+<span class="linenos">65</span>
+<span class="linenos">66</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;制限なしの場合に照合される回数: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s2"> 回&quot;</span><span class="p">)</span>
+<span class="linenos">67</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;制限ありの場合に照合された回数: </span><span class="si">{</span><span class="n">accepted</span><span class="si">}</span><span class="s2"> 回&quot;</span><span class="p">)</span>
+<span class="linenos">68</span>
+<span class="linenos">69</span>
+<span class="linenos">70</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">71</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/8d60a3f80ea4ae43cdbd826ad9267589/login_throttle.py"><code class="xref download docutils literal notranslate"><span class="pre">login_throttle.py</span> <span class="pre">をダウンロード</span></code></a></p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">実行結果</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>    0 秒: 照合して失敗。次の試行まで    0 秒待つ
+    1 秒: 照合して失敗。次の試行まで    0 秒待つ
+    2 秒: 照合して失敗。次の試行まで    0 秒待つ
+    3 秒: 照合して失敗。次の試行まで    2 秒待つ
+    5 秒: 照合して失敗。次の試行まで    4 秒待つ
+    9 秒: 照合して失敗。次の試行まで    8 秒待つ
+   17 秒: 照合して失敗。次の試行まで   16 秒待つ
+   33 秒: 照合して失敗。次の試行まで   32 秒待つ
+   65 秒: 照合して失敗。次の試行まで   64 秒待つ
+  129 秒: 照合して失敗。次の試行まで  128 秒待つ
+  257 秒: 照合して失敗。次の試行まで  256 秒待つ
+  513 秒: 照合して失敗。次の試行まで  512 秒待つ
+ 1025 秒: 照合して失敗。次の試行まで  900 秒待つ
+ 1925 秒: 照合して失敗。次の試行まで  900 秒待つ
+ 2825 秒: 照合して失敗。次の試行まで  900 秒待つ
+制限なしの場合に照合される回数: 3600 回
+制限ありの場合に照合された回数: 15 回
+</pre></div>
+</div>
+</div>
+<p>1 時間に 3600 回試せたはずの攻撃が、15 回に制限されています。実際のシステムでは、失敗回数を複数のサーバーで共有できるように、データベースやキャッシュサーバーに保存します。</p>
+</section>
+<section id="id8">
+<h2><span class="section-number">4.4. </span>多要素認証<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p>多要素認証の代表的な方式を次の表に示します。</p>
+<table class="docutils align-default" id="id19">
+<caption><span class="caption-text">多要素認証の代表的な方式</span><a class="headerlink" href="#id19" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 45.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>方式</p></th>
+<th class="head"><p>仕組み</p></th>
+<th class="head"><p>注意点</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SMS</p></td>
+<td><p>登録した電話番号に確認コードを送ります。</p></td>
+<td><p>SIM の乗っ取りや、偽サイトへのコードの入力に弱い方式です。</p></td>
+</tr>
+<tr class="row-odd"><td><p>認証アプリ（TOTP）</p></td>
+<td><p>スマートフォンのアプリが、時刻から確認コードを計算します。</p></td>
+<td><p>偽サイトにコードを入力させる攻撃に弱い方式です。</p></td>
+</tr>
+<tr class="row-even"><td><p>プッシュ通知</p></td>
+<td><p>スマートフォンに届く通知で承認します。</p></td>
+<td><p>承認依頼を大量に送り付けて誤って承認させる攻撃があります。</p></td>
+</tr>
+<tr class="row-odd"><td><p>パスキー、セキュリティキー</p></td>
+<td><p>端末内の秘密鍵で署名します。</p></td>
+<td><p>フィッシングに強い方式です。次の節で説明します。</p></td>
+</tr>
+</tbody>
+</table>
+<p>プッシュ通知の方式では、ログイン画面に表示された数字をスマートフォンで入力させる方式（番号の照合）にすると、身に覚えのない承認依頼を誤って承認する事故を防げます。</p>
+<section id="totp">
+<h3><span class="section-number">4.4.1. </span>TOTP の仕組み<a class="headerlink" href="#totp" title="Link to this heading"></a></h3>
+<p>認証アプリが表示する 6 桁のコードは、<a class="reference internal" href="glossary.html#term-TOTP"><span class="xref std std-term">TOTP</span></a>（Time-based One-Time Password、RFC 6238）という方式で計算されています。サーバーと認証アプリは、登録時に QR コードなどで秘密鍵を共有しておきます。その後は、双方が現在時刻と秘密鍵から同じコードを計算します。</p>
+<p>コードの計算に使う値は、現在の UNIX 時刻 <span class="math notranslate nohighlight">\(t\)</span> を 30 秒ごとに区切った番号です。</p>
+<div class="math notranslate nohighlight">
+\[T = \left\lfloor \frac{t}{30} \right\rfloor\]</div>
+<p>この <span class="math notranslate nohighlight">\(T\)</span> を入力として秘密鍵で HMAC を計算し、その一部を 10 進数の 6 桁に変換したものがコードになります。次のサンプルでは、TOTP を標準ライブラリだけで実装し、RFC 6238 に記載されたテストベクターで正しさを確認しています。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">totp.py</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;ワンタイムパスワード（TOTP、RFC 6238）の実装サンプル.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">認証アプリが表示する 6 桁のコードは、共有の秘密鍵と現在時刻から</span>
+<span class="linenos"> 4</span><span class="sd">HMAC を使って計算されています。</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="sd">実行方法:</span>
+<span class="linenos"> 7</span><span class="sd">    python totp.py</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">必要なライブラリ:</span>
+<span class="linenos">10</span><span class="sd">    なし（標準ライブラリのみ）</span>
+<span class="linenos">11</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span class="linenos">14</span><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="linenos">15</span><span class="kn">import</span><span class="w"> </span><span class="nn">hmac</span>
+<span class="linenos">16</span><span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="linenos">17</span><span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
+<span class="linenos">18</span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="n">TIME_STEP</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># コードが切り替わる間隔（秒）</span>
+<span class="linenos">21</span>
+<span class="linenos">22</span>
+<span class="linenos">23</span><span class="k">def</span><span class="w"> </span><span class="nf">hotp</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">counter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">digits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">24</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;カウンター値からワンタイムパスワードを計算する（RFC 4226）.&quot;&quot;&quot;</span>
+<span class="linenos">25</span>    <span class="n">digest</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&quot;&gt;Q&quot;</span><span class="p">,</span> <span class="n">counter</span><span class="p">),</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+<span class="linenos">26</span>    <span class="c1"># 動的切り出し: 最後のバイトの下位 4 ビットを開始位置にする</span>
+<span class="linenos">27</span>    <span class="n">offset</span> <span class="o">=</span> <span class="n">digest</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x0F</span>
+<span class="linenos">28</span>    <span class="n">code</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;&gt;I&quot;</span><span class="p">,</span> <span class="n">digest</span><span class="p">[</span><span class="n">offset</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x7FFFFFFF</span>
+<span class="linenos">29</span>    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">code</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">**</span> <span class="n">digits</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span>
+<span class="linenos">32</span><span class="k">def</span><span class="w"> </span><span class="nf">totp</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">unix_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">digits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">33</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;時刻からワンタイムパスワードを計算する（RFC 6238）.&quot;&quot;&quot;</span>
+<span class="linenos">34</span>    <span class="k">return</span> <span class="n">hotp</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">unix_time</span> <span class="o">//</span> <span class="n">TIME_STEP</span><span class="p">),</span> <span class="n">digits</span><span class="p">)</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span><span class="k">def</span><span class="w"> </span><span class="nf">verify_totp</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">unix_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="linenos">38</span>                <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="linenos">39</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;前後 window ステップの時刻のずれを許して検証する.&quot;&quot;&quot;</span>
+<span class="linenos">40</span>    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">window</span><span class="p">,</span> <span class="n">window</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<span class="linenos">41</span>        <span class="n">candidate</span> <span class="o">=</span> <span class="n">totp</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">unix_time</span> <span class="o">+</span> <span class="n">step</span> <span class="o">*</span> <span class="n">TIME_STEP</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">code</span><span class="p">))</span>
+<span class="linenos">42</span>        <span class="k">if</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+<span class="linenos">43</span>            <span class="k">return</span> <span class="kc">True</span>
+<span class="linenos">44</span>    <span class="k">return</span> <span class="kc">False</span>
+<span class="linenos">45</span>
+<span class="linenos">46</span>
+<span class="linenos">47</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">48</span>    <span class="c1"># RFC 6238 付録 B のテストベクターで実装を確認する</span>
+<span class="linenos">49</span>    <span class="n">rfc_key</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;12345678901234567890&quot;</span>
+<span class="linenos">50</span>    <span class="n">result</span> <span class="o">=</span> <span class="n">totp</span><span class="p">(</span><span class="n">rfc_key</span><span class="p">,</span> <span class="mi">59</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="linenos">51</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RFC 6238 のテストベクター: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">（期待値 94287082）&quot;</span><span class="p">)</span>
+<span class="linenos">52</span>
+<span class="linenos">53</span>    <span class="c1"># 新しい秘密鍵を作り、認証アプリに登録する形式（Base32）で表示する</span>
+<span class="linenos">54</span>    <span class="n">key</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="linenos">55</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;秘密鍵（Base32）: </span><span class="si">{</span><span class="n">base64</span><span class="o">.</span><span class="n">b32encode</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">56</span>
+<span class="linenos">57</span>    <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="linenos">58</span>    <span class="n">code</span> <span class="o">=</span> <span class="n">totp</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+<span class="linenos">59</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;現在のコード: </span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">60</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;現在の検証結果: </span><span class="si">{</span><span class="n">verify_totp</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">code</span><span class="p">,</span><span class="w"> </span><span class="n">now</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">61</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;5 分後に同じコードで検証: </span><span class="si">{</span><span class="n">verify_totp</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">code</span><span class="p">,</span><span class="w"> </span><span class="n">now</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">300</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">62</span>
+<span class="linenos">63</span>
+<span class="linenos">64</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">65</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/9be624c3c83e552d38063844f2e06787/totp.py"><code class="xref download docutils literal notranslate"><span class="pre">totp.py</span> <span class="pre">をダウンロード</span></code></a></p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">実行結果の例（秘密鍵とコードは実行のたびに変わります）</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>RFC 6238 のテストベクター: 94287082（期待値 94287082）
+秘密鍵（Base32）: XYUGTZXDOR22GMBKLGYPUHOFWDKQVXEX
+現在のコード: 053422
+現在の検証結果: True
+5 分後に同じコードで検証: False
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">verify_totp()</span></code> は、端末の時計のずれを考慮して、前後 1 区間（30 秒）のコードも受け付けています。実際のシステムでは、これに加えて、一度使われたコードを再び受け付けないようにし、コードの試行回数も制限します。6 桁のコードは 100 万通りしかないため、制限がなければ総当たりで突破されるおそれがあるからです。</p>
+</section>
+</section>
+<section id="id9">
+<h2><span class="section-number">4.5. </span>パスキー<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="glossary.html#term-30"><span class="xref std std-term">パスキー</span></a>は、パスワードの代わりに公開鍵暗号を使ってログインする仕組みで、FIDO Alliance と W3C が策定した FIDO2（WebAuthn）という規格に基づいています。</p>
+<p>パスキーによる認証は、次のように行われます。</p>
+<ol class="arabic simple">
+<li><p>登録時に、利用者の端末がそのサービス専用の鍵ペアを生成し、公開鍵だけをサーバーに登録します。秘密鍵は端末の中に保管されます。</p></li>
+<li><p>ログイン時に、サーバーはランダムな値（チャレンジ）を送ります。</p></li>
+<li><p>端末は、指紋や顔、PIN などで利用者本人であることを確認したうえで、秘密鍵でチャレンジに署名します。</p></li>
+<li><p>サーバーは、登録済みの公開鍵で署名を検証します。</p></li>
+</ol>
+<p>パスキーには、パスワードに比べて次の利点があります。</p>
+<ul class="simple">
+<li><p><strong>サーバーに秘密の情報がありません。</strong>サーバーに保存されるのは公開鍵だけなので、データベースが漏えいしても、ログインに悪用される情報は含まれません。</p></li>
+<li><p><strong>使い回しがありません。</strong>サービスごとに異なる鍵ペアが作られます。</p></li>
+<li><p><strong>フィッシングに強い方式です。</strong>鍵ペアは登録したサービスのドメインに結び付けられており、ブラウザーが接続先のドメインを確認します。偽サイトでは、そもそも正規サイトの鍵が使われません。</p></li>
+</ul>
+<p>最後の点が特に重要です。TOTP などの確認コードは、利用者が偽サイトに入力してしまえば、攻撃者がそれを正規サイトに転送してログインできます。パスキーでは、利用者がだまされても認証が成立しません。</p>
+</section>
+<section id="id10">
+<h2><span class="section-number">4.6. </span>セッション管理<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>HTTP は、リクエストごとに独立したプロトコルです。ログインした状態を維持するために、サーバーはログインに成功した利用者に<a class="reference internal" href="glossary.html#term-ID"><span class="xref std std-term">セッション ID</span></a> を発行し、以降のリクエストではブラウザーが Cookie でセッション ID を送ります。セッション ID を盗まれると、パスワードを知られなくても、本人になりすまされます。セッション管理では、次の点に注意します。</p>
+<table class="docutils align-default" id="id22">
+<caption><span class="caption-text">セッション管理の注意点</span><a class="headerlink" href="#id22" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>項目</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>推測できない値</p></td>
+<td><p>セッション ID は、<a class="reference internal" href="03_cryptography.html"><span class="doc">暗号技術の基礎</span></a>で説明した secrets モジュールなど、暗号論的に安全な乱数で生成します。連番や時刻から作ってはいけません。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ログイン時の再発行</p></td>
+<td><p>ログインの前後で同じセッション ID を使い続けると、攻撃者があらかじめ用意したセッション ID を利用者に使わせ、ログイン後にそのセッションを乗っ取る攻撃（セッション固定攻撃）が成立します。ログインに成功したら、新しいセッション ID を発行します。</p></td>
+</tr>
+<tr class="row-even"><td><p>有効期限</p></td>
+<td><p>一定時間操作がなければセッションを無効にします。重要な操作の前には、パスワードの再入力などで本人を再確認します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ログアウト時の無効化</p></td>
+<td><p>ブラウザーの Cookie を消すだけでなく、サーバー側でもセッションを無効にします。</p></td>
+</tr>
+<tr class="row-even"><td><p>Cookie の属性</p></td>
+<td><p>Secure、HttpOnly、SameSite の各属性を設定します。詳しくは <a class="reference internal" href="06_web_application.html"><span class="doc">Web アプリケーションのセキュリティ</span></a>で説明します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>URL に含めないこと</p></td>
+<td><p>セッション ID を URL に含めると、ログやリファラー（遷移元の情報）を通じて漏えいします。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="jwt">
+<h2><span class="section-number">4.7. </span>トークンによる認証（JWT）<a class="headerlink" href="#jwt" title="Link to this heading"></a></h2>
+<p>API では、セッション ID の代わりに、署名付きのトークンを使うことがあります。代表的な形式が <a class="reference internal" href="glossary.html#term-JWT"><span class="xref std std-term">JWT</span></a>（JSON Web Token、RFC 7519）です。JWT は、ヘッダー、ペイロード（クレームと呼ばれる情報の集まり）、署名の 3 つの部分を Base64URL でエンコードし、ピリオドでつないだ文字列です。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSJ9.署名
+</pre></div>
+</div>
+<p>JWT を扱う際には、次の点に注意します。</p>
+<ul class="simple">
+<li><p><strong>ペイロードは暗号化されていません。</strong>署名は改ざんを防ぐだけで、内容は誰でもデコードして読めます。秘密にすべき情報を入れてはいけません。</p></li>
+<li><p><strong>許可するアルゴリズムを固定してください。</strong>JWT のヘッダーには署名アルゴリズムが書かれていますが、この値は攻撃者が自由に書き換えられます。ヘッダーの <code class="docutils literal notranslate"><span class="pre">alg</span></code> を <code class="docutils literal notranslate"><span class="pre">none</span></code>（署名なし）に書き換えた偽造トークンを受け入れてしまう実装や、公開鍵を HMAC の鍵として使わせる攻撃（アルゴリズム混同攻撃）が知られています。検証時には、サーバー側で許可するアルゴリズムを明示します。</p></li>
+<li><p><strong>クレームを検証してください。</strong>有効期限（<code class="docutils literal notranslate"><span class="pre">exp</span></code>）、発行者（<code class="docutils literal notranslate"><span class="pre">iss</span></code>）、想定する受信者（<code class="docutils literal notranslate"><span class="pre">aud</span></code>）などを検証します。</p></li>
+<li><p><strong>有効期限を短くしてください。</strong>JWT は、サーバーに状態を持たずに検証できる反面、発行後に個別に無効化することが困難です。有効期限を短くし、必要に応じて別のリフレッシュトークンで更新する設計にします。</p></li>
+</ul>
+<p>次のサンプルでは、PyJWT ライブラリを使ってトークンを発行・検証し、期限切れのトークンや <code class="docutils literal notranslate"><span class="pre">alg=none</span></code> の偽造トークンが拒否されることを確認します。</p>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text">jwt_verification.py</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="sd">&quot;&quot;&quot;JWT の発行と安全な検証のサンプル.</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="sd">JWT を検証するときは、許可するアルゴリズムを明示し、</span>
+<span class="linenos"> 4</span><span class="sd">有効期限などのクレームも必ず検証します。</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="sd">実行方法:</span>
+<span class="linenos"> 7</span><span class="sd">    python jwt_verification.py</span>
+<span class="linenos"> 8</span>
+<span class="linenos"> 9</span><span class="sd">必要なライブラリ:</span>
+<span class="linenos">10</span><span class="sd">    PyJWT（python -m pip install PyJWT）</span>
+<span class="linenos">11</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos">12</span>
+<span class="linenos">13</span><span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span class="linenos">14</span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="linenos">15</span><span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="linenos">16</span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="linenos">17</span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="linenos">18</span>
+<span class="linenos">19</span><span class="kn">import</span><span class="w"> </span><span class="nn">jwt</span>
+<span class="linenos">20</span>
+<span class="linenos">21</span><span class="n">SECRET_KEY</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+<span class="linenos">22</span><span class="n">ISSUER</span> <span class="o">=</span> <span class="s2">&quot;https://auth.example.com&quot;</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="k">def</span><span class="w"> </span><span class="nf">issue_token</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">lifetime</span><span class="p">:</span> <span class="n">timedelta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">26</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ユーザー ID を含むトークンを発行する.&quot;&quot;&quot;</span>
+<span class="linenos">27</span>    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+<span class="linenos">28</span>    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">29</span>        <span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+<span class="linenos">30</span>        <span class="s2">&quot;iss&quot;</span><span class="p">:</span> <span class="n">ISSUER</span><span class="p">,</span>
+<span class="linenos">31</span>        <span class="s2">&quot;iat&quot;</span><span class="p">:</span> <span class="n">now</span><span class="p">,</span>
+<span class="linenos">32</span>        <span class="s2">&quot;exp&quot;</span><span class="p">:</span> <span class="n">now</span> <span class="o">+</span> <span class="n">lifetime</span><span class="p">,</span>
+<span class="linenos">33</span>    <span class="p">}</span>
+<span class="linenos">34</span>    <span class="k">return</span> <span class="n">jwt</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">SECRET_KEY</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;HS256&quot;</span><span class="p">)</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span>
+<span class="linenos">37</span><span class="k">def</span><span class="w"> </span><span class="nf">verify_token</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="linenos">38</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;トークンを検証し、問題がなければペイロードを返す.&quot;&quot;&quot;</span>
+<span class="linenos">39</span>    <span class="k">return</span> <span class="n">jwt</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+<span class="linenos">40</span>        <span class="n">token</span><span class="p">,</span>
+<span class="linenos">41</span>        <span class="n">SECRET_KEY</span><span class="p">,</span>
+<span class="linenos">42</span>        <span class="n">algorithms</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;HS256&quot;</span><span class="p">],</span>  <span class="c1"># 許可するアルゴリズムを固定する</span>
+<span class="linenos">43</span>        <span class="n">issuer</span><span class="o">=</span><span class="n">ISSUER</span><span class="p">,</span>
+<span class="linenos">44</span>        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;require&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;exp&quot;</span><span class="p">,</span> <span class="s2">&quot;iss&quot;</span><span class="p">,</span> <span class="s2">&quot;sub&quot;</span><span class="p">]},</span>
+<span class="linenos">45</span>    <span class="p">)</span>
+<span class="linenos">46</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span><span class="k">def</span><span class="w"> </span><span class="nf">unsafe_decode</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="linenos">49</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;署名を検証せずにデコードする（悪い例）.&quot;&quot;&quot;</span>
+<span class="linenos">50</span>    <span class="k">return</span> <span class="n">jwt</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;verify_signature&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span>
+<span class="linenos">53</span><span class="k">def</span><span class="w"> </span><span class="nf">b64url</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">54</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;辞書を JSON にして Base64URL でエンコードする.&quot;&quot;&quot;</span>
+<span class="linenos">55</span>    <span class="n">raw</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+<span class="linenos">56</span>    <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;=&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)</span>
+<span class="linenos">57</span>
+<span class="linenos">58</span>
+<span class="linenos">59</span><span class="k">def</span><span class="w"> </span><span class="nf">forge_none_token</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">60</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;alg=none を指定した、署名のない偽造トークンを作る.&quot;&quot;&quot;</span>
+<span class="linenos">61</span>    <span class="n">header</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alg&quot;</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;typ&quot;</span><span class="p">:</span> <span class="s2">&quot;JWT&quot;</span><span class="p">}</span>
+<span class="linenos">62</span>    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sub&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">&quot;iss&quot;</span><span class="p">:</span> <span class="n">ISSUER</span><span class="p">,</span> <span class="s2">&quot;exp&quot;</span><span class="p">:</span> <span class="mi">4102444800</span><span class="p">}</span>
+<span class="linenos">63</span>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">b64url</span><span class="p">(</span><span class="n">header</span><span class="p">)</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">b64url</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+<span class="linenos">64</span>
+<span class="linenos">65</span>
+<span class="linenos">66</span><span class="k">def</span><span class="w"> </span><span class="nf">try_verify</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">67</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;検証を試み、結果を表示する.&quot;&quot;&quot;</span>
+<span class="linenos">68</span>    <span class="k">try</span><span class="p">:</span>
+<span class="linenos">69</span>        <span class="n">payload</span> <span class="o">=</span> <span class="n">verify_token</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+<span class="linenos">70</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: 成功（sub=</span><span class="si">{</span><span class="n">payload</span><span class="p">[</span><span class="s1">&#39;sub&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">）&quot;</span><span class="p">)</span>
+<span class="linenos">71</span>    <span class="k">except</span> <span class="n">jwt</span><span class="o">.</span><span class="n">InvalidTokenError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+<span class="linenos">72</span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: 拒否（</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">）&quot;</span><span class="p">)</span>
+<span class="linenos">73</span>
+<span class="linenos">74</span>
+<span class="linenos">75</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">76</span>    <span class="n">try_verify</span><span class="p">(</span><span class="s2">&quot;正規のトークン&quot;</span><span class="p">,</span> <span class="n">issue_token</span><span class="p">(</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">15</span><span class="p">)))</span>
+<span class="linenos">77</span>    <span class="n">try_verify</span><span class="p">(</span><span class="s2">&quot;期限切れのトークン&quot;</span><span class="p">,</span> <span class="n">issue_token</span><span class="p">(</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=-</span><span class="mi">1</span><span class="p">)))</span>
+<span class="linenos">78</span>
+<span class="linenos">79</span>    <span class="n">forged</span> <span class="o">=</span> <span class="n">forge_none_token</span><span class="p">(</span><span class="s2">&quot;admin&quot;</span><span class="p">)</span>
+<span class="linenos">80</span>    <span class="n">try_verify</span><span class="p">(</span><span class="s2">&quot;alg=none の偽造トークン&quot;</span><span class="p">,</span> <span class="n">forged</span><span class="p">)</span>
+<span class="linenos">81</span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;署名を検証しない場合（悪い例）: </span><span class="si">{</span><span class="n">unsafe_decode</span><span class="p">(</span><span class="n">forged</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos">82</span>
+<span class="linenos">83</span>
+<span class="linenos">84</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="linenos">85</span>    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference download internal" download="" href="_downloads/06fdc4e0c2a0d80729f43e195fea14a5/jwt_verification.py"><code class="xref download docutils literal notranslate"><span class="pre">jwt_verification.py</span> <span class="pre">をダウンロード</span></code></a></p>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">実行結果</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>正規のトークン: 成功（sub=alice）
+期限切れのトークン: 拒否（ExpiredSignatureError）
+alg=none の偽造トークン: 拒否（InvalidAlgorithmError）
+署名を検証しない場合（悪い例）: {&#39;sub&#39;: &#39;admin&#39;, &#39;iss&#39;: &#39;https://auth.example.com&#39;, &#39;exp&#39;: 4102444800}
+</pre></div>
+</div>
+</div>
+<p>最後の行のように、署名を検証せずにデコードすると、偽造されたトークンの内容をそのまま信じてしまいます。</p>
+</section>
+<section id="oauth-2-0-openid-connect">
+<h2><span class="section-number">4.8. </span>OAuth 2.0 と OpenID Connect<a class="headerlink" href="#oauth-2-0-openid-connect" title="Link to this heading"></a></h2>
+<p>「Google アカウントでログイン」のように、外部のサービスと連携する仕組みには、<a class="reference internal" href="glossary.html#term-OAuth-2.0"><span class="xref std std-term">OAuth 2.0</span></a> と <a class="reference internal" href="glossary.html#term-OpenID-Connect"><span class="xref std std-term">OpenID Connect</span></a> が使われます。両者は目的が異なります。</p>
+<table class="docutils align-default" id="id25">
+<caption><span class="caption-text">OAuth 2.0 と OpenID Connect の違い</span><a class="headerlink" href="#id25" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 40.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>規格</p></th>
+<th class="head"><p>目的</p></th>
+<th class="head"><p>発行されるもの</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>OAuth 2.0</p></td>
+<td><p>利用者の同意に基づいて、アプリケーションに API へのアクセス権限を与えます（認可）。</p></td>
+<td><p>アクセストークン</p></td>
+</tr>
+<tr class="row-odd"><td><p>OpenID Connect</p></td>
+<td><p>OAuth 2.0 の上に、利用者が誰であるかを伝える仕組みを加えます（認証）。</p></td>
+<td><p>ID トークン（JWT 形式）</p></td>
+</tr>
+</tbody>
+</table>
+<p>OAuth 2.0 のアクセストークンは「この API を呼び出してよい」という許可を表すもので、利用者が誰であるかを証明するものではありません。アクセストークンを受け取ったことをもってログインしたとみなす実装は、他のアプリケーション向けに発行されたトークンを使ったなりすましを許すおそれがあります。ログインに使う場合は、OpenID Connect の ID トークンを検証します。</p>
+<p>Web アプリケーションやスマートフォンアプリでは、認可コードフローに PKCE（RFC 7636）を組み合わせて使うのが標準的です。認可サーバーとの間でやり取りする <code class="docutils literal notranslate"><span class="pre">state</span></code> パラメーターも検証し、CSRF を防ぎます。これらは自分で実装せず、実績のあるライブラリや、認証サービスが提供する SDK を使うことをお勧めします。</p>
+</section>
+<section id="id11">
+<h2><span class="section-number">4.9. </span>アクセス制御<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>認可を実装する方法をアクセス制御と呼びます。代表的なモデルを次の表に示します。</p>
+<table class="docutils align-default" id="id26">
+<caption><span class="caption-text">アクセス制御の代表的なモデル</span><a class="headerlink" href="#id26" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 45.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>モデル</p></th>
+<th class="head"><p>内容</p></th>
+<th class="head"><p>例</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>RBAC（ロールベース）</p></td>
+<td><p>利用者にロール（役割）を割り当て、ロールごとに権限を決めます。</p></td>
+<td><p>「編集者」は記事を編集できます。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ABAC（属性ベース）</p></td>
+<td><p>利用者、データ、環境の属性を組み合わせた規則で判断します。</p></td>
+<td><p>「所属部署が同じで、勤務時間内なら」参照できます。</p></td>
+</tr>
+</tbody>
+</table>
+<p>どのモデルを使う場合も、次の原則を守ります。</p>
+<ul class="simple">
+<li><p><strong>サーバー側で判定してください。</strong>画面のボタンを非表示にするだけでは、アクセス制御になりません。攻撃者は API を直接呼び出せます。</p></li>
+<li><p><strong>既定では拒否してください。</strong>明示的に許可された操作だけを許可し、それ以外はすべて拒否します。</p></li>
+<li><p><strong>データごとに判定してください。</strong>「ログインしているか」だけでなく、「このデータにアクセスする権限があるか」をリクエストごとに確認します。</p></li>
+</ul>
+<p>最後の原則が守られていないことによる脆弱性は非常に多く見られます。具体例は <a class="reference internal" href="06_web_application.html"><span class="doc">Web アプリケーションのセキュリティ</span></a>で説明します。</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="03_cryptography.html" class="btn btn-neutral float-left" title="3. 暗号技術の基礎" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="05_network.html" class="btn btn-neutral float-right" title="5. ネットワークセキュリティ" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

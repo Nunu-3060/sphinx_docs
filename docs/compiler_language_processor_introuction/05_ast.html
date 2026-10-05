@@ -1,0 +1,652 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 5 章 抽象構文木と Tiny の構文解析器 &mdash; コンパイラ・言語処理系入門</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=01529632" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="第 6 章 意味解析" href="06_semantic.html" />
+    <link rel="prev" title="第 4 章 構文解析" href="04_parsing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            コンパイラ・言語処理系入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">目次</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00_introduction.html">はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01_overview.html">第 1 章 言語処理系の全体像</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02_language.html">第 2 章 題材言語 Tiny の定義</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03_lexer.html">第 3 章 字句解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04_parsing.html">第 4 章 構文解析</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">第 5 章 抽象構文木と Tiny の構文解析器</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">具象構文木と抽象構文木</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">抽象構文木の設計</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">Tiny の構文解析器</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">文の解析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">式の解析</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">エラー回復の実装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">構文木をたどる</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">実行例</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#python-ast">Python の ast モジュール</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">まとめ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="06_semantic.html">第 6 章 意味解析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07_interpreter.html">第 7 章 インタプリタ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="08_ir.html">第 8 章 中間表現</a></li>
+<li class="toctree-l1"><a class="reference internal" href="09_optimization.html">第 9 章 最適化</a></li>
+<li class="toctree-l1"><a class="reference internal" href="10_vm.html">第 10 章 コード生成と仮想マシン</a></li>
+<li class="toctree-l1"><a class="reference internal" href="11_runtime.html">第 11 章 実行時環境とネイティブコード生成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="12_advanced.html">第 12 章 発展的な話題</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="appendix_a_examples.html">付録 A サンプルコード</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_b_glossary.html">付録 B 用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_c_references.html">付録 C 参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">コンパイラ・言語処理系入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">第 5 章 抽象構文木と Tiny の構文解析器</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tiny">
+<h1>第 5 章 抽象構文木と Tiny の構文解析器<a class="headerlink" href="#tiny" title="Link to this heading"></a></h1>
+<p>この章では、構文解析の結果を表す抽象構文木を設計し、第 4 章の手法を組み合わせて Tiny 全体の構文解析器を作ります。</p>
+<section id="id1">
+<h2>具象構文木と抽象構文木<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>第 4 章の構文木（具象構文木）は、文法の規則をそのまま反映しているため、後の処理にとって不要な情報を多く含んでいます。たとえば <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3</span></code> の構文木には <code class="docutils literal notranslate"><span class="pre">term</span></code> や <code class="docutils literal notranslate"><span class="pre">factor</span></code> といった中間のノードや、括弧のトークンが含まれます。しかし、計算の内容を表すには「<code class="docutils literal notranslate"><span class="pre">1</span></code> と、<code class="docutils literal notranslate"><span class="pre">2</span></code> と <code class="docutils literal notranslate"><span class="pre">3</span></code> の積との和」が分かれば十分です。</p>
+<p>そこで、プログラムの意味に必要な情報だけを残した木を作ります。これを<a class="reference internal" href="appendix_b_glossary.html#term-48"><span class="xref std std-term">抽象構文木</span></a>（AST: Abstract Syntax Tree）と呼びます。次の図は、<code class="docutils literal notranslate"><span class="pre">let</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">1</span> <span class="pre">+</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">3;</span></code> の抽象構文木です。</p>
+<figure class="align-default" id="id10">
+<div class="graphviz"><object data="_images/graphviz-749363bf8463eed5b6c74612d5b91064da386687.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph ast {
+  node [shape=box, fontname=&quot;monospace&quot;];
+  let [label=&quot;Let\nname: x&quot;];
+  add [label=&quot;Binary\nop: +&quot;];
+  one [label=&quot;IntLit\nvalue: 1&quot;];
+  mul [label=&quot;Binary\nop: *&quot;];
+  two [label=&quot;IntLit\nvalue: 2&quot;];
+  three [label=&quot;IntLit\nvalue: 3&quot;];
+  let -&gt; add [label=&quot; value&quot;];
+  add -&gt; one [label=&quot; left&quot;];
+  add -&gt; mul [label=&quot; right&quot;];
+  mul -&gt; two [label=&quot; left&quot;];
+  mul -&gt; three [label=&quot; right&quot;];
+}</p></object></div>
+<figcaption>
+<p><span class="caption-text">「let x = 1 + 2 * 3;」の抽象構文木</span><a class="headerlink" href="#id10" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>括弧は木の形に反映されるので、抽象構文木には残りません。<code class="docutils literal notranslate"><span class="pre">(1</span> <span class="pre">+</span> <span class="pre">2)</span> <span class="pre">*</span> <span class="pre">3</span></code> なら、根が <code class="docutils literal notranslate"><span class="pre">*</span></code> で、その左の子が <code class="docutils literal notranslate"><span class="pre">+</span></code> の木になります。</p>
+</section>
+<section id="id2">
+<h2>抽象構文木の設計<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>Tiny の抽象構文木は <code class="docutils literal notranslate"><span class="pre">tiny_ast.py</span></code> にデータクラスで定義します。まず、型を表すクラスです。型はソースコード中の型注釈（<code class="docutils literal notranslate"><span class="pre">[int]</span></code> など）を表すほか、意味解析で式の型を記録するのにも使います。</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">tiny_ast.py（配列型と型の定数）</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">41</span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">42</span><span class="k">class</span><span class="w"> </span><span class="nc">ArrayType</span><span class="p">(</span><span class="n">Type</span><span class="p">):</span>
+<span class="linenos">43</span>    <span class="n">element</span><span class="p">:</span> <span class="n">Type</span>
+<span class="linenos">44</span>
+<span class="linenos">45</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="linenos">46</span>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="si">}</span><span class="s2">]&quot;</span>
+<span class="linenos">47</span>
+<span class="linenos">48</span>
+<span class="linenos">49</span><span class="n">INT</span> <span class="o">=</span> <span class="n">IntType</span><span class="p">()</span>
+<span class="linenos">50</span><span class="n">BOOL</span> <span class="o">=</span> <span class="n">BoolType</span><span class="p">()</span>
+<span class="linenos">51</span><span class="n">STR</span> <span class="o">=</span> <span class="n">StrType</span><span class="p">()</span>
+<span class="linenos">52</span><span class="n">VOID</span> <span class="o">=</span> <span class="n">VoidType</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>データクラスは <code class="docutils literal notranslate"><span class="pre">==</span></code> で値として比較できるので、<code class="docutils literal notranslate"><span class="pre">ArrayType(INT)</span> <span class="pre">==</span> <span class="pre">ArrayType(INT)</span></code> は <code class="docutils literal notranslate"><span class="pre">True</span></code> になります。さらに <code class="docutils literal notranslate"><span class="pre">frozen=True</span></code> を指定すると、値を変更できなくなる代わりにハッシュ可能になり、辞書のキーにも使えます。</p>
+<p>次に、式を表すノードです。すべてのノードは行番号 <code class="docutils literal notranslate"><span class="pre">line</span></code> を持ち、式のノードは意味解析で求めた型 <code class="docutils literal notranslate"><span class="pre">ty</span></code> を持ちます。これらは <code class="docutils literal notranslate"><span class="pre">kw_only=True</span></code> としてキーワード引数でだけ指定できるようにし、<code class="docutils literal notranslate"><span class="pre">compare=False</span></code> として比較の対象から外しています。</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">tiny_ast.py（式のノード）</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 57</span><span class="nd">@dataclass</span>
+<span class="linenos"> 58</span><span class="k">class</span><span class="w"> </span><span class="nc">Node</span><span class="p">:</span>
+<span class="linenos"> 59</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;構文木のノードの基底クラス。line はソースコード上の行番号。&quot;&quot;&quot;</span>
+<span class="linenos"> 60</span>
+<span class="linenos"> 61</span>    <span class="n">line</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos"> 62</span>
+<span class="linenos"> 63</span>
+<span class="linenos"> 64</span><span class="nd">@dataclass</span>
+<span class="linenos"> 65</span><span class="k">class</span><span class="w"> </span><span class="nc">Expr</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+<span class="linenos"> 66</span>    <span class="c1"># 意味解析（第 6 章）で式の型を書き込む。</span>
+<span class="linenos"> 67</span>    <span class="n">ty</span><span class="p">:</span> <span class="n">Type</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="linenos"> 68</span>
+<span class="linenos"> 69</span>
+<span class="linenos"> 70</span><span class="nd">@dataclass</span>
+<span class="linenos"> 71</span><span class="k">class</span><span class="w"> </span><span class="nc">IntLit</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos"> 72</span>    <span class="n">value</span><span class="p">:</span> <span class="nb">int</span>
+<span class="linenos"> 73</span>
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span><span class="nd">@dataclass</span>
+<span class="linenos"> 76</span><span class="k">class</span><span class="w"> </span><span class="nc">BoolLit</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos"> 77</span>    <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="linenos"> 78</span>
+<span class="linenos"> 79</span>
+<span class="linenos"> 80</span><span class="nd">@dataclass</span>
+<span class="linenos"> 81</span><span class="k">class</span><span class="w"> </span><span class="nc">StrLit</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos"> 82</span>    <span class="n">value</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos"> 83</span>
+<span class="linenos"> 84</span>
+<span class="linenos"> 85</span><span class="nd">@dataclass</span>
+<span class="linenos"> 86</span><span class="k">class</span><span class="w"> </span><span class="nc">ArrayLit</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos"> 87</span>    <span class="n">elements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]</span>
+<span class="linenos"> 88</span>
+<span class="linenos"> 89</span>
+<span class="linenos"> 90</span><span class="nd">@dataclass</span>
+<span class="linenos"> 91</span><span class="k">class</span><span class="w"> </span><span class="nc">Name</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos"> 92</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos"> 93</span>
+<span class="linenos"> 94</span>
+<span class="linenos"> 95</span><span class="nd">@dataclass</span>
+<span class="linenos"> 96</span><span class="k">class</span><span class="w"> </span><span class="nc">Index</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos"> 97</span>    <span class="n">target</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos"> 98</span>    <span class="n">index</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos"> 99</span>
+<span class="linenos">100</span>
+<span class="linenos">101</span><span class="nd">@dataclass</span>
+<span class="linenos">102</span><span class="k">class</span><span class="w"> </span><span class="nc">Call</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos">103</span>    <span class="n">callee</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">104</span>    <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expr</span><span class="p">]</span>
+<span class="linenos">105</span>
+<span class="linenos">106</span>
+<span class="linenos">107</span><span class="nd">@dataclass</span>
+<span class="linenos">108</span><span class="k">class</span><span class="w"> </span><span class="nc">Unary</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos">109</span>    <span class="n">op</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">110</span>    <span class="n">operand</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos">111</span>
+<span class="linenos">112</span>
+<span class="linenos">113</span><span class="nd">@dataclass</span>
+<span class="linenos">114</span><span class="k">class</span><span class="w"> </span><span class="nc">Binary</span><span class="p">(</span><span class="n">Expr</span><span class="p">):</span>
+<span class="linenos">115</span>    <span class="n">op</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">116</span>    <span class="n">left</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos">117</span>    <span class="n">right</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos">118</span>
+</pre></div>
+</div>
+</div>
+<p>関数呼び出し <code class="docutils literal notranslate"><span class="pre">Call</span></code> の呼び出し先 <code class="docutils literal notranslate"><span class="pre">callee</span></code> を、式ではなく文字列にしている点に注意してください。Tiny では関数は値ではなく、呼び出せるのは関数名だけだからです。</p>
+<p>文、関数、プログラムのノードも同様に定義します。<code class="docutils literal notranslate"><span class="pre">If</span></code> の <code class="docutils literal notranslate"><span class="pre">else_body</span></code> は、<code class="docutils literal notranslate"><span class="pre">else</span></code> 節がなければ <code class="docutils literal notranslate"><span class="pre">None</span></code>、<code class="docutils literal notranslate"><span class="pre">else</span> <span class="pre">if</span></code> なら <code class="docutils literal notranslate"><span class="pre">If</span></code>、<code class="docutils literal notranslate"><span class="pre">else</span> <span class="pre">{</span> <span class="pre">...</span> <span class="pre">}</span></code> なら <code class="docutils literal notranslate"><span class="pre">Block</span></code> になります。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">tiny_ast.py（文、関数、プログラムのノード）</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">122</span><span class="nd">@dataclass</span>
+<span class="linenos">123</span><span class="k">class</span><span class="w"> </span><span class="nc">Stmt</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+<span class="linenos">124</span>    <span class="k">pass</span>
+<span class="linenos">125</span>
+<span class="linenos">126</span>
+<span class="linenos">127</span><span class="nd">@dataclass</span>
+<span class="linenos">128</span><span class="k">class</span><span class="w"> </span><span class="nc">Block</span><span class="p">(</span><span class="n">Stmt</span><span class="p">):</span>
+<span class="linenos">129</span>    <span class="n">stmts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Stmt</span><span class="p">]</span>
+<span class="linenos">130</span>
+<span class="linenos">131</span>
+<span class="linenos">132</span><span class="nd">@dataclass</span>
+<span class="linenos">133</span><span class="k">class</span><span class="w"> </span><span class="nc">Let</span><span class="p">(</span><span class="n">Stmt</span><span class="p">):</span>
+<span class="linenos">134</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">135</span>    <span class="n">declared_type</span><span class="p">:</span> <span class="n">Type</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="linenos">136</span>    <span class="n">value</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos">137</span>
+<span class="linenos">138</span>
+<span class="linenos">139</span><span class="nd">@dataclass</span>
+<span class="linenos">140</span><span class="k">class</span><span class="w"> </span><span class="nc">Assign</span><span class="p">(</span><span class="n">Stmt</span><span class="p">):</span>
+<span class="linenos">141</span>    <span class="n">target</span><span class="p">:</span> <span class="n">Expr</span>  <span class="c1"># Name または Index</span>
+<span class="linenos">142</span>    <span class="n">value</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos">143</span>
+<span class="linenos">144</span>
+<span class="linenos">145</span><span class="nd">@dataclass</span>
+<span class="linenos">146</span><span class="k">class</span><span class="w"> </span><span class="nc">If</span><span class="p">(</span><span class="n">Stmt</span><span class="p">):</span>
+<span class="linenos">147</span>    <span class="n">cond</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos">148</span>    <span class="n">then_body</span><span class="p">:</span> <span class="n">Block</span>
+<span class="linenos">149</span>    <span class="n">else_body</span><span class="p">:</span> <span class="n">Stmt</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># Block、If、None のいずれか</span>
+<span class="linenos">150</span>
+<span class="linenos">151</span>
+<span class="linenos">152</span><span class="nd">@dataclass</span>
+<span class="linenos">153</span><span class="k">class</span><span class="w"> </span><span class="nc">While</span><span class="p">(</span><span class="n">Stmt</span><span class="p">):</span>
+<span class="linenos">154</span>    <span class="n">cond</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos">155</span>    <span class="n">body</span><span class="p">:</span> <span class="n">Block</span>
+<span class="linenos">156</span>
+<span class="linenos">157</span>
+<span class="linenos">158</span><span class="nd">@dataclass</span>
+<span class="linenos">159</span><span class="k">class</span><span class="w"> </span><span class="nc">Return</span><span class="p">(</span><span class="n">Stmt</span><span class="p">):</span>
+<span class="linenos">160</span>    <span class="n">value</span><span class="p">:</span> <span class="n">Expr</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="linenos">161</span>
+<span class="linenos">162</span>
+<span class="linenos">163</span><span class="nd">@dataclass</span>
+<span class="linenos">164</span><span class="k">class</span><span class="w"> </span><span class="nc">ExprStmt</span><span class="p">(</span><span class="n">Stmt</span><span class="p">):</span>
+<span class="linenos">165</span>    <span class="n">expr</span><span class="p">:</span> <span class="n">Expr</span>
+<span class="linenos">166</span>
+<span class="linenos">167</span>
+<span class="linenos">168</span><span class="c1"># ---------------------------------------------------------------- 関数とプログラム</span>
+<span class="linenos">169</span>
+<span class="linenos">170</span><span class="nd">@dataclass</span>
+<span class="linenos">171</span><span class="k">class</span><span class="w"> </span><span class="nc">Param</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+<span class="linenos">172</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">173</span>    <span class="n">ty</span><span class="p">:</span> <span class="n">Type</span>
+<span class="linenos">174</span>
+<span class="linenos">175</span>
+<span class="linenos">176</span><span class="nd">@dataclass</span>
+<span class="linenos">177</span><span class="k">class</span><span class="w"> </span><span class="nc">FuncDef</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+<span class="linenos">178</span>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="linenos">179</span>    <span class="n">params</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Param</span><span class="p">]</span>
+<span class="linenos">180</span>    <span class="n">return_type</span><span class="p">:</span> <span class="n">Type</span>
+<span class="linenos">181</span>    <span class="n">body</span><span class="p">:</span> <span class="n">Block</span>
+<span class="linenos">182</span>
+<span class="linenos">183</span>
+<span class="linenos">184</span><span class="nd">@dataclass</span>
+<span class="linenos">185</span><span class="k">class</span><span class="w"> </span><span class="nc">Program</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+<span class="linenos">186</span>    <span class="n">functions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FuncDef</span><span class="p">]</span>
+<span class="linenos">187</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id3">
+<h2>Tiny の構文解析器<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>構文解析器は <code class="docutils literal notranslate"><span class="pre">tiny_parser.py</span></code> に実装します。文と関数定義は再帰下降構文解析で、式は Pratt 構文解析で解析します。</p>
+<section id="id4">
+<h3>文の解析<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">parse_statement</span></code> は、最初のトークンを見てどの種類の文かを判断します。<code class="docutils literal notranslate"><span class="pre">let</span></code>、<code class="docutils literal notranslate"><span class="pre">if</span></code>、<code class="docutils literal notranslate"><span class="pre">while</span></code>、<code class="docutils literal notranslate"><span class="pre">return</span></code>、<code class="docutils literal notranslate"><span class="pre">{</span></code> のどれでもなければ、代入文か式文です。この 2 つは先頭を見ただけでは区別できないため、まず式として解析し、その後に <code class="docutils literal notranslate"><span class="pre">=</span></code> が続くかどうかで判断します。代入文の場合は、左辺が変数か添字式であることを確かめます。</p>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">tiny_parser.py（文の解析）</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">177</span>    <span class="k">def</span><span class="w"> </span><span class="nf">parse_statement</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Stmt</span><span class="p">:</span>
+<span class="linenos">178</span>        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span>
+<span class="linenos">179</span>        <span class="n">line</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">line</span>
+<span class="linenos">180</span>        <span class="k">match</span> <span class="n">token</span><span class="o">.</span><span class="n">kind</span><span class="p">:</span>
+<span class="linenos">181</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">LBRACE</span><span class="p">:</span>
+<span class="linenos">182</span>                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_block</span><span class="p">()</span>
+<span class="linenos">183</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">LET</span><span class="p">:</span>
+<span class="linenos">184</span>                <span class="c1"># &quot;let&quot; IDENT [ &quot;:&quot; type ] &quot;=&quot; expr &quot;;&quot;</span>
+<span class="linenos">185</span>                <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">186</span>                <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">IDENT</span><span class="p">,</span> <span class="s2">&quot;変数名&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+<span class="linenos">187</span>                <span class="n">declared</span><span class="p">:</span> <span class="n">Type</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos">188</span>                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">COLON</span><span class="p">):</span>
+<span class="linenos">189</span>                    <span class="n">declared</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_type</span><span class="p">()</span>
+<span class="linenos">190</span>                <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">ASSIGN</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">)</span>
+<span class="linenos">191</span>                <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">()</span>
+<span class="linenos">192</span>                <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">SEMICOLON</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">)</span>
+<span class="linenos">193</span>                <span class="k">return</span> <span class="n">Let</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">declared</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">194</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">IF</span><span class="p">:</span>
+<span class="linenos">195</span>                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_if</span><span class="p">()</span>
+<span class="linenos">196</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">WHILE</span><span class="p">:</span>
+<span class="linenos">197</span>                <span class="c1"># &quot;while&quot; &quot;(&quot; expr &quot;)&quot; block</span>
+<span class="linenos">198</span>                <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">199</span>                <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">LPAREN</span><span class="p">,</span> <span class="s2">&quot;(&quot;</span><span class="p">)</span>
+<span class="linenos">200</span>                <span class="n">cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">()</span>
+<span class="linenos">201</span>                <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RPAREN</span><span class="p">,</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+<span class="linenos">202</span>                <span class="k">return</span> <span class="n">While</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_block</span><span class="p">(),</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">203</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">RETURN</span><span class="p">:</span>
+<span class="linenos">204</span>                <span class="c1"># &quot;return&quot; [ expr ] &quot;;&quot;</span>
+<span class="linenos">205</span>                <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">206</span>                <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos">207</span>                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">SEMICOLON</span><span class="p">):</span>
+<span class="linenos">208</span>                    <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">()</span>
+<span class="linenos">209</span>                <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">SEMICOLON</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">)</span>
+<span class="linenos">210</span>                <span class="k">return</span> <span class="n">Return</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">211</span>        <span class="c1"># 代入文または式文: expr [ &quot;=&quot; expr ] &quot;;&quot;</span>
+<span class="linenos">212</span>        <span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">()</span>
+<span class="linenos">213</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">ASSIGN</span><span class="p">):</span>
+<span class="linenos">214</span>            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="p">(</span><span class="n">Name</span><span class="p">,</span> <span class="n">Index</span><span class="p">)):</span>
+<span class="linenos">215</span>                <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="s2">&quot;代入の左辺が不正です&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">line</span><span class="p">,</span>
+<span class="linenos">216</span>                                 <span class="n">token</span><span class="o">.</span><span class="n">column</span><span class="p">)</span>
+<span class="linenos">217</span>            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">()</span>
+<span class="linenos">218</span>            <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">SEMICOLON</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">)</span>
+<span class="linenos">219</span>            <span class="k">return</span> <span class="n">Assign</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">220</span>        <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">SEMICOLON</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">)</span>
+<span class="linenos">221</span>        <span class="k">return</span> <span class="n">ExprStmt</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">else</span> <span class="pre">if</span></code> の連鎖は <code class="docutils literal notranslate"><span class="pre">parse_if</span></code> を再帰的に呼び出して解析します。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">tiny_parser.py（if 文の解析）</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">223</span>    <span class="k">def</span><span class="w"> </span><span class="nf">parse_if</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">If</span><span class="p">:</span>
+<span class="linenos">224</span>        <span class="c1"># &quot;if&quot; &quot;(&quot; expr &quot;)&quot; block [ &quot;else&quot; ( block | if ) ]</span>
+<span class="linenos">225</span>        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">IF</span><span class="p">,</span> <span class="s2">&quot;if&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">line</span>
+<span class="linenos">226</span>        <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">LPAREN</span><span class="p">,</span> <span class="s2">&quot;(&quot;</span><span class="p">)</span>
+<span class="linenos">227</span>        <span class="n">cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">()</span>
+<span class="linenos">228</span>        <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RPAREN</span><span class="p">,</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+<span class="linenos">229</span>        <span class="n">then_body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_block</span><span class="p">()</span>
+<span class="linenos">230</span>        <span class="n">else_body</span><span class="p">:</span> <span class="n">Stmt</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos">231</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">ELSE</span><span class="p">):</span>
+<span class="linenos">232</span>            <span class="n">else_body</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_if</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">IF</span><span class="p">)</span>
+<span class="linenos">233</span>                         <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_block</span><span class="p">())</span>
+<span class="linenos">234</span>        <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">then_body</span><span class="p">,</span> <span class="n">else_body</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id5">
+<h3>式の解析<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>式の解析は第 4 章の Pratt 構文解析と同じ形です。違いは、文字列の代わりに抽象構文木のノードを作ることと、関数呼び出し <code class="docutils literal notranslate"><span class="pre">f(...)</span></code> と添字 <code class="docutils literal notranslate"><span class="pre">a[...]</span></code> という後置の演算子を扱うことです。後置の演算子にはどの二項演算子よりも大きな結合力 <code class="docutils literal notranslate"><span class="pre">POSTFIX_POWER</span></code> を与えているので、<code class="docutils literal notranslate"><span class="pre">-a[0]</span></code> は <code class="docutils literal notranslate"><span class="pre">-(a[0])</span></code> と解釈されます。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">tiny_parser.py（式の解析）</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">238</span>    <span class="k">def</span><span class="w"> </span><span class="nf">parse_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_power</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="linenos">239</span>        <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_prefix</span><span class="p">()</span>
+<span class="linenos">240</span>        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="linenos">241</span>            <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span>
+<span class="linenos">242</span>            <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">LPAREN</span><span class="p">,</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">LBRACKET</span><span class="p">):</span>
+<span class="linenos">243</span>                <span class="k">if</span> <span class="n">POSTFIX_POWER</span> <span class="o">&lt;</span> <span class="n">min_power</span><span class="p">:</span>
+<span class="linenos">244</span>                    <span class="k">return</span> <span class="n">left</span>
+<span class="linenos">245</span>                <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_postfix</span><span class="p">(</span><span class="n">left</span><span class="p">)</span>
+<span class="linenos">246</span>                <span class="k">continue</span>
+<span class="linenos">247</span>            <span class="n">power</span> <span class="o">=</span> <span class="n">BINARY_POWER</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
+<span class="linenos">248</span>            <span class="k">if</span> <span class="n">power</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">power</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_power</span><span class="p">:</span>
+<span class="linenos">249</span>                <span class="k">return</span> <span class="n">left</span>
+<span class="linenos">250</span>            <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">251</span>            <span class="n">right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">(</span><span class="n">power</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="linenos">252</span>            <span class="n">left</span> <span class="o">=</span> <span class="n">Binary</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">token</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">253</span>
+<span class="linenos">254</span>    <span class="k">def</span><span class="w"> </span><span class="nf">parse_postfix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="linenos">255</span>        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">256</span>        <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">LBRACKET</span><span class="p">:</span>
+<span class="linenos">257</span>            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">()</span>
+<span class="linenos">258</span>            <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RBRACKET</span><span class="p">,</span> <span class="s2">&quot;]&quot;</span><span class="p">)</span>
+<span class="linenos">259</span>            <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">token</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">260</span>        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">Name</span><span class="p">):</span>
+<span class="linenos">261</span>            <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="s2">&quot;関数名以外は呼び出せません&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">line</span><span class="p">,</span>
+<span class="linenos">262</span>                             <span class="n">token</span><span class="o">.</span><span class="n">column</span><span class="p">)</span>
+<span class="linenos">263</span>        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_list</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RPAREN</span><span class="p">,</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+<span class="linenos">264</span>        <span class="k">return</span> <span class="n">Call</span><span class="p">(</span><span class="n">left</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">left</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">265</span>
+</pre></div>
+</div>
+</div>
+<p>被演算子になる式（リテラル、変数、単項演算子、括弧、配列リテラル）は <code class="docutils literal notranslate"><span class="pre">parse_prefix</span></code> で解析します。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">tiny_parser.py（被演算子の解析）</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">276</span>    <span class="k">def</span><span class="w"> </span><span class="nf">parse_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expr</span><span class="p">:</span>
+<span class="linenos">277</span>        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span>
+<span class="linenos">278</span>        <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">PREFIX_START</span><span class="p">:</span>
+<span class="linenos">279</span>            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;式が必要です&quot;</span><span class="p">)</span>
+<span class="linenos">280</span>        <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">281</span>        <span class="n">line</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">line</span>
+<span class="linenos">282</span>        <span class="k">match</span> <span class="n">token</span><span class="o">.</span><span class="n">kind</span><span class="p">:</span>
+<span class="linenos">283</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">INT</span><span class="p">:</span>
+<span class="linenos">284</span>                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="linenos">285</span>                <span class="k">return</span> <span class="n">IntLit</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">286</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
+<span class="linenos">287</span>                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+<span class="linenos">288</span>                <span class="k">return</span> <span class="n">StrLit</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">289</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">TRUE</span><span class="p">:</span>
+<span class="linenos">290</span>                <span class="k">return</span> <span class="n">BoolLit</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">291</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">FALSE</span><span class="p">:</span>
+<span class="linenos">292</span>                <span class="k">return</span> <span class="n">BoolLit</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">293</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">IDENT</span><span class="p">:</span>
+<span class="linenos">294</span>                <span class="k">return</span> <span class="n">Name</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">295</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">MINUS</span> <span class="o">|</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">NOT</span><span class="p">:</span>
+<span class="linenos">296</span>                <span class="n">operand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">(</span><span class="n">PREFIX_POWER</span><span class="p">)</span>
+<span class="linenos">297</span>                <span class="k">return</span> <span class="n">Unary</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">operand</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">298</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">LPAREN</span><span class="p">:</span>
+<span class="linenos">299</span>                <span class="n">inner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_expr</span><span class="p">()</span>
+<span class="linenos">300</span>                <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RPAREN</span><span class="p">,</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+<span class="linenos">301</span>                <span class="k">return</span> <span class="n">inner</span>
+<span class="linenos">302</span>            <span class="k">case</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">LBRACKET</span><span class="p">:</span>
+<span class="linenos">303</span>                <span class="n">elements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_list</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RBRACKET</span><span class="p">,</span> <span class="s2">&quot;]&quot;</span><span class="p">)</span>
+<span class="linenos">304</span>                <span class="k">return</span> <span class="n">ArrayLit</span><span class="p">(</span><span class="n">elements</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+<span class="linenos">305</span>        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="id6">
+<h2>エラー回復の実装<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>第 4 章で説明したパニックモードのエラー回復を、<code class="docutils literal notranslate"><span class="pre">parse_block</span></code> と <code class="docutils literal notranslate"><span class="pre">synchronize</span></code> で実装しています。文の解析中に構文エラー（<code class="docutils literal notranslate"><span class="pre">ParseError</span></code>）が起きたら、エラーを記録し、文の区切りまでトークンを読み飛ばして次の文から解析を再開します。</p>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">tiny_parser.py（読み飛ばし）</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 98</span>    <span class="k">def</span><span class="w"> </span><span class="nf">synchronize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 99</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;エラー回復: 文の区切りまで字句を読み飛ばす。&quot;&quot;&quot;</span>
+<span class="linenos">100</span>        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">EOF</span><span class="p">):</span>
+<span class="linenos">101</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">SEMICOLON</span><span class="p">):</span>
+<span class="linenos">102</span>                <span class="k">return</span>
+<span class="linenos">103</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">peek</span><span class="p">()</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="n">STATEMENT_START</span><span class="p">,</span> <span class="n">TokenKind</span><span class="o">.</span><span class="n">RBRACE</span><span class="p">):</span>
+<span class="linenos">104</span>                <span class="k">return</span>
+<span class="linenos">105</span>            <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">tiny_parser.py（ブロックの解析とエラー回復）</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">161</span>    <span class="k">def</span><span class="w"> </span><span class="nf">parse_block</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Block</span><span class="p">:</span>
+<span class="linenos">162</span>        <span class="c1"># block = &quot;{&quot; { statement } &quot;}&quot;</span>
+<span class="linenos">163</span>        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">LBRACE</span><span class="p">,</span> <span class="s2">&quot;{&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">line</span>
+<span class="linenos">164</span>        <span class="n">stmts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">165</span>        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RBRACE</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">EOF</span><span class="p">):</span>
+<span class="linenos">166</span>            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span>
+<span class="linenos">167</span>            <span class="k">try</span><span class="p">:</span>
+<span class="linenos">168</span>                <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_statement</span><span class="p">())</span>
+<span class="linenos">169</span>            <span class="k">except</span> <span class="n">ParseError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<span class="linenos">170</span>                <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+<span class="linenos">171</span>                <span class="bp">self</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>
+<span class="linenos">172</span>                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">==</span> <span class="n">start</span><span class="p">:</span>  <span class="c1"># 1 字句も進まなければ強制的に進める</span>
+<span class="linenos">173</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">advance</span><span class="p">()</span>
+<span class="linenos">174</span>        <span class="bp">self</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">TokenKind</span><span class="o">.</span><span class="n">RBRACE</span><span class="p">,</span> <span class="s2">&quot;}&quot;</span><span class="p">)</span>
+<span class="linenos">175</span>        <span class="k">return</span> <span class="n">Block</span><span class="p">(</span><span class="n">stmts</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">synchronize</span></code> がトークンを 1 つも読み進めなかった場合は、強制的に 1 つ進めています。そうしないと、同じ位置で同じエラーが起き続けて無限ループになるおそれがあるからです。</p>
+<p>次のプログラムには 3 つの誤りがあります。2 行目は初期値がなく、3 行目は <code class="docutils literal notranslate"><span class="pre">;</span></code> がなく、4 行目は引数の間に <code class="docutils literal notranslate"><span class="pre">,</span></code> がありません。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">error.tiny</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-tiny notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">fn</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="linenos">2</span>    <span class="k">let</span> <span class="n">x</span> <span class="o">=</span> <span class="p">;</span>
+<span class="linenos">3</span>    <span class="k">let</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="linenos">4</span>    <span class="nb">print</span><span class="p">(</span><span class="n">x</span> <span class="n">y</span><span class="p">);</span>
+<span class="linenos">5</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">$ </span>python<span class="w"> </span>tiny.py<span class="w"> </span>ast<span class="w"> </span>error.tiny
+<span class="linenos">2</span><span class="go">error.tiny:2:13: 式が必要です（&#39;;&#39; があります）</span>
+<span class="linenos">3</span><span class="go">error.tiny:4:5: ; が必要です（&#39;print&#39; があります）</span>
+</pre></div>
+</div>
+<p>2 行目と 3 行目の誤りは報告されましたが、4 行目の誤りは報告されていません。3 行目の誤りから回復するときに、<code class="docutils literal notranslate"><span class="pre">print</span></code> が文の先頭になるキーワードではないため、4 行目の <code class="docutils literal notranslate"><span class="pre">;</span></code> まで読み飛ばしてしまったからです。このように、パニックモードは単純ですが、読み飛ばした範囲にある誤りは見逃します。また、<code class="docutils literal notranslate"><span class="pre">;</span></code> の抜けのエラーは次の行の位置で報告されます。実用的なコンパイラは、「<code class="docutils literal notranslate"><span class="pre">;</span></code> が抜けているとみなして解析を続ける」といった、より細かな回復の手法を組み合わせています。</p>
+</section>
+<section id="id7">
+<h2>構文木をたどる<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>抽象構文木を使う処理（意味解析、インタプリタ、コード生成など）は、どれも「ノードの種類に応じて処理を変えながら木をたどる」という形になります。オブジェクト指向言語では、これを <a class="reference internal" href="appendix_b_glossary.html#term-Visitor"><span class="xref std std-term">Visitor パターン</span></a>で書くのが伝統的な方法です。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">Visitor パターンによる評価（概略）</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">class</span><span class="w"> </span><span class="nc">Visitor</span><span class="p">:</span>
+<span class="linenos"> 2</span>    <span class="k">def</span><span class="w"> </span><span class="nf">visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+<span class="linenos"> 3</span>        <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;visit_&quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="linenos"> 4</span>        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span><span class="k">class</span><span class="w"> </span><span class="nc">Evaluator</span><span class="p">(</span><span class="n">Visitor</span><span class="p">):</span>
+<span class="linenos"> 8</span>    <span class="k">def</span><span class="w"> </span><span class="nf">visit_IntLit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">IntLit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+<span class="linenos"> 9</span>        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span>    <span class="k">def</span><span class="w"> </span><span class="nf">visit_Binary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Binary</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+<span class="linenos">12</span>        <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">left</span><span class="p">)</span>
+<span class="linenos">13</span>        <span class="n">right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
+<span class="linenos">14</span>        <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<p>Python 3.10 以降では、<code class="docutils literal notranslate"><span class="pre">match</span></code> 文の構造的パターンマッチを使うと、同じ処理をより直接的に書けます。データクラスは <code class="docutils literal notranslate"><span class="pre">__match_args__</span></code> を自動的に定義するので、<code class="docutils literal notranslate"><span class="pre">Binary(op,</span> <span class="pre">left,</span> <span class="pre">right)</span></code> のように、フィールドを取り出しながらノードの種類で分岐できます。本書の処理系では、この <code class="docutils literal notranslate"><span class="pre">match</span></code> 文による書き方を使います。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">match 文による評価（概略）</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+<span class="linenos">2</span>    <span class="k">match</span> <span class="n">node</span><span class="p">:</span>
+<span class="linenos">3</span>        <span class="k">case</span> <span class="n">IntLit</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="linenos">4</span>            <span class="k">return</span> <span class="n">value</span>
+<span class="linenos">5</span>        <span class="k">case</span> <span class="n">Binary</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+<span class="linenos">6</span>            <span class="k">return</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">+</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">right</span><span class="p">)</span>
+<span class="linenos">7</span>        <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id8">
+<h2>実行例<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">tiny_parser.py</span></code> を引数なしで実行すると、組み込みの例を解析して抽象構文木を表示します。</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="gp">$ </span>python<span class="w"> </span>tiny_parser.py
+<span class="linenos"> 2</span><span class="go">Program</span>
+<span class="linenos"> 3</span><span class="go">  functions:</span>
+<span class="linenos"> 4</span><span class="go">    FuncDef</span>
+<span class="linenos"> 5</span><span class="go">      name: &#39;main&#39;</span>
+<span class="linenos"> 6</span><span class="go">      params: []</span>
+<span class="linenos"> 7</span><span class="go">      return_type: void</span>
+<span class="linenos"> 8</span><span class="go">      body:</span>
+<span class="linenos"> 9</span><span class="go">        Block</span>
+<span class="linenos">10</span><span class="go">          stmts:</span>
+<span class="linenos">11</span><span class="go">            Let</span>
+<span class="linenos">12</span><span class="go">              name: &#39;x&#39;</span>
+<span class="linenos">13</span><span class="go">              declared_type: None</span>
+<span class="linenos">14</span><span class="go">              value:</span>
+<span class="linenos">15</span><span class="go">                Binary</span>
+<span class="linenos">16</span><span class="go">                  op: &#39;+&#39;</span>
+<span class="linenos">17</span><span class="go">                  left:</span>
+<span class="linenos">18</span><span class="go">                    IntLit</span>
+<span class="linenos">19</span><span class="go">                      value: 1</span>
+<span class="linenos">20</span><span class="go">                  right:</span>
+<span class="linenos">21</span><span class="go">                    Binary</span>
+<span class="linenos">22</span><span class="go">                      op: &#39;*&#39;</span>
+<span class="linenos">23</span><span class="go">                      left:</span>
+<span class="linenos">24</span><span class="go">                        IntLit</span>
+<span class="linenos">25</span><span class="go">                          value: 2</span>
+<span class="linenos">26</span><span class="go">                      right:</span>
+<span class="linenos">27</span><span class="go">                        IntLit</span>
+<span class="linenos">28</span><span class="go">                          value: 3</span>
+<span class="linenos">29</span><span class="go">            ExprStmt</span>
+<span class="linenos">30</span><span class="go">              expr:</span>
+<span class="linenos">31</span><span class="go">                Call</span>
+<span class="linenos">32</span><span class="go">                  callee: &#39;print&#39;</span>
+<span class="linenos">33</span><span class="go">                  args:</span>
+<span class="linenos">34</span><span class="go">                    Name</span>
+<span class="linenos">35</span><span class="go">                      name: &#39;x&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="python-ast">
+<h2>Python の ast モジュール<a class="headerlink" href="#python-ast" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="01_overview.html"><span class="doc">第 1 章</span></a>で見たように、Python の <code class="docutils literal notranslate"><span class="pre">ast</span></code> モジュールを使うと Python のプログラムの抽象構文木を得られます。<code class="docutils literal notranslate"><span class="pre">ast</span></code> モジュールには Visitor パターンの基底クラス <code class="docutils literal notranslate"><span class="pre">ast.NodeVisitor</span></code> も用意されており、<code class="docutils literal notranslate"><span class="pre">visit_クラス名</span></code> というメソッドを定義すると、そのノードを訪れたときに呼び出されます。次の例は、式の中で読み出している変数の名前を集めます。</p>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text">ast.NodeVisitor の使用例</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span>
+<span class="linenos"> 4</span><span class="k">class</span><span class="w"> </span><span class="nc">NameCollector</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">NodeVisitor</span><span class="p">):</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;読み出している変数の名前を集める.&quot;&quot;&quot;</span>
+<span class="linenos"> 6</span>
+<span class="linenos"> 7</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos"> 8</span>        <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span>    <span class="k">def</span><span class="w"> </span><span class="nf">visit_Name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">11</span>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">):</span>
+<span class="linenos">12</span>            <span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+<span class="linenos">13</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span>
+<span class="linenos">16</span><span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;total = price * count + tax&quot;</span><span class="p">)</span>
+<span class="linenos">17</span><span class="n">collector</span> <span class="o">=</span> <span class="n">NameCollector</span><span class="p">()</span>
+<span class="linenos">18</span><span class="n">collector</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+<span class="linenos">19</span><span class="nb">print</span><span class="p">(</span><span class="n">collector</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>  <span class="c1"># [&#39;price&#39;, &#39;count&#39;, &#39;tax&#39;]</span>
+</pre></div>
+</div>
+</div>
+<p>Python の <code class="docutils literal notranslate"><span class="pre">Name</span></code> ノードは、読み出し（<code class="docutils literal notranslate"><span class="pre">Load</span></code>）か書き込み（<code class="docutils literal notranslate"><span class="pre">Store</span></code>）かを <code class="docutils literal notranslate"><span class="pre">ctx</span></code> 属性で区別しています。そのため、代入先の <code class="docutils literal notranslate"><span class="pre">total</span></code> は集められていません。このような <code class="docutils literal notranslate"><span class="pre">ast</span></code> モジュールの機能は、flake8 などの静的解析ツールや、コードの自動変換ツールで広く使われています。</p>
+</section>
+<section id="id9">
+<h2>まとめ<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>抽象構文木は、構文木から意味に必要な情報だけを残した木で、後の段階はすべて抽象構文木を入力とします。</p></li>
+<li><p>Tiny の構文解析器は、文を再帰下降構文解析で、式を Pratt 構文解析で解析します。</p></li>
+<li><p>パニックモードのエラー回復では、文の区切りまで読み飛ばして解析を続けます。単純ですが、読み飛ばした範囲の誤りは見逃します。</p></li>
+<li><p>抽象構文木をたどる処理は、Visitor パターンや <code class="docutils literal notranslate"><span class="pre">match</span></code> 文で書けます。</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="04_parsing.html" class="btn btn-neutral float-left" title="第 4 章 構文解析" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="06_semantic.html" class="btn btn-neutral float-right" title="第 6 章 意味解析" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
