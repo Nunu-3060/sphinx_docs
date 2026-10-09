@@ -1,0 +1,33 @@
+# ------------------------------------------------------------
+# web.container - Quadlet で nginx コンテナを systemd サービスとして動かす例
+#
+# 第 16 章「コンテナ」で使用します。一般ユーザー (rootless) で動かします。
+#
+# 配置と起動 (一般ユーザーで実行):
+#   mkdir -p ~/.config/containers/systemd ~/web
+#   cp web.container ~/.config/containers/systemd/
+#   echo '<h1>Hello from Podman</h1>' > ~/web/index.html
+#   systemctl --user daemon-reload
+#   systemctl --user start web.service
+#
+# ログアウト後も動かし続け、OS 起動時に自動起動するには次を実行します。
+#   sudo loginctl enable-linger $USER
+# ------------------------------------------------------------
+[Unit]
+Description=nginx web container (rootless)
+
+[Container]
+ContainerName=web
+Image=docker.io/library/nginx:stable
+# ホストの 8080 番ポートをコンテナの 80 番ポートに対応付ける
+PublishPort=8080:80
+# ホストの ~/web をコンテナ内の公開ディレクトリにマウントする
+# :Z は SELinux のラベルをコンテナ用に付け替える指定
+Volume=%h/web:/usr/share/nginx/html:Z
+
+[Service]
+Restart=always
+
+[Install]
+# ログイン時 (linger 有効時は OS 起動時) に自動起動する
+WantedBy=default.target

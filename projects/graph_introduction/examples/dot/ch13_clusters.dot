@@ -1,0 +1,44 @@
+// ノードの多いグラフの整理: 関連するノードをクラスターにまとめる
+// 架空の EC サイトのマイクロサービスを、担当チームごとに囲む
+digraph services {
+    rankdir=LR;
+    compound=true;
+    node [fontname="Yu Gothic", shape=box, style="rounded,filled",
+          fillcolor=white];
+    graph [fontname="Yu Gothic", style="rounded,filled"];
+
+    subgraph cluster_front {
+        label="フロント担当";
+        fillcolor="#dbe9f6";
+        web; mobile_api; bff;
+    }
+    subgraph cluster_order {
+        label="注文担当";
+        fillcolor="#f6e3b4";
+        cart; order; payment;
+    }
+    subgraph cluster_catalog {
+        label="商品担当";
+        fillcolor="#c7e9c0";
+        catalog; search; review;
+    }
+    subgraph cluster_platform {
+        label="基盤担当";
+        fillcolor="#eeeeee";
+        auth; notify; log;
+    }
+
+    web -> bff;
+    mobile_api -> bff;
+    bff -> {cart catalog search auth};
+    cart -> order;
+    order -> {payment notify};
+    catalog -> review;
+    search -> catalog;
+    payment -> notify;
+    // 注文担当の 3 つのサービスは、どれもログを送る。エッジを 3 本描く
+    // 代わりに、クラスターの境界どうしをつなぐ 1 本の破線で代表させる
+    // （ltail と lhead には compound=true が必要）
+    payment -> log [ltail=cluster_order, lhead=cluster_platform,
+                    style=dashed, label="ログ", fontname="Yu Gothic"];
+}
