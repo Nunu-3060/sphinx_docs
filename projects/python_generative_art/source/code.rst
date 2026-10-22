@@ -3,7 +3,7 @@
 
 本資料中で使用した ``examples/`` 以下の Python スクリプトを、章をまたいで一括で閲覧できるようにまとめたページ。個別のファイルは各章の本文からも ``literalinclude`` で参照しているが、全体を通して読みたい場合や、手元にまとめて持っておきたい場合はこちらを使う。
 
-:download:`examples.zip <_static/downloads/examples.zip>` として全ファイルをまとめてダウンロードできる。展開すると ``examples/`` ディレクトリの中に本ページと同じ 41 個のスクリプトが入っている。
+:download:`examples.zip <_static/downloads/examples.zip>` として全ファイルをまとめてダウンロードできる。展開すると ``examples/`` ディレクトリの中に、本ページと同じ 49 個のスクリプトと、検査用の設定ファイル ``setup.cfg`` が入っている。
 
 .. contents:: このページの目次
    :local:
@@ -28,6 +28,17 @@ easing.py
 :download:`examples/easing.py <../examples/easing.py>`
 
 .. literalinclude:: ../examples/easing.py
+   :language: python
+   :linenos:
+
+distributions.py
+------------------
+
+:doc:`basics`\ で使用。一様分布・正規分布・べき分布による円の大きさのばらつきの比較。
+
+:download:`examples/distributions.py <../examples/distributions.py>`
+
+.. literalinclude:: ../examples/distributions.py
    :language: python
    :linenos:
 
@@ -229,6 +240,17 @@ bezier.py
    :language: python
    :linenos:
 
+illusions.py
+--------------
+
+:doc:`illusions`\ で使用。カフェウォール錯視・きらめき格子錯視・周辺ドリフト錯視・モアレ・格子の歪みによる膨らみ。
+
+:download:`examples/illusions.py <../examples/illusions.py>`
+
+.. literalinclude:: ../examples/illusions.py
+   :language: python
+   :linenos:
+
 perlin_noise.py
 -----------------
 
@@ -284,6 +306,17 @@ sdf.py
    :language: python
    :linenos:
 
+raymarching.py
+----------------
+
+:doc:`shapes`\ で使用。3 次元の距離関数とスフィアトレーシングによるレイマーチング。
+
+:download:`examples/raymarching.py <../examples/raymarching.py>`
+
+.. literalinclude:: ../examples/raymarching.py
+   :language: python
+   :linenos:
+
 circle_packing.py
 -------------------
 
@@ -336,6 +369,17 @@ l_system.py
 :download:`examples/l_system.py <../examples/l_system.py>`
 
 .. literalinclude:: ../examples/l_system.py
+   :language: python
+   :linenos:
+
+space_colonization.py
+-----------------------
+
+:doc:`fractals`\ で使用。空間植民アルゴリズムによる樹木の生成。
+
+:download:`examples/space_colonization.py <../examples/space_colonization.py>`
+
+.. literalinclude:: ../examples/space_colonization.py
    :language: python
    :linenos:
 
@@ -427,6 +471,39 @@ neighbor_search.py
    :language: python
    :linenos:
 
+quadtree.py
+-------------
+
+:doc:`particles`\ で使用。点を登録する四分木と、それを使った円の範囲探索。
+
+:download:`examples/quadtree.py <../examples/quadtree.py>`
+
+.. literalinclude:: ../examples/quadtree.py
+   :language: python
+   :linenos:
+
+dla.py
+--------
+
+:doc:`particles`\ で使用。拡散律速凝集（DLA）による枝分かれした凝集体の生成。
+
+:download:`examples/dla.py <../examples/dla.py>`
+
+.. literalinclude:: ../examples/dla.py
+   :language: python
+   :linenos:
+
+differential_growth.py
+------------------------
+
+:doc:`particles`\ で使用。差分成長による、折りたたまれていく曲線の生成。
+
+:download:`examples/differential_growth.py <../examples/differential_growth.py>`
+
+.. literalinclude:: ../examples/differential_growth.py
+   :language: python
+   :linenos:
+
 evolution.py
 --------------
 
@@ -458,4 +535,26 @@ stippling.py
 
 .. literalinclude:: ../examples/stippling.py
    :language: python
+   :linenos:
+
+hatching.py
+-------------
+
+:doc:`image_effects`\ で使用。ハッチングによる濃淡の表現と、SVG 形式での書き出し。
+
+:download:`examples/hatching.py <../examples/hatching.py>`
+
+.. literalinclude:: ../examples/hatching.py
+   :language: python
+   :linenos:
+
+setup.cfg
+-----------
+
+サンプルコードを flake8 と mypy で検査するときの設定ファイル。行長の上限を 120 文字とし、mypy を ``--strict`` 相当の設定で実行する。``examples/`` ディレクトリで ``flake8`` と ``mypy .`` を実行すると、この設定が使われる。mypy は Windows の日本語環境では設定ファイルを Shift_JIS（cp932）として読むため、コメントは英語（ASCII 文字だけ）で書いている。
+
+:download:`examples/setup.cfg <../examples/setup.cfg>`
+
+.. literalinclude:: ../examples/setup.cfg
+   :language: ini
    :linenos:

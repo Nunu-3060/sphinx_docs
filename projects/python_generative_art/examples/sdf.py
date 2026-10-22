@@ -31,7 +31,8 @@ def sdf_box(
     qy: np.ndarray = np.abs(y - cy) - half_height
     outside: np.ndarray = np.hypot(np.maximum(qx, 0.0), np.maximum(qy, 0.0))
     inside: np.ndarray = np.minimum(np.maximum(qx, qy), 0.0)
-    return outside + inside
+    result: np.ndarray = outside + inside
+    return result
 
 
 def sdf_segment(
@@ -53,34 +54,40 @@ def sdf_segment(
     )
     dx: np.ndarray = pax - h * bax
     dy: np.ndarray = pay - h * bay
-    return np.hypot(dx, dy) - thickness
+    result: np.ndarray = np.hypot(dx, dy) - thickness
+    return result
 
 
 def union(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
     """2つの図形の和集合(どちらかの内側なら内側)。"""
-    return np.minimum(d1, d2)
+    result: np.ndarray = np.minimum(d1, d2)
+    return result
 
 
 def intersection(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
     """2つの図形の積集合(両方の内側なら内側)。"""
-    return np.maximum(d1, d2)
+    result: np.ndarray = np.maximum(d1, d2)
+    return result
 
 
 def subtraction(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
     """d1 から d2 の領域を取り除いた差集合。"""
-    return np.maximum(d1, -d2)
+    result: np.ndarray = np.maximum(d1, -d2)
+    return result
 
 
 def smooth_union(d1: np.ndarray, d2: np.ndarray, k: float) -> np.ndarray:
     """継ぎ目を滑らかに繋いだ和集合(k は滑らかさの半径)。"""
     h: np.ndarray = np.clip(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0)
-    return d2 * (1.0 - h) + d1 * h - k * h * (1.0 - h)
+    result: np.ndarray = d2 * (1.0 - h) + d1 * h - k * h * (1.0 - h)
+    return result
 
 
 def _smoothstep(edge0: float, edge1: float, x: np.ndarray) -> np.ndarray:
     """``x`` が ``edge0`` から ``edge1`` へ進むにつれ、0から1へなめらかに変化する値。"""
     t: np.ndarray = np.clip((x - edge0) / (edge1 - edge0), 0.0, 1.0)
-    return t * t * (3.0 - 2.0 * t)
+    result: np.ndarray = t * t * (3.0 - 2.0 * t)
+    return result
 
 
 def render_fill(

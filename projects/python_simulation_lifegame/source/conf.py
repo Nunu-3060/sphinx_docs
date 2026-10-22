@@ -60,3 +60,7 @@ html_show_sourcelink = False
 intersphinx_mapping = {
     'PIL': ('https://pillow.readthedocs.io/en/stable/', None),
 }
+
+# 既定ではタイムアウトなしのため、応答しない IP に当たるとビルドが止まる。
+# タイムアウトを設けることで、次の IP へのフォールバックが働くようにする。
+intersphinx_timeout = 10

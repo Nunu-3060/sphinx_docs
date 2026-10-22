@@ -64,7 +64,8 @@ def hsv_to_rgb(
         conditions, [zero, zero, x, chroma, chroma, x]
     )
 
-    return np.stack([r, g, b], axis=-1) + m[..., np.newaxis]
+    result: np.ndarray = np.stack([r, g, b], axis=-1) + m[..., np.newaxis]
+    return result
 
 
 def _hsv_to_rgb255(

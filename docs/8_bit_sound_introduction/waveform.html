@@ -1,0 +1,487 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>6. Python で波形を作る &mdash; 8 bit Game Sound 作成入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=a1f6736e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="7. 音を形づくる" href="shaping.html" />
+    <link rel="prev" title="5. 音源チップの仕組み" href="sound_chip.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            8 bit Game Sound 作成入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="what_is_8bit.html">2. 8 bit サウンドとは</a></li>
+<li class="toctree-l1"><a class="reference internal" href="digital_audio.html">3. 音とデジタル音声の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="music_basics.html">4. 最低限の音楽知識</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sound_chip.html">5. 音源チップの仕組み</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">6. Python で波形を作る</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">6.1. サンプルコードの構成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#numpy">6.2. 音は NumPy の配列で表す</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wav">6.3. WAV ファイルに書き出す</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">6.4. 位相で波形を作る</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">6.5. 矩形波</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">6.6. 三角波</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">6.7. ノイズ</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lfsr">6.7.1. LFSR の出力を求める</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">6.7.2. サンプルに変換する</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">6.8. 音名から周波数を求める</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">6.9. 波形を書き出す</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">6.10. スペクトルで確かめる</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">6.11. クリック音を防ぐ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">6.12. 練習</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">7. 音を形づくる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sound_effects.html">8. 効果音を作る</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bgm.html">9. BGM を作る</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">10. 制作ツールの紹介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">11. ゲームへの組み込み</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">12. 権利とライセンス</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">13. まとめ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="frequency_table.html">音名と周波数の対応表</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">8 bit Game Sound 作成入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">6. </span>Python で波形を作る</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python">
+<span id="ch-waveform"></span><h1><span class="section-number">6. </span>Python で波形を作る<a class="headerlink" href="#python" title="Link to this heading"></a></h1>
+<p>この章から、実際にプログラムで音を作る。まず、すべての音の材料となる矩形波・三角波・ノイズを生成し、WAV ファイルとして書き出せるようにする。</p>
+<section id="id1">
+<h2><span class="section-number">6.1. </span>サンプルコードの構成<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>本書のサンプルコードは、次のモジュールで構成されている。この章では <code class="docutils literal notranslate"><span class="pre">wav_io.py</span></code> と <code class="docutils literal notranslate"><span class="pre">waveforms.py</span></code> を扱う。</p>
+<table class="docutils align-default" id="id12">
+<caption><span class="caption-number">表 6.1 </span><span class="caption-text">サンプルコードのモジュール</span><a class="headerlink" href="#id12" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 50.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ファイル</p></th>
+<th class="head"><p>内容</p></th>
+<th class="head"><p>説明している章</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">wav_io.py</span></code></p></td>
+<td><p>WAV ファイルの書き出し</p></td>
+<td><p>本章</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">waveforms.py</span></code></p></td>
+<td><p>矩形波・三角波・ノイズの生成</p></td>
+<td><p>本章</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">envelope.py</span></code></p></td>
+<td><p>音量や音程の時間変化</p></td>
+<td><p>「<a class="reference internal" href="shaping.html#ch-shaping"><span class="std std-ref">音を形づくる</span></a>」</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sound_effects.py</span></code></p></td>
+<td><p>効果音の作例</p></td>
+<td><p>「<a class="reference internal" href="sound_effects.html#ch-sound-effects"><span class="std std-ref">効果音を作る</span></a>」</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sequencer.py</span></code></p></td>
+<td><p>テキストの楽譜から曲を合成する簡易シーケンサ</p></td>
+<td><p>「<a class="reference internal" href="bgm.html#ch-bgm"><span class="std std-ref">BGM を作る</span></a>」</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bgm_example.py</span></code></p></td>
+<td><p>BGM の作例</p></td>
+<td><p>「<a class="reference internal" href="bgm.html#ch-bgm"><span class="std std-ref">BGM を作る</span></a>」</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pyxel_sound.py</span></code></p></td>
+<td><p>Pyxel の音源機能を使う例</p></td>
+<td><p>「<a class="reference internal" href="tools.html#ch-tools"><span class="std std-ref">制作ツールの紹介</span></a>」</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">play_pygame.py</span></code></p></td>
+<td><p>pygame-ce で BGM と効果音を鳴らす例</p></td>
+<td><p>「<a class="reference internal" href="integration.html#ch-integration"><span class="std std-ref">ゲームへの組み込み</span></a>」</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">make_all.py</span></code></p></td>
+<td><p>すべての音声ファイルを一括で生成する</p></td>
+<td><p>「<a class="reference internal" href="introduction.html#ch-introduction"><span class="std std-ref">はじめに</span></a>」</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="numpy">
+<h2><span class="section-number">6.2. </span>音は NumPy の配列で表す<a class="headerlink" href="#numpy" title="Link to this heading"></a></h2>
+<p>本書のサンプルコードでは、音を NumPy の 1 次元配列で表す。配列の各要素が 1 つのサンプルであり、値の範囲は -1.0 から 1.0 である。44100 Hz で 1 秒の音なら、要素数 44100 の配列になる。この型には <code class="docutils literal notranslate"><span class="pre">Signal</span></code> という別名を付けている。</p>
+<p>NumPy を使うのは、配列の全要素に対する計算を 1 行で書けて、しかも Python の <code class="docutils literal notranslate"><span class="pre">for</span></code> 文で 1 サンプルずつ計算するより大幅に速いからである。例えば、<code class="docutils literal notranslate"><span class="pre">signal</span> <span class="pre">*</span> <span class="pre">0.5</span></code> と書けば全サンプルの音量が半分になり、<code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">+</span> <span class="pre">b</span></code> と書けば 2 つの音が重なる。</p>
+</section>
+<section id="wav">
+<h2><span class="section-number">6.3. </span>WAV ファイルに書き出す<a class="headerlink" href="#wav" title="Link to this heading"></a></h2>
+<p>最初に、作った音を WAV ファイルに書き出す関数を用意する。</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-number">リスト 6.1 </span><span class="caption-text">wav_io.py の write_wav 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">38</span><span class="k">def</span><span class="w"> </span><span class="nf">write_wav</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">Signal</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SAMPLE_RATE</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">39</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;モノラル 16 bit の WAV ファイルとして書き出す.</span>
+<span class="linenos">40</span>
+<span class="linenos">41</span><span class="sd">    範囲外の値は -1.0 から 1.0 に切り詰める（クリッピング）。</span>
+<span class="linenos">42</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">43</span>    <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">44</span>    <span class="n">clipped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="linenos">45</span>    <span class="n">pcm</span> <span class="o">=</span> <span class="p">(</span><span class="n">clipped</span> <span class="o">*</span> <span class="mf">32767.0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;&lt;i2&quot;</span><span class="p">)</span>  <span class="c1"># リトルエンディアンの 16 bit 整数</span>
+<span class="linenos">46</span>    <span class="k">with</span> <span class="n">wave</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">wav_file</span><span class="p">:</span>
+<span class="linenos">47</span>        <span class="n">wav_file</span><span class="o">.</span><span class="n">setnchannels</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># モノラル</span>
+<span class="linenos">48</span>        <span class="n">wav_file</span><span class="o">.</span><span class="n">setsampwidth</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># 1 サンプルあたり 2 バイト = 16 bit</span>
+<span class="linenos">49</span>        <span class="n">wav_file</span><span class="o">.</span><span class="n">setframerate</span><span class="p">(</span><span class="n">sample_rate</span><span class="p">)</span>
+<span class="linenos">50</span>        <span class="n">wav_file</span><span class="o">.</span><span class="n">writeframes</span><span class="p">(</span><span class="n">pcm</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>この関数は次の手順で書き出す。</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">np.clip</span></code> で -1.0 から 1.0 の範囲外の値を切り詰める。範囲外の値をそのまま整数に変換すると、値があふれて大きな雑音になるためである。</p></li>
+<li><p>値に 32767 を掛け、16 bit の符号付き整数（<code class="docutils literal notranslate"><span class="pre">&quot;&lt;i2&quot;</span></code> はリトルエンディアンの 2 バイト整数を表す）に変換する。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wave</span></code> モジュールでチャンネル数（1: モノラル）、1 サンプルのバイト数（2: 16 bit）、サンプリング周波数を設定し、データを書き込む。</p></li>
+</ol>
+<p>動作を確かめるため、<code class="docutils literal notranslate"><span class="pre">wav_io.py</span></code> を単独で実行すると 440 Hz の正弦波を 1 秒間書き出すようにしている。</p>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-number">リスト 6.2 </span><span class="caption-text">wav_io.py の main 関数</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">53</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">54</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;動作確認として 440 Hz の正弦波を 1 秒間書き出す.&quot;&quot;&quot;</span>
+<span class="linenos">55</span>    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">SAMPLE_RATE</span><span class="p">)</span> <span class="o">/</span> <span class="n">SAMPLE_RATE</span>
+<span class="linenos">56</span>    <span class="n">signal</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">440.0</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+<span class="linenos">57</span>    <span class="n">write_wav</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;output&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;sine_440.wav&quot;</span><span class="p">,</span> <span class="n">signal</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">np.arange(SAMPLE_RATE)</span> <span class="pre">/</span> <span class="pre">SAMPLE_RATE</span></code> は、各サンプルの時刻 <span class="math notranslate nohighlight">\(t_n = n / f_s\)</span> を並べた配列である。これを正弦波の式 <span class="math notranslate nohighlight">\(A \sin(2 \pi f t)\)</span> に代入している。</p>
+</section>
+<section id="id2">
+<h2><span class="section-number">6.4. </span>位相で波形を作る<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>正弦波は <span class="math notranslate nohighlight">\(\sin(2 \pi f t)\)</span> で作れたが、この式は周波数 <span class="math notranslate nohighlight">\(f\)</span> が一定であることを前提にしている。効果音では音程を時間とともに変化させたいことが多い。そこで本書では、<a class="reference internal" href="glossary.html#term-1"><span class="xref std std-term">位相</span></a>を使って波形を作る。</p>
+<p>位相は「波の 1 周期のうち、今どの位置にいるか」を 0 以上 1 未満の値で表したものである。周波数 <span class="math notranslate nohighlight">\(f\)</span> の音では、1 サンプルごとに位相が <span class="math notranslate nohighlight">\(f / f_s\)</span> ずつ進み、1 に達したら 0 に戻る。<span class="math notranslate nohighlight">\(n\)</span> 番目のサンプルの位相 <span class="math notranslate nohighlight">\(\phi_n\)</span> は、それまでの増分を足し合わせて求められる。</p>
+<div class="math notranslate nohighlight">
+\[\phi_n = \left( \sum_{k=0}^{n-1} \frac{f_k}{f_s} \right) \bmod 1\]</div>
+<p>ここで <span class="math notranslate nohighlight">\(f_k\)</span> は <span class="math notranslate nohighlight">\(k\)</span> 番目のサンプルの時点での周波数である。周波数が途中で変わっても、位相は途切れずに進むので、滑らかに音程が変化する。</p>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-number">リスト 6.3 </span><span class="caption-text">waveforms.py の phase_from_frequency 関数</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">57</span><span class="k">def</span><span class="w"> </span><span class="nf">phase_from_frequency</span><span class="p">(</span><span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Signal</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">58</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;周波数（定数または時間変化する配列）から 0 以上 1 未満の位相を作る.</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span><span class="sd">    位相はサンプルごとに frequency / SAMPLE_RATE ずつ進む。</span>
+<span class="linenos">61</span><span class="sd">    周波数を配列で与えれば、音程が滑らかに変化する音を作れる。</span>
+<span class="linenos">62</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">63</span>    <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="p">(</span><span class="n">num_samples</span><span class="p">,))</span>
+<span class="linenos">64</span>    <span class="n">increments</span> <span class="o">=</span> <span class="n">freq</span> <span class="o">/</span> <span class="n">SAMPLE_RATE</span>
+<span class="linenos">65</span>    <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">increments</span><span class="p">)</span> <span class="o">-</span> <span class="n">increments</span>  <span class="c1"># 最初のサンプルの位相を 0 にする</span>
+<span class="linenos">66</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">np.cumsum</span></code> は配列の累積和を求める関数である。周波数には定数と配列のどちらも渡せるように、<code class="docutils literal notranslate"><span class="pre">np.broadcast_to</span></code> で長さ <code class="docutils literal notranslate"><span class="pre">num_samples</span></code> の配列にそろえている。</p>
+<p>位相さえ求めれば、波形は「位相から値への変換」として書ける。正弦波なら <span class="math notranslate nohighlight">\(\sin(2 \pi \phi)\)</span> である。</p>
+</section>
+<section id="id3">
+<h2><span class="section-number">6.5. </span>矩形波<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>矩形波は、位相がデューティ比より小さいときに高い値、それ以外で低い値を出力すればよい。</p>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-number">リスト 6.4 </span><span class="caption-text">waveforms.py の pulse_wave 関数</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">69</span><span class="k">def</span><span class="w"> </span><span class="nf">pulse_wave</span><span class="p">(</span><span class="n">phase</span><span class="p">:</span> <span class="n">Signal</span><span class="p">,</span> <span class="n">duty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Signal</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">70</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;矩形波（パルス波）を作る. duty は 1 周期のうち高い値になっている割合.</span>
+<span class="linenos">71</span>
+<span class="linenos">72</span><span class="sd">    実機と同じく 1 と 0 の 2 値を作り、平均値 duty を引いて直流成分を取り除く。</span>
+<span class="linenos">73</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">74</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">phase</span> <span class="o">&lt;</span> <span class="n">duty</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">duty</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">np.where(条件,</span> <span class="pre">a,</span> <span class="pre">b)</span></code> は、条件を満たす要素を <code class="docutils literal notranslate"><span class="pre">a</span></code> に、満たさない要素を <code class="docutils literal notranslate"><span class="pre">b</span></code> にした配列を返す。デューティ比 <code class="docutils literal notranslate"><span class="pre">duty</span></code> にも配列を渡せるので、デューティ比を時間とともに変えることもできる（「<a class="reference internal" href="shaping.html#ch-shaping"><span class="std std-ref">音を形づくる</span></a>」で使う）。</p>
+<p>実機の矩形波チャンネルは、0 と音量の値の 2 つを出力する。このままでは波形の平均値が 0 にならず、平均値の分だけ全体が片側にずれた状態になる。このずれを<a class="reference internal" href="glossary.html#term-36"><span class="xref std std-term">直流成分</span></a>という。直流成分は音としては聞こえないが、表現できる振幅の範囲を無駄に使ううえ、音の鳴り始めと鳴り終わりでクリック音（後述）の原因になる。実機では、出力の後段にある回路が直流成分を取り除いている。</p>
+<p>そこで <code class="docutils literal notranslate"><span class="pre">pulse_wave</span></code> では、1 と 0 の 2 値を作った後、その平均値であるデューティ比 <code class="docutils literal notranslate"><span class="pre">duty</span></code> を引いて直流成分を取り除いている。例えばデューティ比 25 % の場合、出力は 0.75 と -0.25 の 2 値になり、平均値は 0 になる。</p>
+</section>
+<section id="id4">
+<h2><span class="section-number">6.6. </span>三角波<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>ファミコンの三角波は、16 段階の値を 32 ステップで上下させる階段状の波形である。この並びを配列 <code class="docutils literal notranslate"><span class="pre">TRIANGLE_SEQUENCE</span></code> として用意しておき、位相に応じて値を取り出す。</p>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-number">リスト 6.5 </span><span class="caption-text">waveforms.py の TRIANGLE_SEQUENCE</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">17</span><span class="c1"># 三角波チャンネルが 1 周期の間に出力する 32 段階の値（4 bit: 0 から 15）</span>
+<span class="linenos">18</span><span class="n">TRIANGLE_SEQUENCE</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-number">リスト 6.6 </span><span class="caption-text">waveforms.py の triangle_wave 関数</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">77</span><span class="k">def</span><span class="w"> </span><span class="nf">triangle_wave</span><span class="p">(</span><span class="n">phase</span><span class="p">:</span> <span class="n">Signal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">78</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;4 bit（16 段階）の階段状の三角波を作る.&quot;&quot;&quot;</span>
+<span class="linenos">79</span>    <span class="n">step</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">phase</span> <span class="o">*</span> <span class="mf">32.0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+<span class="linenos">80</span>    <span class="k">return</span> <span class="n">TRIANGLE_SEQUENCE</span><span class="p">[</span><span class="n">step</span><span class="p">]</span> <span class="o">/</span> <span class="mf">7.5</span> <span class="o">-</span> <span class="mf">1.0</span>
+</pre></div>
+</div>
+</div>
+<p>位相に 32 を掛けて切り捨てると、0 から 31 のステップ番号が得られる。取り出した 0 から 15 の値を 7.5 で割って 1 を引き、-1.0 から 1.0 の範囲に変換している。</p>
+</section>
+<section id="id5">
+<h2><span class="section-number">6.7. </span>ノイズ<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<section id="lfsr">
+<h3><span class="section-number">6.7.1. </span>LFSR の出力を求める<a class="headerlink" href="#lfsr" title="Link to this heading"></a></h3>
+<p>ノイズは「<a class="reference internal" href="sound_chip.html#ch-sound-chip"><span class="std std-ref">音源チップの仕組み</span></a>」で説明した LFSR で作る。LFSR の出力は一巡すると元に戻るので、一巡分のビット列をあらかじめ計算しておく。</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-number">リスト 6.7 </span><span class="caption-text">waveforms.py の lfsr_sequence 関数</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 88</span><span class="k">def</span><span class="w"> </span><span class="nf">lfsr_sequence</span><span class="p">(</span><span class="n">short_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]:</span>
+<span class="linenos"> 89</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;15 bit の線形帰還シフトレジスタ（LFSR）が出力するビット列を 1 周期分返す.</span>
+<span class="linenos"> 90</span>
+<span class="linenos"> 91</span><span class="sd">    通常モードでは bit 0 と bit 1、短周期モードでは bit 0 と bit 6 の</span>
+<span class="linenos"> 92</span><span class="sd">    排他的論理和を最上位（bit 14）に戻しながら右シフトする。</span>
+<span class="linenos"> 93</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos"> 94</span>    <span class="n">tap</span> <span class="o">=</span> <span class="mi">6</span> <span class="k">if</span> <span class="n">short_mode</span> <span class="k">else</span> <span class="mi">1</span>
+<span class="linenos"> 95</span>    <span class="n">register</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="linenos"> 96</span>    <span class="n">initial</span> <span class="o">=</span> <span class="n">register</span>
+<span class="linenos"> 97</span>    <span class="n">bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos"> 98</span>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="linenos"> 99</span>        <span class="n">bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">register</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos">100</span>        <span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span><span class="n">register</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">^</span> <span class="p">((</span><span class="n">register</span> <span class="o">&gt;&gt;</span> <span class="n">tap</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos">101</span>        <span class="n">register</span> <span class="o">=</span> <span class="p">(</span><span class="n">register</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">feedback</span> <span class="o">&lt;&lt;</span> <span class="mi">14</span><span class="p">)</span>
+<span class="linenos">102</span>        <span class="k">if</span> <span class="n">register</span> <span class="o">==</span> <span class="n">initial</span><span class="p">:</span>
+<span class="linenos">103</span>            <span class="k">break</span>
+<span class="linenos">104</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">register</span> <span class="pre">&amp;</span> <span class="pre">1</span></code> で bit 0 を、<code class="docutils literal notranslate"><span class="pre">(register</span> <span class="pre">&gt;&gt;</span> <span class="pre">tap)</span> <span class="pre">&amp;</span> <span class="pre">1</span></code> で bit 1（短周期モードでは bit 6）を取り出し、<code class="docutils literal notranslate"><span class="pre">^</span></code> で XOR を計算する。<code class="docutils literal notranslate"><span class="pre">register</span> <span class="pre">&gt;&gt;</span> <span class="pre">1</span></code> で右に 1 bit ずらし、<code class="docutils literal notranslate"><span class="pre">feedback</span> <span class="pre">&lt;&lt;</span> <span class="pre">14</span></code> で XOR の結果を bit 14 に入れる。レジスタが初期値に戻ったら一巡したと判断して終了する。通常モードでは 32767 個、短周期モードでは 93 個のビットが得られる。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">6.7.2. </span>サンプルに変換する<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>LFSR は 1 秒あたり <span class="math notranslate nohighlight">\(f_{\mathrm{CPU}} / (\text{周期の CPU クロック数})\)</span> 回更新される。インデックス 0（4 クロック）では毎秒約 447000 回であり、1 サンプル（1/44100 秒）の間に約 10 回更新される。そこで、各サンプルの時点までに LFSR が何回更新されたかを計算し、その回数番目のビットを取り出す。</p>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-number">リスト 6.8 </span><span class="caption-text">waveforms.py の noise_from_rate 関数</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">107</span><span class="k">def</span><span class="w"> </span><span class="nf">noise_from_rate</span><span class="p">(</span><span class="n">clock_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Signal</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">short_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">108</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;LFSR を毎秒 clock_rate 回進めたときのノイズを作る.</span>
+<span class="linenos">109</span>
+<span class="linenos">110</span><span class="sd">    bit 0 が 0 のとき +1、1 のとき -1 を出力する。</span>
+<span class="linenos">111</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">112</span>    <span class="n">rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">clock_rate</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="p">(</span><span class="n">num_samples</span><span class="p">,))</span>
+<span class="linenos">113</span>    <span class="n">sequence</span> <span class="o">=</span> <span class="n">lfsr_sequence</span><span class="p">(</span><span class="n">short_mode</span><span class="p">)</span>
+<span class="linenos">114</span>    <span class="n">position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">rate</span> <span class="o">/</span> <span class="n">SAMPLE_RATE</span><span class="p">)</span> <span class="o">-</span> <span class="n">rate</span> <span class="o">/</span> <span class="n">SAMPLE_RATE</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+<span class="linenos">115</span>    <span class="n">bits</span> <span class="o">=</span> <span class="n">sequence</span><span class="p">[</span><span class="n">position</span> <span class="o">%</span> <span class="n">sequence</span><span class="o">.</span><span class="n">size</span><span class="p">]</span>
+<span class="linenos">116</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">bits</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>更新回数を <code class="docutils literal notranslate"><span class="pre">sequence.size</span></code> で割った余りを使うことで、ビット列の末尾に達したら先頭に戻る。ビットが 0 なら +1、1 なら -1 を出力する。周期インデックスで指定する場合は <code class="docutils literal notranslate"><span class="pre">noise_wave</span></code> 関数を使う。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-number">リスト 6.9 </span><span class="caption-text">waveforms.py の noise_wave 関数</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">119</span><span class="k">def</span><span class="w"> </span><span class="nf">noise_wave</span><span class="p">(</span><span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">period_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">short_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">120</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ノイズチャンネルの周期インデックス（0 から 15）を指定してノイズを作る.&quot;&quot;&quot;</span>
+<span class="linenos">121</span>    <span class="n">clock_rate</span> <span class="o">=</span> <span class="n">CPU_CLOCK</span> <span class="o">/</span> <span class="n">NOISE_PERIODS</span><span class="p">[</span><span class="n">period_index</span><span class="p">]</span>
+<span class="linenos">122</span>    <span class="k">return</span> <span class="n">noise_from_rate</span><span class="p">(</span><span class="n">clock_rate</span><span class="p">,</span> <span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">seconds</span><span class="p">),</span> <span class="n">short_mode</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="id7">
+<h2><span class="section-number">6.8. </span>音名から周波数を求める<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<p>楽譜を扱うには、「A4」のような音名を周波数に変換する必要がある。「<a class="reference internal" href="music_basics.html#ch-music-basics"><span class="std std-ref">最低限の音楽知識</span></a>」で説明したとおり、音名をいったん MIDI ノート番号に変換し、12 平均律の式で周波数を求める。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-number">リスト 6.10 </span><span class="caption-text">waveforms.py の note_number 関数</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">26</span><span class="k">def</span><span class="w"> </span><span class="nf">note_number</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="linenos">27</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;音名（例: &quot;A4&quot;、&quot;C#5&quot;、&quot;Bb3&quot;）を MIDI ノート番号に変換する.</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="sd">    C4（中央のド）が 60、A4 が 69 になる。</span>
+<span class="linenos">30</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">31</span>    <span class="n">letter</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+<span class="linenos">32</span>    <span class="n">rest</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="linenos">33</span>    <span class="n">accidental</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="linenos">34</span>    <span class="k">while</span> <span class="n">rest</span> <span class="ow">and</span> <span class="n">rest</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s2">&quot;#b&quot;</span><span class="p">:</span>
+<span class="linenos">35</span>        <span class="n">accidental</span> <span class="o">+=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">rest</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;#&quot;</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+<span class="linenos">36</span>        <span class="n">rest</span> <span class="o">=</span> <span class="n">rest</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="linenos">37</span>    <span class="n">octave</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span>
+<span class="linenos">38</span>    <span class="k">return</span> <span class="mi">12</span> <span class="o">*</span> <span class="p">(</span><span class="n">octave</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">NOTE_OFFSETS</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span> <span class="o">+</span> <span class="n">accidental</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-number">リスト 6.11 </span><span class="caption-text">waveforms.py の note_frequency 関数</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">41</span><span class="k">def</span><span class="w"> </span><span class="nf">note_frequency</span><span class="p">(</span><span class="n">note</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="linenos">42</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;MIDI ノート番号を周波数 [Hz] に変換する（12 平均律、A4 = 440 Hz）.&quot;&quot;&quot;</span>
+<span class="linenos">43</span>    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mf">440.0</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">**</span> <span class="p">((</span><span class="n">note</span> <span class="o">-</span> <span class="mi">69</span><span class="p">)</span> <span class="o">/</span> <span class="mf">12.0</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">note_number</span></code> は、音名の 1 文字目から C を 0 とした半音の数を求め、<code class="docutils literal notranslate"><span class="pre">#</span></code> と <code class="docutils literal notranslate"><span class="pre">b</span></code> の数だけ増減し、オクターブ番号から <span class="math notranslate nohighlight">\(12 \times (\text{オクターブ} + 1)\)</span> を加える。C4 なら <span class="math notranslate nohighlight">\(12 \times 5 + 0 = 60\)</span> になる。</p>
+</section>
+<section id="id8">
+<h2><span class="section-number">6.9. </span>波形を書き出す<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<p>ここまでの関数を組み合わせ、一定の音程の音を作る <code class="docutils literal notranslate"><span class="pre">tone</span></code> 関数を用意する。</p>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-number">リスト 6.12 </span><span class="caption-text">waveforms.py の tone 関数</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">137</span><span class="k">def</span><span class="w"> </span><span class="nf">tone</span><span class="p">(</span><span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">wave</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pulse&quot;</span><span class="p">,</span> <span class="n">duty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">138</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;一定の音程の音を作る. wave には &quot;pulse&quot;、&quot;triangle&quot;、&quot;sine&quot; を指定する.&quot;&quot;&quot;</span>
+<span class="linenos">139</span>    <span class="n">phase</span> <span class="o">=</span> <span class="n">phase_from_frequency</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">seconds</span><span class="p">))</span>
+<span class="linenos">140</span>    <span class="k">if</span> <span class="n">wave</span> <span class="o">==</span> <span class="s2">&quot;pulse&quot;</span><span class="p">:</span>
+<span class="linenos">141</span>        <span class="k">return</span> <span class="n">pulse_wave</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">duty</span><span class="p">)</span>
+<span class="linenos">142</span>    <span class="k">if</span> <span class="n">wave</span> <span class="o">==</span> <span class="s2">&quot;triangle&quot;</span><span class="p">:</span>
+<span class="linenos">143</span>        <span class="k">return</span> <span class="n">triangle_wave</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span>
+<span class="linenos">144</span>    <span class="k">if</span> <span class="n">wave</span> <span class="o">==</span> <span class="s2">&quot;sine&quot;</span><span class="p">:</span>
+<span class="linenos">145</span>        <span class="k">return</span> <span class="n">sine_wave</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span>
+<span class="linenos">146</span>    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown wave: </span><span class="si">{</span><span class="n">wave</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">waveforms.py</span></code> を実行すると、<code class="docutils literal notranslate"><span class="pre">output</span></code> フォルダに各波形の音が書き出される。</p>
+<div class="highlight-bat notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>python waveforms.py
+</pre></div>
+</div>
+<p>書き出される音は、「<a class="reference internal" href="digital_audio.html#ch-digital-audio"><span class="std std-ref">音とデジタル音声の基礎</span></a>」と「<a class="reference internal" href="sound_chip.html#ch-sound-chip"><span class="std std-ref">音源チップの仕組み</span></a>」に掲載した音と同じである。生成した波形を<a class="reference internal" href="#fig-waveforms"><span class="std std-numref">図 6.1</span></a> に示す。</p>
+<figure class="align-default" id="id25">
+<span id="fig-waveforms"></span><a class="reference internal image-reference" href="_images/waveforms.png"><img alt="_images/waveforms.png" src="_images/waveforms.png" style="width: 100%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">図 6.1 </span><span class="caption-text">生成した 4 種類の波形</span><a class="headerlink" href="#id25" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id9">
+<h2><span class="section-number">6.10. </span>スペクトルで確かめる<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
+<p>波形にどのような周波数の成分が含まれているかを表したものを<a class="reference internal" href="glossary.html#term-26"><span class="xref std std-term">スペクトル</span></a>という。<a class="reference internal" href="#fig-spectra"><span class="std std-numref">図 6.2</span></a> は、生成した波形のスペクトルである。横軸が周波数、縦軸が各周波数の成分の大きさ（最大の成分を 0 dB とする）を表す。</p>
+<figure class="align-default" id="id26">
+<span id="fig-spectra"></span><a class="reference internal image-reference" href="_images/spectra.png"><img alt="_images/spectra.png" src="_images/spectra.png" style="width: 100%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">図 6.2 </span><span class="caption-text">生成した波形のスペクトル</span><a class="headerlink" href="#id26" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>正弦波は 440 Hz の成分だけを持つ。矩形波（50 %）では 440 Hz の奇数倍の位置に、矩形波（25 %）では 4 の倍数を除く整数倍の位置に、大きな成分が並んでいる。いずれも「<a class="reference internal" href="sound_chip.html#ch-sound-chip"><span class="std std-ref">音源チップの仕組み</span></a>」で説明した倍音の性質のとおりである。</p>
+<p>一方、矩形波や三角波のスペクトルには、点線（440 Hz の整数倍）から外れた位置にも小さな成分が多数現れている。これは「<a class="reference internal" href="digital_audio.html#ch-digital-audio"><span class="std std-ref">音とデジタル音声の基礎</span></a>」で説明したエイリアシングによるものである。本書の方法では、高い周波数の成分を取り除く処理（帯域制限）をせずに、1 サンプルごとに階段状の波形の値を直接決めているため、ナイキスト周波数（22050 Hz）を超える倍音が低い周波数に折り返されている。</p>
+<p>エイリアシングの成分は、低い音ではほとんど気にならないが、高い音ほど目立ち、ざらついた音や濁った音に聞こえる原因になる。対策としては、波形の切り替わり部分を補正する方法（PolyBLEP など）や、高いサンプリング周波数で生成してから低域通過フィルターをかけて間引く方法（オーバーサンプリング）がある。本書では、仕組みのわかりやすさを優先してこれらの対策は行わない。</p>
+</section>
+<section id="id10">
+<h2><span class="section-number">6.11. </span>クリック音を防ぐ<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<p>音を途中で急に止めたり、急に鳴らし始めたりすると、「プチッ」という雑音が聞こえることがある。これを<a class="reference internal" href="glossary.html#term-13"><span class="xref std std-term">クリック音</span></a>という。<a class="reference internal" href="#fig-click"><span class="std std-numref">図 6.3</span></a> の左のように、波形の値が一瞬で大きく変化すると、その部分に幅広い周波数の成分が含まれるためである。</p>
+<figure class="align-default" id="id27">
+<span id="fig-click"></span><a class="reference internal image-reference" href="_images/click.png"><img alt="_images/click.png" src="_images/click.png" style="width: 100%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">図 6.3 </span><span class="caption-text">音を急に止めた場合と、フェードアウトを入れた場合</span><a class="headerlink" href="#id27" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>これを防ぐには、音の始まりと終わりに数ミリ秒の短いフェードを入れる。</p>
+<div class="literal-block-wrapper docutils container" id="id28">
+<div class="code-block-caption"><span class="caption-number">リスト 6.13 </span><span class="caption-text">waveforms.py の fade_edges 関数</span><a class="headerlink" href="#id28" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">125</span><span class="k">def</span><span class="w"> </span><span class="nf">fade_edges</span><span class="p">(</span><span class="n">signal</span><span class="p">:</span> <span class="n">Signal</span><span class="p">,</span> <span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">126</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;音の始まりと終わりを短く滑らかにし、プチッというクリック音を防ぐ.&quot;&quot;&quot;</span>
+<span class="linenos">127</span>    <span class="n">length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">seconds</span><span class="p">),</span> <span class="n">signal</span><span class="o">.</span><span class="n">size</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+<span class="linenos">128</span>    <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="linenos">129</span>        <span class="k">return</span> <span class="n">signal</span>
+<span class="linenos">130</span>    <span class="n">ramp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+<span class="linenos">131</span>    <span class="n">result</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="linenos">132</span>    <span class="n">result</span><span class="p">[:</span><span class="n">length</span><span class="p">]</span> <span class="o">*=</span> <span class="n">ramp</span>
+<span class="linenos">133</span>    <span class="n">result</span><span class="p">[</span><span class="o">-</span><span class="n">length</span><span class="p">:]</span> <span class="o">*=</span> <span class="n">ramp</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="linenos">134</span>    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">np.linspace(0.0,</span> <span class="pre">1.0,</span> <span class="pre">length)</span></code> で 0 から 1 へ直線的に増える配列を作り、先頭に掛ける。末尾には <code class="docutils literal notranslate"><span class="pre">ramp[::-1]</span></code>（逆順にした配列）を掛ける。既定の 5 ミリ秒は、聞こえ方を変えずにクリック音を防げる程度の長さである。</p>
+<p>なお、矩形波はもともと値が急に変化する波形なので、波形の途中の変化はクリック音にならない。問題になるのは、音の鳴り始めと鳴り終わりで値が 0 との間を急に行き来する場合である。</p>
+</section>
+<section id="id11">
+<h2><span class="section-number">6.12. </span>練習<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tone</span></code> 関数を使って、C4、E4、G4、C5 を 0.25 秒ずつ順に鳴らす音を作り、<code class="docutils literal notranslate"><span class="pre">np.concatenate</span></code> でつないで書き出してみよう。</p></li>
+<li><p>同じ音を矩形波と三角波で作り、音色の違いを聞き比べてみよう。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">noise_wave</span></code> の <code class="docutils literal notranslate"><span class="pre">period_index</span></code> と <code class="docutils literal notranslate"><span class="pre">short_mode</span></code> を変えて、どのような音になるかを確かめてみよう。</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sound_chip.html" class="btn btn-neutral float-left" title="5. 音源チップの仕組み" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="shaping.html" class="btn btn-neutral float-right" title="7. 音を形づくる" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

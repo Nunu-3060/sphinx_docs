@@ -44,6 +44,24 @@
 
 リサージュ曲線の位相を動かしたループアニメーション GIF。:download:`examples/animation.py <../../examples/animation.py>` の ``lissajous_loop_frames`` 関数。
 
+.. image:: ../_static/gallery/distribution_uniform.png
+   :alt: 半径を一様分布から選んだ 600 個の円
+   :width: 250px
+
+半径を一様分布から選んだ円。:download:`examples/distributions.py <../../examples/distributions.py>` の ``uniform_radii`` 関数。
+
+.. image:: ../_static/gallery/distribution_normal.png
+   :alt: 半径を正規分布から選んだ 600 個の円
+   :width: 250px
+
+半径を正規分布から選んだ円。:download:`examples/distributions.py <../../examples/distributions.py>` の ``normal_radii`` 関数。
+
+.. image:: ../_static/gallery/distribution_power_law.png
+   :alt: 半径をべき分布から選んだ 600 個の円。小さい円が多く、少数の大きな円が目立つ
+   :width: 250px
+
+半径をべき分布から選んだ円。:download:`examples/distributions.py <../../examples/distributions.py>` の ``power_law_radii`` 関数。
+
 色彩設計
 ----------
 
@@ -341,6 +359,47 @@ k=4 のバラ曲線（8 枚花びら）。:download:`examples/polar_curves.py <.
 
 3 次ベジェ曲線を重ねた、波打つ線の束。:download:`examples/bezier.py <../../examples/bezier.py>` の ``render_strands`` 関数。
 
+錯視とオプ・アート
+--------------------
+
+詳しい解説は\ :doc:`../illusions`\ を参照。錯視の図は、縮小すると効果が弱まったり意図しないモアレが生じたりするため、この区分の画像だけは等倍で表示している。
+
+.. image:: ../_static/gallery/illusion_cafe_wall.png
+   :alt: 白と黒のタイルの行を灰色の目地で区切り、行ごとに少しずつずらして積んだ図。水平な目地が交互に傾いて見える
+   :width: 384px
+
+水平な目地が傾いて見えるカフェウォール錯視。:download:`examples/illusions.py <../../examples/illusions.py>` の ``cafe_wall`` 関数。
+
+.. image:: ../_static/gallery/illusion_scintillating_grid.png
+   :alt: 黒い背景に灰色の格子線を引き、交点に白い円を置いた図
+   :width: 400px
+
+交点の白い円に黒い点がちらつくきらめき格子錯視。:download:`examples/illusions.py <../../examples/illusions.py>` の ``scintillating_grid`` 関数。
+
+.. image:: ../_static/gallery/illusion_peripheral_drift.png
+   :alt: 黒・濃い灰色・白・薄い灰色の区画を繰り返し並べたリングからなる 4 つの円盤
+   :width: 480px
+
+視野の端で見るとリングが回って見える周辺ドリフト錯視。:download:`examples/illusions.py <../../examples/illusions.py>` の ``peripheral_drift`` 関数。
+
+.. image:: ../_static/gallery/illusion_moire_lines.png
+   :alt: 細い縞を互いに 5 度回して 2 組重ねた図。粗い明暗の縞が現れている
+   :width: 400px
+
+回転させた 2 組の縞によるモアレ。:download:`examples/illusions.py <../../examples/illusions.py>` の ``moire_lines`` 関数。
+
+.. image:: ../_static/gallery/illusion_moire_circles.png
+   :alt: 中心を少しずらした 2 組の同心円を重ねた図
+   :width: 400px
+
+中心をずらした 2 組の同心円によるモアレ。:download:`examples/illusions.py <../../examples/illusions.py>` の ``moire_circles`` 関数。
+
+.. image:: ../_static/gallery/illusion_bulge.png
+   :alt: 中央の円の中だけマスを引き伸ばした市松模様。中央が球のように膨らんで見える
+   :width: 400px
+
+マスの引き伸ばしで中央が膨らんで見える市松模様。:download:`examples/illusions.py <../../examples/illusions.py>` の ``bulge_checkerboard`` 関数。
+
 ノイズ
 --------
 
@@ -505,6 +564,12 @@ Worley ノイズの :math:`F_2 - F_1` による網目模様。:download:`example
 
 ロイド緩和を 30 回適用したボロノイ図。:download:`examples/lloyd.py <../../examples/lloyd.py>` の ``lloyd_relaxation`` 関数。
 
+.. image:: ../_static/gallery/raymarching.png
+   :alt: 球とトーラスをなめらかにつないだ形が床の上に置かれ、陰影と影が付いている
+   :width: 250px
+
+3 次元の距離関数をレイマーチングで描いた場面。:download:`examples/raymarching.py <../../examples/raymarching.py>`
+
 フラクタル
 -----------
 
@@ -570,6 +635,12 @@ L-system の書き換え規則から生成した樹木状の分岐構造。:down
 
 補助関数を介した Gumowski-Mira map。:download:`examples/attractors.py <../../examples/attractors.py>`
 
+.. image:: ../_static/gallery/space_colonization.png
+   :alt: 楕円の樹冠に散らした誘引点に向かって枝を伸ばした樹木
+   :width: 250px
+
+空間植民アルゴリズムで育てた樹木。:download:`examples/space_colonization.py <../../examples/space_colonization.py>`
+
 セルオートマトンと反応拡散系
 ------------------------------
 
@@ -628,6 +699,12 @@ Gray-Scott モデルによるサンゴ状（迷路状）のパターン。:downl
 
 格子による近傍探索で求めた、近い点どうしを線で結んだ網目。:download:`examples/neighbor_search.py <../../examples/neighbor_search.py>` の ``grid_pairs`` 関数。
 
+.. image:: ../_static/gallery/quadtree_points.png
+   :alt: 密度に偏りのある 4000 個の点を登録した四分木。点の密な場所ほど正方形が細かい
+   :width: 250px
+
+点を登録した四分木と、円による範囲探索で調べた正方形。:download:`examples/quadtree.py <../../examples/quadtree.py>` の ``render_quadtree`` 関数。
+
 .. image:: ../_static/gallery/particle_gravity.png
    :alt: 重力と粒子間の反発力、床・壁との衝突判定を組み込んだパーティクルの軌跡
    :width: 250px
@@ -645,6 +722,18 @@ Verlet 積分と距離拘束による、懸垂線状に垂れたロープ。:dow
    :width: 250px
 
 同じ拘束を格子状に適用した、上端だけを固定したクロス。:download:`examples/particle.py <../../examples/particle.py>` の ``simulate_cloth`` 関数。
+
+.. image:: ../_static/gallery/dla.png
+   :alt: 中央の種から枝分かれしながら外へ伸びた DLA の凝集体
+   :width: 250px
+
+拡散律速凝集（DLA）で育てた凝集体。:download:`examples/dla.py <../../examples/dla.py>`
+
+.. image:: ../_static/gallery/differential_growth.png
+   :alt: 小さな円から育った閉じた曲線が、珊瑚や脳のしわのように折りたたまれている
+   :width: 250px
+
+差分成長で折りたたまれた曲線。:download:`examples/differential_growth.py <../../examples/differential_growth.py>`
 
 進化的アルゴリズム
 --------------------
@@ -691,6 +780,12 @@ Floyd-Steinberg 法で白黒 2 階調に減色した誤差拡散ディザリン�
    :width: 250px
 
 重み付きボロノイ図による点描。:download:`examples/stippling.py <../../examples/stippling.py>`
+
+.. image:: ../_static/gallery/hatching.svg
+   :alt: 球とトーラスをなめらかにつないだ形を、向きの異なる平行線の重なりで描いたハッチング
+   :width: 250px
+
+レイマーチングの画像をハッチングで描き、SVG 形式で書き出したもの。:download:`examples/hatching.py <../../examples/hatching.py>`
 
 .. image:: ../_static/gallery/pixel_sort.png
    :alt: Gray-Scott モデルによるサンゴ状のパターンにピクセルソートを適用した結果

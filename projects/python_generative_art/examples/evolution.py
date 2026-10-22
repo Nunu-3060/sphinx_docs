@@ -134,7 +134,8 @@ def triangle_mask(
 
     has_neg: np.ndarray = (d1 < 0) | (d2 < 0) | (d3 < 0)
     has_pos: np.ndarray = (d1 > 0) | (d2 > 0) | (d3 > 0)
-    return ~(has_neg & has_pos)
+    result: np.ndarray = ~(has_neg & has_pos)
+    return result
 
 
 def render_genome(genome: Genome, width: int, height: int) -> np.ndarray:

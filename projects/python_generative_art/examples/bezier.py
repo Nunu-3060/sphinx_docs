@@ -31,7 +31,8 @@ def de_casteljau(control_points: np.ndarray, t: np.ndarray) -> np.ndarray:
     )
     while len(points) > 1:
         points = (1.0 - weights) * points[:-1] + weights * points[1:]
-    return points[0]
+    result: np.ndarray = points[0]
+    return result
 
 
 def de_casteljau_levels(

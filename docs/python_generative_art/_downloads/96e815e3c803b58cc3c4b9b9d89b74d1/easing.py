@@ -18,7 +18,8 @@ EasingFunction = Callable[[np.ndarray], np.ndarray]
 
 def lerp(a: np.ndarray, b: np.ndarray, t: np.ndarray) -> np.ndarray:
     """``a`` から ``b`` へ、``t`` (0〜1) の割合で線形補間する。"""
-    return a + (b - a) * t
+    result: np.ndarray = a + (b - a) * t
+    return result
 
 
 def linear(t: np.ndarray) -> np.ndarray:
@@ -38,7 +39,8 @@ def ease_out_cubic(t: np.ndarray) -> np.ndarray:
 
 def smoothstep(t: np.ndarray) -> np.ndarray:
     """3次のエルミート補間。両端で1階微分が0になる。"""
-    return t * t * (3.0 - 2.0 * t)
+    result: np.ndarray = t * t * (3.0 - 2.0 * t)
+    return result
 
 
 def smootherstep(t: np.ndarray) -> np.ndarray:
@@ -46,7 +48,8 @@ def smootherstep(t: np.ndarray) -> np.ndarray:
 
     パーリンノイズの fade 関数と同じ式である。
     """
-    return t * t * t * (t * (6.0 * t - 15.0) + 10.0)
+    result: np.ndarray = t * t * t * (t * (6.0 * t - 15.0) + 10.0)
+    return result
 
 
 EASINGS: dict[str, EasingFunction] = {

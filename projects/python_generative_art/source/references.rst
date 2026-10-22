@@ -23,6 +23,15 @@
 * Stuart P. Lloyd, "Least Squares Quantization in PCM", IEEE Transactions on Information Theory 28(2), 1982. — 本資料の\ :ref:`lloyd`\ で扱ったロイド緩和の原論文。1957 年に社内報告としてまとめられた内容を論文として発表したもの。
 * Steven Worley, "A Cellular Texture Basis Function", Proceedings of SIGGRAPH '96, 1996. — 本資料の :ref:`worley`\ で扱った Worley ノイズの原論文。
 * Robert Bridson, Jim Houriham, Marcus Nordenstam, "Curl-Noise for Procedural Fluid Flow", ACM Transactions on Graphics 26(3) (SIGGRAPH 2007), 2007. — 本資料の\ :ref:`curl-noise`\ で扱ったカールノイズの原論文。流れ関数の回転から発散が 0 の速度場を作る考え方と、障害物の周りを回り込む流れへの拡張を扱う。
+* Richard L. Gregory, Priscilla Heard, "Border Locking and the Café Wall Illusion", Perception 8(4), 1979. — 本資料の\ :doc:`illusions`\ で扱ったカフェウォール錯視を報告し、目地の明るさや太さとの関係を調べた論文。
+* Alan Fraser, Kimerly J. Wilcox, "Perception of Illusory Movement", Nature 281, 1979. — 本資料の\ :doc:`illusions`\ で扱った周辺ドリフト錯視を最初に報告した論文。
+* Akiyoshi Kitaoka, Hiroshi Ashida, "Phenomenal Characteristics of the Peripheral Drift Illusion", VISION 15(4), 2003. — 明るさの異なる 4 色の並びで周辺ドリフト錯視を強める方法と、動いて見える向きを示した論文。
+* Michael Schrauf, Bernd Lingelbach, Eugene R. Wist, "The Scintillating Grid Illusion", Vision Research 37(8), 1997. — 本資料の\ :doc:`illusions`\ で扱ったきらめき格子錯視について、見え方の条件を調べた論文。
+* T. A. Witten, L. M. Sander, "Diffusion-Limited Aggregation, a Kinetic Critical Phenomenon", Physical Review Letters 47(19), 1981. — 本資料の\ :ref:`dla`\ で扱った拡散律速凝集の原論文。
+* Adam Runions, Martin Fuhrer, Brendan Lane, Pavol Federl, Anne-Gaëlle Rolland-Lagan, Przemyslaw Prusinkiewicz, "Modeling and Visualization of Leaf Venation Patterns", ACM Transactions on Graphics 24(3) (SIGGRAPH 2005), 2005. — 本資料の\ :ref:`space-colonization`\ の考え方を、葉脈の生成に用いた論文。
+* Adam Runions, Brendan Lane, Przemyslaw Prusinkiewicz, "Modeling Trees with a Space Colonization Algorithm", Eurographics Workshop on Natural Phenomena, 2007. — 本資料の\ :ref:`space-colonization`\ で扱った、樹木を生成する空間植民アルゴリズムの論文。
+* John C. Hart, "Sphere Tracing: A Geometric Method for the Antialiased Ray Tracing of Implicit Surfaces", The Visual Computer 12(10), 1996. — 本資料の :ref:`raymarching`\ で扱ったスフィアトレーシングの原論文。
+* M. E. J. Newman, "Power Laws, Pareto Distributions and Zipf's Law", Contemporary Physics 46(5), 2005. — 本資料の\ :ref:`random-distribution`\ で扱ったべき分布について、性質や現実のデータでの現れ方を解説する論文。
 * Adrian Secord, "Weighted Voronoi Stippling", Proceedings of the 2nd International Symposium on Non-Photorealistic Animation and Rendering (NPAR 2002), 2002. — 本資料の\ :ref:`stippling`\ で扱った、重み付きロイド緩和による点描の原論文。
 * Edwin Catmull, Raphael Rom, "A Class of Local Interpolating Splines", in R.E. Barnhill, R.F. Riesenfeld (eds.), *Computer Aided Geometric Design*, Academic Press, 1974. — 本資料の\ :ref:`bezier`\ で扱った Catmull-Rom スプラインの原論文。
 
@@ -31,6 +40,10 @@ Web サイト・記事
 
 * `Inigo Quilez, "Domain Warping" <https://iquilezles.org/articles/warp/>`_ — 本資料の\ :doc:`noise`\ で扱ったドメインワーピング手法の元記事。fBm を用いたパターン生成から、多段階のワープ、彩色までを解説する。
 * `Patricio Gonzalez Vivo, Jen Lowe, The Book of Shaders <https://thebookofshaders.com/>`_ — GLSL シェーダー向けの入門書だが、ノイズやフラクタルの考え方は言語に依存せず参考になる。smoothstep などの補間関数で図形の輪郭や濃淡を作る考え方も詳しく扱っている。
+* `北岡明佳, 「北岡明佳の錯視のページ」 <https://www.ritsumei.ac.jp/~akitaoka/>`_ — 本資料の\ :doc:`illusions`\ で扱った周辺ドリフト錯視（「蛇の回転」など）をはじめ、多数の錯視図形とその解説を公開している。
+* `Anders Hoff, "Differential Line" <https://inconvergent.net/generative/differential-line/>`_ — 本資料の\ :ref:`differential-growth`\ で扱った差分成長の作品と、そのアルゴリズムの解説。
+* `Inigo Quilez, "Distance Functions" <https://iquilezles.org/articles/distfunctions/>`_ — 本資料の :ref:`raymarching`\ で扱った 3 次元の距離関数を、多数の図形について一覧にした記事。
+* `W3C, "Scalable Vector Graphics (SVG) 2" <https://www.w3.org/TR/SVG2/>`_ — 本資料の\ :ref:`hatching`\ で書き出した SVG 形式の仕様。
 * Thomas Jakobsen, "Advanced Character Physics", Game Developers Conference, 2001. — 本資料の\ :doc:`particles`\ で扱った、Verlet 積分と距離拘束の反復によるロープ・クロスの表現の元になった講演資料。
 * `Björn Ottosson, "A perceptual color space for image processing" <https://bottosson.github.io/posts/oklab/>`_, 2020. — 本資料の\ :ref:`oklab`\ で扱った OKLab 色空間を提案した記事。変換行列の導出や、CIELAB などほかの色空間との比較を扱う。
 * `Maxim Gumin, "WaveFunctionCollapse" <https://github.com/mxgmn/WaveFunctionCollapse>`_ — 本資料の :ref:`wfc`\ で扱った Wave Function Collapse の考案者によるリポジトリ。simple tiled model と overlapping model の実装と解説を含む。

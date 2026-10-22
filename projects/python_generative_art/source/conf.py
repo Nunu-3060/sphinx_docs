@@ -56,10 +56,12 @@ _GALLERY_SCRIPT_ORDER = [
     "image_effects.py",
     "stippling.py",  # perlin_noise.png を読む
     "palette.py",
+    "raymarching.py",  # hatching.py が raymarching.png を読む
+    "hatching.py",
 ]
 
 # ギャラリーに集める画像の拡張子。
-_GALLERY_IMAGE_PATTERNS = ["*.png", "*.gif"]
+_GALLERY_IMAGE_PATTERNS = ["*.png", "*.gif", "*.svg"]
 
 
 def _list_images(directory: pathlib.Path) -> set[str]:
@@ -77,7 +79,8 @@ def generate_gallery_images(app: Sphinx) -> None:
 
     スクリプトはそれぞれ画像をカレントディレクトリ（プロジェクト直下）
     に相対パスで保存するため、実行後にプロジェクト直下へ新たに現れた
-    画像(.png と、アニメーションの .gif)だけをギャラリーへ移動する。スクリプトのソースが前回のビルド
+    画像(.png と、アニメーションの .gif と、ベクター画像の .svg)だけを
+    ギャラリーへ移動する。スクリプトのソースが前回のビルド
     から変わっていなければ再実行をスキップし、ビルドのたびに全スクリプト
     (反応拡散系や進化的アルゴリズムなど、実行に時間がかかるものを含む)
     を走らせる無駄を避ける。
@@ -128,18 +131,19 @@ def generate_gallery_images(app: Sphinx) -> None:
 
 
 def generate_examples_zip(app: Sphinx) -> None:
-    """examples/ 以下の .py ファイルをまとめて _static/downloads/examples.zip に固める。"""
+    """examples/ 以下の .py ファイルと検査用の設定ファイル setup.cfg を
+    まとめて _static/downloads/examples.zip に固める。"""
     src_dir = pathlib.Path(app.srcdir)
     examples_dir = src_dir.parent / "examples"
     output_dir = src_dir / "_static" / "downloads"
     output_dir.mkdir(parents=True, exist_ok=True)
     zip_path = output_dir / "examples.zip"
 
-    py_files = sorted(examples_dir.glob("*.py"))
+    files = sorted(examples_dir.glob("*.py")) + [examples_dir / "setup.cfg"]
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for py_file in py_files:
-            zf.write(py_file, arcname=f"examples/{py_file.name}")
+        for file in files:
+            zf.write(file, arcname=f"examples/{file.name}")
 
 
 def setup(app: Sphinx) -> None:

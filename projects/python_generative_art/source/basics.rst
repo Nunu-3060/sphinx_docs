@@ -33,6 +33,63 @@ Python・NumPy・Pillow・matplotlib 自体の使い方には立ち入らず、�
 
    rng: np.random.Generator = np.random.default_rng(seed=42)
 
+.. _random-distribution:
+
+乱数の分布
+----------
+
+シードを固定しても、どの分布から乱数を選ぶかによって、作品の「ばらつきの質」は大きく変わる。``rng.uniform`` が返す一様分布では、範囲内のどの値も同じ確率で現れる。しかし、自然界の物の大きさのばらつきが一様であることは少なく、目的に合った分布を選ぶと、同じ配置でも作品の印象が変わる。
+
+次の 3 枚は、同じ 600 か所に円を置き、半径だけを異なる分布から選んで描いたものである。3 つの分布は、いずれも半径の平均が 6 ピクセルになるように設定した。
+
+- **一様分布**\ （1 枚目）: 1〜11 ピクセルのどの半径も同じ頻度で現れる。大小がまんべんなく混ざり、単調な印象になる。
+- **正規分布**\ （2 枚目）: 平均 6 ピクセル、標準偏差 1.5 ピクセル。ほとんどの円が平均に近い大きさになり、整った印象になる。
+- **べき分布**\ （3 枚目）: 小さい円が非常に多く、まれに非常に大きい円が現れる。大きな円が画面の焦点になり、変化に富んだ印象になる。
+
+.. image:: _static/gallery/distribution_uniform.png
+   :alt: 半径を一様分布から選んだ 600 個の円。大小がまんべんなく混ざっている
+   :width: 220px
+
+.. image:: _static/gallery/distribution_normal.png
+   :alt: 半径を正規分布から選んだ 600 個の円。ほとんどの円が同じくらいの大きさである
+   :width: 220px
+
+.. image:: _static/gallery/distribution_power_law.png
+   :alt: 半径をべき分布から選んだ 600 個の円。小さい円が多く、ごく少数の大きな円が目立つ
+   :width: 220px
+
+選んだ半径の分布をヒストグラムにすると、違いがはっきりする（横軸の範囲は 30 ピクセルまで）。
+
+.. image:: _static/gallery/distribution_histograms.png
+   :alt: 3 つの分布から選んだ半径のヒストグラム。一様分布は平らで、正規分布は平均の周りに山があり、べき分布は小さい値に集中して右に長い裾を引く
+   :width: 600px
+
+正規分布は負の値も取りうるため、半径のように正の値しか意味を持たない量に使う場合は、下限で切り詰める。本実装では標準偏差を平均の 1/4 にしているので、下限の 1 ピクセルで切り詰められる値はごくわずかである。
+
+.. literalinclude:: ../examples/distributions.py
+   :linenos:
+   :language: python
+   :pyobject: normal_radii
+   :caption: examples/distributions.py の normal_radii 関数
+
+べき分布は、確率密度が値の負のべき乗に比例する分布である。最小値を :math:`x_{\min}`、指数を :math:`a` とすると、確率密度と平均は次のようになる（平均は :math:`a > 2` のときに定まる）。
+
+.. math::
+
+   p(x) \propto x^{-a} \quad (x \ge x_{\min}), \qquad \bar{x} = x_{\min} \frac{a - 1}{a - 2}
+
+NumPy の ``Generator.pareto(s)`` は、確率密度が :math:`x^{-(s+1)}` に比例し :math:`x \ge 1` となる分布から 1 を引いた値を返す。そこで、``s`` に :math:`a - 1` を渡し、結果に 1 を足してから :math:`x_{\min}` 倍している。
+
+.. literalinclude:: ../examples/distributions.py
+   :linenos:
+   :language: python
+   :pyobject: power_law_radii
+   :caption: examples/distributions.py の power_law_radii 関数
+
+作例では :math:`a = 2.5` としたので、理論上の平均は 6 ピクセルになる。ただし、ヒストグラムに示した実際の平均は 4.8 ピクセルと小さい。これは、画面に収まるよう半径の上限を 60 ピクセルで切り詰めたことと、:math:`a \le 3` のべき分布は分散が無限大になり、標本の平均が大きくばらつくことによる。べき分布を使うときは、上限を設けるかどうかで見た目が大きく変わる点に注意する。
+
+ここで扱った 3 つ以外にも、待ち時間のように「次の出来事が起こるまでの間隔」を表す指数分布や、正の値で右に裾を引く対数正規分布などがある。ばらつきの質を変えたいときは、値の範囲を変える前に、分布そのものを変えることを検討するとよい。
+
 .. _basics-composition:
 
 構図とレイヤーの考え方

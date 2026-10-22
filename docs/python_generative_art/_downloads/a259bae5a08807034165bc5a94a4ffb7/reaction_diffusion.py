@@ -17,13 +17,14 @@ def laplacian(field: np.ndarray) -> np.ndarray:
     上下左右の隣接セルとの差の合計であり、値がまわりより低い場所
     ほど正、高い場所ほど負になる、拡散の向きと強さを表す量になる。
     """
-    return (
+    result: np.ndarray = (
         np.roll(field, 1, axis=0)
         + np.roll(field, -1, axis=0)
         + np.roll(field, 1, axis=1)
         + np.roll(field, -1, axis=1)
         - 4.0 * field
     )
+    return result
 
 
 def gray_scott_step(

@@ -34,7 +34,7 @@ Python 等の知識はあるエンジニア
 
 * build_html.bat
   * html ビルド用のバッチファイル
-  * ビルド前に build フォルダーがあったら削除する。
+  * ビルド前に build フォルダがあったら削除する。
   * build/html/ に index.html を出力する。
   * ビルド後に既定のブラウザで index.html を開く。
   * pause コマンドは使用しない。
@@ -49,15 +49,17 @@ Python 等の知識はあるエンジニア
       * flake8
         * 行長は 120 文字まで許容する。
       * mypy
-        * `--strict` のオプションを付ける。
+        * `strict = True` を指定する。
+      * setup.cfg を設定ファイルとして examples 直下に置く。
 * source
   * 図
-    * Graphviz, Python PIL, Python matplotlib が使える。
+    * Graphviz, Python Pillow, Python matplotlib が使える。
     * 本文中で必要であれば使用する。
+    * ビルド時に図を出力する必要がある場合は、conf.py から呼び出すようにする。
   * conf.py
     * 必要に応じて内容を変更する。
     * 出力された html からソースコードの rst が閲覧できないようにする。
-    * GitHub Pages で公開することを前提に .nojekyll を出力する設定にする。
+    * .nojekyll を出力する設定にする。
     * sphinx_rtd_theme を使用する。
     * author: Nunu_3060
     * copyright: 2026, Nunu_3060
@@ -67,9 +69,9 @@ Python 等の知識はあるエンジニア
       * rst の可読性は考慮しなくてよい。
       * 出力される html の表示が崩れないことを優先する。
       * 表は list-table を使用する。
-      * 数式は崩れていないか確認する。
+      * 数式を使う場合は表示が崩れていないか確認する。
       * リンク切れが無いか確認する。
-      * 常体か敬体かどちらかに統一する。
+      * 常体に統一する。
       * 日本語の文章中に英単語や数字を入れる際は前後に半角空白を入れる。
       * 表記ゆれが無いようにする。
       * 文中で提示するコードの例には行番号を付ける。
