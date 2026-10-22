@@ -47,7 +47,8 @@ def initial_points(
     ys, xs = np.divmod(indices, width)
     # 画素の中心(整数座標)から ±0.5 の範囲で、画素内のどこに置くかを決める。
     jitter: np.ndarray = rng.random((count, 2)) - 0.5
-    return np.stack([xs, ys], axis=1) + jitter
+    result: np.ndarray = np.stack([xs, ys], axis=1) + jitter
+    return result
 
 
 def render_stipples(

@@ -57,6 +57,7 @@
 <li class="toctree-l1"><a class="reference internal" href="color.html">色彩設計</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tiling.html">タイリングパターン</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spirals.html">螺旋と曲線</a></li>
+<li class="toctree-l1"><a class="reference internal" href="illusions.html">錯視とオプ・アート</a></li>
 <li class="toctree-l1"><a class="reference internal" href="noise.html">ノイズを使った表現</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">距離関数による形状表現</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#sdf">距離関数（SDF）とは</a></li>
@@ -64,10 +65,11 @@
 <li class="toctree-l2"><a class="reference internal" href="#id3">ブール演算による形状の合成</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id4">距離場の可視化：等高線とアンチエイリアス</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id5">ノイズによる形状の歪み（応用）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#raymarching">3 次元の距離関数とレイマーチング（発展）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#circle-packing">円充填（サークルパッキング）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id7">ポアソン円盤サンプリング</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id8">ボロノイ図とドロネー三角形分割</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id9">距離の測り方を変える</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">ポアソン円盤サンプリング</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">ボロノイ図とドロネー三角形分割</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">距離の測り方を変える</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#lloyd">ロイド緩和（重心ボロノイ分割）</a></li>
@@ -119,8 +121,8 @@
 <section id="id2">
 <h2>基本図形の距離関数<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
 <p>円のほかに、矩形と線分についても同様に距離関数を定義できる。矩形は、中心からの相対座標を各軸ごとに矩形の半径（半幅・半高さ）だけ縮めた上で、はみ出した分の長さ（外側にいる場合）と、はみ出していない分のうちもっとも浅い軸の距離（内側にいる場合）を組み合わせて求める。</p>
-<div class="literal-block-wrapper docutils container" id="id11">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の sdf_circle 関数</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の sdf_circle 関数</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">sdf_circle</span><span class="p">(</span>
 <span class="linenos">2</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">cx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
 <span class="linenos">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -129,8 +131,8 @@
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id12">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の sdf_box 関数</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の sdf_box 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">sdf_box</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 <span class="linenos"> 3</span>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -144,13 +146,14 @@
 <span class="linenos">11</span>    <span class="n">qy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">cy</span><span class="p">)</span> <span class="o">-</span> <span class="n">half_height</span>
 <span class="linenos">12</span>    <span class="n">outside</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">qy</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
 <span class="linenos">13</span>    <span class="n">inside</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
-<span class="linenos">14</span>    <span class="k">return</span> <span class="n">outside</span> <span class="o">+</span> <span class="n">inside</span>
+<span class="linenos">14</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">outside</span> <span class="o">+</span> <span class="n">inside</span>
+<span class="linenos">15</span>    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 </div>
 <p>線分までの距離は、点から線分への垂線の足が線分の範囲に収まるように、内積を使ってパラメータ <code class="docutils literal notranslate"><span class="pre">h</span></code> を <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> にクランプしてから求める。距離の値から <code class="docutils literal notranslate"><span class="pre">thickness</span></code> の分だけ引いて図形を外側に太らせる（オフセットする）と、線分の周囲 <code class="docutils literal notranslate"><span class="pre">thickness</span></code> 分までが「内側」として扱われるようになり、線分に太さを持たせたカプセル形状としても使える。</p>
-<div class="literal-block-wrapper docutils container" id="id13">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の sdf_segment 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の sdf_segment 関数</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">sdf_segment</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 <span class="linenos"> 3</span>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -170,7 +173,8 @@
 <span class="linenos">17</span>    <span class="p">)</span>
 <span class="linenos">18</span>    <span class="n">dx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">pax</span> <span class="o">-</span> <span class="n">h</span> <span class="o">*</span> <span class="n">bax</span>
 <span class="linenos">19</span>    <span class="n">dy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">pay</span> <span class="o">-</span> <span class="n">h</span> <span class="o">*</span> <span class="n">bay</span>
-<span class="linenos">20</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">)</span> <span class="o">-</span> <span class="n">thickness</span>
+<span class="linenos">20</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">)</span> <span class="o">-</span> <span class="n">thickness</span>
+<span class="linenos">21</span>    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 </div>
@@ -184,27 +188,30 @@
 \[d_{\mathrm{intersection}}(p) = \max(d_1(p), d_2(p))\]</div>
 <div class="math notranslate nohighlight">
 \[d_{\mathrm{subtraction}}(p) = \max(d_1(p), -d_2(p))\]</div>
-<div class="literal-block-wrapper docutils container" id="id14">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の union 関数</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の union 関数</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">union</span><span class="p">(</span><span class="n">d1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">d2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;2つの図形の和集合(どちらかの内側なら内側)。&quot;&quot;&quot;</span>
-<span class="linenos">3</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="literal-block-wrapper docutils container" id="id15">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の intersection 関数</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">intersection</span><span class="p">(</span><span class="n">d1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">d2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;2つの図形の積集合(両方の内側なら内側)。&quot;&quot;&quot;</span>
-<span class="linenos">3</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span>
+<span class="linenos">3</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span>
+<span class="linenos">4</span>    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 </div>
 <div class="literal-block-wrapper docutils container" id="id16">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の subtraction 関数</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の intersection 関数</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">intersection</span><span class="p">(</span><span class="n">d1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">d2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;2つの図形の積集合(両方の内側なら内側)。&quot;&quot;&quot;</span>
+<span class="linenos">3</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span>
+<span class="linenos">4</span>    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id17">
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の subtraction 関数</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">subtraction</span><span class="p">(</span><span class="n">d1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">d2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;d1 から d2 の領域を取り除いた差集合。&quot;&quot;&quot;</span>
-<span class="linenos">3</span>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="o">-</span><span class="n">d2</span><span class="p">)</span>
+<span class="linenos">3</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="o">-</span><span class="n">d2</span><span class="p">)</span>
+<span class="linenos">4</span>    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 </div>
@@ -214,12 +221,13 @@
 <div class="math notranslate nohighlight">
 \[d_{\mathrm{smooth}}(p) = (1 - h)\,d_2(p) + h\,d_1(p) - k\,h\,(1 - h)\]</div>
 <p>ここで <span class="math notranslate nohighlight">\(k\)</span> はなめらかさの半径で、大きくするほど継ぎ目が広い範囲でなだらかにつながる。</p>
-<div class="literal-block-wrapper docutils container" id="id17">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の smooth_union 関数</span><a class="headerlink" href="#id17" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id18">
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の smooth_union 関数</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">smooth_union</span><span class="p">(</span><span class="n">d1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">d2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;継ぎ目を滑らかに繋いだ和集合(k は滑らかさの半径)。&quot;&quot;&quot;</span>
 <span class="linenos">3</span>    <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">d2</span> <span class="o">-</span> <span class="n">d1</span><span class="p">)</span> <span class="o">/</span> <span class="n">k</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-<span class="linenos">4</span>    <span class="k">return</span> <span class="n">d2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">h</span> <span class="o">-</span> <span class="n">k</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">h</span><span class="p">)</span>
+<span class="linenos">4</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">d2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">h</span> <span class="o">-</span> <span class="n">k</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">h</span><span class="p">)</span>
+<span class="linenos">5</span>    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 </div>
@@ -232,8 +240,8 @@
 <section id="id4">
 <h2>距離場の可視化：等高線とアンチエイリアス<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
 <p>距離関数の値そのものを画像にすると、図形の輪郭だけでなく、輪郭からの距離の分布まで可視化できる。境界付近の狭い帯の中だけ内側色と外側色をなめらかに混ぜれば、画素を増やさずに輪郭をアンチエイリアス処理できる。</p>
-<div class="literal-block-wrapper docutils container" id="id18">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の render_fill 関数</span><a class="headerlink" href="#id18" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の render_fill 関数</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">render_fill</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 <span class="linenos"> 3</span>    <span class="n">inside_color</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">240</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>
@@ -255,8 +263,8 @@
 </div>
 </div>
 <p>一定間隔ごとに線を引けば、地図の等高線のような表現になる。距離を <code class="docutils literal notranslate"><span class="pre">spacing</span></code> で割った余りが 0 に近い場所ほど線を濃くすることで実現している。</p>
-<div class="literal-block-wrapper docutils container" id="id19">
-<div class="code-block-caption"><span class="caption-text">examples/sdf.py の render_isolines 関数</span><a class="headerlink" href="#id19" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text">examples/sdf.py の render_isolines 関数</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">render_isolines</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">spacing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">12.0</span><span class="p">,</span> <span class="n">line_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.2</span>
 <span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">:</span>
@@ -289,8 +297,69 @@
 </a>
 <p>正確な円のまま拡大縮小したい場合や、輪郭を保ったまま太らせたり細らせたりしたい場合には、歪める前に距離関数の値へ定数を足し引きするだけでよい（半径を変えるのと同じ効果になる）。座標を歪めるか、距離の値を直接いじるかで、図形の変形のしかたが変わる点は覚えておく価値がある。</p>
 </section>
+<section id="raymarching">
+<span id="id6"></span><h2>3 次元の距離関数とレイマーチング（発展）<a class="headerlink" href="#raymarching" title="Link to this heading"></a></h2>
+<p>本資料の作例は 2 次元が中心だが、距離関数の考え方はそのまま 3 次元に拡張できる。例えば、中心 <span class="math notranslate nohighlight">\(\mathbf{c}\)</span>・半径 <span class="math notranslate nohighlight">\(r\)</span> の球と、<span class="math notranslate nohighlight">\(y\)</span> 軸のまわりに水平に置いたトーラス（中心から管の中心までの半径 <span class="math notranslate nohighlight">\(R\)</span>、管の半径 <span class="math notranslate nohighlight">\(r\)</span>）の距離関数は次のようになる。<span class="math notranslate nohighlight">\(\mathbf{q} = \mathbf{p} - \mathbf{c}\)</span> は、点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> の図形の中心からの相対位置である。</p>
+<div class="math notranslate nohighlight">
+\[d_{\mathrm{sphere}}(\mathbf{p}) = |\mathbf{p} - \mathbf{c}| - r\]</div>
+<div class="math notranslate nohighlight">
+\[d_{\mathrm{torus}}(\mathbf{p}) = \sqrt{\left(\sqrt{q_x^2 + q_z^2} - R\right)^2 + q_y^2} - r\]</div>
+<p>ブール演算やなめらかな和集合も、2 次元と同じ式がそのまま使える。次の場面は、球とトーラスをなめらかにつなぎ、高さ 0 の床（距離関数は点の <span class="math notranslate nohighlight">\(y\)</span> 座標そのもの）の上に置いたものである。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text">examples/raymarching.py の scene 関数</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">scene</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;場面全体の距離関数: 球とトーラスをなめらかにつなぎ、床の上に置く。&quot;&quot;&quot;</span>
+<span class="linenos">3</span>    <span class="n">sphere</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">sd_sphere</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="mf">0.8</span><span class="p">)</span>
+<span class="linenos">4</span>    <span class="n">torus</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">sd_torus</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="mf">1.15</span><span class="p">,</span> <span class="mf">0.28</span><span class="p">)</span>
+<span class="linenos">5</span>    <span class="n">floor</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># 高さ 0 の水平な床</span>
+<span class="linenos">6</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">smooth_union</span><span class="p">(</span><span class="n">sphere</span><span class="p">,</span> <span class="n">torus</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">),</span> <span class="n">floor</span><span class="p">)</span>
+<span class="linenos">7</span>    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+</div>
+<p>3 次元の場面を画像にするには、カメラから各画素の方向へ視線（レイ）を飛ばし、レイが最初に表面にぶつかる位置を求める。距離関数の値 <span class="math notranslate nohighlight">\(f(\mathbf{p})\)</span> は、「点 <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> を中心とする半径 <span class="math notranslate nohighlight">\(f(\mathbf{p})\)</span> の球の中には表面がない」ことを保証する。そのため、レイの始点を <span class="math notranslate nohighlight">\(\mathbf{o}\)</span>、向きを <span class="math notranslate nohighlight">\(\mathbf{d}\)</span> として、次式のように距離関数の値だけ進めても、表面を突き抜けることはない。</p>
+<div class="math notranslate nohighlight">
+\[t_{k+1} = t_k + f(\mathbf{o} + t_k \mathbf{d})\]</div>
+<p>これを、<span class="math notranslate nohighlight">\(f\)</span> が十分小さくなる（表面に当たる）か、<span class="math notranslate nohighlight">\(t\)</span> が十分大きくなる（何にも当たらずに抜ける）まで繰り返す。この方法を<strong>スフィアトレーシング</strong>（sphere tracing）と呼び、距離関数を使ったレイマーチングの基本になっている。本実装では、全ての画素のレイを NumPy の配列としてまとめて進め、まだ当たっていないレイだけを更新している。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text">examples/raymarching.py の march 関数</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">march</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">origins</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 3</span>    <span class="n">directions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="linenos"> 4</span>    <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+<span class="linenos"> 5</span>    <span class="n">max_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+<span class="linenos"> 6</span>    <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+<span class="linenos"> 7</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;全てのレイを同時に進め、表面までの距離と、当たったかどうかを返す。</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span><span class="sd">    各ステップで、まだ表面に当たっておらず遠くへ抜けてもいないレイ</span>
+<span class="linenos">11</span><span class="sd">    だけを、その位置の距離関数の値だけ進める。</span>
+<span class="linenos">12</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">13</span>    <span class="n">travelled</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">origins</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="linenos">14</span>    <span class="n">hit</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">origins</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+<span class="linenos">15</span>    <span class="n">active</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">origins</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+<span class="linenos">16</span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_steps</span><span class="p">):</span>
+<span class="linenos">17</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">active</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+<span class="linenos">18</span>            <span class="k">break</span>
+<span class="linenos">19</span>        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">origins</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">directions</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">*</span> <span class="n">travelled</span><span class="p">[</span><span class="n">active</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+<span class="linenos">20</span>        <span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">scene</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="linenos">21</span>        <span class="n">travelled</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+=</span> <span class="n">d</span>
+<span class="linenos">22</span>        <span class="n">newly_hit</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="n">epsilon</span>
+<span class="linenos">23</span>        <span class="n">escaped</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">travelled</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_distance</span>
+<span class="linenos">24</span>        <span class="n">hit</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">|=</span> <span class="n">newly_hit</span>
+<span class="linenos">25</span>        <span class="n">active</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="o">~</span><span class="p">(</span><span class="n">newly_hit</span> <span class="o">|</span> <span class="n">escaped</span><span class="p">)</span>
+<span class="linenos">26</span>    <span class="k">return</span> <span class="n">travelled</span><span class="p">,</span> <span class="n">hit</span>
+</pre></div>
+</div>
+</div>
+<p>レイが当たった点では、距離関数の勾配の向きが表面の法線になる。勾配は、<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>のカールノイズと同じく中心差分で求められる。法線と光の向きの内積で明るさを決め（拡散反射）、さらに当たった点から光の方向へもう一度レイを進めて、途中で何かに当たれば影にする。遠くの床ほど背景の明るさに近づける霧も加えている。</p>
+<a class="reference internal image-reference" href="_images/raymarching.png"><img alt="球とトーラスをなめらかにつないだ形が床の上に置かれ、左上からの光で陰影と影が付いている" src="_images/raymarching.png" style="width: 480px;" />
+</a>
+<p>この画像は、<a class="reference internal" href="image_effects.html#hatching"><span class="std std-ref">ハッチングと SVG 出力</span></a>で線の濃淡に置き換える素材としても使う。</p>
+<p>Python と NumPy による本実装は、480 × 360 画素の 1 枚を描くのに数秒かかる。アニメーションやインタラクティブな作品では、同じ計算を GPU で行う GLSL などのシェーダーで書くのが一般的である。距離関数の考え方とスフィアトレーシングの手順は、言語が変わってもそのまま使える。</p>
+</section>
 <section id="circle-packing">
-<span id="id6"></span><h2>円充填（サークルパッキング）<a class="headerlink" href="#circle-packing" title="Link to this heading"></a></h2>
+<span id="id7"></span><h2>円充填（サークルパッキング）<a class="headerlink" href="#circle-packing" title="Link to this heading"></a></h2>
 <p>距離関数は、図形を描くだけでなく、平面の上にどれだけの隙間が残っているかを測る道具にもなる。その代表的な応用が、大きさの異なる円を互いに重ならないように敷き詰める<strong>円充填</strong>（circle packing）である。円を 1 つずつ置いていくとき、ある点を中心として置ける円の最大半径は、その点からもっとも近い既存の円の縁、またはキャンバスの端までの距離に等しい。既存の円までの距離は、全ての円の距離関数を <code class="docutils literal notranslate"><span class="pre">union</span></code> で合わせた和集合の距離関数そのものである。キャンバスの端までの距離は、キャンバスを表す矩形の距離関数の符号を反転したもの（内側で正になる）である。本節では、この 2 つのうち小さいほうを<strong>空き距離</strong> <span class="math notranslate nohighlight">\(f(p)\)</span> と呼ぶ。</p>
 <div class="math notranslate nohighlight">
 \[f(p) = \min\Bigl(-d_{\mathrm{canvas}}(p),\ \min_i d_{\mathrm{circle}, i}(p)\Bigr)\]</div>
@@ -302,8 +371,8 @@
 <li><p>置いた円の距離関数を <code class="docutils literal notranslate"><span class="pre">union</span></code> で空き距離の場に重ねる。</p></li>
 <li><p>最小半径の円を置ける画素がなくなるか、指定した個数に達するまで、2-4 を繰り返す。</p></li>
 </ol>
-<div class="literal-block-wrapper docutils container" id="id20">
-<div class="code-block-caption"><span class="caption-text">examples/circle_packing.py の pack_circles 関数</span><a class="headerlink" href="#id20" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text">examples/circle_packing.py の pack_circles 関数</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">pack_circles</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">free_distance</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 <span class="linenos"> 3</span>    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
@@ -354,8 +423,8 @@
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id21">
-<div class="code-block-caption"><span class="caption-text">examples/circle_packing.py の canvas_distance 関数</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text">examples/circle_packing.py の canvas_distance 関数</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">canvas_distance</span><span class="p">(</span><span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="linenos"> 2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;キャンバスの内側(周囲に ``margin`` の余白を残す)での空き距離。</span>
 <span class="linenos"> 3</span>
@@ -387,8 +456,8 @@
 </a>
 <p>なお、半径を全て同じ値に固定して円をランダムに置いていく方法は、ダーツ投げ法（dart throwing）と呼ばれる素朴なポアソン円盤サンプリングにあたる。次節では、同じ性質の点配置をより効率よく作る方法を扱う。</p>
 </section>
-<section id="id7">
-<h2>ポアソン円盤サンプリング<a class="headerlink" href="#id7" title="Link to this heading"></a></h2>
+<section id="id8">
+<h2>ポアソン円盤サンプリング<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
 <p>次節のボロノイ図は、平面に散らした複数の種点から作られる。種点をどう配置するかによって、ボロノイ図の見た目は大きく変わる。フィロタキシスのように規則正しく並べれば整然としすぎる印象になり、単純な一様乱数で散らせば、粒が偏って固まる場所と大きな隙間ができる場所が混在してしまう。<strong>ポアソン円盤サンプリング</strong>は、この両極端の中間にあたる、「どの 2 点も最小距離以上離れているが、全体としては隙間なく埋め尽くされている」という<strong>ブルーノイズ</strong>特性を持つ点配置を作る手法である。網膜の視細胞の並びなど、自然界の「均一だがランダムに見える」配置の多くがこの性質を持つ。</p>
 <p>Bridson (2007) のアルゴリズムは、次の手順で点を追加していく。</p>
 <ol class="arabic simple">
@@ -398,8 +467,8 @@
 <li><p>アクティブリストが空になるまで 2-3 を繰り返す。</p></li>
 </ol>
 <p>全ての既存点との距離を毎回総当たりで調べる方法は点数が <span class="math notranslate nohighlight">\(n\)</span> のとき計算量が <span class="math notranslate nohighlight">\(O(n^2)\)</span> になり点数が増えるにつれて遅くなるため、実装では「1 マスに点は高々 1 つしか入らない」大きさ（最小距離を <span class="math notranslate nohighlight">\(\sqrt{2}\)</span> で割った値を 1 辺とする正方形）の格子に点を登録しておき、候補点の周囲 5×5 マス程度だけを調べることで高速化している。</p>
-<div class="literal-block-wrapper docutils container" id="id22">
-<div class="code-block-caption"><span class="caption-text">examples/poisson_disk.py の poisson_disk_sampling 関数</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id25">
+<div class="code-block-caption"><span class="caption-text">examples/poisson_disk.py の poisson_disk_sampling 関数</span><a class="headerlink" href="#id25" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">poisson_disk_sampling</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="linenos"> 3</span>    <span class="n">height</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -497,11 +566,11 @@
 <a class="reference internal image-reference" href="_images/poisson_disk.png"><img alt="ポアソン円盤サンプリングで配置した同数の点群。間隔がそろい、隙間なく均一に並んでいる" src="_images/poisson_disk.png" style="width: 300px;" />
 </a>
 </section>
-<section id="id8">
-<h2>ボロノイ図とドロネー三角形分割<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<section id="id9">
+<h2>ボロノイ図とドロネー三角形分割<a class="headerlink" href="#id9" title="Link to this heading"></a></h2>
 <p>ここまでは「1 つの図形までの距離」を扱ってきたが、同じ考え方は「複数の点のうちどれが一番近いか」にも一般化できる。平面上に散らした複数の<strong>種点</strong>のそれぞれについて、その点がもっとも近い種点となる領域で塗り分けたものを<strong>ボロノイ図</strong>（Voronoi diagram）と呼ぶ。実装は単純で、各画素から全ての種点までの距離を求め、最小値を与えた種点の番号を採用するだけである。</p>
-<div class="literal-block-wrapper docutils container" id="id23">
-<div class="code-block-caption"><span class="caption-text">examples/voronoi.py の voronoi_regions 関数</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-text">examples/voronoi.py の voronoi_regions 関数</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">voronoi_regions</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span>
 <span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -528,8 +597,8 @@
 </div>
 </div>
 <p>各領域に種点ごとの色を割り当てるとモザイク状の画像に、領域の境界線だけを描くと配線図のような画像になる。</p>
-<div class="literal-block-wrapper docutils container" id="id24">
-<div class="code-block-caption"><span class="caption-text">examples/voronoi.py の render_edges 関数</span><a class="headerlink" href="#id24" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id27">
+<div class="code-block-caption"><span class="caption-text">examples/voronoi.py の render_edges 関数</span><a class="headerlink" href="#id27" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">render_edges</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">region_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 <span class="linenos"> 3</span>    <span class="n">background</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>
@@ -556,8 +625,8 @@
 <a class="reference internal image-reference" href="_images/voronoi_edges.png"><img alt="同じボロノイ図の領域境界線だけを描いた配線図のような画像" src="_images/voronoi_edges.png" style="width: 300px;" />
 </a>
 <p>ボロノイ図で隣り合う（境界線を共有する）2 つの領域の種点どうしを線で結ぶと、その双対グラフである<strong>ドロネー三角形分割</strong>（Delaunay triangulation）が得られる。正式なドロネー三角形分割のアルゴリズムを実装する代わりに、ラスタ画像上で「隣接する画素の領域番号が異なる箇所」を総当たりで探すことで、隣接している種点のペアを求めている。</p>
-<div class="literal-block-wrapper docutils container" id="id25">
-<div class="code-block-caption"><span class="caption-text">examples/voronoi.py の adjacent_pairs 関数</span><a class="headerlink" href="#id25" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id28">
+<div class="code-block-caption"><span class="caption-text">examples/voronoi.py の adjacent_pairs 関数</span><a class="headerlink" href="#id28" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">adjacent_pairs</span><span class="p">(</span><span class="n">region_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
 <span class="linenos"> 2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ラスタ上で隣接している領域番号の組を、ドロネーの辺として集める。</span>
 <span class="linenos"> 3</span>
@@ -585,8 +654,8 @@
 <p>種点の配置を前節のポアソン円盤サンプリングに差し替えると、<code class="docutils literal notranslate"><span class="pre">voronoi_regions</span></code> や <code class="docutils literal notranslate"><span class="pre">render_mosaic</span></code> のコードは一切変えずに、領域の大きさがそろった、より均質なモザイクが得られる。距離関数の評価対象を変えるだけで結果が大きく変わるという点は、SDF の節で座標を歪めたのと同じ構図である。</p>
 <a class="reference internal image-reference" href="_images/voronoi_poisson.png"><img alt="ポアソン円盤サンプリングの種点から作ったボロノイ図。領域の大きさがそろっている" src="_images/voronoi_poisson.png" style="width: 350px;" />
 </a>
-<section id="id9">
-<h3>距離の測り方を変える<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<section id="id10">
+<h3>距離の測り方を変える<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
 <p>これまでの距離関数は、全て普段馴染みのある<strong>ユークリッド距離</strong>（直線距離）を前提としていた。しかし「距離」の定義はこれだけではない。座標のずれ <code class="docutils literal notranslate"><span class="pre">(dx,</span> <span class="pre">dy)</span></code> から距離を計算する式を一般化した<strong>ミンコフスキー距離</strong> <code class="docutils literal notranslate"><span class="pre">(|dx|^p</span> <span class="pre">+</span> <span class="pre">|dy|^p)^(1/p)</span></code> を使うと、指数 <code class="docutils literal notranslate"><span class="pre">p</span></code> を変えるだけで異なる距離の測り方を統一的に表現できる。</p>
 <div class="math notranslate nohighlight">
 \[\lVert (dx, dy) \rVert_p = \bigl(|dx|^p + |dy|^p\bigr)^{1/p}\]</div>
@@ -595,8 +664,8 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">p</span> <span class="pre">=</span> <span class="pre">2</span></code>: <strong>ユークリッド距離</strong>。これまで使ってきた通常の直線距離。</p></li>
 <li><p><span class="math notranslate nohighlight">\(p = \infty\)</span>: <strong>チェビシェフ距離</strong>。<code class="docutils literal notranslate"><span class="pre">dx</span></code>・<code class="docutils literal notranslate"><span class="pre">dy</span></code> のうち絶対値が大きい方だけで決まる距離（将棋の王が 1 手で到達できる範囲のイメージ）。</p></li>
 </ul>
-<div class="literal-block-wrapper docutils container" id="id26">
-<div class="code-block-caption"><span class="caption-text">examples/voronoi.py の minkowski_distance 関数</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id29">
+<div class="code-block-caption"><span class="caption-text">examples/voronoi.py の minkowski_distance 関数</span><a class="headerlink" href="#id29" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">minkowski_distance</span><span class="p">(</span><span class="n">dx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="linenos"> 2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ミンコフスキー距離 ``(|dx|^p + |dy|^p)^(1/p)``。</span>
 <span class="linenos"> 3</span>
@@ -624,7 +693,7 @@
 </section>
 </section>
 <section id="lloyd">
-<span id="id10"></span><h2>ロイド緩和（重心ボロノイ分割）<a class="headerlink" href="#lloyd" title="Link to this heading"></a></h2>
+<span id="id11"></span><h2>ロイド緩和（重心ボロノイ分割）<a class="headerlink" href="#lloyd" title="Link to this heading"></a></h2>
 <p>ポアソン円盤サンプリングは、点どうしが近づきすぎないように、点を 1 つずつ加えていく手法だった。これとは別に、既にある点の配置を少しずつ動かして均等に近づける方法として、<strong>ロイド緩和</strong>（Lloyd relaxation）がある。手順は、次の 2 つを繰り返すだけである。</p>
 <ol class="arabic simple">
 <li><p>現在の種点からボロノイ図を作る。</p></li>
@@ -632,8 +701,8 @@
 </ol>
 <p>周りに隙間の多い種点は、領域が大きく、重心が種点から離れているため、大きく動く。逆に、密集した種点は領域が小さく、ほとんど動かない。これを繰り返すと、全ての種点が自分の領域の重心とほぼ一致する<strong>重心ボロノイ分割</strong>（centroidal Voronoi tessellation）に近づき、領域の大きさと形がそろっていく。この手順は、Stuart Lloyd が信号の量子化のために考案したもので、k-means 法の標準的な計算手順と同じである。</p>
 <p>前節の <code class="docutils literal notranslate"><span class="pre">voronoi_regions</span></code> は、全ての種点と全ての画素の組み合わせについての距離を一度に配列として持つため、種点が数千個になるとメモリが足りなくなる。そこで本節の実装では、画素を数行ずつに分けて、もっとも近い種点を求めている。重心は、領域番号ごとに座標の合計を求める <code class="docutils literal notranslate"><span class="pre">np.bincount</span></code> で計算する。</p>
-<div class="literal-block-wrapper docutils container" id="id27">
-<div class="code-block-caption"><span class="caption-text">examples/lloyd.py の nearest_seed 関数</span><a class="headerlink" href="#id27" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id30">
+<div class="code-block-caption"><span class="caption-text">examples/lloyd.py の nearest_seed 関数</span><a class="headerlink" href="#id30" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">nearest_seed</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rows_per_chunk</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span>
 <span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -664,8 +733,8 @@
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id28">
-<div class="code-block-caption"><span class="caption-text">examples/lloyd.py の weighted_centroids 関数</span><a class="headerlink" href="#id28" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id31">
+<div class="code-block-caption"><span class="caption-text">examples/lloyd.py の weighted_centroids 関数</span><a class="headerlink" href="#id31" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">weighted_centroids</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">region_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">density</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
 <span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -700,8 +769,8 @@
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id29">
-<div class="code-block-caption"><span class="caption-text">examples/lloyd.py の lloyd_relaxation 関数</span><a class="headerlink" href="#id29" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id32">
+<div class="code-block-caption"><span class="caption-text">examples/lloyd.py の lloyd_relaxation 関数</span><a class="headerlink" href="#id32" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">lloyd_relaxation</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 <span class="linenos"> 3</span>    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

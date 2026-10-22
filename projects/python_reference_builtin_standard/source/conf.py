@@ -41,3 +41,7 @@ html_show_sourcelink = False
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
 }
+
+# Give up on an unreachable server address after this many seconds and try
+# the next one. Without it, the build can hang while fetching the inventory.
+intersphinx_timeout = 10

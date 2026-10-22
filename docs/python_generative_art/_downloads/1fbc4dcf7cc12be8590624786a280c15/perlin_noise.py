@@ -45,11 +45,13 @@ def _fade(t: np.ndarray) -> np.ndarray:
 
     両端で1階・2階微分が0になり、格子の継ぎ目が滑らかにつながる。
     """
-    return t * t * t * (t * (t * 6 - 15) + 10)
+    result: np.ndarray = t * t * t * (t * (t * 6 - 15) + 10)
+    return result
 
 
 def _lerp(t: np.ndarray, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    return a + t * (b - a)
+    result: np.ndarray = a + t * (b - a)
+    return result
 
 
 def _gradient_dot(
@@ -57,7 +59,8 @@ def _gradient_dot(
 ) -> np.ndarray:
     """ハッシュ値から勾配ベクトルを選び、変位ベクトル (x, y) との内積を返す。"""
     g: np.ndarray = _GRADIENTS[hash_value & 7]
-    return g[..., 0] * x + g[..., 1] * y
+    result: np.ndarray = g[..., 0] * x + g[..., 1] * y
+    return result
 
 
 def perlin2d(x: np.ndarray, y: np.ndarray, perm: np.ndarray) -> np.ndarray:

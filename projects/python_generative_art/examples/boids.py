@@ -18,7 +18,8 @@ def _pairwise_delta(positions: np.ndarray) -> np.ndarray:
     shape ``(N, 2)`` から shape ``(N, N, 2)`` を作る。
     ``delta[i, j]`` は「個体jから見た個体iの相対位置」。
     """
-    return positions[:, None, :] - positions[None, :, :]
+    result: np.ndarray = positions[:, None, :] - positions[None, :, :]
+    return result
 
 
 def compute_accelerations(
@@ -81,7 +82,8 @@ def compute_accelerations(
     scale: np.ndarray = np.minimum(1.0, max_force / np.maximum(
         magnitude, 1e-9
     ))
-    return acceleration * scale[:, None]
+    result: np.ndarray = acceleration * scale[:, None]
+    return result
 
 
 def step(

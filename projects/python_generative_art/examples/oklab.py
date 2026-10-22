@@ -53,7 +53,8 @@ def linear_to_srgb(linear: np.ndarray) -> np.ndarray:
 def srgb_to_oklab(rgb: np.ndarray) -> np.ndarray:
     """sRGB 値(末尾の軸が RGB、0.0-1.0)を OKLab (L, a, b) に変換する。"""
     lms: np.ndarray = srgb_to_linear(rgb) @ _RGB_TO_LMS.T
-    return np.cbrt(lms) @ _LMS_TO_LAB.T
+    result: np.ndarray = np.cbrt(lms) @ _LMS_TO_LAB.T
+    return result
 
 
 def oklab_to_srgb(lab: np.ndarray) -> np.ndarray:
@@ -94,7 +95,8 @@ def mix_srgb(
     start: np.ndarray, end: np.ndarray, t: np.ndarray
 ) -> np.ndarray:
     """2色を sRGB の値のまま線形補間する。t は形状 (steps,) の配列。"""
-    return start + (end - start) * t[:, np.newaxis]
+    result: np.ndarray = start + (end - start) * t[:, np.newaxis]
+    return result
 
 
 def mix_oklab(

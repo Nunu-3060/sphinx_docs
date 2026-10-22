@@ -12,6 +12,7 @@ Python で作るジェネラティブアート
    color
    tiling
    spirals
+   illusions
    noise
    shapes
    fractals

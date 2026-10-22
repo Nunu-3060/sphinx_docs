@@ -56,6 +56,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">基礎編：ジェネラティブアート特有の設計方針</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#id2">座標系の正規化</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id3">シードと再現性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#random-distribution">乱数の分布</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#basics-composition">構図とレイヤーの考え方</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#easing">補間とイージング関数</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#animation">時間変化の表現：静止画とアニメーション</a></li>
@@ -64,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="color.html">色彩設計</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tiling.html">タイリングパターン</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spirals.html">螺旋と曲線</a></li>
+<li class="toctree-l1"><a class="reference internal" href="illusions.html">錯視とオプ・アート</a></li>
 <li class="toctree-l1"><a class="reference internal" href="noise.html">ノイズを使った表現</a></li>
 <li class="toctree-l1"><a class="reference internal" href="shapes.html">距離関数による形状表現</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fractals.html">フラクタル</a></li>
@@ -125,8 +127,68 @@
 </pre></div>
 </div>
 </section>
+<section id="random-distribution">
+<span id="id4"></span><h2>乱数の分布<a class="headerlink" href="#random-distribution" title="Link to this heading"></a></h2>
+<p>シードを固定しても、どの分布から乱数を選ぶかによって、作品の「ばらつきの質」は大きく変わる。<code class="docutils literal notranslate"><span class="pre">rng.uniform</span></code> が返す一様分布では、範囲内のどの値も同じ確率で現れる。しかし、自然界の物の大きさのばらつきが一様であることは少なく、目的に合った分布を選ぶと、同じ配置でも作品の印象が変わる。</p>
+<p>次の 3 枚は、同じ 600 か所に円を置き、半径だけを異なる分布から選んで描いたものである。3 つの分布は、いずれも半径の平均が 6 ピクセルになるように設定した。</p>
+<ul class="simple">
+<li><p><strong>一様分布</strong>（1 枚目）: 1〜11 ピクセルのどの半径も同じ頻度で現れる。大小がまんべんなく混ざり、単調な印象になる。</p></li>
+<li><p><strong>正規分布</strong>（2 枚目）: 平均 6 ピクセル、標準偏差 1.5 ピクセル。ほとんどの円が平均に近い大きさになり、整った印象になる。</p></li>
+<li><p><strong>べき分布</strong>（3 枚目）: 小さい円が非常に多く、まれに非常に大きい円が現れる。大きな円が画面の焦点になり、変化に富んだ印象になる。</p></li>
+</ul>
+<a class="reference internal image-reference" href="_images/distribution_uniform.png"><img alt="半径を一様分布から選んだ 600 個の円。大小がまんべんなく混ざっている" src="_images/distribution_uniform.png" style="width: 220px;" />
+</a>
+<a class="reference internal image-reference" href="_images/distribution_normal.png"><img alt="半径を正規分布から選んだ 600 個の円。ほとんどの円が同じくらいの大きさである" src="_images/distribution_normal.png" style="width: 220px;" />
+</a>
+<a class="reference internal image-reference" href="_images/distribution_power_law.png"><img alt="半径をべき分布から選んだ 600 個の円。小さい円が多く、ごく少数の大きな円が目立つ" src="_images/distribution_power_law.png" style="width: 220px;" />
+</a>
+<p>選んだ半径の分布をヒストグラムにすると、違いがはっきりする（横軸の範囲は 30 ピクセルまで）。</p>
+<a class="reference internal image-reference" href="_images/distribution_histograms.png"><img alt="3 つの分布から選んだ半径のヒストグラム。一様分布は平らで、正規分布は平均の周りに山があり、べき分布は小さい値に集中して右に長い裾を引く" src="_images/distribution_histograms.png" style="width: 600px;" />
+</a>
+<p>正規分布は負の値も取りうるため、半径のように正の値しか意味を持たない量に使う場合は、下限で切り詰める。本実装では標準偏差を平均の 1/4 にしているので、下限の 1 ピクセルで切り詰められる値はごくわずかである。</p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">examples/distributions.py の normal_radii 関数</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">normal_radii</span><span class="p">(</span><span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;正規分布から半径を選ぶ。</span>
+<span class="linenos">3</span>
+<span class="linenos">4</span><span class="sd">    正規分布は負の値も取りうるため、下限で切り詰める。標準偏差を</span>
+<span class="linenos">5</span><span class="sd">    平均の 1/4 にしているので、切り詰められる値はごくわずかである。</span>
+<span class="linenos">6</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">7</span>    <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">_MEAN_RADIUS</span><span class="p">,</span> <span class="n">_MEAN_RADIUS</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+<span class="linenos">8</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">_MIN_RADIUS</span><span class="p">,</span> <span class="n">_MAX_RADIUS</span><span class="p">)</span>
+<span class="linenos">9</span>    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+</div>
+<p>べき分布は、確率密度が値の負のべき乗に比例する分布である。最小値を <span class="math notranslate nohighlight">\(x_{\min}\)</span>、指数を <span class="math notranslate nohighlight">\(a\)</span> とすると、確率密度と平均は次のようになる（平均は <span class="math notranslate nohighlight">\(a &gt; 2\)</span> のときに定まる）。</p>
+<div class="math notranslate nohighlight">
+\[p(x) \propto x^{-a} \quad (x \ge x_{\min}), \qquad \bar{x} = x_{\min} \frac{a - 1}{a - 2}\]</div>
+<p>NumPy の <code class="docutils literal notranslate"><span class="pre">Generator.pareto(s)</span></code> は、確率密度が <span class="math notranslate nohighlight">\(x^{-(s+1)}\)</span> に比例し <span class="math notranslate nohighlight">\(x \ge 1\)</span> となる分布から 1 を引いた値を返す。そこで、<code class="docutils literal notranslate"><span class="pre">s</span></code> に <span class="math notranslate nohighlight">\(a - 1\)</span> を渡し、結果に 1 を足してから <span class="math notranslate nohighlight">\(x_{\min}\)</span> 倍している。</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">examples/distributions.py の power_law_radii 関数</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">power_law_radii</span><span class="p">(</span>
+<span class="linenos"> 2</span>    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span> <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">exponent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.5</span>
+<span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;べき分布（パレート分布）から半径を選ぶ。</span>
+<span class="linenos"> 5</span>
+<span class="linenos"> 6</span><span class="sd">    確率密度が半径の ``-exponent`` 乗に比例する分布で、最小値</span>
+<span class="linenos"> 7</span><span class="sd">    ``x_min`` 以上の値を取る。平均は ``x_min * (a - 1) / (a - 2)``</span>
+<span class="linenos"> 8</span><span class="sd">    （``a = exponent``）なので、平均が ``_MEAN_RADIUS`` になるように</span>
+<span class="linenos"> 9</span><span class="sd">    ``x_min`` を決める。NumPy の ``pareto`` は ``x_min = 1`` から 1 を</span>
+<span class="linenos">10</span><span class="sd">    引いた値を返すため、1 を足してから ``x_min`` 倍する。</span>
+<span class="linenos">11</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">12</span>    <span class="n">x_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_MEAN_RADIUS</span> <span class="o">*</span> <span class="p">(</span><span class="n">exponent</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">exponent</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="linenos">13</span>    <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">pareto</span><span class="p">(</span><span class="n">exponent</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_min</span>
+<span class="linenos">14</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">_MIN_RADIUS</span><span class="p">,</span> <span class="n">_MAX_RADIUS</span><span class="p">)</span>
+<span class="linenos">15</span>    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+</div>
+<p>作例では <span class="math notranslate nohighlight">\(a = 2.5\)</span> としたので、理論上の平均は 6 ピクセルになる。ただし、ヒストグラムに示した実際の平均は 4.8 ピクセルと小さい。これは、画面に収まるよう半径の上限を 60 ピクセルで切り詰めたことと、<span class="math notranslate nohighlight">\(a \le 3\)</span> のべき分布は分散が無限大になり、標本の平均が大きくばらつくことによる。べき分布を使うときは、上限を設けるかどうかで見た目が大きく変わる点に注意する。</p>
+<p>ここで扱った 3 つ以外にも、待ち時間のように「次の出来事が起こるまでの間隔」を表す指数分布や、正の値で右に裾を引く対数正規分布などがある。ばらつきの質を変えたいときは、値の範囲を変える前に、分布そのものを変えることを検討するとよい。</p>
+</section>
 <section id="basics-composition">
-<span id="id4"></span><h2>構図とレイヤーの考え方<a class="headerlink" href="#basics-composition" title="Link to this heading"></a></h2>
+<span id="id5"></span><h2>構図とレイヤーの考え方<a class="headerlink" href="#basics-composition" title="Link to this heading"></a></h2>
 <p>1 枚の絵を「1 つの決め打ちの手続き」として書くのではなく、「パラメータを受け取って画像（または画像の一部）を返す関数」として設計しておくと、同じコードから多様なバリエーションを生み出せる。本資料の作例でも、<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>の <code class="docutils literal notranslate"><span class="pre">fbm2d</span></code> / <code class="docutils literal notranslate"><span class="pre">domain_warp2d</span></code> は座標配列とシード・オクターブ数などのパラメータを受け取り、<a class="reference internal" href="fractals.html"><span class="doc">フラクタル</span></a>の <code class="docutils literal notranslate"><span class="pre">draw_l_system</span></code> は axiom・書き換え規則・角度を受け取る、というように、いずれも「描画関数 + パラメータ」の形をとっている。</p>
 <p>この形にしておくと、少なくとも 2 つの組み立て方ができるようになる。</p>
 <dl class="simple">
@@ -138,7 +200,7 @@
 <p>いずれの場合も、「1 回描画する処理」と「複数の結果を並べる・重ねる処理」を分けて実装しておくことが鍵になる。前者を作品ごとに使い回し、後者はグリッド配置・レイヤー合成のどちらにも共通して使える汎用的なユーティリティとして持っておくとよい。</p>
 </section>
 <section id="easing">
-<span id="id5"></span><h2>補間とイージング関数<a class="headerlink" href="#easing" title="Link to this heading"></a></h2>
+<span id="id6"></span><h2>補間とイージング関数<a class="headerlink" href="#easing" title="Link to this heading"></a></h2>
 <p>ジェネラティブアートでは、「2 つの値の間をなめらかにつなぐ」処理が至るところに現れる。2 色の間のグラデーション、図形の大きさを中心から外側へ変化させる処理、格子点の値からその間の値を求めるノイズの計算などは、いずれも <code class="docutils literal notranslate"><span class="pre">t</span></code>（0〜1）を使った補間として書ける。もっとも単純なのは、<code class="docutils literal notranslate"><span class="pre">t</span></code> に比例して値を変化させる線形補間（lerp）である。</p>
 <div class="math notranslate nohighlight">
 \[\mathrm{lerp}(a, b, t) = a + (b - a)\,t\]</div>
@@ -176,22 +238,24 @@
 </tr>
 </tbody>
 </table>
-<div class="literal-block-wrapper docutils container" id="id7">
-<div class="code-block-caption"><span class="caption-text">examples/easing.py の smoothstep 関数</span><a class="headerlink" href="#id7" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">examples/easing.py の smoothstep 関数</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">smoothstep</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;3次のエルミート補間。両端で1階微分が0になる。&quot;&quot;&quot;</span>
-<span class="linenos">3</span>    <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="mf">3.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+<span class="linenos">3</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="mf">3.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+<span class="linenos">4</span>    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id8">
-<div class="code-block-caption"><span class="caption-text">examples/easing.py の smootherstep 関数</span><a class="headerlink" href="#id8" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">examples/easing.py の smootherstep 関数</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">def</span><span class="w"> </span><span class="nf">smootherstep</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="linenos">2</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;5次の補間。両端で1階・2階微分がともに0になる。</span>
 <span class="linenos">3</span>
 <span class="linenos">4</span><span class="sd">    パーリンノイズの fade 関数と同じ式である。</span>
 <span class="linenos">5</span><span class="sd">    &quot;&quot;&quot;</span>
-<span class="linenos">6</span>    <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="mf">6.0</span> <span class="o">*</span> <span class="n">t</span> <span class="o">-</span> <span class="mf">15.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">10.0</span><span class="p">)</span>
+<span class="linenos">6</span>    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="mf">6.0</span> <span class="o">*</span> <span class="n">t</span> <span class="o">-</span> <span class="mf">15.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">10.0</span><span class="p">)</span>
+<span class="linenos">7</span>    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 </div>
 </div>
@@ -199,8 +263,8 @@
 <a class="reference internal image-reference" href="_images/easing_curves.png"><img alt="linear・ease-in・ease-out・smoothstep・smootherstep の 5 つのイージング関数のグラフを横に並べた図" src="_images/easing_curves.png" style="width: 600px;" />
 </a>
 <p>イージング関数は、UI やアニメーションで「動きの緩急」を付けるための道具として知られているが、本資料で扱う静止画でも、補間の割合 <code class="docutils literal notranslate"><span class="pre">t</span></code> を空間上の位置と見なせばそのまま使える。例えば、同じ 2 色の間のグラデーションを、イージング関数だけを変えて補間すると、色の変化が画像のどこに集中するかが変わる（上から linear・ease-in・ease-out・smoothstep・smootherstep の順）。</p>
-<div class="literal-block-wrapper docutils container" id="id9">
-<div class="code-block-caption"><span class="caption-text">examples/easing.py の render_eased_gradient 関数</span><a class="headerlink" href="#id9" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">examples/easing.py の render_eased_gradient 関数</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">render_eased_gradient</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">easings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EasingFunction</span><span class="p">],</span>
 <span class="linenos"> 3</span>    <span class="n">start_color</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span>
@@ -227,8 +291,8 @@
 <a class="reference internal image-reference" href="_images/easing_gradient.png"><img alt="同じ 2 色の間を 5 種類のイージング関数で補間したグラデーションを縦に並べた画像" src="_images/easing_gradient.png" style="width: 600px;" />
 </a>
 <p>同様に、図形を並べる間隔をイージング関数で決めれば、間隔の疎密で奥行きや集中を表現できる。次の 2 枚は、同心円の半径を等間隔の <code class="docutils literal notranslate"><span class="pre">t</span></code> から求めたもの（左、linear）と、ease-in に通してから求めたもの（右）である。ease-in では中心付近の円が密に、外側の円が疎になり、中心に向かって吸い込まれるような印象になる。</p>
-<div class="literal-block-wrapper docutils container" id="id10">
-<div class="code-block-caption"><span class="caption-text">examples/easing.py の render_eased_rings 関数</span><a class="headerlink" href="#id10" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">examples/easing.py の render_eased_rings 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">render_eased_rings</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">easing</span><span class="p">:</span> <span class="n">EasingFunction</span><span class="p">,</span>
 <span class="linenos"> 3</span>    <span class="n">num_rings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
@@ -275,7 +339,7 @@
 <p>本資料の他の章にも、イージング関数は名前を変えて登場する。<a class="reference internal" href="noise.html"><span class="doc">ノイズを使った表現</span></a>のパーリンノイズで格子点の値を補間する fade 関数は smootherstep そのものであり、<a class="reference internal" href="shapes.html"><span class="doc">距離関数による形状表現</span></a>で SDF の輪郭をアンチエイリアスする処理や等高線を描く処理には smoothstep を使っている。いずれも「両端で傾きが 0 になる」性質を利用して、隣り合う領域の継ぎ目を目立たなくしている。</p>
 </section>
 <section id="animation">
-<span id="id6"></span><h2>時間変化の表現：静止画とアニメーション<a class="headerlink" href="#animation" title="Link to this heading"></a></h2>
+<span id="id7"></span><h2>時間変化の表現：静止画とアニメーション<a class="headerlink" href="#animation" title="Link to this heading"></a></h2>
 <p>本資料で扱う技法の多くは、本来は時間とともに変化するものである。セルオートマトンや反応拡散系は世代ごとに状態が更新され、パーティクルシステムや Boids は 1 ステップごとに粒子が動き、進化的アルゴリズムは世代を重ねるごとに目標へ近づいていく。本資料はこれらを 1 枚の静止画として示しており、その方法は大きく 2 つに分かれる。</p>
 <dl class="simple">
 <dt>最終状態を描く</dt><dd><p>十分なステップ数だけ進めた時点の状態を 1 枚にする。<a class="reference internal" href="automata.html"><span class="doc">セルオートマトンと反応拡散系</span></a>の反応拡散系や、<a class="reference internal" href="evolution.html"><span class="doc">進化的アルゴリズム</span></a>の最終結果がこれにあたる。</p>
@@ -291,8 +355,8 @@
 </dd>
 </dl>
 <p>Pillow は複数の画像をアニメーション GIF として保存できるため、追加のライブラリなしで書き出せる。</p>
-<div class="literal-block-wrapper docutils container" id="id11">
-<div class="code-block-caption"><span class="caption-text">examples/animation.py の save_gif 関数</span><a class="headerlink" href="#id11" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id14">
+<div class="code-block-caption"><span class="caption-text">examples/animation.py の save_gif 関数</span><a class="headerlink" href="#id14" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">save_gif</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">frames</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">frame_duration_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
 <span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -315,8 +379,8 @@
 </div>
 </div>
 <p>「状態を更新する」例として、<a class="reference internal" href="automata.html"><span class="doc">セルオートマトンと反応拡散系</span></a>のライフゲームの <code class="docutils literal notranslate"><span class="pre">simulate_life</span></code> が返す履歴を、1 世代ずつフレームにする。静止画の作例では同じ履歴を 1 枚に重ね合わせていたが、ここでは時間方向に並べる。</p>
-<div class="literal-block-wrapper docutils container" id="id12">
-<div class="code-block-caption"><span class="caption-text">examples/animation.py の life_frames 関数</span><a class="headerlink" href="#id12" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id15">
+<div class="code-block-caption"><span class="caption-text">examples/animation.py の life_frames 関数</span><a class="headerlink" href="#id15" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">life_frames</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">grid_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">90</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">120</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]:</span>
@@ -340,8 +404,8 @@
 <a class="reference internal image-reference" href="_images/animation_life.gif"><img alt="ライフゲームを 120 世代分、1 世代ずつフレームにしたアニメーション" src="_images/animation_life.gif" style="width: 270px;" />
 </a>
 <p>「時刻をパラメータとして渡す」例として、<a class="reference internal" href="spirals.html"><span class="doc">螺旋と曲線</span></a>のリサージュ曲線の位相 <span class="math notranslate nohighlight">\(\phi\)</span> を <span class="math notranslate nohighlight">\(2\pi t\)</span> として 1 周期分動かす。位相は <span class="math notranslate nohighlight">\(2\pi\)</span> を周期とするため、最後のフレームの次に最初のフレームへ戻っても変化がつながる。</p>
-<div class="literal-block-wrapper docutils container" id="id13">
-<div class="code-block-caption"><span class="caption-text">examples/animation.py の lissajous_loop_frames 関数</span><a class="headerlink" href="#id13" title="Link to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id16">
+<div class="code-block-caption"><span class="caption-text">examples/animation.py の lissajous_loop_frames 関数</span><a class="headerlink" href="#id16" title="Link to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">def</span><span class="w"> </span><span class="nf">lissajous_loop_frames</span><span class="p">(</span>
 <span class="linenos"> 2</span>    <span class="n">num_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">240</span>
 <span class="linenos"> 3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]:</span>

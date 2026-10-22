@@ -1,0 +1,672 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>9. BGM を作る &mdash; 8 bit Game Sound 作成入門 1.0 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=a1f6736e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=19757887"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="10. 制作ツールの紹介" href="tools.html" />
+    <link rel="prev" title="8. 効果音を作る" href="sound_effects.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            8 bit Game Sound 作成入門
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">本編</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. はじめに</a></li>
+<li class="toctree-l1"><a class="reference internal" href="what_is_8bit.html">2. 8 bit サウンドとは</a></li>
+<li class="toctree-l1"><a class="reference internal" href="digital_audio.html">3. 音とデジタル音声の基礎</a></li>
+<li class="toctree-l1"><a class="reference internal" href="music_basics.html">4. 最低限の音楽知識</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sound_chip.html">5. 音源チップの仕組み</a></li>
+<li class="toctree-l1"><a class="reference internal" href="waveform.html">6. Python で波形を作る</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shaping.html">7. 音を形づくる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sound_effects.html">8. 効果音を作る</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">9. BGM を作る</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">9.1. ゲームの BGM の特徴</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">9.2. チャンネルの役割分担</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">9.3. 楽譜の書き方</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">9.4. シーケンサの設計</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">9.4.1. データ構造</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">9.4.2. 楽譜を解析する</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">9.4.3. 1 音を合成する</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">9.4.4. チャンネルを合成する</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">9.4.5. 全チャンネルをミキシングする</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">9.5. BGM の作例</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">9.5.1. 楽譜</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">9.5.2. 音色とテンポ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">9.5.3. チャンネルごとの音</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">9.5.4. 完成した BGM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">9.6. サンプル音の生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id16">9.7. 改造のヒント</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id17">9.8. 練習</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">10. 制作ツールの紹介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">11. ゲームへの組み込み</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">12. 権利とライセンス</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conclusion.html">13. まとめ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">付録</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="frequency_table.html">音名と周波数の対応表</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">サンプルコード一覧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">用語集</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">参考文献</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">8 bit Game Sound 作成入門</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">9. </span>BGM を作る</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bgm">
+<span id="ch-bgm"></span><h1><span class="section-number">9. </span>BGM を作る<a class="headerlink" href="#bgm" title="Link to this heading"></a></h1>
+<p>この章では、4 つのチャンネルを使った短いループ BGM を作る。そのために、テキストで書いた楽譜を読み込んで音を合成する簡易シーケンサを実装する。</p>
+<section id="id1">
+<h2><span class="section-number">9.1. </span>ゲームの BGM の特徴<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>ゲームの BGM は、映画や音楽 CD の曲とは異なる性質を持つ。</p>
+<ul class="simple">
+<li><p>ループする: プレイヤーがその場面にどれだけ留まるかはわからない。そのため、曲の終わりから先頭へ途切れずに戻り、何度でも繰り返せるように作る。</p></li>
+<li><p>前に出すぎない: プレイヤーの注意はゲームの画面と操作に向いている。BGM は場面の雰囲気を伝えつつ、効果音を邪魔しないことが求められる。</p></li>
+<li><p>聞き飽きにくい: 同じ曲を長時間繰り返し聞くことになるため、単調すぎず、かといって情報量が多すぎない構成にする。</p></li>
+</ul>
+<p>曲の冒頭を 1 回だけ演奏し、その後の部分を繰り返す構成もよく使われる。1 回だけ演奏する部分を<a class="reference internal" href="glossary.html#term-2"><span class="xref std std-term">イントロ</span></a>、繰り返す部分をループ部という。本書の作例は、説明を簡単にするため、イントロなしの 8 小節をそのまま繰り返す。</p>
+</section>
+<section id="id2">
+<h2><span class="section-number">9.2. </span>チャンネルの役割分担<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>ファミコンの音源で曲を作るときは、4 つのチャンネルに次のように役割を割り当てるのが基本である。</p>
+<table class="docutils align-default" id="id18">
+<caption><span class="caption-number">表 9.1 </span><span class="caption-text">チャンネルの役割分担</span><a class="headerlink" href="#id18" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 25.0%" />
+<col style="width: 55.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>チャンネル</p></th>
+<th class="head"><p>役割</p></th>
+<th class="head"><p>理由</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>矩形波 1</p></td>
+<td><p>メロディ</p></td>
+<td><p>倍音が多く、はっきり聞こえる。音量やデューティ比で表情を付けられる。</p></td>
+</tr>
+<tr class="row-odd"><td><p>矩形波 2</p></td>
+<td><p>ハーモニー（伴奏）</p></td>
+<td><p>メロディと同じ音色だと区別しにくいため、デューティ比や音量を変えて目立たせすぎないようにする。</p></td>
+</tr>
+<tr class="row-even"><td><p>三角波</p></td>
+<td><p>ベース</p></td>
+<td><p>倍音が少なく、低い音でも濁らない。音量を変えられないため、一定の音量で鳴らすベースに向く。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ノイズ</p></td>
+<td><p>ドラム</p></td>
+<td><p>周期と減衰の速さを変えて、キック、スネア、ハイハットを表現する。</p></td>
+</tr>
+</tbody>
+</table>
+<p>この割り当てでは、和音を鳴らすために使えるチャンネルは矩形波 2 の 1 つしかない。本書の作例では、矩形波 2 で和音の構成音を 8 分音符で順番に鳴らし（分散和音。音楽一般でいうアルペジオ）、和音の響きを表現している。</p>
+</section>
+<section id="id3">
+<h2><span class="section-number">9.3. </span>楽譜の書き方<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>本書のシーケンサでは、楽譜を次の規則で書いた文字列で表す。空白で区切った 1 つのトークンが、1 ステップ（16 分音符 1 つ分）に対応する。</p>
+<table class="docutils align-default" id="id19">
+<caption><span class="caption-number">表 9.2 </span><span class="caption-text">楽譜のトークン</span><a class="headerlink" href="#id19" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>トークン</p></th>
+<th class="head"><p>意味</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>音名（例: <code class="docutils literal notranslate"><span class="pre">C4</span></code>、<code class="docutils literal notranslate"><span class="pre">F#3</span></code>、<code class="docutils literal notranslate"><span class="pre">Bb4</span></code>）</p></td>
+<td><p>その音を鳴らし始める</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-</span></code></p></td>
+<td><p>直前の音を伸ばす</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">.</span></code></p></td>
+<td><p>休符（音を止める）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">K</span></code>、<code class="docutils literal notranslate"><span class="pre">S</span></code>、<code class="docutils literal notranslate"><span class="pre">H</span></code></p></td>
+<td><p>ノイズチャンネルで、キック、スネア、ハイハットを鳴らす</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">|</span></code></p></td>
+<td><p>小節の区切り。読みやすくするためだけに使い、処理では無視する</p></td>
+</tr>
+</tbody>
+</table>
+<p>例えば、次の 1 小節（16 ステップ）は、A4 を 4 分音符（4 ステップ）、C5、E5、D5、C5、B4、C5 を 8 分音符（2 ステップ）で鳴らすことを表す。</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>A4 - - - C5 - E5 - D5 - C5 - B4 - C5 -
+</pre></div>
+</div>
+<p>この書き方は、「<a class="reference internal" href="tools.html#ch-tools"><span class="std std-ref">制作ツールの紹介</span></a>」で紹介するトラッカーと同じ考え方である。トラッカーでは、時間が上から下へ流れ、1 行が 1 ステップに対応する。本書の楽譜は、それを横に並べたものと考えるとよい。</p>
+</section>
+<section id="id4">
+<h2><span class="section-number">9.4. </span>シーケンサの設計<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<p>シーケンサは、楽譜を次の流れで音に変換する。</p>
+<figure class="align-default" id="id20">
+<div class="graphviz"><object data="_images/graphviz-0ef6040d9ec6f3c37f26175b5d7b9c65bf405e21.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph G {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+    score [label=&quot;楽譜\n（文字列）&quot;, shape=note];
+    parse [label=&quot;parse\n音の一覧に変換&quot;];
+    note [label=&quot;render_note / render_drum\n1 音ずつ合成&quot;];
+    track [label=&quot;render_track\nチャンネルごとに配置&quot;];
+    song [label=&quot;render_song\n全チャンネルをミキシング&quot;];
+    wav [label=&quot;WAV ファイル&quot;, shape=note];
+    score -&gt; parse -&gt; note -&gt; track -&gt; song -&gt; wav;
+}</p></object></div>
+<figcaption>
+<p><span class="caption-number">図 9.1 </span><span class="caption-text">シーケンサの処理の流れ</span><a class="headerlink" href="#id20" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<section id="id5">
+<h3><span class="section-number">9.4.1. </span>データ構造<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<p>音色、打楽器、チャンネル、曲の設定は、それぞれデータクラスで表す。<code class="docutils literal notranslate"><span class="pre">&#64;dataclass</span></code> を付けたクラスは、フィールドを並べるだけで初期化の処理が自動的に作られる。</p>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-number">リスト 9.1 </span><span class="caption-text">sequencer.py の Instrument クラス</span><a class="headerlink" href="#id21" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">26</span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">27</span><span class="k">class</span><span class="w"> </span><span class="nc">Instrument</span><span class="p">:</span>
+<span class="linenos">28</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;音色の設定.&quot;&quot;&quot;</span>
+<span class="linenos">29</span>
+<span class="linenos">30</span>    <span class="n">wave</span><span class="p">:</span> <span class="n">WaveType</span>
+<span class="linenos">31</span>    <span class="n">duty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># 矩形波のデューティ比</span>
+<span class="linenos">32</span>    <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># 最大音量（0.0 から 1.0）</span>
+<span class="linenos">33</span>    <span class="n">attack</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># 音量が最大になるまでの時間 [秒]</span>
+<span class="linenos">34</span>    <span class="n">decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># 持続音量まで下がる時間 [秒]</span>
+<span class="linenos">35</span>    <span class="n">sustain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># 持続音量（最大音量に対する割合）</span>
+<span class="linenos">36</span>    <span class="n">release</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># 音を止めた後の余韻の長さ [秒]</span>
+<span class="linenos">37</span>    <span class="n">vibrato_depth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># ビブラートの幅 [半音]</span>
+<span class="linenos">38</span>    <span class="n">vibrato_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">6.0</span>  <span class="c1"># ビブラートの速さ [回/秒]</span>
+<span class="linenos">39</span>    <span class="n">vibrato_delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span>  <span class="c1"># ビブラートがかかり始めるまでの時間 [秒]</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Instrument</span></code> は音色の設定である。波形の種類、デューティ比、音量、ADSR のパラメータ、ビブラートのパラメータを持つ。</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-number">リスト 9.2 </span><span class="caption-text">sequencer.py の Drum クラス</span><a class="headerlink" href="#id22" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">42</span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos">43</span><span class="k">class</span><span class="w"> </span><span class="nc">Drum</span><span class="p">:</span>
+<span class="linenos">44</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;ノイズチャンネルで鳴らす打楽器の設定.&quot;&quot;&quot;</span>
+<span class="linenos">45</span>
+<span class="linenos">46</span>    <span class="n">period_index</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># ノイズの周期インデックス（0 から 15）</span>
+<span class="linenos">47</span>    <span class="n">length</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># 鳴っている長さ [秒]</span>
+<span class="linenos">48</span>    <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="linenos">49</span>    <span class="n">short_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-number">リスト 9.3 </span><span class="caption-text">sequencer.py の打楽器の定義</span><a class="headerlink" href="#id23" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">52</span><span class="n">DRUMS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Drum</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="linenos">53</span>    <span class="s2">&quot;K&quot;</span><span class="p">:</span> <span class="n">Drum</span><span class="p">(</span><span class="n">period_index</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mf">0.10</span><span class="p">),</span>  <span class="c1"># キック（バスドラム）</span>
+<span class="linenos">54</span>    <span class="s2">&quot;S&quot;</span><span class="p">:</span> <span class="n">Drum</span><span class="p">(</span><span class="n">period_index</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="mf">0.8</span><span class="p">),</span>  <span class="c1"># スネア</span>
+<span class="linenos">55</span>    <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="n">Drum</span><span class="p">(</span><span class="n">period_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="mf">0.4</span><span class="p">),</span>  <span class="c1"># ハイハット</span>
+<span class="linenos">56</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Drum</span></code> はノイズチャンネルで鳴らす打楽器の設定であり、<code class="docutils literal notranslate"><span class="pre">DRUMS</span></code> 辞書で 1 文字の名前と対応付けている。</p>
+<table class="docutils align-default" id="id24">
+<caption><span class="caption-number">表 9.3 </span><span class="caption-text">打楽器の設定</span><a class="headerlink" href="#id24" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>打楽器</p></th>
+<th class="head"><p>周期インデックス</p></th>
+<th class="head"><p>長さ</p></th>
+<th class="head"><p>考え方</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>キック（K）</p></td>
+<td><p>12</p></td>
+<td><p>0.10 秒</p></td>
+<td><p>周期を長くして低い「ドッ」という音にする</p></td>
+</tr>
+<tr class="row-odd"><td><p>スネア（S）</p></td>
+<td><p>6</p></td>
+<td><p>0.15 秒</p></td>
+<td><p>中くらいの周期で「タッ」という音にする</p></td>
+</tr>
+<tr class="row-even"><td><p>ハイハット（H）</p></td>
+<td><p>0</p></td>
+<td><p>0.04 秒</p></td>
+<td><p>最も短い周期でごく短く鳴らし、「チッ」という音にする</p></td>
+</tr>
+</tbody>
+</table>
+<div class="literal-block-wrapper docutils container" id="id25">
+<div class="code-block-caption"><span class="caption-number">リスト 9.4 </span><span class="caption-text">sequencer.py の Song クラス</span><a class="headerlink" href="#id25" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">69</span><span class="nd">@dataclass</span>
+<span class="linenos">70</span><span class="k">class</span><span class="w"> </span><span class="nc">Song</span><span class="p">:</span>
+<span class="linenos">71</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;曲全体の設定.&quot;&quot;&quot;</span>
+<span class="linenos">72</span>
+<span class="linenos">73</span>    <span class="n">bpm</span><span class="p">:</span> <span class="nb">float</span>
+<span class="linenos">74</span>    <span class="n">tracks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Track</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<span class="linenos">75</span>    <span class="n">steps_per_beat</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># 1 拍を何ステップに分けるか（4 なら 16 分音符）</span>
+<span class="linenos">76</span>
+<span class="linenos">77</span>    <span class="nd">@property</span>
+<span class="linenos">78</span>    <span class="k">def</span><span class="w"> </span><span class="nf">step_seconds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="linenos">79</span><span class="w">        </span><span class="sd">&quot;&quot;&quot;1 ステップの長さ [秒].&quot;&quot;&quot;</span>
+<span class="linenos">80</span>        <span class="k">return</span> <span class="mf">60.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">bpm</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps_per_beat</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Song</span></code> は曲全体の設定であり、テンポとチャンネル（<code class="docutils literal notranslate"><span class="pre">Track</span></code>）の一覧を持つ。1 ステップの長さは、1 拍の長さ <span class="math notranslate nohighlight">\(60 / \text{BPM}\)</span> を 1 拍あたりのステップ数（既定は 4）で割って求める。140 BPM なら約 0.107 秒である。</p>
+</section>
+<section id="id6">
+<h3><span class="section-number">9.4.2. </span>楽譜を解析する<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">parse</span></code> 関数は、楽譜の文字列を「何ステップ目から、何ステップの長さで、何を鳴らすか」というイベントの一覧に変換する。</p>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-number">リスト 9.5 </span><span class="caption-text">sequencer.py の parse 関数</span><a class="headerlink" href="#id26" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 97</span><span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="n">score</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Event</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;楽譜からイベントの一覧と全体のステップ数を取り出す.&quot;&quot;&quot;</span>
+<span class="linenos"> 99</span>    <span class="n">tokens</span> <span class="o">=</span> <span class="n">tokenize</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+<span class="linenos">100</span>    <span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos">101</span>    <span class="n">current</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># 鳴っている音の (開始ステップ, 値)</span>
+<span class="linenos">102</span>    <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;.&quot;</span><span class="p">]):</span>  <span class="c1"># 末尾に休符を足して最後の音を閉じる</span>
+<span class="linenos">103</span>        <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
+<span class="linenos">104</span>            <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">105</span>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;step </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">: &#39;-&#39; には伸ばす音が必要である&quot;</span><span class="p">)</span>
+<span class="linenos">106</span>            <span class="k">continue</span>
+<span class="linenos">107</span>        <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos">108</span>            <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Event</span><span class="p">(</span><span class="n">current</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">step</span> <span class="o">-</span> <span class="n">current</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">current</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="linenos">109</span>            <span class="n">current</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="linenos">110</span>        <span class="k">if</span> <span class="n">token</span> <span class="o">!=</span> <span class="s2">&quot;.&quot;</span><span class="p">:</span>
+<span class="linenos">111</span>            <span class="n">current</span> <span class="o">=</span> <span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+<span class="linenos">112</span>    <span class="k">return</span> <span class="n">events</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>トークンを先頭から順に見ていき、<code class="docutils literal notranslate"><span class="pre">-</span></code> なら直前の音を伸ばすので何もしない。それ以外のトークンが来たら、鳴っている音をその位置で終わらせてイベントとして記録し、新しい音を鳴らし始める。末尾に休符 <code class="docutils literal notranslate"><span class="pre">.</span></code> を 1 つ足しておくことで、最後の音も確実に記録される。先ほどの 1 小節を解析すると、次のイベントが得られる。</p>
+<table class="docutils align-default" id="id27">
+<caption><span class="caption-number">表 9.4 </span><span class="caption-text">解析結果の例</span><a class="headerlink" href="#id27" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>開始ステップ</p></th>
+<th class="head"><p>0</p></th>
+<th class="head"><p>4</p></th>
+<th class="head"><p>6</p></th>
+<th class="head"><p>8</p></th>
+<th class="head"><p>10</p></th>
+<th class="head"><p>12</p></th>
+<th class="head"><p>14</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>長さ</p></td>
+<td><p>4</p></td>
+<td><p>2</p></td>
+<td><p>2</p></td>
+<td><p>2</p></td>
+<td><p>2</p></td>
+<td><p>2</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p>値</p></td>
+<td><p>A4</p></td>
+<td><p>C5</p></td>
+<td><p>E5</p></td>
+<td><p>D5</p></td>
+<td><p>C5</p></td>
+<td><p>B4</p></td>
+<td><p>C5</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id7">
+<h3><span class="section-number">9.4.3. </span>1 音を合成する<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">envelope_for</span></code> 関数は、指定した長さ（ゲート）だけ鍵盤を押したときの音量の変化を作る。ゲートの間はアタック、ディケイ、サステインに従い、ゲートが終わった後はリリースの時間をかけて 0 に下がる。</p>
+<div class="literal-block-wrapper docutils container" id="id28">
+<div class="code-block-caption"><span class="caption-number">リスト 9.6 </span><span class="caption-text">sequencer.py の envelope_for 関数</span><a class="headerlink" href="#id28" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">115</span><span class="k">def</span><span class="w"> </span><span class="nf">envelope_for</span><span class="p">(</span><span class="n">instrument</span><span class="p">:</span> <span class="n">Instrument</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">116</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;gate 秒だけ鍵盤を押したときの音量変化（リリース込み）を作る.&quot;&quot;&quot;</span>
+<span class="linenos">117</span>    <span class="n">times</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">instrument</span><span class="o">.</span><span class="n">attack</span><span class="p">,</span> <span class="n">instrument</span><span class="o">.</span><span class="n">attack</span> <span class="o">+</span> <span class="n">instrument</span><span class="o">.</span><span class="n">decay</span><span class="p">]</span>
+<span class="linenos">118</span>    <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">if</span> <span class="n">instrument</span><span class="o">.</span><span class="n">attack</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">instrument</span><span class="o">.</span><span class="n">sustain</span><span class="p">]</span>
+<span class="linenos">119</span>    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">gate</span> <span class="o">+</span> <span class="n">instrument</span><span class="o">.</span><span class="n">release</span><span class="p">))</span> <span class="o">/</span> <span class="n">SAMPLE_RATE</span>
+<span class="linenos">120</span>    <span class="n">held</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">gate</span><span class="p">),</span> <span class="n">times</span><span class="p">,</span> <span class="n">levels</span><span class="p">)</span>
+<span class="linenos">121</span>    <span class="k">if</span> <span class="n">instrument</span><span class="o">.</span><span class="n">release</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+<span class="linenos">122</span>        <span class="n">fade</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">gate</span><span class="p">)</span> <span class="o">/</span> <span class="n">instrument</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="linenos">123</span>        <span class="n">held</span> <span class="o">=</span> <span class="n">held</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">t</span> <span class="o">&gt;</span> <span class="n">gate</span><span class="p">,</span> <span class="n">fade</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="linenos">124</span>    <span class="k">return</span> <span class="n">held</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">render_note</span></code> 関数は、このエンベロープと音色の設定を使って 1 音を合成する。矩形波ではエンベロープを 16 段階に丸めて掛け、三角波ではエンベロープを使わない。</p>
+<div class="literal-block-wrapper docutils container" id="id29">
+<div class="code-block-caption"><span class="caption-number">リスト 9.7 </span><span class="caption-text">sequencer.py の render_note 関数</span><a class="headerlink" href="#id29" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">127</span><span class="k">def</span><span class="w"> </span><span class="nf">render_note</span><span class="p">(</span><span class="n">instrument</span><span class="p">:</span> <span class="n">Instrument</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">128</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;音名 note を gate 秒鳴らした音を作る.&quot;&quot;&quot;</span>
+<span class="linenos">129</span>    <span class="n">envelope</span> <span class="o">=</span> <span class="n">envelope_for</span><span class="p">(</span><span class="n">instrument</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span>
+<span class="linenos">130</span>    <span class="n">frequency</span> <span class="o">=</span> <span class="n">note_frequency</span><span class="p">(</span><span class="n">note_number</span><span class="p">(</span><span class="n">note</span><span class="p">))</span>
+<span class="linenos">131</span>    <span class="k">if</span> <span class="n">instrument</span><span class="o">.</span><span class="n">vibrato_depth</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+<span class="linenos">132</span>        <span class="n">seconds</span> <span class="o">=</span> <span class="n">envelope</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">SAMPLE_RATE</span>
+<span class="linenos">133</span>        <span class="n">freq</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Signal</span> <span class="o">=</span> <span class="n">vibrato</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">instrument</span><span class="o">.</span><span class="n">vibrato_depth</span><span class="p">,</span>
+<span class="linenos">134</span>                                       <span class="n">instrument</span><span class="o">.</span><span class="n">vibrato_rate</span><span class="p">,</span> <span class="n">instrument</span><span class="o">.</span><span class="n">vibrato_delay</span><span class="p">)</span>
+<span class="linenos">135</span>    <span class="k">else</span><span class="p">:</span>
+<span class="linenos">136</span>        <span class="n">freq</span> <span class="o">=</span> <span class="n">frequency</span>
+<span class="linenos">137</span>    <span class="n">phase</span> <span class="o">=</span> <span class="n">phase_from_frequency</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">envelope</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+<span class="linenos">138</span>    <span class="k">if</span> <span class="n">instrument</span><span class="o">.</span><span class="n">wave</span> <span class="o">==</span> <span class="s2">&quot;pulse&quot;</span><span class="p">:</span>
+<span class="linenos">139</span>        <span class="c1"># 矩形波は音量が 16 段階なので、エンベロープを丸める</span>
+<span class="linenos">140</span>        <span class="k">return</span> <span class="n">pulse_wave</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">instrument</span><span class="o">.</span><span class="n">duty</span><span class="p">)</span> <span class="o">*</span> <span class="n">quantize_volume</span><span class="p">(</span><span class="n">envelope</span><span class="p">)</span> <span class="o">*</span> <span class="n">instrument</span><span class="o">.</span><span class="n">volume</span>
+<span class="linenos">141</span>    <span class="k">if</span> <span class="n">instrument</span><span class="o">.</span><span class="n">wave</span> <span class="o">==</span> <span class="s2">&quot;triangle&quot;</span><span class="p">:</span>
+<span class="linenos">142</span>        <span class="c1"># 三角波は音量を変えられないため、エンベロープは使わず鳴らすか止めるかだけにする。</span>
+<span class="linenos">143</span>        <span class="c1"># ただし、音の切れ目でクリック音が出ないように、両端に 3 ミリ秒のフェードを入れる</span>
+<span class="linenos">144</span>        <span class="k">return</span> <span class="n">fade_edges</span><span class="p">(</span><span class="n">triangle_wave</span><span class="p">(</span><span class="n">phase</span><span class="p">),</span> <span class="mf">0.003</span><span class="p">)</span> <span class="o">*</span> <span class="n">instrument</span><span class="o">.</span><span class="n">volume</span>
+<span class="linenos">145</span>    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;音名を鳴らせない波形である: </span><span class="si">{</span><span class="n">instrument</span><span class="o">.</span><span class="n">wave</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>三角波の音の両端に 3 ミリ秒のフェードを入れているのは、クリック音を防ぐためである。実機の三角波チャンネルは、音を止めるとその時点の値を保ったまま止まるため、クリック音が出にくい。本書の方法では止めた瞬間に値が 0 に戻るので、その代わりに短いフェードを入れている。</p>
+<p>打楽器は <code class="docutils literal notranslate"><span class="pre">render_drum</span></code> 関数で合成する。ノイズの音量を、打楽器の長さの間に直線的に 0 まで下げる。</p>
+<div class="literal-block-wrapper docutils container" id="id30">
+<div class="code-block-caption"><span class="caption-number">リスト 9.8 </span><span class="caption-text">sequencer.py の render_drum 関数</span><a class="headerlink" href="#id30" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">148</span><span class="k">def</span><span class="w"> </span><span class="nf">render_drum</span><span class="p">(</span><span class="n">drum</span><span class="p">:</span> <span class="n">Drum</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">149</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;打楽器 1 打分の音を作る.&quot;&quot;&quot;</span>
+<span class="linenos">150</span>    <span class="n">num_samples</span> <span class="o">=</span> <span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">drum</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+<span class="linenos">151</span>    <span class="n">rate</span> <span class="o">=</span> <span class="n">CPU_CLOCK</span> <span class="o">/</span> <span class="n">NOISE_PERIODS</span><span class="p">[</span><span class="n">drum</span><span class="o">.</span><span class="n">period_index</span><span class="p">]</span>
+<span class="linenos">152</span>    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_samples</span><span class="p">)</span> <span class="o">/</span> <span class="n">SAMPLE_RATE</span>
+<span class="linenos">153</span>    <span class="n">volume</span> <span class="o">=</span> <span class="n">quantize_volume</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">t</span> <span class="o">/</span> <span class="n">drum</span><span class="o">.</span><span class="n">length</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+<span class="linenos">154</span>    <span class="k">return</span> <span class="n">noise_from_rate</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">drum</span><span class="o">.</span><span class="n">short_mode</span><span class="p">)</span> <span class="o">*</span> <span class="n">volume</span> <span class="o">*</span> <span class="n">drum</span><span class="o">.</span><span class="n">volume</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id8">
+<h3><span class="section-number">9.4.4. </span>チャンネルを合成する<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">render_track</span></code> 関数は、1 チャンネル分のイベントを順に合成し、それぞれの開始位置に配置する。</p>
+<div class="literal-block-wrapper docutils container" id="id31">
+<div class="code-block-caption"><span class="caption-number">リスト 9.9 </span><span class="caption-text">sequencer.py の render_track 関数</span><a class="headerlink" href="#id31" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">157</span><span class="k">def</span><span class="w"> </span><span class="nf">render_track</span><span class="p">(</span><span class="n">track</span><span class="p">:</span> <span class="n">Track</span><span class="p">,</span> <span class="n">step_seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">loop</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">158</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;1 チャンネル分を合成する.</span>
+<span class="linenos">159</span>
+<span class="linenos">160</span><span class="sd">    1 つのチャンネルは同時に 1 音しか出せないため、次の音が始まったら前の音の余韻は切る。</span>
+<span class="linenos">161</span><span class="sd">    loop が True のときは、曲の終わりからはみ出した余韻を曲の先頭に重ねる。</span>
+<span class="linenos">162</span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos">163</span>    <span class="n">events</span><span class="p">,</span> <span class="n">total_steps</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">score</span><span class="p">)</span>
+<span class="linenos">164</span>    <span class="n">total</span> <span class="o">=</span> <span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">total_steps</span> <span class="o">*</span> <span class="n">step_seconds</span><span class="p">)</span>
+<span class="linenos">165</span>    <span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">total</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># はみ出した余韻を受け止めるため長めに確保する</span>
+<span class="linenos">166</span>    <span class="n">starts</span> <span class="o">=</span> <span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">start</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">]</span>
+<span class="linenos">167</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">event</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">events</span><span class="p">):</span>
+<span class="linenos">168</span>        <span class="n">gate</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">length</span> <span class="o">*</span> <span class="n">step_seconds</span>
+<span class="linenos">169</span>        <span class="k">if</span> <span class="n">track</span><span class="o">.</span><span class="n">instrument</span><span class="o">.</span><span class="n">wave</span> <span class="o">==</span> <span class="s2">&quot;noise&quot;</span><span class="p">:</span>
+<span class="linenos">170</span>            <span class="n">sound</span> <span class="o">=</span> <span class="n">render_drum</span><span class="p">(</span><span class="n">DRUMS</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+<span class="linenos">171</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos">172</span>            <span class="n">sound</span> <span class="o">=</span> <span class="n">render_note</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">instrument</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span>
+<span class="linenos">173</span>        <span class="n">begin</span> <span class="o">=</span> <span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">start</span> <span class="o">*</span> <span class="n">step_seconds</span><span class="p">)</span>
+<span class="linenos">174</span>        <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">starts</span><span class="p">):</span>
+<span class="linenos">175</span>            <span class="c1"># 次の音の開始位置で打ち切る</span>
+<span class="linenos">176</span>            <span class="n">limit</span> <span class="o">=</span> <span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">starts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">step_seconds</span><span class="p">)</span> <span class="o">-</span> <span class="n">begin</span>
+<span class="linenos">177</span>        <span class="k">elif</span> <span class="n">loop</span> <span class="ow">and</span> <span class="n">starts</span><span class="p">:</span>
+<span class="linenos">178</span>            <span class="c1"># 最後の音は、次の周回の最初の音の開始位置で打ち切る</span>
+<span class="linenos">179</span>            <span class="n">limit</span> <span class="o">=</span> <span class="n">total</span> <span class="o">+</span> <span class="n">seconds_to_samples</span><span class="p">(</span><span class="n">starts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">step_seconds</span><span class="p">)</span> <span class="o">-</span> <span class="n">begin</span>
+<span class="linenos">180</span>        <span class="k">else</span><span class="p">:</span>
+<span class="linenos">181</span>            <span class="n">limit</span> <span class="o">=</span> <span class="n">sound</span><span class="o">.</span><span class="n">size</span>
+<span class="linenos">182</span>        <span class="n">sound</span> <span class="o">=</span> <span class="n">sound</span><span class="p">[:</span><span class="n">limit</span><span class="p">]</span>
+<span class="linenos">183</span>        <span class="n">buffer</span><span class="p">[</span><span class="n">begin</span><span class="p">:</span><span class="n">begin</span> <span class="o">+</span> <span class="n">sound</span><span class="o">.</span><span class="n">size</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sound</span>
+<span class="linenos">184</span>    <span class="k">if</span> <span class="n">loop</span><span class="p">:</span>
+<span class="linenos">185</span>        <span class="n">result</span><span class="p">:</span> <span class="n">Signal</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">[:</span><span class="n">total</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="linenos">186</span>        <span class="n">result</span> <span class="o">+=</span> <span class="n">buffer</span><span class="p">[</span><span class="n">total</span><span class="p">:</span><span class="n">total</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># 余韻を先頭へ折り返す</span>
+<span class="linenos">187</span>        <span class="k">return</span> <span class="n">result</span>
+<span class="linenos">188</span>    <span class="n">used</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">buffer</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="k">else</span> <span class="n">total</span>
+<span class="linenos">189</span>    <span class="k">return</span> <span class="n">buffer</span><span class="p">[:</span><span class="nb">max</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="n">used</span><span class="p">)]</span>
+</pre></div>
+</div>
+</div>
+<p>この関数には、実機の制約とループのための 2 つの工夫がある。</p>
+<p>1 つ目は、1 チャンネルで同時に 1 音しか鳴らさないことである。リリースを設定した音は、ゲートが終わった後も余韻が続く。しかし実機では、1 つのチャンネルが次の音を鳴らし始めると、前の音は止まる。そこで、次の音の開始位置で前の音を打ち切っている（変数 <code class="docutils literal notranslate"><span class="pre">limit</span></code>）。</p>
+<p>2 つ目は、ループのつなぎ目の処理である。曲の最後の音の余韻は、曲の終わりをはみ出すことがある。ループ再生では、はみ出した部分は曲の先頭と重なって聞こえるはずである。そこで、バッファを曲の 2 倍の長さで確保して余韻を受け止め、はみ出した部分を先頭に足し込んでいる（<code class="docutils literal notranslate"><span class="pre">result</span> <span class="pre">+=</span> <span class="pre">buffer[total:total</span> <span class="pre">*</span> <span class="pre">2]</span></code>）。これにより、ファイルの末尾から先頭へ戻ったときに、余韻が途切れずにつながる。</p>
+</section>
+<section id="id9">
+<h3><span class="section-number">9.4.5. </span>全チャンネルをミキシングする<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">render_song</span></code> 関数は、各チャンネルに <code class="docutils literal notranslate"><span class="pre">gain</span></code> を掛けて足し合わせ、最後に最大振幅を 0.8 にそろえる。</p>
+<div class="literal-block-wrapper docutils container" id="id32">
+<div class="code-block-caption"><span class="caption-number">リスト 9.10 </span><span class="caption-text">sequencer.py の render_song 関数</span><a class="headerlink" href="#id32" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">192</span><span class="k">def</span><span class="w"> </span><span class="nf">render_song</span><span class="p">(</span><span class="n">song</span><span class="p">:</span> <span class="n">Song</span><span class="p">,</span> <span class="n">loop</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signal</span><span class="p">:</span>
+<span class="linenos">193</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;全チャンネルを合成してミキシングする.&quot;&quot;&quot;</span>
+<span class="linenos">194</span>    <span class="n">tracks</span> <span class="o">=</span> <span class="p">[</span><span class="n">render_track</span><span class="p">(</span><span class="n">track</span><span class="p">,</span> <span class="n">song</span><span class="o">.</span><span class="n">step_seconds</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span> <span class="o">*</span> <span class="n">track</span><span class="o">.</span><span class="n">gain</span> <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">song</span><span class="o">.</span><span class="n">tracks</span><span class="p">]</span>
+<span class="linenos">195</span>    <span class="n">length</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">tracks</span><span class="p">)</span>
+<span class="linenos">196</span>    <span class="n">mixed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+<span class="linenos">197</span>    <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">tracks</span><span class="p">:</span>
+<span class="linenos">198</span>        <span class="n">mixed</span><span class="p">[:</span><span class="n">track</span><span class="o">.</span><span class="n">size</span><span class="p">]</span> <span class="o">+=</span> <span class="n">track</span>
+<span class="linenos">199</span>    <span class="k">return</span> <span class="n">normalize</span><span class="p">(</span><span class="n">mixed</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">gain</span></code> は、チャンネル間の音量のバランスを調整する係数である。「<a class="reference internal" href="sound_chip.html#ch-sound-chip"><span class="std std-ref">音源チップの仕組み</span></a>」で述べたとおり、実機のミキサーは非線形だが、ここでは単純な足し算で代用している。</p>
+</section>
+</section>
+<section id="id10">
+<h2><span class="section-number">9.5. </span>BGM の作例<a class="headerlink" href="#id10" title="Link to this heading"></a></h2>
+<section id="id11">
+<h3><span class="section-number">9.5.1. </span>楽譜<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<p>シーケンサを使って、イ短調の 8 小節のループ BGM を作る。コード進行は「<a class="reference internal" href="music_basics.html#ch-music-basics"><span class="std std-ref">最低限の音楽知識</span></a>」で紹介した Am、F、G、C、Am、F、G、E である。</p>
+<div class="literal-block-wrapper docutils container" id="id33">
+<div class="code-block-caption"><span class="caption-number">リスト 9.11 </span><span class="caption-text">bgm_example.py の楽譜</span><a class="headerlink" href="#id33" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">14</span><span class="n">MELODY</span> <span class="o">=</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+<span class="linenos">15</span>    <span class="s2">&quot;A4 - - - C5 - E5 - D5 - C5 - B4 - C5 -&quot;</span><span class="p">,</span>  <span class="c1"># Am</span>
+<span class="linenos">16</span>    <span class="s2">&quot;A4 - - - - - F4 - A4 - C5 - F5 - E5 -&quot;</span><span class="p">,</span>  <span class="c1"># F</span>
+<span class="linenos">17</span>    <span class="s2">&quot;D5 - - - B4 - G4 - B4 - D5 - G5 - F5 -&quot;</span><span class="p">,</span>  <span class="c1"># G</span>
+<span class="linenos">18</span>    <span class="s2">&quot;E5 - - - - - - - C5 - D5 - E5 - G5 -&quot;</span><span class="p">,</span>  <span class="c1"># C</span>
+<span class="linenos">19</span>    <span class="s2">&quot;A5 - - - G5 - E5 - . . E5 - G5 - A5 -&quot;</span><span class="p">,</span>  <span class="c1"># Am</span>
+<span class="linenos">20</span>    <span class="s2">&quot;F5 - - - E5 - C5 - . . A4 - C5 - F5 -&quot;</span><span class="p">,</span>  <span class="c1"># F</span>
+<span class="linenos">21</span>    <span class="s2">&quot;G5 - - - F5 - D5 - B4 - D5 - F5 - E5 -&quot;</span><span class="p">,</span>  <span class="c1"># G</span>
+<span class="linenos">22</span>    <span class="s2">&quot;E5 - - - - - - - G#4 - - - B4 - - -&quot;</span><span class="p">,</span>  <span class="c1"># E</span>
+<span class="linenos">23</span><span class="p">])</span>
+<span class="linenos">24</span>
+<span class="linenos">25</span><span class="n">HARMONY</span> <span class="o">=</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+<span class="linenos">26</span>    <span class="s2">&quot;A3 - C4 - E4 - C4 - A3 - C4 - E4 - C4 -&quot;</span><span class="p">,</span>  <span class="c1"># Am</span>
+<span class="linenos">27</span>    <span class="s2">&quot;A3 - C4 - F4 - C4 - A3 - C4 - F4 - C4 -&quot;</span><span class="p">,</span>  <span class="c1"># F</span>
+<span class="linenos">28</span>    <span class="s2">&quot;B3 - D4 - G4 - D4 - B3 - D4 - G4 - D4 -&quot;</span><span class="p">,</span>  <span class="c1"># G</span>
+<span class="linenos">29</span>    <span class="s2">&quot;C4 - E4 - G4 - E4 - C4 - E4 - G4 - E4 -&quot;</span><span class="p">,</span>  <span class="c1"># C</span>
+<span class="linenos">30</span>    <span class="s2">&quot;A3 - C4 - E4 - C4 - A3 - C4 - E4 - C4 -&quot;</span><span class="p">,</span>  <span class="c1"># Am</span>
+<span class="linenos">31</span>    <span class="s2">&quot;A3 - C4 - F4 - C4 - A3 - C4 - F4 - C4 -&quot;</span><span class="p">,</span>  <span class="c1"># F</span>
+<span class="linenos">32</span>    <span class="s2">&quot;B3 - D4 - G4 - D4 - B3 - D4 - G4 - D4 -&quot;</span><span class="p">,</span>  <span class="c1"># G</span>
+<span class="linenos">33</span>    <span class="s2">&quot;B3 - E4 - G#4 - E4 - B3 - E4 - G#4 - E4 -&quot;</span><span class="p">,</span>  <span class="c1"># E</span>
+<span class="linenos">34</span><span class="p">])</span>
+<span class="linenos">35</span>
+<span class="linenos">36</span><span class="n">BASS</span> <span class="o">=</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+<span class="linenos">37</span>    <span class="s2">&quot;A2 - A3 - A2 - A3 - A2 - A3 - A2 - A3 -&quot;</span><span class="p">,</span>  <span class="c1"># Am</span>
+<span class="linenos">38</span>    <span class="s2">&quot;F2 - F3 - F2 - F3 - F2 - F3 - F2 - F3 -&quot;</span><span class="p">,</span>  <span class="c1"># F</span>
+<span class="linenos">39</span>    <span class="s2">&quot;G2 - G3 - G2 - G3 - G2 - G3 - G2 - G3 -&quot;</span><span class="p">,</span>  <span class="c1"># G</span>
+<span class="linenos">40</span>    <span class="s2">&quot;C3 - C4 - C3 - C4 - C3 - C4 - C3 - C4 -&quot;</span><span class="p">,</span>  <span class="c1"># C</span>
+<span class="linenos">41</span>    <span class="s2">&quot;A2 - A3 - A2 - A3 - A2 - A3 - A2 - A3 -&quot;</span><span class="p">,</span>  <span class="c1"># Am</span>
+<span class="linenos">42</span>    <span class="s2">&quot;F2 - F3 - F2 - F3 - F2 - F3 - F2 - F3 -&quot;</span><span class="p">,</span>  <span class="c1"># F</span>
+<span class="linenos">43</span>    <span class="s2">&quot;G2 - G3 - G2 - G3 - G2 - G3 - G2 - G3 -&quot;</span><span class="p">,</span>  <span class="c1"># G</span>
+<span class="linenos">44</span>    <span class="s2">&quot;E2 - E3 - E2 - E3 - E2 - E3 - E2 - E3 -&quot;</span><span class="p">,</span>  <span class="c1"># E</span>
+<span class="linenos">45</span><span class="p">])</span>
+<span class="linenos">46</span>
+<span class="linenos">47</span><span class="n">DRUM_BAR</span> <span class="o">=</span> <span class="s2">&quot;K . H . S . H . K . K . S . H H&quot;</span>
+<span class="linenos">48</span><span class="n">DRUM_FILL</span> <span class="o">=</span> <span class="s2">&quot;K . H . S . H . S . S . S S S S&quot;</span>
+<span class="linenos">49</span><span class="n">DRUMS</span> <span class="o">=</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">DRUM_BAR</span><span class="p">]</span> <span class="o">*</span> <span class="mi">7</span> <span class="o">+</span> <span class="p">[</span><span class="n">DRUM_FILL</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>各チャンネルの楽譜は、1 小節ずつ文字列のリストに並べ、<code class="docutils literal notranslate"><span class="pre">&quot;</span> <span class="pre">|</span> <span class="pre">&quot;.join</span></code> で 1 つの文字列にまとめている。行末のコメントは、その小節のコードである。</p>
+<ul class="simple">
+<li><p>メロディ: 各小節の頭にコードの構成音を置き、その間をスケールの音でつないでいる。5 小節目からは音域を高くして、曲の後半で盛り上がるようにしている。</p></li>
+<li><p>ハーモニー: コードの構成音を、低い音から上がって下がる形で 8 分音符で鳴らしている。最後の小節では、E の構成音（E、G#、B）を使う。</p></li>
+<li><p>ベース: コードの根音を、8 分音符でオクターブを上下させながら鳴らしている。ファミコンの曲でよく使われるベースの型である。</p></li>
+<li><p>ドラム: キックとスネアで拍を刻み、ハイハットで細かいリズムを加えている。最後の小節はスネアを連打する<a class="reference internal" href="glossary.html#term-55"><span class="xref std std-term">フィルイン</span></a>にして、ループの先頭へ戻ることを予告している。</p></li>
+</ul>
+</section>
+<section id="id12">
+<h3><span class="section-number">9.5.2. </span>音色とテンポ<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<div class="literal-block-wrapper docutils container" id="id34">
+<div class="code-block-caption"><span class="caption-number">リスト 9.12 </span><span class="caption-text">bgm_example.py の build_song 関数</span><a class="headerlink" href="#id34" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">52</span><span class="k">def</span><span class="w"> </span><span class="nf">build_song</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Song</span><span class="p">:</span>
+<span class="linenos">53</span><span class="w">    </span><span class="sd">&quot;&quot;&quot;曲データを組み立てる.&quot;&quot;&quot;</span>
+<span class="linenos">54</span>    <span class="n">lead</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="s2">&quot;pulse&quot;</span><span class="p">,</span> <span class="n">duty</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">sustain</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">release</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+<span class="linenos">55</span>                      <span class="n">vibrato_depth</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">vibrato_rate</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">vibrato_delay</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+<span class="linenos">56</span>    <span class="n">chord</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="s2">&quot;pulse&quot;</span><span class="p">,</span> <span class="n">duty</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.12</span><span class="p">,</span> <span class="n">sustain</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">release</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+<span class="linenos">57</span>    <span class="n">bass</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="s2">&quot;triangle&quot;</span><span class="p">)</span>
+<span class="linenos">58</span>    <span class="n">noise</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="s2">&quot;noise&quot;</span><span class="p">)</span>
+<span class="linenos">59</span>    <span class="k">return</span> <span class="n">Song</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mf">140.0</span><span class="p">,</span> <span class="n">tracks</span><span class="o">=</span><span class="p">[</span>
+<span class="linenos">60</span>        <span class="n">Track</span><span class="p">(</span><span class="s2">&quot;pulse1&quot;</span><span class="p">,</span> <span class="n">lead</span><span class="p">,</span> <span class="n">MELODY</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+<span class="linenos">61</span>        <span class="n">Track</span><span class="p">(</span><span class="s2">&quot;pulse2&quot;</span><span class="p">,</span> <span class="n">chord</span><span class="p">,</span> <span class="n">HARMONY</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+<span class="linenos">62</span>        <span class="n">Track</span><span class="p">(</span><span class="s2">&quot;triangle&quot;</span><span class="p">,</span> <span class="n">bass</span><span class="p">,</span> <span class="n">BASS</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+<span class="linenos">63</span>        <span class="n">Track</span><span class="p">(</span><span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="n">noise</span><span class="p">,</span> <span class="n">DRUMS</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">0.4</span><span class="p">),</span>
+<span class="linenos">64</span>    <span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>メロディは、デューティ比 50 % の太い音色に、ディケイとサステインで少し減衰する音量変化と、0.25 秒後からかかるビブラートを付けている。ハーモニーは、デューティ比 25 % の細い音色にし、すぐに小さくなるエンベロープと小さな <code class="docutils literal notranslate"><span class="pre">gain</span></code> で、メロディより目立たないようにしている。</p>
+<p><a class="reference internal" href="#fig-pianoroll"><span class="std std-numref">図 9.2</span></a> は、作例の楽譜を<a class="reference internal" href="glossary.html#term-50"><span class="xref std std-term">ピアノロール</span></a>（横軸を時間、縦軸を音の高さとして音を棒で表した図）で表したものである。</p>
+<figure class="align-default" id="id35">
+<span id="fig-pianoroll"></span><a class="reference internal image-reference" href="_images/pianoroll.png"><img alt="_images/pianoroll.png" src="_images/pianoroll.png" style="width: 100%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">図 9.2 </span><span class="caption-text">BGM の作例のピアノロール</span><a class="headerlink" href="#id35" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id13">
+<h3><span class="section-number">9.5.3. </span>チャンネルごとの音<a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<p>各チャンネルを単独で鳴らした音を次に示す。</p>
+<p class="audio-label">矩形波 1（メロディ）</p>
+<audio controls preload="none" src="_static/audio/bgm_solo_pulse1.wav"></audio>
+<p class="audio-label">矩形波 2（ハーモニー）</p>
+<audio controls preload="none" src="_static/audio/bgm_solo_pulse2.wav"></audio>
+<p class="audio-label">三角波（ベース）</p>
+<audio controls preload="none" src="_static/audio/bgm_solo_triangle.wav"></audio>
+<p class="audio-label">ノイズ（ドラム）</p>
+<audio controls preload="none" src="_static/audio/bgm_solo_noise.wav"></audio></section>
+<section id="id14">
+<h3><span class="section-number">9.5.4. </span>完成した BGM<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<p>4 つのチャンネルを合わせると、次の BGM になる。</p>
+<p class="audio-label">BGM（ループ 1 回分）</p>
+<audio controls preload="none" src="_static/audio/bgm_loop.wav"></audio><p>ループのつなぎ目を確かめるため、同じ音を 2 回つなげたものも用意した。8 小節目から 1 小節目へ戻る部分（約 13.7 秒の位置）で、音が途切れたりクリック音が出たりしないことを確かめてほしい。</p>
+<p class="audio-label">BGM（ループ 2 回分）</p>
+<audio controls preload="none" src="_static/audio/bgm_loop_twice.wav"></audio><p>ブラウザのプレーヤーで 1 回分のファイルをループ再生すると、つなぎ目にわずかな隙間が入ることがある。これはプレーヤー側の処理によるもので、ファイルの問題ではない。ゲームに組み込んだときのループ再生については「<a class="reference internal" href="integration.html#ch-integration"><span class="std std-ref">ゲームへの組み込み</span></a>」で説明する。</p>
+</section>
+</section>
+<section id="id15">
+<h2><span class="section-number">9.6. </span>サンプル音の生成<a class="headerlink" href="#id15" title="Link to this heading"></a></h2>
+<p>この章の音は、次のコマンドで <code class="docutils literal notranslate"><span class="pre">output</span></code> フォルダに書き出される。</p>
+<div class="highlight-bat notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>python bgm_example.py
+</pre></div>
+</div>
+</section>
+<section id="id16">
+<h2><span class="section-number">9.7. </span>改造のヒント<a class="headerlink" href="#id16" title="Link to this heading"></a></h2>
+<p>作例を自分の曲に作り替えるときは、次の順で進めるとよい。</p>
+<ol class="arabic simple">
+<li><p>テンポを決める: <code class="docutils literal notranslate"><span class="pre">Song</span></code> の <code class="docutils literal notranslate"><span class="pre">bpm</span></code> を変える。100 BPM 前後なら落ち着いた曲、150 BPM 以上なら急いだ雰囲気の曲になる。</p></li>
+<li><p>コード進行を決める: 「<a class="reference internal" href="music_basics.html#ch-music-basics"><span class="std std-ref">最低限の音楽知識</span></a>」のコードの中から 4 つから 8 つ程度を選んで並べる。</p></li>
+<li><p>ベースとドラムを書く: コードの根音でベースを書き、ドラムの型を決める。曲の土台がこれでできる。</p></li>
+<li><p>ハーモニーを書く: コードの構成音を並べる。分散和音、和音の連打、アルペジオなど、形を変えると雰囲気が変わる。</p></li>
+<li><p>メロディを書く: 「<a class="reference internal" href="music_basics.html#ch-music-basics"><span class="std std-ref">最低限の音楽知識</span></a>」で述べた目安に沿って、コードに合うメロディを書く。</p></li>
+<li><p>音色とバランスを調整する: <code class="docutils literal notranslate"><span class="pre">Instrument</span></code> のパラメータと <code class="docutils literal notranslate"><span class="pre">Track</span></code> の <code class="docutils literal notranslate"><span class="pre">gain</span></code> を調整する。</p></li>
+</ol>
+</section>
+<section id="id17">
+<h2><span class="section-number">9.8. </span>練習<a class="headerlink" href="#id17" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Song</span></code> の <code class="docutils literal notranslate"><span class="pre">bpm</span></code> を 100 と 180 に変えて、曲の印象がどう変わるか聞き比べてみよう。</p></li>
+<li><p>ハーモニーのチャンネルを、<code class="docutils literal notranslate"><span class="pre">Instrument</span></code> に新しい項目を追加して、アルペジオ（「<a class="reference internal" href="shaping.html#ch-shaping"><span class="std std-ref">音を形づくる</span></a>」）で鳴らすように改造してみよう。</p></li>
+<li><p>1 回だけ演奏する 2 小節のイントロを追加し、イントロの後にループ部を 2 回繰り返した WAV ファイルを作ってみよう。</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sound_effects.html" class="btn btn-neutral float-left" title="8. 効果音を作る" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tools.html" class="btn btn-neutral float-right" title="10. 制作ツールの紹介" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Nunu_3060.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

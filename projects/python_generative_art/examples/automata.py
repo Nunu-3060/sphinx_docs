@@ -69,7 +69,8 @@ def life_step(grid: np.ndarray) -> np.ndarray:
     survive: np.ndarray = (
         (neighbor_count == 2) | (neighbor_count == 3)
     ) & grid
-    return born | survive
+    result: np.ndarray = born | survive
+    return result
 
 
 def simulate_life(grid: np.ndarray, num_steps: int) -> np.ndarray:
