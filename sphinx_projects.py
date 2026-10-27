@@ -7,6 +7,8 @@ unify_build_html.py, update_conf.py）から import して使う。
   ``source/conf.py`` を持つフォルダーとする。
 * conf.py は副作用のある処理を含む場合があるため、実行せずに ast で解析する。
   ``project = "..."`` のほか、型ヒント付きの ``project: str = "..."`` にも対応する。
+* 文書の分類（グループ）と公開用の出力先は、カレントディレクトリの
+  ``categories.toml`` に書く（読み込みは load_categories）。
 """
 
 from __future__ import annotations
@@ -14,6 +16,7 @@ from __future__ import annotations
 import argparse
 import ast
 import io
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -23,6 +26,10 @@ BAT_NAME = "build_html.bat"
 BUILD_DIR_NAME = "build"
 HTML_RELATIVE_DIR = Path(BUILD_DIR_NAME) / "html"
 INDEX_NAME = "index.html"
+CATEGORIES_NAME = "categories.toml"
+# グループごとの公開用リポジトリのフォルダー名の接頭辞と、その中の公開フォルダー
+REPOSITORY_PREFIX = "sphinx_docs_"
+PAGES_DIR_NAME = "docs"
 
 
 def get_projects_dir(base_dir: Path) -> Path:
@@ -159,3 +166,83 @@ def read_project_name(conf_path: Path) -> str | None:
     assignments = parse_assignments(text, str(conf_path))
     project = find_assignment(assignments, "project")
     return project.value if project else None
+
+
+@dataclass(frozen=True)
+class Category:
+    """categories.toml の 1 グループ。"""
+
+    # 公開用リポジトリのフォルダー名（sphinx_docs_<folder>）に使う名前
+    folder: str
+    # 文書一覧に表示するグループ名
+    title: str
+    description: str
+    # 所属する Sphinx プロジェクトのフォルダー（一覧に並べる順）
+    projects: list[Path]
+
+    @property
+    def repository_name(self) -> str:
+        """公開用リポジトリのフォルダー名を返す。"""
+        return REPOSITORY_PREFIX + self.folder
+
+
+@dataclass(frozen=True)
+class Categories:
+    """categories.toml の内容。"""
+
+    # 公開用リポジトリを置く親フォルダー
+    output_root: Path
+    items: list[Category]
+
+    def pages_dir_of(self, category: Category) -> Path:
+        """グループの公開フォルダー（<output_root>/sphinx_docs_<folder>/docs）を返す。"""
+        return self.output_root / category.repository_name / PAGES_DIR_NAME
+
+
+def load_categories(base_dir: Path) -> Categories:
+    """categories.toml を読み込み、projects の全文書が 1 回ずつ分類されているか確かめる。
+
+    分類漏れ・重複・存在しないプロジェクト名があればエラーで終了する。
+    """
+    path = base_dir / CATEGORIES_NAME
+    if not path.is_file():
+        raise SystemExit(f"{path} がありません。")
+    with path.open("rb") as file:
+        data = tomllib.load(file)
+
+    by_name = {project.name: project for project in find_projects(base_dir)}
+    errors: list[str] = []
+    seen: dict[str, str] = {}
+    folders: set[str] = set()
+    items: list[Category] = []
+    for raw in data.get("categories", []):
+        folder = str(raw["folder"])
+        if folder in folders:
+            errors.append(f"folder が重複しています: {folder}")
+        folders.add(folder)
+        projects: list[Path] = []
+        for name in raw.get("projects", []):
+            if name in seen:
+                errors.append(f"{name} が {seen[name]} と {folder} の両方にあります")
+            elif name not in by_name:
+                errors.append(f"{folder} の {name} は projects にありません")
+            else:
+                projects.append(by_name[name])
+            seen.setdefault(name, folder)
+        items.append(
+            Category(
+                folder=folder,
+                title=str(raw["title"]),
+                description=str(raw.get("description", "")),
+                projects=projects,
+            )
+        )
+    for name in sorted(by_name.keys() - seen.keys()):
+        errors.append(f"{name} がどのグループにもありません")
+    if errors:
+        raise SystemExit(
+            f"{path} に問題があります:\n"
+            + "\n".join(f"  {error}" for error in errors)
+        )
+    output_root = (base_dir / str(data.get("output_root", ".."))).resolve()
+    return Categories(output_root=output_root, items=items)

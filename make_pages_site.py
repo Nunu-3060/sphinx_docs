@@ -1,10 +1,14 @@
-"""各 Sphinx プロジェクトのビルド結果を GitHub Pages 公開用の 1 つのフォルダーにまとめる。
+"""各 Sphinx プロジェクトのビルド結果を、グループごとの GitHub Pages 公開用フォルダーにまとめる。
 
-カレントディレクトリの ``projects/*/build/html`` を ``<出力先>/<プロジェクト>/`` にコピーし、
-次のファイルを出力先の直下に作成する。
+グループと所属する文書は ``categories.toml`` に書く。
+カレントディレクトリの ``projects/*/build/html`` を、グループごとに
+``<出力先>/sphinx_docs_<グループ>/docs/<プロジェクト>/`` にコピーし、
+次のファイルを各グループの docs の直下に作成する。
+``<出力先>`` の既定は categories.toml の output_root で、
+``sphinx_docs_<グループ>`` が 1 つの公開用リポジトリになる。
 
-* ``index.html``: 各文書へのリンクを並べたトップページ
-  （見出しは conf.py の project）
+* ``index.html``: グループの各文書へのリンクを並べたトップページ
+  （見出しは categories.toml の title、各文書の名前は conf.py の project）
 * ``.nojekyll``: GitHub Pages の Jekyll 処理を無効にする
   （無いと ``_static`` などアンダースコアで始まるフォルダーが公開されない。
   公開するフォルダーの直下に必要で、各文書のフォルダー内の .nojekyll では効かない）
@@ -17,7 +21,7 @@ GitHub Pages は Windows と違ってファイル名の大文字・小文字を�
 使い方::
 
     python run_build_html.py        # 先に全文書をビルドしておく
-    python make_pages_site.py       # docs フォルダーに出力する
+    python make_pages_site.py       # categories.toml の output_root に出力する
     python make_pages_site.py -o site
 """
 
@@ -36,13 +40,14 @@ from urllib.parse import unquote, urlsplit
 from sphinx_projects import (
     HTML_RELATIVE_DIR,
     INDEX_NAME,
+    PAGES_DIR_NAME,
+    Category,
     conf_path_of,
-    find_projects,
     get_projects_dir,
+    load_categories,
     read_project_name,
 )
 
-DEFAULT_OUTPUT = "docs"
 # 出力先に残してよい、このスクリプトが作らないファイル（GitHub Pages の設定）
 KEEP_IN_OUTPUT = {"CNAME"}
 
@@ -52,7 +57,7 @@ INDEX_TEMPLATE = """\
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>文書一覧</title>
+<title>{title} 文書一覧</title>
 <style>
   body {{
     margin: 0 auto;
@@ -64,6 +69,7 @@ INDEX_TEMPLATE = """\
     background: #fff;
   }}
   h1 {{ font-size: 1.6rem; border-bottom: 2px solid #2980b9; }}
+  .description {{ color: #555; }}
   ul {{ padding-left: 0; list-style: none; }}
   li {{ margin: 0.4rem 0; }}
   a {{
@@ -77,13 +83,15 @@ INDEX_TEMPLATE = """\
   a:hover {{ background: #f3f8fc; }}
   @media (prefers-color-scheme: dark) {{
     body {{ color: #ddd; background: #1e1e1e; }}
+    .description {{ color: #aaa; }}
     a {{ border-color: #444; color: #6ab0de; }}
     a:hover {{ background: #26303a; }}
   }}
 </style>
 </head>
 <body>
-<h1>文書一覧</h1>
+<h1>{title} 文書一覧</h1>
+<p class="description">{description}</p>
 <ul>
 {items}
 </ul>
@@ -121,14 +129,18 @@ def clear_output(output: Path) -> None:
             child.unlink()
 
 
-def render_index(entries: list[tuple[str, str]]) -> str:
-    """トップページの html を作成する。"""
+def render_index(category: Category, entries: list[tuple[str, str]]) -> str:
+    """グループのトップページの html を作成する。"""
     items = "\n".join(
         f'<li><a href="{html.escape(folder)}/index.html">'
         f"{html.escape(' '.join(title.split()))}</a></li>"
         for title, folder in entries
     )
-    return INDEX_TEMPLATE.format(items=items)
+    return INDEX_TEMPLATE.format(
+        title=html.escape(category.title),
+        description=html.escape(category.description),
+        items=items,
+    )
 
 
 @functools.lru_cache(maxsize=None)
@@ -178,38 +190,30 @@ def check_links(output: Path) -> list[str]:
     return problems
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        default=Path(DEFAULT_OUTPUT),
-        help=f"出力先のフォルダー（既定: {DEFAULT_OUTPUT}）",
-    )
-    parser.add_argument(
-        "--skip-link-check", action="store_true", help="リンクの確認を省く"
-    )
-    args = parser.parse_args()
+def check_output(output: Path, base_dir: Path) -> None:
+    """出力先がカレントディレクトリや projects フォルダーと重ならないか調べる。
 
-    base_dir = Path.cwd()
-    output: Path = args.output
-    # 出力先は実行のたびに中身を削除するため、プロジェクトを含む場所は拒否する。
+    出力先は実行のたびに中身を削除するため、プロジェクトを含む場所は拒否する。
+    """
     projects_dir = get_projects_dir(base_dir).resolve()
     resolved = output.resolve()
     if resolved == base_dir.resolve() or resolved == projects_dir or (
-        projects_dir in resolved.parents
+        projects_dir in resolved.parents or resolved in projects_dir.parents
     ):
         raise SystemExit(
             f"出力先に {resolved} は指定できません"
-            "（カレントディレクトリと projects フォルダー以下は不可）。"
+            "（カレントディレクトリと projects フォルダーに重なる場所は不可）。"
         )
 
+
+def make_category_site(
+    category: Category, output: Path
+) -> tuple[int, list[str]]:
+    """1 グループの公開フォルダーを作成し、(出力した件数, ビルド結果の無い文書) を返す。"""
     entries: list[tuple[str, str]] = []
     missing: list[str] = []
-    projects = find_projects(base_dir)
     clear_output(output)
-    for project in projects:
+    for project in category.projects:
         html_dir = project / HTML_RELATIVE_DIR
         if not (html_dir / INDEX_NAME).is_file():
             missing.append(project.name)
@@ -218,25 +222,58 @@ def main() -> int:
         title = read_project_name(conf_path_of(project)) or project.name
         entries.append((title, project.name))
 
-    (output / INDEX_NAME).write_text(render_index(entries), encoding="utf-8")
+    (output / INDEX_NAME).write_text(
+        render_index(category, entries), encoding="utf-8"
+    )
     (output / ".nojekyll").write_bytes(b"")
+    return len(entries), missing
 
-    size_mb = sum(
-        path.stat().st_size for path in output.rglob("*") if path.is_file()
-    ) / 1024 / 1024
-    print(f"{output} に {len(entries)} 件の文書を出力しました"
-          f"（{size_mb:.1f} MB）。")
 
-    failed = bool(missing)
-    for name in missing:
-        print(f"  ビルド結果がないため省略: {name}（先にビルドしてください）")
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=None,
+        help="出力先のフォルダー（既定: categories.toml の output_root）",
+    )
+    parser.add_argument(
+        "--skip-link-check", action="store_true", help="リンクの確認を省く"
+    )
+    args = parser.parse_args()
 
-    if not args.skip_link_check:
-        problems = check_links(output)
-        for problem in problems:
-            print(f"  {problem}")
-        print(f"リンクの確認: 問題 {len(problems)} 件")
-        failed = failed or bool(problems)
+    base_dir = Path.cwd()
+    categories = load_categories(base_dir)
+    output_root: Path = args.output or categories.output_root
+    outputs = [
+        output_root / category.repository_name / PAGES_DIR_NAME
+        for category in categories.items
+    ]
+    for output in outputs:
+        check_output(output, base_dir)
+
+    failed = False
+    total = 0
+    for category, output in zip(categories.items, outputs):
+        count, missing = make_category_site(category, output)
+        total += count
+        size_mb = sum(
+            path.stat().st_size for path in output.rglob("*") if path.is_file()
+        ) / 1024 / 1024
+        print(f"{output} に {count} 件の文書を出力しました"
+              f"（{size_mb:.1f} MB）。")
+        for name in missing:
+            print(f"  ビルド結果がないため省略: {name}（先にビルドしてください）")
+        failed = failed or bool(missing)
+
+        if not args.skip_link_check:
+            problems = check_links(output)
+            for problem in problems:
+                print(f"  {problem}")
+            print(f"  リンクの確認: 問題 {len(problems)} 件")
+            failed = failed or bool(problems)
+    print(f"合計 {len(outputs)} グループ、{total} 件の文書を出力しました。")
     return 1 if failed else 0
 
 

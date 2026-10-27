@@ -1,82 +1,206 @@
 # Sphinx プロジェクト一覧
 
-文書一覧のトップページ: [docs/index.html](docs/index.html)
+10 グループ、100 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
 
-| プロジェクト | index.html |
+| グループ | 件数 | 公開用フォルダー |
+| --- | --- | --- |
+| [計算機科学](#computer_science) | 11 | [sphinx_docs_computer_science](../sphinx_docs_computer_science/docs/index.html) |
+| [数学・シミュレーション](#mathematics) | 14 | [sphinx_docs_mathematics](../sphinx_docs_mathematics/docs/index.html) |
+| [プログラミング](#programming) | 12 | [sphinx_docs_programming](../sphinx_docs_programming/docs/index.html) |
+| [ソフトウェア開発](#software_development) | 11 | [sphinx_docs_software_development](../sphinx_docs_software_development/docs/index.html) |
+| [AI](#artificial_intelligence) | 3 | [sphinx_docs_artificial_intelligence](../sphinx_docs_artificial_intelligence/docs/index.html) |
+| [グラフィックス・アート](#graphics_and_art) | 13 | [sphinx_docs_graphics_and_art](../sphinx_docs_graphics_and_art/docs/index.html) |
+| [ゲーム制作](#game_creation) | 13 | [sphinx_docs_game_creation](../sphinx_docs_game_creation/docs/index.html) |
+| [技術者の仕事](#engineering_career) | 7 | [sphinx_docs_engineering_career](../sphinx_docs_engineering_career/docs/index.html) |
+| [暮らし](#life) | 9 | [sphinx_docs_life](../sphinx_docs_life/docs/index.html) |
+| [嗜好品](#food_and_drink) | 7 | [sphinx_docs_food_and_drink](../sphinx_docs_food_and_drink/docs/index.html) |
+
+<a id="computer_science"></a>
+
+## 計算機科学
+
+コンピューターの仕組みと理論
+
+| タイトル | フォルダー |
 | --- | --- |
-| 8 bit Game Sound 作成入門 | [docs/8_bit_sound_introduction/index.html](docs/8_bit_sound_introduction/index.html) |
-| アンドラゴジー・成人教育 | [docs/andragogy_adult_education/index.html](docs/andragogy_adult_education/index.html) |
-| 茨城名所案内 | [docs/city_guide_ibaraki/index.html](docs/city_guide_ibaraki/index.html) |
-| 東京名所案内 | [docs/city_guide_tokyo/index.html](docs/city_guide_tokyo/index.html) |
-| Claude 入門 | [docs/claude_introduction/index.html](docs/claude_introduction/index.html) |
-| 良いコード・悪いコード | [docs/code_writing_introduction/index.html](docs/code_writing_introduction/index.html) |
-| コーヒー入門 | [docs/coffee_introduction/index.html](docs/coffee_introduction/index.html) |
-| 色彩設計入門 | [docs/color_introduction/index.html](docs/color_introduction/index.html) |
-| コンパイラ・言語処理系入門 | [docs/compiler_language_processor_introuction/index.html](docs/compiler_language_processor_introuction/index.html) |
-| 計算理論・アルゴリズム入門 | [docs/computational_theory_algorithm_introduction/index.html](docs/computational_theory_algorithm_introduction/index.html) |
-| コンピューターアーキテクチャ入門 | [docs/computer_architecture_introduction/index.html](docs/computer_architecture_introduction/index.html) |
-| コンピューターグラフィックス入門 | [docs/computer_graphics_introduction/index.html](docs/computer_graphics_introduction/index.html) |
-| 計算機入門 | [docs/computer_introduction/index.html](docs/computer_introduction/index.html) |
-| 計算機科学入門 | [docs/computer_science_introduction/index.html](docs/computer_science_introduction/index.html) |
-| C++ 入門 | [docs/cpp_introduction_for_python/index.html](docs/cpp_introduction_for_python/index.html) |
-| Pyxel によるレトロゲーム作成入門 | [docs/creating_retro_game_introduction/index.html](docs/creating_retro_game_introduction/index.html) |
-| 自作 PC 入門 | [docs/custom_built_pc_introduction/index.html](docs/custom_built_pc_introduction/index.html) |
-| デザイン入門 | [docs/design_introduction/index.html](docs/design_introduction/index.html) |
-| 技術者倫理 | [docs/engineer_ethics/index.html](docs/engineer_ethics/index.html) |
-| 工学入門 | [docs/engineering_introduction/index.html](docs/engineering_introduction/index.html) |
-| ゲーム作成入門 | [docs/game_development_introduction/index.html](docs/game_development_introduction/index.html) |
-| Git 入門 | [docs/git_introduction/index.html](docs/git_introduction/index.html) |
-| GLSL 入門 | [docs/glsl_introduction/index.html](docs/glsl_introduction/index.html) |
-| GLSL によるレイマーチング入門 | [docs/glsl_introduction_raymarching/index.html](docs/glsl_introduction_raymarching/index.html) |
-| GPU の歴史 | [docs/gpu_history/index.html](docs/gpu_history/index.html) |
-| グラフによる可視化入門 | [docs/graph_introduction/index.html](docs/graph_introduction/index.html) |
-| Graphviz 入門 | [docs/graphviz_introduction/index.html](docs/graphviz_introduction/index.html) |
-| 健康的な生活 | [docs/healthy_living/index.html](docs/healthy_living/index.html) |
-| HTML & CSS & JavaScript 入門 | [docs/html_css_javascript_introduction/index.html](docs/html_css_javascript_introduction/index.html) |
-| 一般人のための投資入門 | [docs/investment_for_average_person/index.html](docs/investment_for_average_person/index.html) |
-| Jenkins & Jenkins Pipeline 入門 | [docs/jenkins_introduction/index.html](docs/jenkins_introduction/index.html) |
-| エンジニアの転職 | [docs/job_change/index.html](docs/job_change/index.html) |
-| マネジメント入門 | [docs/management_introduction/index.html](docs/management_introduction/index.html) |
-| 解析学入門 | [docs/mathematics_analysis_introduction/index.html](docs/mathematics_analysis_introduction/index.html) |
-| 双曲幾何学入門 | [docs/mathematics_hyperbolic_geometry_introduction/index.html](docs/mathematics_hyperbolic_geometry_introduction/index.html) |
-| 線形代数入門 | [docs/mathematics_linear_algebra_introduction/index.html](docs/mathematics_linear_algebra_introduction/index.html) |
-| ベクトル解析入門 | [docs/mathematics_vector_calculus_introduction/index.html](docs/mathematics_vector_calculus_introduction/index.html) |
-| 引越し手続きガイド | [docs/moving/index.html](docs/moving/index.html) |
-| ネットワーク・分散システム入門 | [docs/network_distributed_system_introduction/index.html](docs/network_distributed_system_introduction/index.html) |
-| オペレーティングシステム入門 | [docs/operating_system_introduction/index.html](docs/operating_system_introduction/index.html) |
-| p5.js 入門 | [docs/p5js_introductiopn/index.html](docs/p5js_introductiopn/index.html) |
-| プログラミング入門 | [docs/programming_introduction/index.html](docs/programming_introduction/index.html) |
-| 代表的なプログラミング言語の概要・歴史・比較 | [docs/programming_language/index.html](docs/programming_language/index.html) |
-| Python で作る ジェネラティブアート | [docs/python_generative_art/index.html](docs/python_generative_art/index.html) |
-| Python によるジェネラティブミュージック | [docs/python_generative_music/index.html](docs/python_generative_music/index.html) |
-| Python 入門 | [docs/python_introduction/index.html](docs/python_introduction/index.html) |
-| numpy/pandas/matplotlib 入門 | [docs/python_introduction_numpy_pandas_matplotlib/index.html](docs/python_introduction_numpy_pandas_matplotlib/index.html) |
-| Sphinx 入門 | [docs/python_introduction_sphinx/index.html](docs/python_introduction_sphinx/index.html) |
-| Python による統計入門 | [docs/python_introduction_statistics/index.html](docs/python_introduction_statistics/index.html) |
-| Python tkinter 解説 | [docs/python_introduction_tkinter/index.html](docs/python_introduction_tkinter/index.html) |
-| Python コア機能・標準ライブラリ解説書 | [docs/python_reference_builtin_standard/index.html](docs/python_reference_builtin_standard/index.html) |
-| Python による BML 交通モデルの実装 | [docs/python_simulation_bml_traffic_model/index.html](docs/python_simulation_bml_traffic_model/index.html) |
-| Python によるライフゲームの実装 | [docs/python_simulation_lifegame/index.html](docs/python_simulation_lifegame/index.html) |
-| Python による飛砂のシミュレーションの実装 | [docs/python_simulation_sand/index.html](docs/python_simulation_sand/index.html) |
-| 正規表現入門 | [docs/regular_expression_introduction/index.html](docs/regular_expression_introduction/index.html) |
-| 退職 | [docs/retirement/index.html](docs/retirement/index.html) |
-| Rocky Linux 入門 | [docs/rocky_linux_introduction/index.html](docs/rocky_linux_introduction/index.html) |
-| Rust 入門 | [docs/rust_introduction_for_python/index.html](docs/rust_introduction_for_python/index.html) |
-| セキュリティ入門 | [docs/security_introduction/index.html](docs/security_introduction/index.html) |
-| ソフトウェア設計入門 | [docs/software_architecture_introduction/index.html](docs/software_architecture_introduction/index.html) |
-| ソフトウェア工学入門 | [docs/software_engineering_introduction/index.html](docs/software_engineering_introduction/index.html) |
-| ソフトウェア品質保証入門 | [docs/software_quality_assurance_introduction/index.html](docs/software_quality_assurance_introduction/index.html) |
-| ソフトウェアテスト入門 | [docs/software_test_introduction/index.html](docs/software_test_introduction/index.html) |
-| SQL 入門 | [docs/sql_introduction/index.html](docs/sql_introduction/index.html) |
-| 紅茶入門 | [docs/tea_black_introduction/index.html](docs/tea_black_introduction/index.html) |
-| 中国茶入門 | [docs/tea_chinese_introduction/index.html](docs/tea_chinese_introduction/index.html) |
-| 日本茶入門 | [docs/tea_japanese_introduction/index.html](docs/tea_japanese_introduction/index.html) |
-| 旅行手引書 | [docs/travel/index.html](docs/travel/index.html) |
-| Unity 入門 | [docs/unity_introduction/index.html](docs/unity_introduction/index.html) |
-| Unity アニメーション入門 | [docs/unity_introduction_animation/index.html](docs/unity_introduction_animation/index.html) |
-| Unity C# 入門 | [docs/unity_introduction_c_sharp/index.html](docs/unity_introduction_c_sharp/index.html) |
-| Unity デバッグ・最適化入門 | [docs/unity_introduction_debug/index.html](docs/unity_introduction_debug/index.html) |
-| Unity エディター拡張入門 | [docs/unity_introduction_editor/index.html](docs/unity_introduction_editor/index.html) |
-| Unity パーティクル入門 | [docs/unity_introduction_particle/index.html](docs/unity_introduction_particle/index.html) |
-| Unity シェーダー・グラフィックス入門 | [docs/unity_introduction_shader/index.html](docs/unity_introduction_shader/index.html) |
-| WebGL 入門 | [docs/webgl_introduction/index.html](docs/webgl_introduction/index.html) |
+| 計算機入門 | [projects/computer_introduction](projects/computer_introduction) |
+| 計算機科学入門 | [projects/computer_science_introduction](projects/computer_science_introduction) |
+| コンピューターアーキテクチャ入門 | [projects/computer_architecture_introduction](projects/computer_architecture_introduction) |
+| オペレーティングシステム入門 | [projects/operating_system_introduction](projects/operating_system_introduction) |
+| ネットワーク・分散システム入門 | [projects/network_distributed_system_introduction](projects/network_distributed_system_introduction) |
+| コンパイラ・言語処理系入門 | [projects/compiler_language_processor_introduction](projects/compiler_language_processor_introduction) |
+| 計算理論・アルゴリズム入門 | [projects/computational_theory_algorithm_introduction](projects/computational_theory_algorithm_introduction) |
+| 暗号理論入門 | [projects/cryptography_introduction](projects/cryptography_introduction) |
+| セキュリティ入門 | [projects/security_introduction](projects/security_introduction) |
+| GPU の歴史 | [projects/gpu_history](projects/gpu_history) |
+| 自作 PC 入門 | [projects/custom_built_pc_introduction](projects/custom_built_pc_introduction) |
+
+<a id="mathematics"></a>
+
+## 数学・シミュレーション
+
+数学と、数理モデルを実装して確かめるシミュレーション
+
+| タイトル | フォルダー |
+| --- | --- |
+| 論理・集合入門 | [projects/mathematics_sets_and_logic_introduction](projects/mathematics_sets_and_logic_introduction) |
+| 解析学入門 | [projects/mathematics_analysis_introduction](projects/mathematics_analysis_introduction) |
+| 線形代数入門 | [projects/mathematics_linear_algebra_introduction](projects/mathematics_linear_algebra_introduction) |
+| ベクトル解析入門 | [projects/mathematics_vector_calculus_introduction](projects/mathematics_vector_calculus_introduction) |
+| 双曲幾何学入門 | [projects/mathematics_hyperbolic_geometry_introduction](projects/mathematics_hyperbolic_geometry_introduction) |
+| フーリエ解析・デジタル信号処理入門 | [projects/mathematics_fourier_dsp_introduction](projects/mathematics_fourier_dsp_introduction) |
+| グラフ理論入門 | [projects/mathematics_graph_introduction](projects/mathematics_graph_introduction) |
+| 確率論・離散数学入門 | [projects/mathematics_probability_discrete_introduction](projects/mathematics_probability_discrete_introduction) |
+| Python による統計入門 | [projects/python_introduction_statistics](projects/python_introduction_statistics) |
+| セル・オートマトンの理論と歴史 | [projects/cellular_automata_theory_and_history](projects/cellular_automata_theory_and_history) |
+| Python によるライフゲームの実装 | [projects/python_simulation_lifegame](projects/python_simulation_lifegame) |
+| Python による BML 交通モデルの実装 | [projects/python_simulation_bml_traffic_model](projects/python_simulation_bml_traffic_model) |
+| Python による飛砂のシミュレーションの実装 | [projects/python_simulation_sand](projects/python_simulation_sand) |
+| Python による流体・粒子シミュレーション入門 | [projects/python_simulation_fluid](projects/python_simulation_fluid) |
+
+<a id="programming"></a>
+
+## プログラミング
+
+プログラミング言語とライブラリ
+
+| タイトル | フォルダー |
+| --- | --- |
+| プログラミング入門 | [projects/programming_introduction](projects/programming_introduction) |
+| 代表的なプログラミング言語の概要・歴史・比較 | [projects/programming_language](projects/programming_language) |
+| Python 入門 | [projects/python_introduction](projects/python_introduction) |
+| Python コア機能・標準ライブラリ解説書 | [projects/python_reference_builtin_standard](projects/python_reference_builtin_standard) |
+| numpy/pandas/matplotlib 入門 | [projects/python_introduction_numpy_pandas_matplotlib](projects/python_introduction_numpy_pandas_matplotlib) |
+| Python tkinter 解説 | [projects/python_introduction_tkinter](projects/python_introduction_tkinter) |
+| グラフによる可視化入門 | [projects/graph_introduction](projects/graph_introduction) |
+| C++ 入門 | [projects/cpp_introduction_for_python](projects/cpp_introduction_for_python) |
+| Rust 入門 | [projects/rust_introduction_for_python](projects/rust_introduction_for_python) |
+| HTML & CSS & JavaScript 入門 | [projects/html_css_javascript_introduction](projects/html_css_javascript_introduction) |
+| 正規表現入門 | [projects/regular_expression_introduction](projects/regular_expression_introduction) |
+| SQL 入門 | [projects/sql_introduction](projects/sql_introduction) |
+
+<a id="software_development"></a>
+
+## ソフトウェア開発
+
+ソフトウェアの作り方・品質と、開発で使う道具
+
+| タイトル | フォルダー |
+| --- | --- |
+| 良いコード・悪いコード | [projects/code_writing_introduction](projects/code_writing_introduction) |
+| ソフトウェア設計入門 | [projects/software_architecture_introduction](projects/software_architecture_introduction) |
+| ソフトウェア工学入門 | [projects/software_engineering_introduction](projects/software_engineering_introduction) |
+| ソフトウェアテスト入門 | [projects/software_test_introduction](projects/software_test_introduction) |
+| ソフトウェア品質保証入門 | [projects/software_quality_assurance_introduction](projects/software_quality_assurance_introduction) |
+| Git 入門 | [projects/git_introduction](projects/git_introduction) |
+| Jenkins & Jenkins Pipeline 入門 | [projects/jenkins_introduction](projects/jenkins_introduction) |
+| 代表的な Linux ディストリビューション | [projects/linux_distribution](projects/linux_distribution) |
+| Rocky Linux 入門 | [projects/rocky_linux_introduction](projects/rocky_linux_introduction) |
+| Sphinx 入門 | [projects/python_introduction_sphinx](projects/python_introduction_sphinx) |
+| Graphviz 入門 | [projects/graphviz_introduction](projects/graphviz_introduction) |
+
+<a id="artificial_intelligence"></a>
+
+## AI
+
+AI の利用と機械学習
+
+| タイトル | フォルダー |
+| --- | --- |
+| Claude 入門 | [projects/claude_introduction](projects/claude_introduction) |
+| AI を用いた開発 | [projects/ai_development_introduction](projects/ai_development_introduction) |
+| 機械学習・深層学習入門 | [projects/machine_learning_and_deep_learning_introduction](projects/machine_learning_and_deep_learning_introduction) |
+
+<a id="graphics_and_art"></a>
+
+## グラフィックス・アート
+
+CG・シェーダー、クリエイティブコーディング、デザイン・アート
+
+| タイトル | フォルダー |
+| --- | --- |
+| コンピューターグラフィックス入門 | [projects/computer_graphics_introduction](projects/computer_graphics_introduction) |
+| 物理ベースレンダリング入門 | [projects/physically_based_rendering_introduction](projects/physically_based_rendering_introduction) |
+| GLSL 入門 | [projects/glsl_introduction](projects/glsl_introduction) |
+| GLSL によるレイマーチング入門 | [projects/glsl_introduction_raymarching](projects/glsl_introduction_raymarching) |
+| WebGL 入門 | [projects/webgl_introduction](projects/webgl_introduction) |
+| Houdini 入門 | [projects/houdini_introduction](projects/houdini_introduction) |
+| p5.js 入門 | [projects/p5js_introduction](projects/p5js_introduction) |
+| Python で作る ジェネラティブアート | [projects/python_generative_art](projects/python_generative_art) |
+| Python によるジェネラティブミュージック | [projects/python_generative_music](projects/python_generative_music) |
+| 色彩設計入門 | [projects/color_introduction](projects/color_introduction) |
+| デザイン入門 | [projects/design_introduction](projects/design_introduction) |
+| ドット絵作成入門 | [projects/pixel_art_introduction](projects/pixel_art_introduction) |
+| 趣味としての芸術 | [projects/art_as_a_hobby](projects/art_as_a_hobby) |
+
+<a id="game_creation"></a>
+
+## ゲーム制作
+
+ゲームの作り方とゲームエンジン
+
+| タイトル | フォルダー |
+| --- | --- |
+| ゲーム作成入門 | [projects/game_development_introduction](projects/game_development_introduction) |
+| ゲームデザイン・レベルデザイン入門 | [projects/game_design_introduction](projects/game_design_introduction) |
+| ゲームのための数学・物理入門 | [projects/game_math_physics_introduction](projects/game_math_physics_introduction) |
+| Pyxel によるレトロゲーム作成入門 | [projects/creating_retro_game_introduction](projects/creating_retro_game_introduction) |
+| 8 bit Game Sound 作成入門 | [projects/8_bit_sound_introduction](projects/8_bit_sound_introduction) |
+| Godot 入門 | [projects/godot_introduction](projects/godot_introduction) |
+| Unity 入門 | [projects/unity_introduction](projects/unity_introduction) |
+| Unity C# 入門 | [projects/unity_introduction_c_sharp](projects/unity_introduction_c_sharp) |
+| Unity エディター拡張入門 | [projects/unity_introduction_editor](projects/unity_introduction_editor) |
+| Unity アニメーション入門 | [projects/unity_introduction_animation](projects/unity_introduction_animation) |
+| Unity パーティクル入門 | [projects/unity_introduction_particle](projects/unity_introduction_particle) |
+| Unity シェーダー・グラフィックス入門 | [projects/unity_introduction_shader](projects/unity_introduction_shader) |
+| Unity デバッグ・最適化入門 | [projects/unity_introduction_debug](projects/unity_introduction_debug) |
+
+<a id="engineering_career"></a>
+
+## 技術者の仕事
+
+技術者として働くうえでの考え方とキャリア
+
+| タイトル | フォルダー |
+| --- | --- |
+| 工学入門 | [projects/engineering_introduction](projects/engineering_introduction) |
+| 技術者倫理 | [projects/engineer_ethics](projects/engineer_ethics) |
+| マネジメント入門 | [projects/management_introduction](projects/management_introduction) |
+| アンドラゴジー・成人教育 | [projects/andragogy_adult_education](projects/andragogy_adult_education) |
+| 技術文書の書き方 | [projects/technical_writing_introduction](projects/technical_writing_introduction) |
+| エンジニアの転職 | [projects/job_change](projects/job_change) |
+| 退職 | [projects/retirement](projects/retirement) |
+
+<a id="life"></a>
+
+## 暮らし
+
+健康・家事・お金・手続き・旅行
+
+| タイトル | フォルダー |
+| --- | --- |
+| 健康的な生活 | [projects/healthy_living](projects/healthy_living) |
+| 睡眠・姿勢・運動入門 | [projects/sleep_exercise_introduction](projects/sleep_exercise_introduction) |
+| 家事・炊事入門 | [projects/housework_cooking_introduction](projects/housework_cooking_introduction) |
+| 一般人のための投資入門 | [projects/investment_for_average_person](projects/investment_for_average_person) |
+| 税金と社会保険のしくみ | [projects/tax_social_insurance_guide](projects/tax_social_insurance_guide) |
+| 引越し手続きガイド | [projects/moving](projects/moving) |
+| 旅行手引書 | [projects/travel](projects/travel) |
+| 東京名所案内 | [projects/city_guide_tokyo](projects/city_guide_tokyo) |
+| 茨城名所案内 | [projects/city_guide_ibaraki](projects/city_guide_ibaraki) |
+
+<a id="food_and_drink"></a>
+
+## 嗜好品
+
+コーヒー・お茶・お酒
+
+| タイトル | フォルダー |
+| --- | --- |
+| コーヒー入門 | [projects/coffee_introduction](projects/coffee_introduction) |
+| 日本茶入門 | [projects/tea_japanese_introduction](projects/tea_japanese_introduction) |
+| 中国茶入門 | [projects/tea_chinese_introduction](projects/tea_chinese_introduction) |
+| 紅茶入門 | [projects/tea_black_introduction](projects/tea_black_introduction) |
+| ルイボスティー入門 | [projects/tea_rooibos_introduction](projects/tea_rooibos_introduction) |
+| 薩摩焼酎入門 | [projects/satsuma_shouchuu_introduction](projects/satsuma_shouchuu_introduction) |
+| ウイスキー入門 | [projects/whisky_introduction](projects/whisky_introduction) |
