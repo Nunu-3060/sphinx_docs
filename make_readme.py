@@ -1,8 +1,8 @@
 """各 Sphinx プロジェクトの conf.py から project を読み取り、readme.md にグループごとの一覧表を出力する。
 
 グループと所属する文書は ``categories.toml`` に書く。
-グループの一覧表には、GitHub Pages 公開用フォルダー
-``<output_root>/sphinx_docs_<グループ>/docs/index.html`` への相対パスを載せる。
+グループの一覧表には、GitHub Pages の公開先 URL
+（categories.toml の pages_base_url から作る）を載せる。
 グループごとの表には、文書のタイトルと ``projects/<プロジェクト>`` のフォルダーを
 対応付けて載せる（各文書の index.html へのリンクは載せない）。
 公開用フォルダーは make_pages_site.py で作成する。
@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 
 from sphinx_projects import (
-    INDEX_NAME,
     Categories,
     Category,
     conf_path_of,
@@ -55,16 +54,14 @@ def render_markdown(categories: Categories, base_dir: Path) -> str:
         "グループの分類は categories.toml に、"
         "公開用の出力先は sphinx_docs_<グループ>/docs にある。",
         "",
-        "| グループ | 件数 | 公開用フォルダー |",
+        "| グループ | 件数 | 公開先 URL |",
         "| --- | --- | --- |",
     ]
     for category in categories.items:
-        pages_dir = categories.pages_dir_of(category)
-        top_page = relative_link(pages_dir / INDEX_NAME, base_dir)
         lines.append(
             f"| [{escape_cell(category.title)}](#{category.folder}) "
             f"| {len(category.projects)} "
-            f"| [{category.repository_name}]({top_page}) |"
+            f"| <{categories.pages_url_of(category)}> |"
         )
     for category in categories.items:
         lines += [
@@ -93,12 +90,6 @@ def main() -> None:
     total = sum(len(category.projects) for category in categories.items)
     print(f"{readme_path} に {len(categories.items)} グループ、"
           f"{total} 件のプロジェクトを出力しました。")
-    # リンク先はファイルとして存在しなくても出力する（公開用フォルダーは後から作れる）。
-    for category in categories.items:
-        path = categories.pages_dir_of(category) / INDEX_NAME
-        if not path.is_file():
-            print(f"  リンク先がありません: {path}"
-                  "（python make_pages_site.py で作成してください）")
 
 
 if __name__ == "__main__":

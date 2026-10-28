@@ -1,7 +1,7 @@
 """ツール用スクリプトで共通して使う、Sphinx プロジェクトの探索と conf.py の解析。
 
-各スクリプト（make_pages_site.py, make_readme.py, run_build_html.py,
-unify_build_html.py, update_conf.py）から import して使う。
+各スクリプト（make_pages_site.py, make_readme.py, make_docs_index.py,
+run_build_html.py, unify_build_html.py, update_conf.py）から import して使う。
 
 * Sphinx プロジェクトは、カレントディレクトリの ``projects`` フォルダー直下にある
   ``source/conf.py`` を持つフォルダーとする。
@@ -9,6 +9,8 @@ unify_build_html.py, update_conf.py）から import して使う。
   ``project = "..."`` のほか、型ヒント付きの ``project: str = "..."`` にも対応する。
 * 文書の分類（グループ）と公開用の出力先は、カレントディレクトリの
   ``categories.toml`` に書く（読み込みは load_categories）。
+  GitHub Pages の公開先 URL も、categories.toml の pages_base_url から作る
+  （Categories.pages_url_of）。
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ import io
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 PROJECTS_DIR = "projects"
 CONF_RELATIVE_PATH = Path("source") / "conf.py"
@@ -192,11 +195,22 @@ class Categories:
 
     # 公開用リポジトリを置く親フォルダー
     output_root: Path
+    # GitHub Pages の公開先 URL の共通部分（https://<ユーザー>.github.io/）
+    # 末尾は / にそろえる
+    pages_base_url: str
     items: list[Category]
 
     def pages_dir_of(self, category: Category) -> Path:
         """グループの公開フォルダー（<output_root>/sphinx_docs_<folder>/docs）を返す。"""
         return self.output_root / category.repository_name / PAGES_DIR_NAME
+
+    def pages_url_of(self, category: Category) -> str:
+        """グループの公開先 URL（<pages_base_url>sphinx_docs_<folder>/）を返す。
+
+        GitHub Pages のプロジェクトサイトは、リポジトリ名がそのまま URL のパスになる。
+        文書の URL を後ろに付け足せるように、末尾は / にする。
+        """
+        return f"{self.pages_base_url}{category.repository_name}/"
 
 
 def load_categories(base_dir: Path) -> Categories:
@@ -239,10 +253,20 @@ def load_categories(base_dir: Path) -> Categories:
         )
     for name in sorted(by_name.keys() - seen.keys()):
         errors.append(f"{name} がどのグループにもありません")
+    pages_base_url = str(data.get("pages_base_url", ""))
+    parts = urlsplit(pages_base_url)
+    if parts.scheme not in ("http", "https") or not parts.netloc:
+        errors.append(
+            f"pages_base_url が URL ではありません: {pages_base_url!r}"
+        )
     if errors:
         raise SystemExit(
             f"{path} に問題があります:\n"
             + "\n".join(f"  {error}" for error in errors)
         )
     output_root = (base_dir / str(data.get("output_root", ".."))).resolve()
-    return Categories(output_root=output_root, items=items)
+    return Categories(
+        output_root=output_root,
+        pages_base_url=pages_base_url.rstrip("/") + "/",
+        items=items,
+    )

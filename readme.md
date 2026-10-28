@@ -1,19 +1,19 @@
 # Sphinx プロジェクト一覧
 
-10 グループ、100 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
+10 グループ、101 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
 
-| グループ | 件数 | 公開用フォルダー |
+| グループ | 件数 | 公開先 URL |
 | --- | --- | --- |
-| [計算機科学](#computer_science) | 11 | [sphinx_docs_computer_science](../sphinx_docs_computer_science/docs/index.html) |
-| [数学・シミュレーション](#mathematics) | 14 | [sphinx_docs_mathematics](../sphinx_docs_mathematics/docs/index.html) |
-| [プログラミング](#programming) | 12 | [sphinx_docs_programming](../sphinx_docs_programming/docs/index.html) |
-| [ソフトウェア開発](#software_development) | 11 | [sphinx_docs_software_development](../sphinx_docs_software_development/docs/index.html) |
-| [AI](#artificial_intelligence) | 3 | [sphinx_docs_artificial_intelligence](../sphinx_docs_artificial_intelligence/docs/index.html) |
-| [グラフィックス・アート](#graphics_and_art) | 13 | [sphinx_docs_graphics_and_art](../sphinx_docs_graphics_and_art/docs/index.html) |
-| [ゲーム制作](#game_creation) | 13 | [sphinx_docs_game_creation](../sphinx_docs_game_creation/docs/index.html) |
-| [技術者の仕事](#engineering_career) | 7 | [sphinx_docs_engineering_career](../sphinx_docs_engineering_career/docs/index.html) |
-| [暮らし](#life) | 9 | [sphinx_docs_life](../sphinx_docs_life/docs/index.html) |
-| [嗜好品](#food_and_drink) | 7 | [sphinx_docs_food_and_drink](../sphinx_docs_food_and_drink/docs/index.html) |
+| [計算機科学](#computer_science) | 11 | <https://nunu-3060.github.io/sphinx_docs_computer_science/> |
+| [数学・シミュレーション](#mathematics) | 15 | <https://nunu-3060.github.io/sphinx_docs_mathematics/> |
+| [プログラミング](#programming) | 12 | <https://nunu-3060.github.io/sphinx_docs_programming/> |
+| [ソフトウェア開発](#software_development) | 11 | <https://nunu-3060.github.io/sphinx_docs_software_development/> |
+| [AI](#artificial_intelligence) | 3 | <https://nunu-3060.github.io/sphinx_docs_artificial_intelligence/> |
+| [グラフィックス・アート](#graphics_and_art) | 13 | <https://nunu-3060.github.io/sphinx_docs_graphics_and_art/> |
+| [ゲーム制作](#game_creation) | 13 | <https://nunu-3060.github.io/sphinx_docs_game_creation/> |
+| [技術者の仕事](#engineering_career) | 7 | <https://nunu-3060.github.io/sphinx_docs_engineering_career/> |
+| [暮らし](#life) | 9 | <https://nunu-3060.github.io/sphinx_docs_life/> |
+| [嗜好品](#food_and_drink) | 7 | <https://nunu-3060.github.io/sphinx_docs_food_and_drink/> |
 
 <a id="computer_science"></a>
 
@@ -52,6 +52,7 @@
 | グラフ理論入門 | [projects/mathematics_graph_introduction](projects/mathematics_graph_introduction) |
 | 確率論・離散数学入門 | [projects/mathematics_probability_discrete_introduction](projects/mathematics_probability_discrete_introduction) |
 | Python による統計入門 | [projects/python_introduction_statistics](projects/python_introduction_statistics) |
+| フラクタル・カオス・力学系入門 | [projects/fractals_chaos_dynamical_systems_introduction](projects/fractals_chaos_dynamical_systems_introduction) |
 | セル・オートマトンの理論と歴史 | [projects/cellular_automata_theory_and_history](projects/cellular_automata_theory_and_history) |
 | Python によるライフゲームの実装 | [projects/python_simulation_lifegame](projects/python_simulation_lifegame) |
 | Python による BML 交通モデルの実装 | [projects/python_simulation_bml_traffic_model](projects/python_simulation_bml_traffic_model) |

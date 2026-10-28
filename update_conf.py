@@ -14,7 +14,7 @@
 使い方::
 
     python update_conf.py --release 1.1
-    python update_conf.py --copyright "2026, prometech" --author prometech
+    python update_conf.py --copyright "2026, Nunu_3060" --author Nunu_3060
     python update_conf.py --check                  # 書き換えずに差分を表示する
     python update_conf.py --release 1.1 python_introduction
 """

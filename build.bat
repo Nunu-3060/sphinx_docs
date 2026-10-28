@@ -5,3 +5,4 @@ py update_conf.py
 py run_build_html.py
 py make_pages_site.py
 py make_readme.py
+py make_docs_index.py
