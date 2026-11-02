@@ -38,12 +38,15 @@ Python 等の知識はあるエンジニア
   * build/html/ に index.html を出力する。
   * ビルド後に既定のブラウザで index.html を開く。
   * pause コマンドは使用しない。
+  * sphinx のパスは通っていないので `py -m sphinx` で実行する。
+  * 本プロジェクトの直下に置く。
 * examples
   * 一般
     * 人間にも分かりやすく書かれているか
     * html から閲覧・ダウンロードできるか
   * py
     * PEP8 に違反していないか
+      * 下記の行長の制限は除く
     * 型ヒントは記述されているか
     * 以下の検査で違反が検出されないか
       * flake8
@@ -52,10 +55,18 @@ Python 等の知識はあるエンジニア
         * `strict = True` を指定する。
       * setup.cfg を設定ファイルとして examples 直下に置く。
 * source
-  * 図
-    * Graphviz, Python Pillow, Python matplotlib が使える。
+  * 図・動画
+    * 以下のライブラリ・ツールが使用できる。
+      * Graphviz
+      * ffmpeg
+      * GLSL (Chrome)
+      * Python
+        * Pillow
+        * matplotlib
+        * numpy
+        * scipy
     * 本文中で必要であれば使用する。
-    * ビルド時に図を出力する必要がある場合は、conf.py から呼び出すようにする。
+    * ビルド時に図を出力する必要がある場合は conf.py から呼び出すようにする。
   * conf.py
     * 必要に応じて内容を変更する。
     * 出力された html からソースコードの rst が閲覧できないようにする。
@@ -88,6 +99,8 @@ Python 等の知識はあるエンジニア
         * 説明不足
         * 冗長な言い回し
         * 奇妙な言い回し
+* build
+  * ひとつのファイルの大きさは GitHub にプッシュする際に警告が出ない程度に抑える。
 
 ## 報告
 

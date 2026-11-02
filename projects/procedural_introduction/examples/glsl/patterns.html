@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>パターンとマテリアル（第 4 章）</title>
+<style>
+  body { margin: 0; background: #1b1b1f; color: #e8e8ec; font-family: "Yu Gothic UI", "Meiryo", sans-serif; }
+  #wrap { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; }
+  canvas { width: 640px; height: 640px; max-width: 100%; background: #000; }
+  #panel { width: 280px; font-size: 14px; }
+  #panel label { display: block; margin: 10px 0 2px; }
+  #panel input[type=range], #panel select { width: 260px; }
+  .value { color: #ffcc66; margin-left: 6px; }
+  #error { color: #ff7777; white-space: pre-wrap; font-size: 12px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="canvas" width="640" height="640"></canvas>
+  <div id="panel">
+    <h1>パターンとマテリアル（第 4 章）</h1>
+    <label>模様
+      <select id="u_pattern">
+        <option value="0" selected>レンガ</option>
+        <option value="1">六角形タイル</option>
+        <option value="2">石畳（ボロノイ）</option>
+        <option value="3">木目</option>
+        <option value="4">大理石</option>
+      </select>
+    </label>
+    <div id="sliders"></div>
+    <pre id="error"></pre>
+  </div>
+</div>
+
+<script type="x-shader/x-vertex" id="vertex">#version 300 es
+in vec2 a_position;
+void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
+</script>
+
+<script type="x-shader/x-fragment" id="fragment">#version 300 es
+// [shader-begin]
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform int u_pattern;      // 0: レンガ, 1: 六角形, 2: 石畳, 3: 木目, 4: 大理石
+uniform float u_scale;      // 画面の幅に入るセルの数
+uniform float u_gap;        // 目地の太さ（レンガ・六角形・石畳）
+uniform float u_distortion; // ノイズによる歪みの強さ
+uniform float u_variation;  // セルごとの色のばらつき
+uniform float u_bands;      // 年輪・縞の数（木目・大理石）
+uniform float u_bump;       // 凹凸（陰影）の強さ
+uniform float u_light;      // 光の向き [度]
+uniform int u_seed;
+
+out vec4 outColor;
+
+const float PI = 3.14159265358979;
+
+// ---- PCG ハッシュとノイズ（第 3 章と同じ） ----
+uint pcg(uint v) {
+    uint state = v * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+float random2(ivec2 p, uint seed) {
+    uint h = pcg(uint(p.y) + pcg(seed));
+    h = pcg(uint(p.x) + h);
+    return float(h) / 4294967296.0;
+}
+
+vec2 fade(vec2 t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
+
+float gradientDot(ivec2 i, vec2 d, uint seed) {
+    float angle = random2(i, seed) * 2.0 * PI;
+    return dot(vec2(cos(angle), sin(angle)), d);
+}
+
+float perlin(vec2 p, uint seed) {
+    ivec2 i = ivec2(floor(p));
+    vec2 f = fract(p);
+    vec2 u = fade(f);
+    float a = gradientDot(i, f, seed);
+    float b = gradientDot(i + ivec2(1, 0), f - vec2(1.0, 0.0), seed);
+    float c = gradientDot(i + ivec2(0, 1), f - vec2(0.0, 1.0), seed);
+    float d = gradientDot(i + ivec2(1, 1), f - vec2(1.0, 1.0), seed);
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y) * sqrt(2.0);
+}
+
+float fbm(vec2 p, uint seed) {
+    float total = 0.0;
+    float amplitude = 0.5;
+    for (int k = 0; k < 5; k++) {
+        total += amplitude * perlin(p, seed + uint(k));
+        amplitude *= 0.5;
+        p *= 2.0;
+    }
+    return total;
+}
+
+float turbulence(vec2 p, uint seed) {
+    float total = 0.0;
+    float amplitude = 0.5;
+    for (int k = 0; k < 6; k++) {
+        total += amplitude * abs(perlin(p, seed + uint(k)));
+        amplitude *= 0.5;
+        p *= 2.0;
+    }
+    return total;
+}
+
+// セルラーノイズ。戻り値は (F1, F2, 最も近い点のセルの乱数)
+vec3 worley(vec2 p, uint seed) {
+    ivec2 i = ivec2(floor(p));
+    vec2 f = fract(p);
+    vec3 result = vec3(8.0, 8.0, 0.0);
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            ivec2 cell = i + ivec2(dx, dy);
+            vec2 site = vec2(dx, dy) + 0.1 + 0.8 * vec2(random2(cell, seed), random2(cell, seed + 1u));
+            float d = length(site - f);
+            if (d < result.x) {
+                result = vec3(d, result.x, random2(cell, seed + 2u));
+            } else if (d < result.y) {
+                result.y = d;
+            }
+        }
+    }
+    return result;
+}
+
+// ---- 模様: 各関数は vec4(色, 高さ) を返す ----
+
+// レンガ: 奇数段を半個ずらし、セル内の座標から目地までの距離を求める
+vec4 bricks(vec2 p, uint seed) {
+    const float RATIO = 2.0;  // レンガの横と縦の比
+    float row = floor(p.y);
+    float u = p.x / RATIO + 0.5 * mod(row, 2.0);
+    float column = floor(u);
+    vec2 local = vec2(fract(u) * RATIO, fract(p.y));
+    vec2 edge2 = min(local, vec2(RATIO, 1.0) - local);
+    float edge = min(edge2.x, edge2.y);
+    float id = random2(ivec2(column, row), seed);
+    float detail = fbm(p * 6.0, seed + 7u);
+    float brick = smoothstep(u_gap * 0.5, u_gap * 0.5 + 0.03, edge);
+    vec3 color = mix(vec3(0.61, 0.24, 0.17), vec3(0.78, 0.45, 0.31), 0.5 + u_variation * (id - 0.5));
+    color *= 0.9 + 0.2 * detail;
+    color = mix(vec3(0.82, 0.79, 0.74) * (0.9 + 0.1 * detail), color, brick);
+    float height = brick * smoothstep(0.0, 0.15, edge - u_gap * 0.5) * (0.97 + 0.03 * detail);
+    return vec4(color, height);
+}
+
+// 六角形タイル: 2 組の長方形格子のうち近いほうの中心を選ぶ
+vec4 hexTiles(vec2 p, uint seed) {
+    const vec2 SIZE = vec2(1.0, 1.7320508);
+    vec2 a = mod(p, SIZE) - SIZE * 0.5;
+    vec2 b = mod(p - SIZE * 0.5, SIZE) - SIZE * 0.5;
+    vec2 g = dot(a, a) < dot(b, b) ? a : b;
+    vec2 center = p - g;
+    vec2 q = abs(g);
+    float distance = max(q.x, q.x * 0.5 + q.y * 0.8660254);  // 辺の上で 0.5
+    float edge = 0.5 - distance;
+    float id = random2(ivec2(round(center.x * 2.0), round(center.y * 2.0 / SIZE.y)), seed);
+    float tile = smoothstep(u_gap * 0.5, u_gap * 0.5 + 0.02, edge);
+    vec3 color = mix(vec3(0.16, 0.44, 0.59), vec3(0.66, 0.84, 0.90), 0.5 + u_variation * (id - 0.5));
+    color = mix(vec3(0.95), color, tile);
+    float height = tile * smoothstep(0.0, 0.1, edge - u_gap * 0.5);
+    return vec4(color, height);
+}
+
+// 石畳: 歪めた座標のセルラーノイズの F2 - F1 で目地を作る
+vec4 stones(vec2 p, uint seed) {
+    vec2 warp = vec2(fbm(p * 2.0, seed + 10u), fbm(p * 2.0, seed + 20u));
+    vec3 w = worley(p + u_distortion * 0.2 * warp, seed);
+    float edge = w.y - w.x;
+    float detail = fbm(p * 8.0, seed + 30u);
+    float stone = smoothstep(u_gap * 0.6, u_gap * 0.6 + 0.06, edge);
+    vec3 color = mix(vec3(0.42, 0.41, 0.38), vec3(0.65, 0.62, 0.58), 0.5 + u_variation * (w.z - 0.5));
+    color *= 0.9 + 0.25 * detail;
+    color = mix(vec3(0.23, 0.19, 0.16), color, stone);
+    float height = stone * smoothstep(u_gap * 0.6, u_gap * 0.6 + 0.35, edge) + 0.015 * detail;
+    return vec4(color, height);
+}
+
+// 木目: 板の外にある中心からの距離の縞（年輪）を、ノイズで歪める
+vec4 wood(vec2 p, uint seed) {
+    float distance = length(vec2(p.x - 0.5 * u_scale, (p.y - 1.3 * u_scale) * 0.35)) / u_scale * 2.0;
+    distance += u_distortion * 0.1 * fbm(vec2(p.x * 0.75, p.y * 0.25), seed);
+    float ring = fract(distance * u_bands);
+    float late = smoothstep(0.55, 0.95, ring);
+    float grain = perlin(vec2(p.x * 30.0, p.y * 1.5), seed + 1u) * 0.5 + 0.5;
+    float tone = clamp(0.75 * late + 0.25 * grain * u_variation * 2.0, 0.0, 1.0);
+    vec3 color = mix(vec3(0.89, 0.72, 0.50), vec3(0.60, 0.36, 0.18), tone);
+    return vec4(color, 0.04 * (1.0 - late) + 0.01 * grain);
+}
+
+// 大理石: 斜めの縞 sin の位相を乱流でずらし、縞の中心を脈にする
+vec4 marble(vec2 p, uint seed) {
+    float phase = (p.x + 0.5 * p.y) / u_scale * u_bands * PI + u_distortion * 3.0 * turbulence(p * 0.5, seed);
+    float vein = pow(1.0 - abs(sin(phase)), 4.0);
+    float cloud = fbm(p * 0.7, seed + 5u) * u_variation;
+    vec3 color = mix(vec3(0.96, 0.95, 0.93), vec3(0.85, 0.83, 0.80), clamp(cloud + 0.5, 0.0, 1.0));
+    color = mix(color, vec3(0.28, 0.27, 0.26), smoothstep(0.3, 1.0, vein));
+    return vec4(color, 0.5 - 0.05 * vein);
+}
+
+vec4 pattern(vec2 p) {
+    uint seed = uint(u_seed);
+    if (u_pattern == 0) return bricks(p, seed);
+    if (u_pattern == 1) return hexTiles(p, seed);
+    if (u_pattern == 2) return stones(p, seed);
+    if (u_pattern == 3) return wood(p, seed);
+    return marble(p, seed);
+}
+
+// ---- メイン: 高さの差分から法線を求め、陰影を付ける ----
+void main() {
+    vec2 p = gl_FragCoord.xy / u_resolution.x * u_scale;
+    float pixel = u_scale / u_resolution.x;  // 1 画素の大きさ（模様の座標で）
+    vec4 center = pattern(p);
+    float hx = pattern(p + vec2(pixel, 0.0)).w;
+    float hy = pattern(p + vec2(0.0, pixel)).w;
+    // 高さの傾きから法線を作る（gl_FragCoord の y は上向きなので、そのまま y の傾きになる）
+    vec3 normal = normalize(vec3(-(hx - center.w) * u_bump, -(hy - center.w) * u_bump, 1.0));
+    float angle = radians(u_light);
+    vec3 light = normalize(vec3(cos(angle), sin(angle), 0.8));
+    float diffuse = max(dot(normal, light), 0.0);
+    // 平らな面（法線が真上）で明るさ 1 になるように、光の z 成分で割る
+    float brightness = 0.25 + 0.75 * diffuse / light.z;
+    outColor = vec4(clamp(center.rgb * brightness, 0.0, 1.0), 1.0);
+}
+// [shader-end]
+</script>
+
+<script>
+"use strict";
+// スライダーの定義: [uniform 名, 表示名, 最小, 最大, 刻み, 初期値, 整数か]
+const SLIDERS = [
+  ["u_scale", "スケール（画面の幅のセル数）", 2, 24, 0.5, 8, false],
+  ["u_gap", "目地の太さ", 0.0, 0.3, 0.01, 0.08, false],
+  ["u_distortion", "歪みの強さ", 0.0, 3.0, 0.05, 1.0, false],
+  ["u_variation", "色のばらつき", 0.0, 1.0, 0.01, 0.6, false],
+  ["u_bands", "年輪・縞の数", 1, 20, 0.5, 6, false],
+  ["u_bump", "凹凸の強さ", 0, 300, 1, 60, false],
+  ["u_light", "光の向き [度]", 0, 360, 1, 135, false],
+  ["u_seed", "シード", 0, 99, 1, 0, true],
+];
+const SELECTS = ["u_pattern"];
+
+const canvas = document.getElementById("canvas");
+const errorBox = document.getElementById("error");
+const gl = canvas.getContext("webgl2");
+
+function compile(type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    throw new Error("シェーダーのコンパイルエラー:\n" + gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
+function createProgram() {
+  const program = gl.createProgram();
+  gl.attachShader(program, compile(gl.VERTEX_SHADER, document.getElementById("vertex").textContent.trim()));
+  gl.attachShader(program, compile(gl.FRAGMENT_SHADER, document.getElementById("fragment").textContent.trim()));
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error("リンクエラー:\n" + gl.getProgramInfoLog(program));
+  }
+  return program;
+}
+
+function buildSliders() {
+  const container = document.getElementById("sliders");
+  for (const [name, label, min, max, step, value] of SLIDERS) {
+    const wrapper = document.createElement("label");
+    wrapper.innerHTML = `${label}<span class="value" id="${name}_value">${value}</span><br>` +
+      `<input type="range" id="${name}" min="${min}" max="${max}" step="${step}" value="${value}">`;
+    container.appendChild(wrapper);
+    const input = wrapper.querySelector("input");
+    input.addEventListener("input", () => { document.getElementById(`${name}_value`).textContent = input.value; });
+  }
+}
+
+// URL の ?u_pattern=2&u_gap=0.1 のような指定で、初期値を変えられるようにする。
+function applyQuery() {
+  for (const [name, value] of new URLSearchParams(location.search)) {
+    const element = document.getElementById(name);
+    if (!element) continue;
+    element.value = value;
+    const label = document.getElementById(`${name}_value`);
+    if (label) label.textContent = value;
+  }
+}
+
+function main() {
+  if (!gl) { errorBox.textContent = "WebGL2 を使えない。"; return; }
+  buildSliders();
+  applyQuery();
+  let program;
+  try { program = createProgram(); } catch (error) { errorBox.textContent = error.message; return; }
+  gl.useProgram(program);
+
+  // 画面全体を覆う四角形（三角形 2 枚）
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+  const location = gl.getAttribLocation(program, "a_position");
+  gl.enableVertexAttribArray(location);
+  gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+
+  const start = performance.now();
+  function frame() {
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
+    gl.uniform1f(gl.getUniformLocation(program, "u_time"), (performance.now() - start) / 1000);
+    for (const [name, , , , , , isInt] of SLIDERS) {
+      const value = parseFloat(document.getElementById(name).value);
+      const uniform = gl.getUniformLocation(program, name);
+      if (isInt) gl.uniform1i(uniform, value); else gl.uniform1f(uniform, value);
+    }
+    for (const name of SELECTS) {
+      gl.uniform1i(gl.getUniformLocation(program, name), parseInt(document.getElementById(name).value));
+    }
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+main();
+</script>
+</body>
+</html>

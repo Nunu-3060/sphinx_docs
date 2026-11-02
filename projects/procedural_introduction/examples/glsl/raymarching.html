@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>レイマーチング（距離関数と雲）</title>
+<style>
+  body { margin: 0; background: #111; color: #eee; font-family: "Yu Gothic", "Meiryo", sans-serif; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #panel {
+    position: fixed; top: 10px; left: 10px; padding: 10px 14px; background: rgba(0, 0, 0, 0.6);
+    border-radius: 6px; font-size: 13px; line-height: 1.9;
+  }
+  #panel label { display: inline-block; width: 9em; }
+  #panel input[type=range] { width: 150px; vertical-align: middle; }
+  #panel span.value { display: inline-block; width: 3.5em; text-align: right; }
+  #error { position: fixed; bottom: 0; left: 0; margin: 0; padding: 8px; color: #f88; background: #200; white-space: pre-wrap; }
+  #error:empty { display: none; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="panel">
+  <div><label>組み合わせ方</label>
+    <select id="op">
+      <option value="0" selected>和（スムーズ）</option>
+      <option value="1">差（スムーズ）</option>
+      <option value="2">共通部分（スムーズ）</option>
+    </select></div>
+  <div><label>丸みの幅 k</label><input id="k" type="range" min="0" max="1" step="0.01" value="0.35"><span class="value" id="k-value"></span></div>
+  <div><label>球を動かす</label><input id="move" type="checkbox" checked></div>
+  <div><label>視点の向き</label><input id="angle" type="range" min="-180" max="180" step="1" value="-35"><span class="value" id="angle-value"></span></div>
+  <div><label>雲を表示</label><input id="cloud" type="checkbox"></div>
+  <div><label>雲の被覆</label><input id="coverage" type="range" min="-0.3" max="0.5" step="0.01" value="0.1"><span class="value" id="coverage-value"></span></div>
+  <div><label>消散係数 σ</label><input id="extinction" type="range" min="0.2" max="6" step="0.1" value="2.5"><span class="value" id="extinction-value"></span></div>
+</div>
+<pre id="error"></pre>
+
+<script type="x-shader/x-vertex" id="vertex">#version 300 es
+in vec2 a_position;
+void main() {
+    gl_Position = vec4(a_position, 0.0, 1.0);
+}
+</script>
+
+<script type="x-shader/x-fragment" id="fragment">#version 300 es
+// [shader-begin]
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform int u_op;            // 0: 和、1: 差、2: 共通部分（いずれもスムーズ）
+uniform float u_k;           // スムーズな min / max の丸みの幅
+uniform float u_move;        // 1 なら球を上下に動かす
+uniform float u_angle;       // 視点の向き（ラジアン）
+uniform bool u_cloud;        // 雲を描くかどうか
+uniform float u_coverage;    // 雲の被覆（大きいほど雲が増える）
+uniform float u_extinction;  // 雲の消散係数（大きいほど濃く、影が強い）
+
+out vec4 outColor;
+
+// z 軸を上向きとする（Python の sdf3d.py と同じ）。
+const vec3 SUN = normalize(vec3(-0.5, -0.4, 0.75));
+
+// ---- ハッシュと 3 次元バリューノイズ ----------------------------------------
+uint pcg(uint v) {
+    uint state = v * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+// 3 次元の整数座標とシードから 0 以上 1 未満の乱数を作る（prng.py の random3 と同じ）
+float random3(ivec3 p, uint seed) {
+    uint h = pcg(seed);
+    h = pcg(uint(p.z) + h);
+    h = pcg(uint(p.y) + h);
+    h = pcg(uint(p.x) + h);
+    return float(h) / 4294967296.0;
+}
+
+float valueNoise3(vec3 p, uint seed) {
+    ivec3 i = ivec3(floor(p));
+    vec3 f = fract(p);
+    vec3 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    float c000 = random3(i, seed);
+    float c100 = random3(i + ivec3(1, 0, 0), seed);
+    float c010 = random3(i + ivec3(0, 1, 0), seed);
+    float c110 = random3(i + ivec3(1, 1, 0), seed);
+    float c001 = random3(i + ivec3(0, 0, 1), seed);
+    float c101 = random3(i + ivec3(1, 0, 1), seed);
+    float c011 = random3(i + ivec3(0, 1, 1), seed);
+    float c111 = random3(i + ivec3(1, 1, 1), seed);
+    float near = mix(mix(c000, c100, u.x), mix(c010, c110, u.x), u.y);
+    float far = mix(mix(c001, c101, u.x), mix(c011, c111, u.x), u.y);
+    return mix(near, far, u.z) * 2.0 - 1.0;
+}
+
+float fbm3(vec3 p) {
+    float total = 0.0;
+    float amplitude = 0.5;
+    for (int octave = 0; octave < 4; octave++) {
+        total += amplitude * valueNoise3(p, uint(octave));
+        p *= 2.0;
+        amplitude *= 0.5;
+    }
+    return total;
+}
+
+// ---- 距離関数とその組み合わせ ------------------------------------------------
+float sdSphere(vec3 p, float r) { return length(p) - r; }
+
+float sdBox(vec3 p, vec3 b) {
+    vec3 q = abs(p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+float sdTorus(vec3 p, float major, float minor) {
+    return length(vec2(length(p.xy) - major, p.z)) - minor;
+}
+
+float smin(float a, float b, float k) {
+    if (k <= 0.0) return min(a, b);
+    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+}
+
+float smax(float a, float b, float k) { return -smin(-a, -b, k); }
+
+// 物体（直方体と球を u_op で組み合わせ、トーラスをスムーズに足したもの）
+float objects(vec3 p) {
+    vec3 center = vec3(-0.35, 0.0, 0.95 + u_move * 0.45 * sin(u_time * 0.8));
+    float sphere = sdSphere(p - center, 0.55);
+    float box = sdBox(p - vec3(0.35, 0.1, 0.45), vec3(0.45)) - 0.03;
+    float shape;
+    if (u_op == 0) shape = smin(box, sphere, u_k);
+    else if (u_op == 1) shape = smax(box, -sphere, u_k);
+    else shape = smax(box, sphere, u_k);
+    float torus = sdTorus(p - vec3(1.45, -0.9, 0.22), 0.42, 0.18);
+    return smin(shape, torus, u_k);
+}
+
+float map(vec3 p) { return min(objects(p), p.z); }  // p.z は高さ 0 の床
+
+vec3 calcNormal(vec3 p) {
+    const vec2 e = vec2(1e-3, 0.0);
+    return normalize(vec3(map(p + e.xyy) - map(p - e.xyy),
+                          map(p + e.yxy) - map(p - e.yxy),
+                          map(p + e.yyx) - map(p - e.yyx)));
+}
+
+// スフィアトレーシング。当たらなければ -1 を返す。
+float trace(vec3 ro, vec3 rd) {
+    float t = 0.0;
+    for (int i = 0; i < 128; i++) {
+        float d = map(ro + rd * t);
+        if (d < 1e-3 * t) return t;
+        t += d;
+        if (t > 40.0) break;
+    }
+    return -1.0;
+}
+
+float softShadow(vec3 p, vec3 l) {
+    float shade = 1.0;
+    float t = 0.02;
+    for (int i = 0; i < 48; i++) {
+        float h = map(p + l * t);
+        shade = min(shade, 10.0 * h / t);
+        t += clamp(h, 0.02, 0.3);
+        if (shade < 0.001 || t > 8.0) break;
+    }
+    return clamp(shade, 0.0, 1.0);
+}
+
+vec3 skyColor(vec3 rd) {
+    return vec3(0.62, 0.75, 0.92) - 0.35 * max(rd.z, 0.0);
+}
+
+// ---- 雲（ボリュームレンダリング） -------------------------------------------
+const vec3 CLOUD_CENTER = vec3(2.6, 2.6, 2.9);
+const vec3 CLOUD_HALF = vec3(3.8, 2.2, 1.2);
+
+float cloudDensity(vec3 p) {
+    vec3 q = (p - CLOUD_CENTER) / vec3(3.0, 1.5, 0.7);
+    float shape = 1.0 - length(q);  // 中心で 1、楕円体の表面で 0
+    vec3 wind = vec3(0.15, 0.05, 0.0) * u_time;
+    float detail = fbm3(p * 1.2 + wind);
+    return max(shape + 1.3 * detail - 0.15 + u_coverage, 0.0) * 4.0;
+}
+
+// レイが直方体に入る距離と出る距離（スラブ法）
+vec2 rayBox(vec3 ro, vec3 rd, vec3 center, vec3 halfSize) {
+    vec3 inv = 1.0 / rd;
+    vec3 t1 = (center - halfSize - ro) * inv;
+    vec3 t2 = (center + halfSize - ro) * inv;
+    vec3 tmin = min(t1, t2);
+    vec3 tmax = max(t1, t2);
+    return vec2(max(max(tmin.x, tmin.y), max(tmin.z, 0.0)), min(tmax.x, min(tmax.y, tmax.z)));
+}
+
+// 背景の色 background に雲を重ねる。tEnd は物体に当たった距離（雲はそれより手前だけ描く）
+vec3 renderCloud(vec3 ro, vec3 rd, float tEnd, vec3 background) {
+    vec2 range = rayBox(ro, rd, CLOUD_CENTER, CLOUD_HALF);
+    range.y = min(range.y, tEnd);
+    if (range.x >= range.y) return background;
+    const int STEPS = 48;
+    float ds = (range.y - range.x) / float(STEPS);
+    // 画素ごとに標本の位置をずらして、縞模様を防ぐ
+    float jitter = random3(ivec3(gl_FragCoord.xy, 0), 9u);
+    float transmittance = 1.0;
+    vec3 light = vec3(0.0);
+    for (int i = 0; i < STEPS; i++) {
+        vec3 p = ro + rd * (range.x + (float(i) + jitter) * ds);
+        float rho = cloudDensity(p);
+        if (rho <= 0.0) continue;
+        // 太陽の方向へ数歩進み、途中の密度の合計から自己影を求める
+        float depth = 0.0;
+        for (int j = 1; j <= 5; j++) depth += cloudDensity(p + SUN * 0.25 * float(j)) * 0.25;
+        float toSun = exp(-u_extinction * depth);
+        float absorbed = 1.0 - exp(-u_extinction * rho * ds);  // Beer–Lambert の法則
+        vec3 lit = vec3(1.0, 0.95, 0.85) * 1.4 * toSun + vec3(0.55, 0.65, 0.8) * 0.45;
+        light += transmittance * absorbed * lit;
+        transmittance *= 1.0 - absorbed;
+        if (transmittance < 0.01) break;
+    }
+    return background * transmittance + light;
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution) / u_resolution.x;
+    // 物体の少し上を、角度 u_angle の方向から見るカメラ
+    float a = u_angle;
+    vec3 target = vec3(0.3, 0.0, 0.9);
+    vec3 ro = target + vec3(5.6 * sin(a), -5.6 * cos(a), 0.9);
+    vec3 forward = normalize(target - ro);
+    vec3 right = normalize(cross(forward, vec3(0.0, 0.0, 1.0)));
+    vec3 up = cross(right, forward);
+    vec3 rd = normalize(forward + 0.7 * (uv.x * right + uv.y * up));
+
+    vec3 sky = skyColor(rd);
+    vec3 color = sky;
+    float t = trace(ro, rd);
+    if (t > 0.0) {
+        vec3 p = ro + rd * t;
+        vec3 n = calcNormal(p);
+        vec3 albedo;
+        if (objects(p) < p.z) {
+            albedo = vec3(0.85, 0.45, 0.30);
+        } else {
+            float checker = mod(floor(p.x * 2.0) + floor(p.y * 2.0), 2.0);
+            albedo = vec3(0.55 + 0.15 * checker);
+        }
+        float diffuse = max(dot(n, SUN), 0.0) * softShadow(p + n * 2e-3, SUN);
+        float ambient = 0.5 + 0.5 * n.z;
+        vec3 light = diffuse * vec3(1.0, 0.92, 0.8) + 0.3 * ambient * vec3(0.6, 0.7, 0.9);
+        color = albedo * light;
+        float fog = 1.0 - exp(-0.004 * t * t);
+        color = mix(color, sky, fog);
+    }
+    if (u_cloud) color = renderCloud(ro, rd, t > 0.0 ? t : 1e9, color);
+    outColor = vec4(pow(clamp(color, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+}
+// [shader-end]
+</script>
+
+<script>
+"use strict";
+const canvas = document.getElementById("canvas");
+const errorBox = document.getElementById("error");
+const gl = canvas.getContext("webgl2");
+
+function compile(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        throw new Error("シェーダーのコンパイルに失敗した:\n" + gl.getShaderInfoLog(shader));
+    }
+    return shader;
+}
+
+function createProgram() {
+    const program = gl.createProgram();
+    gl.attachShader(program, compile(gl.VERTEX_SHADER, document.getElementById("vertex").textContent));
+    gl.attachShader(program, compile(gl.FRAGMENT_SHADER, document.getElementById("fragment").textContent));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error("シェーダーのリンクに失敗した:\n" + gl.getProgramInfoLog(program));
+    }
+    return program;
+}
+
+// 値を表示する入力欄と、その値の書式
+const controls = {
+    k: v => v.toFixed(2),
+    angle: v => v.toFixed(0) + "°",
+    coverage: v => v.toFixed(2),
+    extinction: v => v.toFixed(1),
+};
+
+function value(id) {
+    return parseFloat(document.getElementById(id).value);
+}
+
+function updateLabels() {
+    for (const [id, format] of Object.entries(controls)) {
+        document.getElementById(id + "-value").textContent = format(value(id));
+    }
+}
+
+try {
+    if (!gl) throw new Error("WebGL2 が使えない。");
+    const program = createProgram();
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const location = gl.getAttribLocation(program, "a_position");
+    gl.enableVertexAttribArray(location);
+    gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+    gl.useProgram(program);
+    const uniform = name => gl.getUniformLocation(program, name);
+
+    for (const id of Object.keys(controls)) document.getElementById(id).addEventListener("input", updateLabels);
+    updateLabels();
+
+    const start = performance.now();
+    function frame() {
+        // 画面の大きさに合わせる（高解像度の画面では、負荷を抑えるため画素比を 1.5 までにする）
+        const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+        const width = Math.floor(canvas.clientWidth * ratio);
+        const height = Math.floor(canvas.clientHeight * ratio);
+        if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
+        }
+        gl.viewport(0, 0, width, height);
+        gl.uniform2f(uniform("u_resolution"), width, height);
+        gl.uniform1f(uniform("u_time"), (performance.now() - start) / 1000);
+        gl.uniform1i(uniform("u_op"), parseInt(document.getElementById("op").value, 10));
+        gl.uniform1f(uniform("u_k"), value("k"));
+        gl.uniform1f(uniform("u_move"), document.getElementById("move").checked ? 1 : 0);
+        gl.uniform1f(uniform("u_angle"), value("angle") * Math.PI / 180);
+        gl.uniform1i(uniform("u_cloud"), document.getElementById("cloud").checked ? 1 : 0);
+        gl.uniform1f(uniform("u_coverage"), value("coverage"));
+        gl.uniform1f(uniform("u_extinction"), value("extinction"));
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+} catch (error) {
+    errorBox.textContent = error.message;
+}
+</script>
+</body>
+</html>

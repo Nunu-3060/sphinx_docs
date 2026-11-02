@@ -1,19 +1,19 @@
 # Sphinx プロジェクト一覧
 
-10 グループ、101 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
+10 グループ、106 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
 
 | グループ | 件数 | 公開先 URL |
 | --- | --- | --- |
 | [計算機科学](#computer_science) | 11 | <https://nunu-3060.github.io/sphinx_docs_computer_science/> |
 | [数学・シミュレーション](#mathematics) | 15 | <https://nunu-3060.github.io/sphinx_docs_mathematics/> |
 | [プログラミング](#programming) | 12 | <https://nunu-3060.github.io/sphinx_docs_programming/> |
-| [ソフトウェア開発](#software_development) | 11 | <https://nunu-3060.github.io/sphinx_docs_software_development/> |
+| [ソフトウェア開発](#software_development) | 12 | <https://nunu-3060.github.io/sphinx_docs_software_development/> |
 | [AI](#artificial_intelligence) | 3 | <https://nunu-3060.github.io/sphinx_docs_artificial_intelligence/> |
-| [グラフィックス・アート](#graphics_and_art) | 13 | <https://nunu-3060.github.io/sphinx_docs_graphics_and_art/> |
-| [ゲーム制作](#game_creation) | 13 | <https://nunu-3060.github.io/sphinx_docs_game_creation/> |
-| [技術者の仕事](#engineering_career) | 7 | <https://nunu-3060.github.io/sphinx_docs_engineering_career/> |
+| [グラフィックス・アート](#graphics_and_art) | 14 | <https://nunu-3060.github.io/sphinx_docs_graphics_and_art/> |
+| [ゲーム制作](#game_creation) | 14 | <https://nunu-3060.github.io/sphinx_docs_game_creation/> |
+| [技術者の仕事](#engineering_career) | 8 | <https://nunu-3060.github.io/sphinx_docs_engineering_career/> |
 | [暮らし](#life) | 9 | <https://nunu-3060.github.io/sphinx_docs_life/> |
-| [嗜好品](#food_and_drink) | 7 | <https://nunu-3060.github.io/sphinx_docs_food_and_drink/> |
+| [嗜好品](#food_and_drink) | 8 | <https://nunu-3060.github.io/sphinx_docs_food_and_drink/> |
 
 <a id="computer_science"></a>
 
@@ -97,6 +97,7 @@
 | Jenkins & Jenkins Pipeline 入門 | [projects/jenkins_introduction](projects/jenkins_introduction) |
 | 代表的な Linux ディストリビューション | [projects/linux_distribution](projects/linux_distribution) |
 | Rocky Linux 入門 | [projects/rocky_linux_introduction](projects/rocky_linux_introduction) |
+| Markdown 入門 | [projects/markdown_introduction](projects/markdown_introduction) |
 | Sphinx 入門 | [projects/python_introduction_sphinx](projects/python_introduction_sphinx) |
 | Graphviz 入門 | [projects/graphviz_introduction](projects/graphviz_introduction) |
 
@@ -126,6 +127,7 @@ CG・シェーダー、クリエイティブコーディング、デザイン・
 | GLSL によるレイマーチング入門 | [projects/glsl_introduction_raymarching](projects/glsl_introduction_raymarching) |
 | WebGL 入門 | [projects/webgl_introduction](projects/webgl_introduction) |
 | Houdini 入門 | [projects/houdini_introduction](projects/houdini_introduction) |
+| プロシージャル生成入門 | [projects/procedural_introduction](projects/procedural_introduction) |
 | p5.js 入門 | [projects/p5js_introduction](projects/p5js_introduction) |
 | Python で作る ジェネラティブアート | [projects/python_generative_art](projects/python_generative_art) |
 | Python によるジェネラティブミュージック | [projects/python_generative_music](projects/python_generative_music) |
@@ -142,6 +144,7 @@ CG・シェーダー、クリエイティブコーディング、デザイン・
 
 | タイトル | フォルダー |
 | --- | --- |
+| ゲーム入門 | [projects/game_introduction](projects/game_introduction) |
 | ゲーム作成入門 | [projects/game_development_introduction](projects/game_development_introduction) |
 | ゲームデザイン・レベルデザイン入門 | [projects/game_design_introduction](projects/game_design_introduction) |
 | ゲームのための数学・物理入門 | [projects/game_math_physics_introduction](projects/game_math_physics_introduction) |
@@ -167,6 +170,7 @@ CG・シェーダー、クリエイティブコーディング、デザイン・
 | 工学入門 | [projects/engineering_introduction](projects/engineering_introduction) |
 | 技術者倫理 | [projects/engineer_ethics](projects/engineer_ethics) |
 | マネジメント入門 | [projects/management_introduction](projects/management_introduction) |
+| 独学の方法と学習科学 | [projects/methods_for_self-directed_learning_and_the_science_of_learning](projects/methods_for_self-directed_learning_and_the_science_of_learning) |
 | アンドラゴジー・成人教育 | [projects/andragogy_adult_education](projects/andragogy_adult_education) |
 | 技術文書の書き方 | [projects/technical_writing_introduction](projects/technical_writing_introduction) |
 | エンジニアの転職 | [projects/job_change](projects/job_change) |
@@ -202,6 +206,7 @@ CG・シェーダー、クリエイティブコーディング、デザイン・
 | 日本茶入門 | [projects/tea_japanese_introduction](projects/tea_japanese_introduction) |
 | 中国茶入門 | [projects/tea_chinese_introduction](projects/tea_chinese_introduction) |
 | 紅茶入門 | [projects/tea_black_introduction](projects/tea_black_introduction) |
+| 茶外茶入門 | [projects/tea_other_introduction](projects/tea_other_introduction) |
 | ルイボスティー入門 | [projects/tea_rooibos_introduction](projects/tea_rooibos_introduction) |
 | 薩摩焼酎入門 | [projects/satsuma_shouchuu_introduction](projects/satsuma_shouchuu_introduction) |
 | ウイスキー入門 | [projects/whisky_introduction](projects/whisky_introduction) |

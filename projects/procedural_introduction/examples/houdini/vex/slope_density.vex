@@ -1,0 +1,23 @@
+// 斜面の傾きと高さから、木の生えやすさ（density）を 0〜1 で決める。
+// Scatter SOP は、この density 属性に比例する密度でポイントを散布する。
+vector n = normalize(@N);
+float slope = degrees(acos(clamp(n.y, -1.0, 1.0)));  // 0 度 = 水平、90 度 = 垂直
+
+// 傾きが max_slope に近づくほど生えにくく、超えると生えない
+float max_slope = chf("max_slope");
+float slope_mask = 1.0 - smooth(max_slope - 10.0, max_slope, slope);
+
+// 海岸のすぐ近くと高い山の上には生えない
+float low = chf("min_height");
+float high = chf("max_height");
+float height_mask = smooth(low, low + 0.3, @P.y) * (1.0 - smooth(high - 0.5, high, @P.y));
+
+f@density = slope_mask * height_mask;
+
+// 確認用の色: 生える所を緑、生えない所を岩の灰色、海を青にする
+vector rock = {0.55, 0.52, 0.48};
+vector grass = {0.30, 0.55, 0.25};
+@Cd = lerp(rock, grass, f@density);
+if (@P.y <= chf("sea_level") + 1e-4) {
+    @Cd = {0.25, 0.45, 0.70};
+}

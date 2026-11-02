@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>反応拡散（第 5 章）</title>
+<style>
+  body { margin: 0; background: #1b1b1f; color: #e8e8ec; font-family: "Yu Gothic UI", "Meiryo", sans-serif; }
+  #wrap { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; }
+  canvas { width: 640px; height: 640px; max-width: 100%; background: #000; cursor: crosshair; image-rendering: pixelated; }
+  #panel { width: 280px; font-size: 14px; }
+  #panel label { display: block; margin: 10px 0 2px; }
+  #panel input[type=range], #panel select { width: 260px; }
+  button { margin-top: 12px; padding: 4px 16px; }
+  .value { color: #ffcc66; margin-left: 6px; }
+  #error { color: #ff7777; white-space: pre-wrap; font-size: 12px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  p { font-size: 12px; color: #b0b0b8; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="canvas" width="320" height="320"></canvas>
+  <div id="panel">
+    <h1>反応拡散（第 5 章）</h1>
+    <label>プリセット
+      <select id="preset">
+        <option value="0.0367,0.0649">斑点</option>
+        <option value="0.029,0.057" selected>迷路</option>
+        <option value="0.0545,0.062">サンゴ</option>
+        <option value="0.039,0.058">穴</option>
+        <option value="0.058,0.065">短い縞</option>
+        <option value="0.022,0.051">混沌</option>
+      </select>
+    </label>
+    <div id="sliders"></div>
+    <button id="reset">リセット</button>
+    <p>画面をドラッグすると、その場所に V を置く。</p>
+    <pre id="error"></pre>
+  </div>
+</div>
+
+<script type="x-shader/x-vertex" id="vertex">#version 300 es
+in vec2 a_position;
+void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
+</script>
+
+<script type="x-shader/x-fragment" id="fragment">#version 300 es
+// [shader-begin]
+// ---- シミュレーション: Gray-Scott モデルを 1 歩進める ----
+// 状態のテクスチャの R に U、G に V の濃度を入れる。
+precision highp float;
+
+uniform sampler2D u_state;   // 前の歩の状態
+uniform vec2 u_resolution;   // 格子の大きさ
+uniform float u_feed;        // F: U の供給率
+uniform float u_kill;        // k: V の除去率
+uniform vec3 u_mouse;        // (x, y, 押しているなら 1)。格子の座標
+uniform float u_brush;       // V を置く円の半径（格子の数）
+uniform int u_reset;         // 1 なら初期状態を作る
+uniform int u_seed;
+
+out vec4 outColor;
+
+const float DIFFUSION_U = 1.0;
+const float DIFFUSION_V = 0.5;
+
+uint pcg(uint v) {
+    uint state = v * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+float random2(ivec2 p, uint seed) {
+    uint h = pcg(uint(p.y) + pcg(seed));
+    h = pcg(uint(p.x) + h);
+    return float(h) / 4294967296.0;
+}
+
+// 端は反対側とつながる（周期境界）
+vec2 cell(ivec2 p) {
+    ivec2 size = ivec2(u_resolution);
+    return texelFetch(u_state, (p + size) % size, 0).rg;
+}
+
+void main() {
+    ivec2 p = ivec2(gl_FragCoord.xy);
+    if (u_reset == 1) {
+        // 初期状態: U = 1, V = 0。16 × 16 の区画ごとに確率 8 % で V の種を置く
+        float seedHere = step(0.92, random2(p / 16, uint(u_seed))) * step(0.5, random2(p / 4, uint(u_seed) + 1u));
+        outColor = vec4(1.0 - 0.5 * seedHere, 0.25 * seedHere, 0.0, 1.0);
+        return;
+    }
+    vec2 c = cell(p);
+    // ラプラシアン: 上下左右 0.2、斜め 0.05、中心 -1
+    vec2 laplacian = -c
+        + 0.2 * (cell(p + ivec2(1, 0)) + cell(p - ivec2(1, 0)) + cell(p + ivec2(0, 1)) + cell(p - ivec2(0, 1)))
+        + 0.05 * (cell(p + ivec2(1, 1)) + cell(p + ivec2(-1, 1)) + cell(p + ivec2(1, -1)) + cell(p - ivec2(1, 1)));
+    float u = c.r;
+    float v = c.g;
+    float reaction = u * v * v;
+    u += DIFFUSION_U * laplacian.r - reaction + u_feed * (1.0 - u);
+    v += DIFFUSION_V * laplacian.g + reaction - (u_feed + u_kill) * v;
+    // マウスで V を置く
+    if (u_mouse.z > 0.5 && distance(gl_FragCoord.xy, u_mouse.xy) < u_brush) {
+        u = 0.5;
+        v = 0.25;
+    }
+    outColor = vec4(clamp(u, 0.0, 1.0), clamp(v, 0.0, 1.0), 0.0, 1.0);
+}
+// [shader-end]
+</script>
+
+<script type="x-shader/x-fragment" id="display">#version 300 es
+// ---- 表示: V の濃度を色にする ----
+precision highp float;
+uniform sampler2D u_state;
+uniform vec2 u_resolution;
+out vec4 outColor;
+
+void main() {
+    float v = texelFetch(u_state, ivec2(gl_FragCoord.xy), 0).g;
+    float t = clamp(v / 0.4, 0.0, 1.0);
+    vec3 dark = vec3(0.04, 0.11, 0.23);
+    vec3 middle = vec3(0.12, 0.44, 0.55);
+    vec3 light = vec3(1.0, 0.96, 0.84);
+    vec3 color = t < 0.4 ? mix(dark, middle, t / 0.4) : mix(middle, light, (t - 0.4) / 0.6);
+    outColor = vec4(color, 1.0);
+}
+</script>
+
+<script>
+"use strict";
+// スライダーの定義: [id, 表示名, 最小, 最大, 刻み, 初期値]
+const SLIDERS = [
+  ["u_feed", "F（U の供給率）", 0.01, 0.1, 0.0001, 0.029],
+  ["u_kill", "k（V の除去率）", 0.04, 0.075, 0.0001, 0.057],
+  ["steps", "1 フレームあたりの歩数", 1, 40, 1, 16],
+  ["u_brush", "ブラシの半径", 1, 20, 1, 5],
+];
+
+const canvas = document.getElementById("canvas");
+const errorBox = document.getElementById("error");
+const gl = canvas.getContext("webgl2");
+const SIZE = canvas.width;  // 格子の大きさ（画素と 1 対 1）
+
+function compile(type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    throw new Error("シェーダーのコンパイルエラー:\n" + gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
+function createProgram(fragmentId) {
+  const program = gl.createProgram();
+  gl.attachShader(program, compile(gl.VERTEX_SHADER, document.getElementById("vertex").textContent.trim()));
+  gl.attachShader(program, compile(gl.FRAGMENT_SHADER, document.getElementById(fragmentId).textContent.trim()));
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error("リンクエラー:\n" + gl.getProgramInfoLog(program));
+  }
+  return program;
+}
+
+function buildSliders() {
+  const container = document.getElementById("sliders");
+  for (const [name, label, min, max, step, value] of SLIDERS) {
+    const wrapper = document.createElement("label");
+    wrapper.innerHTML = `${label}<span class="value" id="${name}_value">${value}</span><br>` +
+      `<input type="range" id="${name}" min="${min}" max="${max}" step="${step}" value="${value}">`;
+    container.appendChild(wrapper);
+    const input = wrapper.querySelector("input");
+    input.addEventListener("input", () => { document.getElementById(`${name}_value`).textContent = input.value; });
+  }
+}
+
+function setSlider(name, value) {
+  document.getElementById(name).value = value;
+  document.getElementById(`${name}_value`).textContent = value;
+}
+
+// 32 bit 浮動小数点数のテクスチャと、それに描くためのフレームバッファを作る
+function createTarget() {
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, SIZE, SIZE, 0, gl.RGBA, gl.FLOAT, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  const framebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+    throw new Error("浮動小数点数のフレームバッファを作れない。");
+  }
+  return { texture, framebuffer };
+}
+
+function main() {
+  if (!gl) { errorBox.textContent = "WebGL2 を使えない。"; return; }
+  if (!gl.getExtension("EXT_color_buffer_float")) {
+    errorBox.textContent = "EXT_color_buffer_float を使えない（浮動小数点数のテクスチャに描けない）。";
+    return;
+  }
+  buildSliders();
+  let simulation, display, targets;
+  try {
+    simulation = createProgram("fragment");
+    display = createProgram("display");
+    targets = [createTarget(), createTarget()];  // ピンポン用の 2 枚
+  } catch (error) { errorBox.textContent = error.message; return; }
+
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+  for (const program of [simulation, display]) {
+    const location = gl.getAttribLocation(program, "a_position");
+    gl.enableVertexAttribArray(location);
+    gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+  }
+
+  // マウスの位置（格子の座標。y は下から上）
+  const mouse = [0, 0, 0];
+  function updateMouse(event) {
+    const rect = canvas.getBoundingClientRect();
+    mouse[0] = (event.clientX - rect.left) / rect.width * SIZE;
+    mouse[1] = (1 - (event.clientY - rect.top) / rect.height) * SIZE;
+  }
+  canvas.addEventListener("pointerdown", (event) => { mouse[2] = 1; updateMouse(event); });
+  canvas.addEventListener("pointermove", updateMouse);
+  window.addEventListener("pointerup", () => { mouse[2] = 0; });
+
+  let current = 0;
+  let resetRequested = true;
+  let seed = 0;
+  document.getElementById("reset").addEventListener("click", () => { resetRequested = true; seed += 1; });
+  document.getElementById("preset").addEventListener("change", (event) => {
+    const [feed, kill] = event.target.value.split(",");
+    setSlider("u_feed", feed);
+    setSlider("u_kill", kill);
+    resetRequested = true;
+  });
+
+  function simulate(reset) {
+    const source = targets[current];
+    const target = targets[1 - current];
+    gl.useProgram(simulation);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+    gl.viewport(0, 0, SIZE, SIZE);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, source.texture);
+    gl.uniform1i(gl.getUniformLocation(simulation, "u_state"), 0);
+    gl.uniform2f(gl.getUniformLocation(simulation, "u_resolution"), SIZE, SIZE);
+    gl.uniform1f(gl.getUniformLocation(simulation, "u_feed"), parseFloat(document.getElementById("u_feed").value));
+    gl.uniform1f(gl.getUniformLocation(simulation, "u_kill"), parseFloat(document.getElementById("u_kill").value));
+    gl.uniform1f(gl.getUniformLocation(simulation, "u_brush"), parseFloat(document.getElementById("u_brush").value));
+    gl.uniform3f(gl.getUniformLocation(simulation, "u_mouse"), mouse[0], mouse[1], mouse[2]);
+    gl.uniform1i(gl.getUniformLocation(simulation, "u_reset"), reset ? 1 : 0);
+    gl.uniform1i(gl.getUniformLocation(simulation, "u_seed"), seed);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    current = 1 - current;  // 描いた側を次の入力にする
+  }
+
+  function frame() {
+    if (resetRequested) { simulate(true); resetRequested = false; }
+    const steps = parseInt(document.getElementById("steps").value);
+    for (let i = 0; i < steps; i++) simulate(false);
+    gl.useProgram(display);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, SIZE, SIZE);
+    gl.bindTexture(gl.TEXTURE_2D, targets[current].texture);
+    gl.uniform1i(gl.getUniformLocation(display, "u_state"), 0);
+    gl.uniform2f(gl.getUniformLocation(display, "u_resolution"), SIZE, SIZE);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+main();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+// 散布したポイント 1 個ずつに、複製する木の大きさ（pscale）と向き（orient）を決める。
+// Copy to Points SOP は、この 2 つの属性を読んで木を拡大・回転する。
+int seed = chi("seed");
+
+// 3 種類の乱数を、ポイント番号・シード・用途の番号から作る（第 2 章のハッシュと同じ考え方）
+float r_scale = rand(set(@ptnum, seed, 1));
+float r_turn = rand(set(@ptnum, seed, 2));
+float r_tilt = rand(set(@ptnum, seed, 3));
+
+// 大きさ: 乱数でばらつかせ、生えやすい所（density が大きい所）ほど大きくする
+float scale = fit01(r_scale, chf("min_scale"), chf("max_scale"));
+f@pscale = scale * fit01(f@density, 0.6, 1.0);
+
+// 向き: 鉛直軸のまわりに 0〜360 度回し、さらに最大 max_tilt 度だけ傾ける
+vector4 turn = quaternion(r_turn * 2.0 * PI, {0, 1, 0});
+vector axis = set(cos(r_turn * 7.0), 0.0, sin(r_turn * 7.0));
+vector4 tilt = quaternion(radians(chf("max_tilt")) * r_tilt, axis);
+p@orient = qmultiply(tilt, turn);
