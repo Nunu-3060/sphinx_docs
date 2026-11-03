@@ -1,18 +1,18 @@
-"""ファイルへの書き込みと読み込みの基本を示すサンプルです。"""
+"""ファイルへの書き込みと読み込みの基本を示すサンプル。"""
 
 import tempfile
 from pathlib import Path
 
 
 def write_lines(path: Path, lines: list[str]) -> None:
-    """指定したパスのファイルに、複数行のテキストを書き込みます。"""
+    """指定したパスのファイルに、複数行のテキストを書き込む。"""
     with path.open(mode="w", encoding="utf-8") as file:
         for line in lines:
             file.write(line + "\n")
 
 
 def read_lines(path: Path) -> list[str]:
-    """指定したパスのファイルを読み込み、行のリストとして返します。"""
+    """指定したパスのファイルを読み込み、行のリストとして返す。"""
     lines: list[str] = []
     with path.open(mode="r", encoding="utf-8") as file:
         for line in file:
@@ -21,7 +21,7 @@ def read_lines(path: Path) -> list[str]:
 
 
 def main() -> None:
-    """一時ファイルへの書き込みと読み込みの結果を表示します。"""
+    """一時ファイルへの書き込みと読み込みの結果を表示する。"""
     with tempfile.TemporaryDirectory() as temp_dir:
         file_path: Path = Path(temp_dir) / "memo.txt"
 

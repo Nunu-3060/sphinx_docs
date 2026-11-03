@@ -1,10 +1,10 @@
-"""自作パッケージ shapes をインポートして利用するサンプルです。"""
+"""自作パッケージ shapes をインポートして利用するサンプル。"""
 
 from shapes import calculate_area, calculate_perimeter
 
 
 def main() -> None:
-    """長方形の面積と周囲の長さを計算して表示します。"""
+    """長方形の面積と周囲の長さを計算して表示する。"""
     width: float = 4.0
     height: float = 3.0
 

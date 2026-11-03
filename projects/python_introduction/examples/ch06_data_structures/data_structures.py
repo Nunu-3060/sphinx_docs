@@ -1,28 +1,28 @@
-"""リスト、タプル、辞書、集合の基本的な操作を示すサンプルです。"""
+"""リスト、タプル、辞書、集合の基本的な操作を示すサンプル。"""
 
 
 def summarize_scores(scores: list[int]) -> float:
-    """点数のリストを受け取り、平均点を返します。"""
+    """点数のリストを受け取り、平均点を返す。"""
     return sum(scores) / len(scores)
 
 
 def squares_of(numbers: list[int]) -> list[int]:
-    """整数のリストを受け取り、各要素を 2 乗したリストをリスト内包表記で返します。"""
+    """整数のリストを受け取り、各要素を 2 乗したリストをリスト内包表記で返す。"""
     return [number ** 2 for number in numbers]
 
 
 def squares_dict_of(numbers: list[int]) -> dict[int, int]:
-    """整数のリストを受け取り、各要素とその 2 乗を対応させた辞書を辞書内包表記で返します。"""
+    """整数のリストを受け取り、各要素とその 2 乗を対応させた辞書を辞書内包表記で返す。"""
     return {number: number ** 2 for number in numbers}
 
 
 def unique_squares_of(numbers: list[int]) -> set[int]:
-    """整数のリストを受け取り、各要素を 2 乗した値の集合を集合内包表記で返します。"""
+    """整数のリストを受け取り、各要素を 2 乗した値の集合を集合内包表記で返す。"""
     return {number ** 2 for number in numbers}
 
 
 def main() -> None:
-    """代表的なデータ構造の使い方を表示します。"""
+    """代表的なデータ構造の使い方を表示する。"""
     fruits: list[str] = ["りんご", "みかん", "ぶどう"]
     print("先頭の要素:", fruits[0])
     print("末尾の要素:", fruits[-1])

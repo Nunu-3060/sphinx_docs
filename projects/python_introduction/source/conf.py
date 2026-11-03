@@ -9,15 +9,15 @@ language = "ja"
 
 extensions = []
 
-templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 highlight_language = "python3"
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
+# Copy source/_extra/.nojekyll to the output so that GitHub Pages serves the files as is.
 html_extra_path = ["_extra"]
 
+# Do not publish the rst sources with the HTML pages.
 html_copy_source = False
 html_show_sourcelink = False
 

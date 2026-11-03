@@ -1,4 +1,4 @@
-"""図形を扱うためのパッケージです。"""
+"""図形を扱うためのパッケージ。"""
 
 from .rectangle import calculate_area, calculate_perimeter
 

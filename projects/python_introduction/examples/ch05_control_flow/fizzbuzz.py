@@ -1,8 +1,8 @@
-"""条件分岐と繰り返しの基本を示す FizzBuzz のサンプルです。"""
+"""条件分岐と繰り返しの基本を示す FizzBuzz のサンプル。"""
 
 
 def fizzbuzz(number: int) -> str:
-    """数値を受け取り、FizzBuzz のルールに従った文字列を返します。"""
+    """数値を受け取り、FizzBuzz のルールに従った文字列を返す。"""
     if number % 15 == 0:
         return "FizzBuzz"
     elif number % 3 == 0:
@@ -14,7 +14,7 @@ def fizzbuzz(number: int) -> str:
 
 
 def main() -> None:
-    """1 から 20 までの数値に対して FizzBuzz の結果を表示します。"""
+    """1 から 20 までの数値に対して FizzBuzz の結果を表示する。"""
     number: int = 1
     while number <= 20:
         print(fizzbuzz(number))

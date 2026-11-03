@@ -1,35 +1,35 @@
-"""関数の定義と引数の使い方を示すサンプルです。"""
+"""関数の定義と引数の使い方を示すサンプル。"""
 
 
 def celsius_to_fahrenheit(celsius: float) -> float:
-    """摂氏温度を華氏温度に変換して返します。"""
+    """摂氏温度を華氏温度に変換して返す。"""
     return celsius * 9 / 5 + 32
 
 
 def introduce(name: str, age: int = 20) -> str:
-    """名前と年齢を受け取り、自己紹介の文字列を返します。"""
+    """名前と年齢を受け取り、自己紹介の文字列を返す。"""
     return "私は " + name + " です。年齢は " + str(age) + " 歳です。"
 
 
 def greet(name: str, nickname: str | None = None) -> str:
-    """名前とニックネームを受け取り、挨拶の文字列を返します。"""
+    """名前とニックネームを受け取り、挨拶の文字列を返す。"""
     if nickname is None:
         return name + " です。"
     return name + "（" + nickname + "）です。"
 
 
 def total(*numbers: int) -> int:
-    """可変長引数として受け取った数値の合計を返します。"""
+    """可変長引数として受け取った数値の合計を返す。"""
     return sum(numbers)
 
 
 def show_profile(**info: str) -> dict[str, str]:
-    """可変長のキーワード引数として受け取った情報を辞書のまま返します。"""
+    """可変長のキーワード引数として受け取った情報を辞書のまま返す。"""
     return info
 
 
 def main() -> None:
-    """関数の呼び出し例を表示します。"""
+    """関数の呼び出し例を表示する。"""
     print("摂氏 25 度は華氏", celsius_to_fahrenheit(25.0), "度です。")
     print(introduce("鈴木"))
     print(introduce("田中", 35))

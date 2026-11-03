@@ -1,8 +1,8 @@
-"""match 文を使った条件分岐のサンプルです。"""
+"""match 文を使った条件分岐のサンプル。"""
 
 
 def describe_weekday(day: int) -> str:
-    """曜日を表す数値（1 から 7）を受け取り、曜日名を返します。"""
+    """曜日を表す数値（1 から 7）を受け取り、曜日名を返す。"""
     match day:
         case 1:
             return "月曜日"
@@ -21,7 +21,7 @@ def describe_weekday(day: int) -> str:
 
 
 def main() -> None:
-    """1 から 7 までの数値に対応する曜日を表示します。"""
+    """1 から 7 までの数値に対応する曜日を表示する。"""
     for day in range(1, 8):
         print(day, ":", describe_weekday(day))
 
