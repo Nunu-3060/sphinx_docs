@@ -12,3 +12,4 @@ Godot
 
 ffmpeg
 Graphviz
+marp-cli

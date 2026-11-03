@@ -1,6 +1,6 @@
 # Sphinx プロジェクト一覧
 
-10 グループ、106 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
+10 グループ、107 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
 
 | グループ | 件数 | 公開先 URL |
 | --- | --- | --- |
@@ -11,7 +11,7 @@
 | [AI](#artificial_intelligence) | 3 | <https://nunu-3060.github.io/sphinx_docs_artificial_intelligence/> |
 | [グラフィックス・アート](#graphics_and_art) | 14 | <https://nunu-3060.github.io/sphinx_docs_graphics_and_art/> |
 | [ゲーム制作](#game_creation) | 14 | <https://nunu-3060.github.io/sphinx_docs_game_creation/> |
-| [技術者の仕事](#engineering_career) | 8 | <https://nunu-3060.github.io/sphinx_docs_engineering_career/> |
+| [技術者の仕事](#engineering_career) | 9 | <https://nunu-3060.github.io/sphinx_docs_engineering_career/> |
 | [暮らし](#life) | 9 | <https://nunu-3060.github.io/sphinx_docs_life/> |
 | [嗜好品](#food_and_drink) | 8 | <https://nunu-3060.github.io/sphinx_docs_food_and_drink/> |
 
@@ -173,6 +173,7 @@ CG・シェーダー、クリエイティブコーディング、デザイン・
 | 独学の方法と学習科学 | [projects/methods_for_self-directed_learning_and_the_science_of_learning](projects/methods_for_self-directed_learning_and_the_science_of_learning) |
 | アンドラゴジー・成人教育 | [projects/andragogy_adult_education](projects/andragogy_adult_education) |
 | 技術文書の書き方 | [projects/technical_writing_introduction](projects/technical_writing_introduction) |
+| スライド作成・プレゼンテーション入門 | [projects/slide_introduction](projects/slide_introduction) |
 | エンジニアの転職 | [projects/job_change](projects/job_change) |
 | 退職 | [projects/retirement](projects/retirement) |
 
