@@ -1,12 +1,12 @@
 # Sphinx プロジェクト一覧
 
-10 グループ、107 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
+10 グループ、108 件の文書がある。グループの分類は categories.toml に、公開用の出力先は sphinx_docs_<グループ>/docs にある。
 
 | グループ | 件数 | 公開先 URL |
 | --- | --- | --- |
 | [計算機科学](#computer_science) | 11 | <https://nunu-3060.github.io/sphinx_docs_computer_science/> |
 | [数学・シミュレーション](#mathematics) | 15 | <https://nunu-3060.github.io/sphinx_docs_mathematics/> |
-| [プログラミング](#programming) | 12 | <https://nunu-3060.github.io/sphinx_docs_programming/> |
+| [プログラミング](#programming) | 13 | <https://nunu-3060.github.io/sphinx_docs_programming/> |
 | [ソフトウェア開発](#software_development) | 12 | <https://nunu-3060.github.io/sphinx_docs_software_development/> |
 | [AI](#artificial_intelligence) | 3 | <https://nunu-3060.github.io/sphinx_docs_artificial_intelligence/> |
 | [グラフィックス・アート](#graphics_and_art) | 14 | <https://nunu-3060.github.io/sphinx_docs_graphics_and_art/> |
@@ -71,6 +71,7 @@
 | 代表的なプログラミング言語の概要・歴史・比較 | [projects/programming_language](projects/programming_language) |
 | Python 入門 | [projects/python_introduction](projects/python_introduction) |
 | Python コア機能・標準ライブラリ解説書 | [projects/python_reference_builtin_standard](projects/python_reference_builtin_standard) |
+| Python による非同期処理・並行処理・並列処理 | [projects/python_introduction_async_concurrent_parallel](projects/python_introduction_async_concurrent_parallel) |
 | numpy/pandas/matplotlib 入門 | [projects/python_introduction_numpy_pandas_matplotlib](projects/python_introduction_numpy_pandas_matplotlib) |
 | Python tkinter 解説 | [projects/python_introduction_tkinter](projects/python_introduction_tkinter) |
 | グラフによる可視化入門 | [projects/graph_introduction](projects/graph_introduction) |
