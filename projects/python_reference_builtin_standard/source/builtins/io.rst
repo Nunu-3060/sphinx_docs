@@ -9,6 +9,7 @@ print
 標準出力にオブジェクトを出力する。
 
 .. code-block:: python
+   :linenos:
 
    >>> print("Hello", "World", sep=", ")
    Hello, World
@@ -16,18 +17,20 @@ print
 input
 -----
 
-標準入力から1行読み取り、末尾の改行を除いた文字列を返す。
+標準入力から 1 行読み取り、末尾の改行を除いた文字列を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> name = input("お名前は？: ")
 
 open
 ----
 
-ファイルを開き、ファイルオブジェクトを返す。``with`` 文と組み合わせて使うのが一般的。
+ファイルを開き、ファイルオブジェクトを返す。``with`` 文と組み合わせて使うのが一般的である。テキストモードでは ``encoding`` を省略するとプラットフォーム依存のエンコーディング（Windows ではシステムのコードページなど）が使われるため、``encoding="utf-8"`` のように明示するのがよい。
 
 .. code-block:: python
+   :linenos:
 
    >>> with open("sample.txt", encoding="utf-8") as f:
    ...     content = f.read()
@@ -35,6 +38,7 @@ open
 書き込みを行う場合は、モードに ``"w"`` を指定する。
 
 .. code-block:: python
+   :linenos:
 
    >>> with open("memo.txt", "w", encoding="utf-8") as f:
    ...     f.write("hello\n")

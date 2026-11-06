@@ -1,9 +1,7 @@
 json
 ====
 
-Python のオブジェクトと JSON（JavaScript Object Notation）形式の文字列との間で
-相互変換を行うモジュール。設定ファイルや Web API のレスポンスなど、
-データ交換フォーマットとして広く使われている。
+Python のオブジェクトと JSON（JavaScript Object Notation）形式の文字列との間で相互変換を行うモジュール。設定ファイルや Web API のレスポンスなど、データ交換フォーマットとして広く使われている。
 
 json.dumps / json.loads
 -------------------------
@@ -11,6 +9,7 @@ json.dumps / json.loads
 ``dumps`` は Python オブジェクトを JSON 文字列に変換し、``loads`` は JSON 文字列を Python オブジェクトに変換する。
 
 .. code-block:: python
+   :linenos:
 
    >>> import json
    >>> data = {"name": "Alice", "age": 30, "tags": ["admin", "user"]}
@@ -23,10 +22,10 @@ json.dumps / json.loads
 json.dump / json.load
 -----------------------
 
-ファイルオブジェクトに対して直接 JSON の書き込み・読み込みを行う。
-文字列を経由しない分、大きなデータを扱う際に便利。
+ファイルオブジェクトに対して直接 JSON の書き込み・読み込みを行う。``dumps`` / ``loads`` とファイルの読み書きを別々に書くより簡潔になる。
 
 .. code-block:: python
+   :linenos:
 
    >>> with open("data.json", "w", encoding="utf-8") as f:
    ...     json.dump(data, f)
@@ -40,11 +39,10 @@ json.dump / json.load
 ensure_ascii と indent
 ------------------------
 
-``ensure_ascii=False`` を指定すると非 ASCII 文字（日本語など）を
-エスケープせずそのまま出力できる。``indent`` を指定すると人間が読みやすい
-整形済みの出力になる。
+``ensure_ascii=False`` を指定すると非 ASCII 文字（日本語など）をエスケープせずそのまま出力できる。``indent`` を指定すると人間が読みやすい整形済みの出力になる。
 
 .. code-block:: python
+   :linenos:
 
    >>> print(json.dumps({"名前": "太郎"}))
    {"\u540d\u524d": "\u592a\u90ce"}
@@ -62,11 +60,10 @@ ensure_ascii と indent
 default によるカスタムエンコード
 ----------------------------------
 
-``datetime`` オブジェクトなど、標準では JSON にシリアライズできない型は
-そのまま ``dumps`` に渡すと ``TypeError`` になる。``default`` 引数に
-変換用の関数を渡すことで対応できる。
+``datetime`` オブジェクトなど、標準では JSON にシリアライズできない型はそのまま ``dumps`` に渡すと ``TypeError: Object of type ... is not JSON serializable`` が送出される。``default`` 引数に変換用の関数を渡すことで対応できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> from datetime import datetime
    >>> def default(o):
@@ -77,16 +74,13 @@ default によるカスタムエンコード
    >>> json.dumps({"created_at": datetime(2024, 1, 1)}, default=default)
    '{"created_at": "2024-01-01T00:00:00"}'
 
-.. note::
-
-   ``default`` を指定しないまま非対応の型を渡すと ``TypeError: Object of type ... is not JSON serializable`` が送出される。
-
 object_hook によるカスタムデコード
 --------------------------------------
 
-``default`` がエンコード時にカスタム型を JSON に変換するのに対し、デコード時に JSON オブジェクト（辞書）から独自クラスのインスタンスを復元したい場合は ``loads``/``load`` の ``object_hook`` 引数を使う。``object_hook`` にはデコードされた辞書を受け取り、任意の値（そのままの辞書でも、独自オブジェクトでもよい）を返す関数を渡す。
+``default`` がエンコード時にカスタム型を JSON に変換するのに対し、デコード時に JSON オブジェクト（辞書）から独自クラスのインスタンスを復元したい場合は ``loads`` / ``load`` の ``object_hook`` 引数を使う。``object_hook`` にはデコードされた辞書を受け取り、任意の値（そのままの辞書でも、独自オブジェクトでもよい）を返す関数を渡す。
 
 .. code-block:: python
+   :linenos:
 
    >>> class Point:
    ...     def __init__(self, x, y):
@@ -105,4 +99,4 @@ object_hook によるカスタムデコード
 
 .. note::
 
-   不正な形式の JSON 文字列を ``loads``/``load`` に渡すと ``json.JSONDecodeError`` が送出される。外部から受け取った文字列をデコードする場合は、``try`` / ``except json.JSONDecodeError`` で囲んでおくと安全。
+   不正な形式の JSON 文字列を ``loads`` / ``load`` に渡すと ``json.JSONDecodeError`` が送出される。外部から受け取った文字列をデコードする場合は、``try`` / ``except json.JSONDecodeError`` で囲んでおくと安全。

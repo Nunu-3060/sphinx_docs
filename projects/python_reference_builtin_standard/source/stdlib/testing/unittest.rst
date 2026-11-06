@@ -1,10 +1,7 @@
 unittest
 ========
 
-Python 標準のユニットテストフレームワーク。``TestCase`` を継承したクラスに
-テストメソッドを書き、コードが期待通りに動作するかを自動的に検証する。
-追加のインストールが不要で標準ライブラリだけで完結するため、多くの
-既存プロジェクトで採用されている。
+Python 標準のユニットテストフレームワーク。``TestCase`` を継承したクラスにテストメソッドを書き、コードが期待通りに動作するかを自動的に検証する。追加のインストールが不要で標準ライブラリだけで完結するため、多くの既存プロジェクトで採用されている。
 
 基本構造: TestCase / ``test_`` で始まるメソッド
 --------------------------------------------------
@@ -12,6 +9,7 @@ Python 標準のユニットテストフレームワーク。``TestCase`` を継
 テストは ``unittest.TestCase`` を継承したクラスとして書く。クラス内の ``test_`` で始まるメソッドがテストケースとして自動的に認識され、実行される。実行するには ``unittest.main()`` を呼び出すか、コマンドラインから ``python -m unittest ファイル名`` とする。
 
 .. code-block:: python
+   :linenos:
 
    # test_calc.py
    import unittest
@@ -36,6 +34,7 @@ Python 標準のユニットテストフレームワーク。``TestCase`` を継
 上記のファイルを実行すると、以下のような出力が得られる。
 
 .. code-block:: text
+   :linenos:
 
    $ python -m unittest test_calc -v
    test_add (test_calc.TestCalc.test_add) ... ok
@@ -46,12 +45,19 @@ Python 標準のユニットテストフレームワーク。``TestCase`` を継
 
    OK
 
+``python -m unittest`` を引数なしで実行すると、カレントディレクトリ以下から ``test*.py`` という名前のファイルを探して、その中のテストをまとめて実行する（テストディスカバリ）。``-k`` オプションでテスト名の一部を指定して実行対象を絞り込んだり、``--durations N``\ （Python 3.12 で追加）で実行に時間がかかったテストを表示したりすることもできる。
+
+.. note::
+
+   ``unittest.makeSuite()``/``unittest.findTestCases()``/``unittest.getTestCaseNames()`` は Python 3.13 で削除された。テストスイートを自分で組み立てる必要がある場合は、``unittest.TestLoader`` の ``loadTestsFromTestCase()``/``loadTestsFromModule()`` などを使う。
+
 代表的なアサーションメソッド
 --------------------------------
 
 ``TestCase`` は、値を検証するための多数の ``assert*`` メソッドを提供する。最もよく使うのは、値が等しいことを検証する ``assertEqual``、真偽値を検証する ``assertTrue``/``assertFalse``、そして例外の送出を検証する ``assertRaises`` である。``assertRaises`` はコンテキストマネージャとして使うと、``with`` ブロック内で対象の例外が発生したかどうかを検証できる。
 
 .. code-block:: python
+   :linenos:
 
    import unittest
 
@@ -76,7 +82,7 @@ Python 標準のユニットテストフレームワーク。``TestCase`` を継
 
 .. note::
 
-   このほかにも、値がコンテナに含まれるかを調べる ``assertIn``、``None`` であることを調べる ``assertIsNone``、浮動小数点数の近似比較を行う ``assertAlmostEqual`` など、多数のアサーションメソッドが用意されている。詳しくは公式ドキュメントの一覧を参照。
+   このほかにも、値がコンテナに含まれるかを調べる ``assertIn``、``None`` であることを調べる ``assertIsNone``、浮動小数点数の近似比較を行う ``assertAlmostEqual`` など、多数のアサーションメソッドが用意されている。詳しくは公式ドキュメントの一覧を参照のこと。
 
 setUp / tearDown
 -------------------
@@ -84,6 +90,7 @@ setUp / tearDown
 各テストメソッドの実行前・実行後に共通の準備・後片付けを行いたい場合は、``setUp()``/``tearDown()`` をオーバーライドする。``setUp()`` は各テストメソッドの実行前に、``tearDown()`` は実行後に、それぞれ毎回呼び出される。テスト間で状態が影響し合わないよう、テストごとに新しい状態を用意するのに使う。
 
 .. code-block:: python
+   :linenos:
 
    import unittest
 
@@ -105,6 +112,32 @@ setUp / tearDown
        def test_append(self):
            self.stack.append(4)
            self.assertEqual(self.stack, [1, 2, 3, 4])
+
+非同期コードのテスト: IsolatedAsyncioTestCase
+------------------------------------------------
+
+``async def`` で定義したコルーチンをテストしたい場合は、``TestCase`` の代わりに ``unittest.IsolatedAsyncioTestCase`` を継承する。テストメソッド自体を ``async def`` で書けるようになり、その中で ``await`` を使える。準備・後片付けには ``asyncSetUp()``/``asyncTearDown()`` を使う。テストごとに新しいイベントループが用意されるため、テスト間でイベントループの状態が影響し合わない。
+
+.. code-block:: python
+   :linenos:
+
+   import asyncio
+   import unittest
+
+
+   async def fetch_value():
+       await asyncio.sleep(0.01)
+       return 42
+
+
+   class TestFetch(unittest.IsolatedAsyncioTestCase):
+
+       async def asyncSetUp(self):
+           self.expected = 42
+
+       async def test_fetch_value(self):
+           result = await fetch_value()
+           self.assertEqual(result, self.expected)
 
 .. note::
 

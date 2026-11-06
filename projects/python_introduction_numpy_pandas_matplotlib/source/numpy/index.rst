@@ -1,7 +1,7 @@
 numpy
 =====
 
-numpy の基本的な使い方を紹介します。
+numpy の基本的な使い方を紹介する。
 
 .. toctree::
    :maxdepth: 1

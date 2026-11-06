@@ -6,10 +6,10 @@ operator
 operator.itemgetter
 ----------------------
 
-指定したインデックスやキーで要素を取得する呼び出し可能オブジェクトを
-生成する。``sorted`` の ``key`` 引数としてよく利用される。
+指定したインデックスやキーで要素を取得する呼び出し可能オブジェクトを生成する。``sorted`` の ``key`` 引数としてよく利用される。
 
 .. code-block:: python
+   :linenos:
 
    >>> from operator import itemgetter
    >>> people = [{"name": "b", "age": 30}, {"name": "a", "age": 25}]
@@ -22,10 +22,10 @@ operator.itemgetter
 operator.attrgetter
 ----------------------
 
-指定した属性を取得する呼び出し可能オブジェクトを生成する。オブジェクトの
-リストを属性値でソートする際などに使う。
+指定した属性を取得する呼び出し可能オブジェクトを生成する。オブジェクトのリストを属性値でソートする際などに使う。
 
 .. code-block:: python
+   :linenos:
 
    >>> from operator import attrgetter
    >>> class Person:
@@ -43,6 +43,7 @@ operator.add / operator.mul などの演算子関数
 ``+`` や ``*`` といった演算子を、関数として呼び出せる形にしたもの。``functools.reduce`` のように関数を引数として渡す必要がある場面で ``lambda`` の代わりに使える。
 
 .. code-block:: python
+   :linenos:
 
    >>> from operator import add, mul
    >>> add(2, 3)
@@ -53,10 +54,10 @@ operator.add / operator.mul などの演算子関数
 functools.reduce との組み合わせ
 ------------------------------------
 
-演算子関数は :doc:`functools` の ``functools.reduce`` と組み合わせる
-ことで、累積計算を簡潔に書ける。
+演算子関数は :doc:`functools` の ``functools.reduce`` と組み合わせることで、累積計算を簡潔に書ける。
 
 .. code-block:: python
+   :linenos:
 
    >>> from functools import reduce
    >>> from operator import add, mul

@@ -1,19 +1,15 @@
 asyncio
 =======
 
-単一スレッド・単一プロセスの中で、コルーチンを用いて I/O バウンドな
-処理を並行実行するためのモジュール。イベントループが、待ち時間の発生した
-コルーチンから別のコルーチンへと実行を切り替えることで、効率よく
-多数の処理を同時に進めることができる。
+単一スレッド・単一プロセスの中で、コルーチンを用いて I/O バウンドな処理を並行実行するためのモジュール。イベントループが、待ち時間の発生したコルーチンから別のコルーチンへと実行を切り替えることで、効率よく多数の処理を同時に進めることができる。
 
 async def / await
 --------------------
 
-``async def`` で定義した関数はコルーチン関数となり、呼び出しても即座には
-実行されず、コルーチンオブジェクトを返す。``await`` を使うと、その
-コルーチンの完了を待ちながら、他の処理に制御を譲ることができる。
+``async def`` で定義した関数はコルーチン関数となり、呼び出しても即座には実行されず、コルーチンオブジェクトを返す。``await`` を使うと、そのコルーチンの完了を待ちながら、他の処理に制御を譲ることができる。
 
 .. code-block:: python
+   :linenos:
 
    >>> import asyncio
    >>>
@@ -25,24 +21,28 @@ async def / await
 asyncio.run
 ------------
 
-``asyncio.run()`` はイベントループを新規作成し、渡したコルーチンを
-実行してループを閉じる。トップレベルの非同期プログラムを起動する際の
-基本的な入り口となる関数。
+``asyncio.run()`` はイベントループを新規作成し、渡したコルーチンを実行してループを閉じる。トップレベルの非同期プログラムを起動する際の基本的な入り口となる関数である。
 
 .. code-block:: python
+   :linenos:
 
    >>> asyncio.run(say_hello("Alice", 1))
    こんにちは、Aliceさん
 
+.. note::
+
+   古い資料では ``asyncio.get_event_loop()`` でイベントループを取得し、``loop.run_until_complete()`` で実行するコードが見られるが、新しいコードでは ``asyncio.run()`` を使う。実行中のイベントループが存在しない状態で ``get_event_loop()`` を呼ぶと、3.14 以降は ``RuntimeError`` になる。また、イベントループポリシー（``asyncio.set_event_loop_policy()`` など）の仕組みは 3.14 で非推奨となった。同じイベントループで複数のコルーチンを順に実行したい場合は、3.11 で追加された ``asyncio.Runner`` を使う。
+
 asyncio.create_task / asyncio.gather
 ---------------------------------------
 
-``create_task()`` はコルーチンをイベントループ上のタスクとしてスケジュールし、即座にバックグラウンドで実行を開始させる。複数のコルーチンをまとめて並行実行し、すべての結果を待ちたい場合は ``asyncio.gather()`` を使う。
+``create_task()`` はコルーチンをイベントループ上のタスクとしてスケジュールし、呼び出し元が ``await`` などで制御を手放した時点で、バックグラウンドでの実行が始まる。戻り値の ``Task`` オブジェクトは ``await`` して結果を受け取れる。なお、イベントループはタスクへの弱い参照しか保持しないため、完了前にタスクがガベージコレクションされないよう、戻り値は変数などに保持しておく必要がある。複数のコルーチンをまとめて並行実行し、すべての結果を待ちたい場合は ``asyncio.gather()`` を使う。
 
 .. code-block:: python
+   :linenos:
 
    >>> async def main():
-   ...     # 3 つのタスクを同時にスケジュール
+   ...     # 3 つのコルーチンをタスクとして同時にスケジュール
    ...     await asyncio.gather(
    ...         say_hello("Alice", 1),
    ...         say_hello("Bob", 2),
@@ -59,14 +59,10 @@ asyncio.create_task / asyncio.gather
 asyncio.TaskGroup による構造化された並行実行
 ------------------------------------------------
 
-Python 3.11 以降では、``gather()`` の代わりに ``asyncio.TaskGroup`` を
-使うことが推奨されている。``async with`` ブロックを抜ける際に、ブロック
-内で ``create_task()`` した全タスクの完了を待つ。いずれかのタスクが
-例外を発生させた場合、他の実行中のタスクは自動的にキャンセルされ、
-例外はブロックを抜ける際にまとめて送出される。``gather()`` よりも
-キャンセルと例外伝播の扱いが安全で分かりやすい。
+Python 3.11 で追加された ``asyncio.TaskGroup`` は、``gather()`` に代わるより安全な選択肢である。``async with`` ブロックを抜ける際に、ブロック内で ``tg.create_task()`` した全タスクの完了を待つ。いずれかのタスクが例外を発生させた場合、他の実行中のタスクは自動的にキャンセルされ、発生した例外は ``ExceptionGroup`` にまとめて送出される。``gather()`` よりもキャンセルと例外伝播の扱いが安全で分かりやすい。
 
 .. code-block:: python
+   :linenos:
 
    >>> async def main():
    ...     async with asyncio.TaskGroup() as tg:
@@ -79,13 +75,52 @@ Python 3.11 以降では、``gather()`` の代わりに ``asyncio.TaskGroup`` �
    こんにちは、Carolさん
    こんにちは、Bobさん
 
+``ExceptionGroup`` は ``except*`` 構文（3.11 以降）で、含まれる例外の型ごとに処理できる。
+
+.. code-block:: python
+   :linenos:
+
+   >>> async def fail():
+   ...     raise ValueError("boom")
+   ...
+   >>> async def main():
+   ...     try:
+   ...         async with asyncio.TaskGroup() as tg:
+   ...             tg.create_task(say_hello("Alice", 1))
+   ...             tg.create_task(fail())
+   ...     except* ValueError as eg:
+   ...         print(f"失敗: {eg.exceptions}")
+   ...
+   >>> asyncio.run(main())
+   失敗: (ValueError('boom'),)
+
+asyncio.timeout によるタイムアウト
+------------------------------------
+
+Python 3.11 で追加された ``asyncio.timeout()`` を ``async with`` で使うと、ブロック内の処理に制限時間を設けられる。時間内に終わらなかった場合、ブロック内の処理はキャンセルされ、``TimeoutError`` が送出される。
+
+.. code-block:: python
+   :linenos:
+
+   >>> async def main():
+   ...     try:
+   ...         async with asyncio.timeout(1):
+   ...             await say_hello("Bob", 2)
+   ...     except TimeoutError:
+   ...         print("タイムアウトしました")
+   ...
+   >>> asyncio.run(main())
+   タイムアウトしました
+
+単一のコルーチンにタイムアウトを設定するだけなら、従来からある ``asyncio.wait_for(coro, timeout)`` も使える。
+
 asyncio.Queue によるタスク間の連携
 -------------------------------------
 
-コルーチン同士でデータをやり取りしたい場合は ``asyncio.Queue`` が使える。
-プロデューサー・コンシューマー間の連携によく利用される。
+コルーチン同士でデータをやり取りしたい場合は ``asyncio.Queue`` が使える。プロデューサー・コンシューマー間の連携によく利用される。
 
 .. code-block:: python
+   :linenos:
 
    >>> async def producer(queue):
    ...     for i in range(3):
@@ -110,4 +145,4 @@ asyncio.Queue によるタスク間の連携
 
 .. note::
 
-   ``asyncio`` はシングルスレッドで動作するため、GIL による制限が問題にならず、スレッド切り替えのオーバーヘッドやロックによる競合状態の心配も基本的に不要になる。大量の同時ネットワーク接続を扱うサーバーなど、I/O 待ちの処理を極めて多数同時に扱いたい場合、``threading`` よりも ``asyncio`` の方が少ないリソースで効率よくスケールすることが多い。ただし、対象のライブラリが async 対応している必要があり、CPU バウンドな処理には :doc:`multiprocessing` が適している。
+   ``asyncio`` は 1 つのスレッドの中で、``await`` の地点でのみ処理を切り替えるため、スレッド切り替えのオーバーヘッドがなく、ロックを必要とする競合状態の心配も（``await`` をまたがない限り）基本的に不要になる。大量の同時ネットワーク接続を扱うサーバーなど、I/O 待ちの処理を極めて多数同時に扱いたい場合、``threading`` よりも ``asyncio`` の方が少ないリソースで効率よくスケールすることが多い。ただし、対象のライブラリが async 対応している必要がある。また、CPU バウンドな処理はイベントループ全体を止めてしまうため、:doc:`multiprocessing` などで別プロセスに逃がすのが適している（ブロッキングする関数を別スレッドで実行するには ``asyncio.to_thread()`` が使える）。

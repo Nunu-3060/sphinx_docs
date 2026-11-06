@@ -1,7 +1,7 @@
 オブジェクト検査・リフレクション
 ================================
 
-オブジェクトの型や属性を実行時に調べる・操作するための関数群。
+オブジェクトの型や属性を実行時に調べたり操作したりするための関数群と、文字列として与えたコードを動的に評価・実行する関数について解説する。
 
 type
 ----
@@ -9,15 +9,17 @@ type
 オブジェクトの型を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> type(42)
    <class 'int'>
    >>> type("abc")
    <class 'str'>
 
-3引数版 ``type(name, bases, namespace)`` を使うと、``class`` 文を使わずに動的にクラスを生成できる。
+3 引数版 ``type(name, bases, namespace)`` を使うと、``class`` 文を使わずに動的にクラスを生成できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> Point = type("Point", (), {"x": 0, "y": 0})
    >>> p = Point()
@@ -30,6 +32,7 @@ isinstance
 オブジェクトが指定した型（またはそのサブクラス）のインスタンスかどうかを判定する。
 
 .. code-block:: python
+   :linenos:
 
    >>> isinstance(42, int)
    True
@@ -42,6 +45,7 @@ issubclass
 クラスが指定したクラス（またはそのサブクラス）かどうかを判定する。
 
 .. code-block:: python
+   :linenos:
 
    >>> issubclass(bool, int)
    True
@@ -49,9 +53,10 @@ issubclass
 id
 --
 
-オブジェクトの識別値（CPythonではメモリアドレス相当）を返す。
+オブジェクトの識別値（CPython ではメモリアドレス相当）を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> a = [1, 2, 3]
    >>> b = a
@@ -69,6 +74,7 @@ hasattr / getattr / setattr / delattr
 オブジェクトの属性の有無を調べたり、取得・設定・削除したりする。
 
 .. code-block:: python
+   :linenos:
 
    >>> class Point:
    ...     x = 1
@@ -89,9 +95,10 @@ dir
 オブジェクトが持つ属性・メソッドの名前一覧を返す。引数を省略すると現在のスコープの名前一覧を返す。また、:doc:`class_helpers` で説明する ``super`` や ``property`` などの機能を使って定義したクラスの属性も、``dir`` で確認できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> dir([])[:3]
-   ['__add__', '__class__', '__contains__']
+   ['__add__', '__class__', '__class_getitem__']
 
 vars
 ----
@@ -99,6 +106,7 @@ vars
 オブジェクトの ``__dict__`` 属性を返す。引数を省略すると現在のローカル変数の辞書を返し、これは ``locals()`` と等価である（モジュールレベルの変数一覧を得るには ``globals()`` を使う）。
 
 .. code-block:: python
+   :linenos:
 
    >>> class Point:
    ...     def __init__(self):
@@ -113,10 +121,11 @@ hash
 オブジェクトのハッシュ値（整数）を返す。ハッシュ可能なオブジェクトのみ辞書のキーや集合（``set`` / ``frozenset``）の要素にできる（:doc:`type_conversion` の ``frozenset`` の項も参照）。リストや辞書のようなミュータブルなオブジェクトはハッシュ可能ではない。
 
 .. code-block:: python
+   :linenos:
 
    >>> hash(42)
    42
-   >>> hash("abc")  # 実行毎にランダム化されるため値は環境によって異なる
+   >>> hash("abc")  # 文字列のハッシュ値はプロセスごとにランダム化されるため、実行ごとに異なる
    -4044789205657692274
 
 callable
@@ -125,8 +134,38 @@ callable
 オブジェクトが呼び出し可能（関数のように ``()`` で呼べる）かどうかを判定する。
 
 .. code-block:: python
+   :linenos:
 
    >>> callable(len)
    True
    >>> callable(42)
    False
+
+eval / exec / compile
+---------------------
+
+``eval`` は文字列として与えた式を評価してその値を返し、``exec`` は文（複数行のコードも可）を実行して常に ``None`` を返す。``compile`` はソースコードをコードオブジェクトに変換し、``eval`` / ``exec`` に渡せるようにする。
+
+.. code-block:: python
+   :linenos:
+
+   >>> eval("1 + 2 * 3")
+   7
+   >>> namespace = {}
+   >>> exec("x = 10\ny = x * 2", namespace)
+   >>> namespace["y"]
+   20
+   >>> code = compile("x + 1", "<string>", "eval")
+   >>> eval(code, {"x": 41})
+   42
+
+.. warning::
+
+   ``eval`` / ``exec`` は渡された文字列を任意の Python コードとして実行するため、ユーザー入力や外部ファイルなど信頼できないデータに対して使ってはならない。``globals`` 引数で名前空間を制限しても安全にはならない。文字列で表現されたリテラル（数値・文字列・リスト・辞書など）を値に変換したいだけであれば、リテラル以外を受け付けない ``ast.literal_eval`` を使う（:doc:`../stdlib/misc/ast` を参照）。
+
+   .. code-block:: python
+      :linenos:
+
+      >>> import ast
+      >>> ast.literal_eval("{'a': [1, 2, 3]}")
+      {'a': [1, 2, 3]}

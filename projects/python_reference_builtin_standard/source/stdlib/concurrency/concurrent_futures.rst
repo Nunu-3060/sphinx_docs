@@ -6,10 +6,10 @@ concurrent.futures
 ThreadPoolExecutor
 --------------------
 
-スレッドのプールを使って処理を並行実行する。ファイル I/O やネットワーク
-アクセスのような I/O バウンドな処理に向いている。
+スレッドのプールを使って処理を並行実行する。ファイル I/O やネットワークアクセスのような I/O バウンドな処理に向いている。
 
 .. code-block:: python
+   :linenos:
 
    >>> from concurrent.futures import ThreadPoolExecutor
    >>> import time
@@ -31,36 +31,63 @@ ProcessPoolExecutor
 プロセスのプールを使って処理を並列実行する。GIL の影響を受けないため、CPU バウンドな計算処理を複数コアで高速化したい場合に向いている。インタフェースは ``ThreadPoolExecutor`` とほぼ同じ。
 
 .. code-block:: python
+   :linenos:
 
-   >>> from concurrent.futures import ProcessPoolExecutor
-   >>>
-   >>> def is_prime(n):
-   ...     if n < 2:
-   ...         return False
-   ...     return all(n % i for i in range(2, int(n ** 0.5) + 1))
-   ...
-   >>> if __name__ == "__main__":
-   ...     numbers = [1000003, 1000033, 1000037]
-   ...     with ProcessPoolExecutor() as executor:
-   ...         results = list(executor.map(is_prime, numbers))
-   ...     print(results)
-   ...
-   [True, True, True]
+   from concurrent.futures import ProcessPoolExecutor
+
+   def is_prime(n):
+       if n < 2:
+           return False
+       return all(n % i for i in range(2, int(n ** 0.5) + 1))
+
+   if __name__ == "__main__":
+       numbers = [1000003, 1000033, 1000037]
+       with ProcessPoolExecutor() as executor:
+           results = list(executor.map(is_prime, numbers))
+       print(results)
+   # 出力: [True, True, True]
 
 .. note::
 
-   ``ProcessPoolExecutor`` に渡す関数も、``multiprocessing`` と同様に pickle 可能である必要がある。つまりモジュールのトップレベルで定義された（import 可能な）関数でなければならず、ラムダ式や関数内で定義したクロージャ、対話モードでその場に定義した関数は使えない。詳しくは :doc:`multiprocessing` を参照。
+   ``ProcessPoolExecutor`` に渡す関数も、``multiprocessing`` と同様に pickle 可能である必要がある。つまりモジュールのトップレベルで定義された（import 可能な）関数でなければならず、ラムダ式や関数内で定義したクロージャ、対話モードでその場に定義した関数は使えない。そのため上の例はスクリプトファイルとして実行する必要がある。また、子プロセスの生成方式によってはメインモジュールが import し直されるため、``if __name__ == "__main__":`` も必要である。詳しくは :doc:`multiprocessing` を参照。
+
+InterpreterPoolExecutor
+-------------------------
+
+Python 3.14 で追加された ``Executor`` で、同じプロセス内に複数のサブインタプリタを作成し、それぞれのワーカースレッドで別々のインタプリタを動かす（PEP 734）。各インタプリタは独立した GIL を持つため、``ProcessPoolExecutor`` と同様に CPU バウンドな処理を並列実行でき、しかもプロセスを起動するより軽量である。
+
+.. code-block:: python
+   :linenos:
+
+   from concurrent.futures import InterpreterPoolExecutor
+
+   def is_prime(n):
+       if n < 2:
+           return False
+       return all(n % i for i in range(2, int(n ** 0.5) + 1))
+
+   if __name__ == "__main__":
+       numbers = [1000003, 1000033, 1000037]
+       with InterpreterPoolExecutor() as executor:
+           results = list(executor.map(is_prime, numbers))
+       print(results)
+   # 出力: [True, True, True]
+
+.. note::
+
+   インタプリタ間ではモジュールやオブジェクトが共有されないため、``ProcessPoolExecutor`` と同様に、渡す関数や引数・戻り値は pickle 可能などの制約を満たす必要がある。また、サブインタプリタに対応していない C 拡張モジュール（サードパーティ製の一部ライブラリなど）は import できない場合がある。
 
 submit と Future
 -------------------
 
-``map()`` が複数の入力に同じ関数を適用するのに対し、``submit()`` は1 つのタスクを投入し、その結果を表す ``Future`` オブジェクトを即座に返す。``Future.result()`` を呼ぶと、タスクの完了まで待って結果を取得する。
+``map()`` が複数の入力に同じ関数を適用するのに対し、``submit()`` は 1 つのタスクを投入し、その結果を表す ``Future`` オブジェクトを即座に返す。``Future.result()`` を呼ぶと、タスクの完了まで待って結果を取得する。
 
 .. code-block:: python
+   :linenos:
 
    >>> with ThreadPoolExecutor(max_workers=2) as executor:
    ...     future = executor.submit(fetch, "http://d.example")
-   ...     print(future.done())  # まだ完了していないかもしれない
+   ...     print(future.done())  # 投入直後なので、通常はまだ完了していない
    ...     print(future.result())  # 完了を待って結果を取得
    ...
    False
@@ -69,11 +96,10 @@ submit と Future
 as_completed
 --------------
 
-複数のタスクを ``submit()`` した場合、完了した順に結果を処理したい
-ことがある。``as_completed()`` は、渡された ``Future`` の集合の中から
-完了したものを順次イテレートする。
+複数のタスクを ``submit()`` した場合、完了した順に結果を処理したいことがある。``as_completed()`` は、渡された ``Future`` の集合の中から完了したものを順次イテレートする。
 
 .. code-block:: python
+   :linenos:
 
    >>> from concurrent.futures import as_completed
    >>>
@@ -87,10 +113,10 @@ as_completed
 例外の伝播
 ------------
 
-ワーカー内のタスクで例外が発生しても、その場でエラーが表面化するわけ
-ではない。例外は ``Future`` に保持され、``Future.result()`` を呼び出した時点で再送出される。``Future.exception()`` を使うと、例外を発生させずにその例外オブジェクトを取得できる（例外が発生していなければ ``None`` を返す）。タスクが失敗していても ``result()`` を呼ぶまで気づかない、というのはよくある落とし穴である。
+ワーカー内のタスクで例外が発生しても、その場でエラーが表面化するわけではない。例外は ``Future`` に保持され、``Future.result()`` を呼び出した時点で再送出される。``Future.exception()`` を使うと、例外を発生させずにその例外オブジェクトを取得できる（例外が発生していなければ ``None`` を返す）。タスクが失敗していても ``result()`` を呼ぶまで気づかない、というのはよくある落とし穴である。
 
 .. code-block:: python
+   :linenos:
 
    >>> def fail():
    ...     raise ValueError("boom")
@@ -111,4 +137,4 @@ as_completed
 
 .. note::
 
-   ``ThreadPoolExecutor`` と ``ProcessPoolExecutor`` は同じ ``Executor`` インタフェース（``submit`` / ``map`` / ``shutdown``）を共有しているため、I/O バウンドな処理か CPU バウンドな処理かに応じて、コードをほとんど変更せずに切り替えることができる。より細かく低レベルな制御が必要な場合は :doc:`threading` や :doc:`multiprocessing` を、非同期 I/O を中心に設計する場合は :doc:`asyncio` を検討するとよい。
+   ``ThreadPoolExecutor``・``ProcessPoolExecutor``・``InterpreterPoolExecutor`` は同じ ``Executor`` インタフェース（``submit`` / ``map`` / ``shutdown``）を共有しているため、I/O バウンドな処理か CPU バウンドな処理かに応じて、コードをほとんど変更せずに切り替えることができる。より細かく低レベルな制御が必要な場合は :doc:`threading` や :doc:`multiprocessing` を、非同期 I/O を中心に設計する場合は :doc:`asyncio` を検討するとよい。

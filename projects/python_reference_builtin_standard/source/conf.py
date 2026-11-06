@@ -45,3 +45,20 @@ intersphinx_mapping = {
 # Give up on an unreachable server address after this many seconds and try
 # the next one. Without it, the build can hang while fetching the inventory.
 intersphinx_timeout = 10
+
+
+# -- Build hooks -------------------------------------------------------------
+
+def _remove_empty_sources_dir(app, exception):
+    """Remove the empty _sources directory left behind by html_copy_source = False."""
+    import os
+
+    if exception is not None or app.builder.format != 'html':
+        return
+    sources_dir = os.path.join(app.outdir, '_sources')
+    if os.path.isdir(sources_dir) and not os.listdir(sources_dir):
+        os.rmdir(sources_dir)
+
+
+def setup(app):
+    app.connect('build-finished', _remove_empty_sources_dir)

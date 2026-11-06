@@ -6,9 +6,10 @@
 super
 -----
 
-親クラス（スーパークラス）のメソッド呼び出しを委譲するためのプロキシオブジェクトを返す。
+親クラス（スーパークラス）のメソッドを呼び出すためのプロキシオブジェクトを返す。正確には、メソッド解決順序（MRO）上で次に位置するクラスへ属性の探索を委譲する。
 
 .. code-block:: python
+   :linenos:
 
    class Base:
        def greet(self):
@@ -24,17 +25,32 @@ property
 メソッドを属性のようにアクセスできるようにする（ゲッター・セッターの定義）。
 
 .. code-block:: python
+   :linenos:
 
    class Circle:
        def __init__(self, radius):
            self._radius = radius
 
        @property
+       def radius(self):
+           return self._radius
+
+       @radius.setter
+       def radius(self, value):
+           if value < 0:
+               raise ValueError("radius must be non-negative")
+           self._radius = value
+
+       @property
        def area(self):
            return 3.14 * self._radius ** 2
 
-   >>> Circle(2).area
+   >>> c = Circle(2)
+   >>> c.area
    12.56
+   >>> c.radius = 3
+   >>> c.radius
+   3
 
 staticmethod
 ------------
@@ -42,6 +58,7 @@ staticmethod
 インスタンスやクラスに依存しない、クラスの名前空間に属するメソッドを定義する。
 
 .. code-block:: python
+   :linenos:
 
    class Math:
        @staticmethod
@@ -57,6 +74,7 @@ classmethod
 第一引数にクラス自身を受け取るメソッドを定義する。代替コンストラクタなどでよく使われる。
 
 .. code-block:: python
+   :linenos:
 
    class Point:
        def __init__(self, x, y):

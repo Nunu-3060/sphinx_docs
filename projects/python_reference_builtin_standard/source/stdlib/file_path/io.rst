@@ -9,6 +9,7 @@ io.StringIO
 メモリ上に文字列を保持するテキストストリーム。``open()`` で開いたテキストファイルと同じように ``read`` / ``write`` / ``readline`` などが使える。
 
 .. code-block:: python
+   :linenos:
 
    >>> import io
    >>> buf = io.StringIO()
@@ -29,6 +30,7 @@ io.BytesIO
 メモリ上にバイト列を保持するバイナリストリーム。画像データやネットワークから受信したバイナリデータなどを、ファイルに書き出さずに処理したい場合に使う。
 
 .. code-block:: python
+   :linenos:
 
    >>> import io
    >>> buf = io.BytesIO()
@@ -47,6 +49,7 @@ io.BytesIO
 ファイルを受け取って処理する関数をテストする際、実際にディスクへファイルを作成する代わりに ``StringIO`` / ``BytesIO`` を渡すことで、高速かつ副作用のないテストが書ける。
 
 .. code-block:: python
+   :linenos:
 
    >>> def count_lines(fileobj):
    ...     return sum(1 for _ in fileobj)
@@ -62,6 +65,7 @@ open() が返すオブジェクトとの関係
 組み込み関数 ``open()`` は、モードに応じて ``io`` モジュールのクラスのインスタンスを返す。テキストモード（``"r"`` など）では ``io.TextIOWrapper``、バイナリモード（``"rb"`` など）では ``io.BufferedReader`` や ``io.BufferedWriter`` が返される。
 
 .. code-block:: python
+   :linenos:
 
    >>> import io
    >>> f = open("source/index.rst", "r", encoding="utf-8")

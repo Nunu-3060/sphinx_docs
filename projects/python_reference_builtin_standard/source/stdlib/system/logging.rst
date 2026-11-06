@@ -1,18 +1,15 @@
 logging
 =======
 
-アプリケーションの実行状況やエラーを記録するための標準的な仕組みを
-提供するモジュール。出力先やフォーマット、重要度に応じた出力可否を
-柔軟に設定できるため、本番運用を前提としたコードでは ``print`` の
-代わりに ``logging`` を使うことが強く推奨される。
+アプリケーションの実行状況やエラーを記録するための標準的な仕組みを提供するモジュール。出力先やフォーマット、重要度に応じた出力可否を柔軟に設定できるため、本番運用を前提としたコードでは ``print`` の代わりに ``logging`` を使うことが強く推奨される。
 
 logging.basicConfig
 ---------------------
 
-ルートロガーに対する基本的な設定（出力レベル、フォーマット、出力先
-など）を一度だけ行う。通常はプログラムの起動時に一度だけ呼び出す。
+ルートロガーに対する基本的な設定（出力レベル、フォーマット、出力先など）を一度だけ行う。通常はプログラムの起動時に一度だけ呼び出す。
 
 .. code-block:: python
+   :linenos:
 
    >>> import logging
    >>> logging.basicConfig(
@@ -25,6 +22,7 @@ logging.basicConfig
    ``basicConfig`` はプロセス内で **最初に呼ばれたときだけ** 効果を持つ。ルートロガーに既にハンドラが設定されている状態で ``basicConfig`` を再度呼び出しても、2 回目以降の呼び出しは黙って無視され、``level`` や ``format`` の変更は反映されない。設定を強制的にやり直したい場合は ``force=True`` を渡す必要がある。
 
    .. code-block:: python
+      :linenos:
 
       >>> logging.basicConfig(level=logging.DEBUG)  # 既に設定済みなので無視される
       >>> logging.basicConfig(level=logging.DEBUG, force=True)  # 強制的に再設定
@@ -32,33 +30,25 @@ logging.basicConfig
 logging.getLogger
 -------------------
 
-モジュールごとに独立したロガーを取得する。``__name__`` を渡すのが
-慣例で、ログの出力元がどのモジュールかを識別しやすくなる。
+モジュールごとに独立したロガーを取得する。``__name__`` を渡すのが慣例で、ログの出力元がどのモジュールかを識別しやすくなる。
 
 .. code-block:: python
+   :linenos:
 
    >>> import logging
    >>> logger = logging.getLogger(__name__)
    >>> logger.info("処理を開始します")  # doctest: +SKIP
-   2024-01-01 12:00:00 [INFO] __main__: 処理を開始します
+   2024-01-01 12:00:00,123 [INFO] __main__: 処理を開始します
 
 ログレベル（DEBUG / INFO / WARNING / ERROR / CRITICAL）
 -----------------------------------------------------------
 
-ログには重要度に応じた 5 段階のレベルがあり、``basicConfig`` で設定した ``level`` 未満のメッセージは出力されない。デフォルトのレベルは ``WARNING`` であるため、``INFO`` 以下を表示するには明示的な設定が必要。
+ログには重要度に応じた 5 段階のレベルがあり、``basicConfig`` で設定した ``level`` 未満のメッセージは出力されない。デフォルトのレベルは ``WARNING`` であるため、``INFO`` 以下を表示するには明示的な設定が必要である。
 
-以下は、``basicConfig`` を一度も呼んでいない別プロセスでの例
-（このページの他の例とは独立している）。``basicConfig`` を呼ばなくても、
-ロガーの実効レベルは既定で ``WARNING`` であり、標準エラー出力への
-出力自体は Python の logging モジュールが用意する「最終手段のハンドラ
-（handler of last resort）」によって行われる。このときルートロガーには
-何のハンドラも設定されていないが、``WARNING`` 以上のメッセージは
-自動的に標準エラー出力に表示される（``DEBUG`` と ``INFO`` は既定の
-レベル ``WARNING`` 未満のため、そもそも出力されない）。このハンドラ
-にはフォーマッタが設定されて
-いないため、メッセージ本文のみがそのまま出力される。
+以下は、``basicConfig`` を一度も呼んでいない別プロセスでの例（このページの他の例とは独立している）。``basicConfig`` を呼ばなくても、ロガーの実効レベルは既定で ``WARNING`` であり、標準エラー出力への出力自体は ``logging`` モジュールが用意する「最終手段のハンドラ（handler of last resort）」によって行われる。このときルートロガーには何のハンドラも設定されていないが、``WARNING`` 以上のメッセージは自動的に標準エラー出力に表示される（``DEBUG`` と ``INFO`` は既定のレベル ``WARNING`` 未満のため、そもそも出力されない）。このハンドラにはフォーマッタが設定されていないため、メッセージ本文のみがそのまま出力される。
 
 .. code-block:: python
+   :linenos:
 
    >>> import logging
    >>> logger = logging.getLogger(__name__)
@@ -74,16 +64,14 @@ logging.getLogger
 なぜ本番コードで print ではなく logging を使うのか
 -------------------------------------------------------
 
-``print`` は常に標準出力へ出力され、後から出力の有無やレベルを
-制御できない。一方 ``logging`` は次のような利点を持つ。
+``print`` は常に標準出力へ出力され、後から出力の有無やレベルを制御できない。一方 ``logging`` は次のような利点を持つ。
 
-- レベルごとに出力の可否を切り替えられる（本番では ``INFO`` 以上のみ
-  出力し、調査時だけ ``DEBUG`` を有効にする、といった運用が可能）。
+- レベルごとに出力の可否を切り替えられる（本番では ``INFO`` 以上のみ出力し、調査時だけ ``DEBUG`` を有効にする、といった運用が可能）。
 - タイムスタンプや呼び出し元モジュール名などを自動的に付与できる。
-- ファイルやシステムログ、外部の監視サービスなど、出力先を後から
-  変更・追加しやすい。
+- ファイルやシステムログ、外部の監視サービスなど、出力先を後から変更・追加しやすい。
 
 .. code-block:: python
+   :linenos:
 
    >>> import logging
    >>> logging.basicConfig(
@@ -103,14 +91,12 @@ logging.getLogger
 logger.exception による例外の記録
 -------------------------------------
 
-``except`` ブロックの中で ``logger.exception(...)`` を呼ぶと、指定した
-メッセージを ``ERROR`` レベルで記録しつつ、現在処理中の例外のトレース
-バックを自動的に付加してくれる。``logger.error(msg, exc_info=True)`` と
-書くのと同じ効果だが、``exception`` の方が短く書ける。
+``except`` ブロックの中で ``logger.exception(...)`` を呼ぶと、指定したメッセージを ``ERROR`` レベルで記録しつつ、現在処理中の例外のトレースバックを自動的に付加してくれる。``logger.error(msg, exc_info=True)`` と書くのと同じ効果だが、``exception`` の方が短く書ける。
 
 前節までで ``basicConfig`` にファイル出力（``filename="app.log"``）を設定したが、ここではコンソールでの出力を確認するため、``force=True`` で既定のストリームハンドラ・既定のフォーマット（``"%(levelname)s:%(name)s:%(message)s"``）に一旦リセットしている。
 
 .. code-block:: python
+   :linenos:
 
    >>> import logging
    >>> logging.basicConfig(force=True)
@@ -122,19 +108,20 @@ logger.exception による例外の記録
    ...
    ERROR:__main__:計算中にエラーが発生しました
    Traceback (most recent call last):
-     File "<stdin>", line 2, in <module>
+     ...
    ZeroDivisionError: division by zero
 
 ``exception`` は ``except`` ブロックの外で呼んだり、記録したいレベルが ``ERROR`` 以外だったりする場合には使えない。その場合は任意のレベルのメソッドに ``exc_info=True`` を渡せば同様にトレースバックを付加できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> try:
    ...     1 / 0
    ... except ZeroDivisionError:
-   ...     logger.warning("計算に失敗しましたが処理を継続します", exc_info=True)
-   ...  # doctest: +SKIP
+   ...     logger.warning("計算に失敗しましたが処理を継続します", exc_info=True)  # doctest: +SKIP
+   ...
 
 .. note::
 
-   ライブラリを実装する場合、ライブラリ自身が ``basicConfig`` を呼ぶべきではない。出力設定はアプリケーション側に委ね、ライブラリ側は ``getLogger(__name__)`` でロガーを取得するだけにとどめるのが慣例。
+   ライブラリを実装する場合、ライブラリ自身が ``basicConfig`` を呼ぶべきではない。出力設定はアプリケーション側に委ね、ライブラリ側は ``getLogger(__name__)`` でロガーを取得するだけにとどめるのが慣例である。

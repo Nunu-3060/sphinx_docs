@@ -37,3 +37,18 @@ html_show_sourcelink = False
 # -- Options for matplotlib plot_directive ------------------------------------
 # .. plot:: が生成する図に "Source code" へのダウンロードリンクを付けない
 plot_html_show_source_link = False
+
+
+# -- Line numbers for code examples -------------------------------------------
+# code-block だけでなく、plot ディレクティブの :include-source: が生成する
+# コードにも行番号を付けるため、すべての literal_block に linenos を設定する。
+
+def _add_linenos(app, doctree):
+    from docutils import nodes
+
+    for node in doctree.findall(nodes.literal_block):
+        node['linenos'] = True
+
+
+def setup(app):
+    app.connect('doctree-read', _add_linenos)

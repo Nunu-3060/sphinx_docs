@@ -1,7 +1,7 @@
 pandas
 ======
 
-pandas の基本的な使い方を紹介します。
+pandas の基本的な使い方を紹介する。
 
 .. toctree::
    :maxdepth: 1

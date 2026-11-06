@@ -1,8 +1,7 @@
 functools
 =========
 
-高階関数（関数を引数に取ったり返したりする関数）や、関数・呼び出し可能
-オブジェクトに対する操作をまとめたモジュール。
+高階関数（関数を引数に取ったり返したりする関数）や、関数・呼び出し可能オブジェクトに対する操作をまとめたモジュール。
 
 functools.reduce
 ------------------
@@ -10,6 +9,7 @@ functools.reduce
 イテラブルの要素を左から順に累積的に関数へ適用し、単一の値にまとめる。
 
 .. code-block:: python
+   :linenos:
 
    >>> from functools import reduce
    >>> reduce(lambda acc, x: acc + x, [1, 2, 3, 4])
@@ -20,10 +20,10 @@ functools.reduce
 functools.partial
 --------------------
 
-既存の関数の一部の引数をあらかじめ固定した、新しい呼び出し可能
-オブジェクトを生成する。コールバック関数に引数を渡したい場合などに便利。
+既存の関数の一部の引数をあらかじめ固定した、新しい呼び出し可能オブジェクトを生成する。コールバック関数に引数を渡したい場合などに便利。
 
 .. code-block:: python
+   :linenos:
 
    >>> from functools import partial
    >>> def power(base, exponent):
@@ -33,15 +33,26 @@ functools.partial
    >>> square(5)
    25
 
+Python 3.14 以降では、``functools.Placeholder`` を使って位置引数の途中を空けたまま固定できる。
+
+.. code-block:: python
+   :linenos:
+
+   >>> from functools import partial, Placeholder
+   >>> square = partial(pow, Placeholder, 2)  # 第 1 引数を空けて第 2 引数を固定
+   >>> square(5)
+   25
+
 functools.lru_cache / functools.cache
 ----------------------------------------
 
-関数の呼び出し結果をキャッシュし、同じ引数での再計算を避けるデコレータ。``lru_cache`` は保持件数の上限を指定でき、``cache`` は上限なしでキャッシュする ``lru_cache(maxsize=None)`` の簡易版。
+関数の呼び出し結果をキャッシュし、同じ引数での再計算を避けるデコレータ。``lru_cache`` は保持件数の上限（``maxsize``、デフォルトは 128）を指定でき、上限を超えると最も長く使われていない結果から破棄する。``cache`` は上限なしでキャッシュする ``lru_cache(maxsize=None)`` の簡易版である。引数はキャッシュのキーとして使われるため、ハッシュ可能でなければならない。
 
 .. code-block:: python
+   :linenos:
 
-   >>> from functools import lru_cache
-   >>> @lru_cache(maxsize=None)
+   >>> from functools import cache
+   >>> @cache
    ... def fib(n):
    ...     return n if n < 2 else fib(n - 1) + fib(n - 2)
    ...
@@ -56,6 +67,7 @@ functools.wraps
 デコレータを書く際に、ラップ対象の関数が持つ ``__name__`` や ``__doc__`` などのメタデータを、生成される wrapper 関数へコピーする。
 
 .. code-block:: python
+   :linenos:
 
    >>> from functools import wraps
    >>> def logged(func):
@@ -78,9 +90,10 @@ functools.wraps
 functools.singledispatch
 --------------------------
 
-第一引数の型に応じて呼び出す実装を切り替える関数を作成するデコレータ。``if isinstance(...)`` を連ねる代わりに、型ごとの処理を ``register()`` で個別の関数として追加していける。
+第一引数の型に応じて呼び出す実装を切り替える関数を作成するデコレータ。``if isinstance(...)`` を連ねる代わりに、型ごとの処理を ``register()`` で個別の関数として追加していける。型は引数の型ヒントから判定され、``int | float`` のような Union 型も指定できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> from functools import singledispatch
    >>> @singledispatch
@@ -108,6 +121,7 @@ functools.cmp_to_key
 2 引数を取り、負・0・正の値を返す旧スタイルの比較関数を、``sorted`` や ``list.sort`` の ``key`` に渡せる形式に変換する。
 
 .. code-block:: python
+   :linenos:
 
    >>> from functools import cmp_to_key
    >>> def compare(a, b):

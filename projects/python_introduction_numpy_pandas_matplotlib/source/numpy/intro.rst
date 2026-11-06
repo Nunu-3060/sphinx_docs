@@ -1,7 +1,7 @@
 numpy とは
 ==========
 
-numpy (Numerical Python) は、Python で数値計算を効率的に行うためのライブラリです。numpy が提供する多次元配列 ``ndarray`` は、pandas や matplotlib をはじめ多くのライブラリの基盤としても使われています。
+numpy (Numerical Python) は、Python で数値計算を効率的に行うためのライブラリである。numpy が提供する多次元配列 ``ndarray`` は、pandas や matplotlib をはじめ多くのライブラリの基盤としても使われている。
 
 公式サイト: `numpy <https://numpy.org/>`_
 
@@ -15,7 +15,7 @@ numpy (Numerical Python) は、Python で数値計算を効率的に行うため
 list と ndarray の違い
 ------------------------
 
-Python の ``list`` は要素ごとに異なる型を格納できる汎用的なコンテナですが、その分オーバーヘッドがあります。numpy の ``ndarray`` は同じ型のデータを連続したメモリ領域に格納するため、要素ごとの演算をまとめて高速に実行できます。
+Python の ``list`` は要素ごとに異なる型を格納できる汎用的なコンテナであるが、その分オーバーヘッドがある。numpy の ``ndarray`` は同じ型のデータを連続したメモリ領域に格納するため、要素ごとの演算をまとめて高速に実行できる。
 
 .. code-block:: python
 
@@ -29,4 +29,4 @@ Python の ``list`` は要素ごとに異なる型を格納できる汎用的な
    # ndarray は要素ごとに 2 倍される
    print(arr * 2)  # [2 4 6]
 
-このように、``ndarray`` を使うと「配列全体に対する演算」を直感的に書くことができます。次のページから、``ndarray`` の作成方法を見ていきます。
+このように、``ndarray`` を使うと「配列全体に対する演算」を直感的に書くことができる。次のページから、``ndarray`` の作成方法を見ていく。

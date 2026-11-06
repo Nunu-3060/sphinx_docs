@@ -1,16 +1,15 @@
 bisect
 ======
 
-ソート済みリストに対して、二分探索を用いた挿入位置の検索・挿入を行う
-関数群を提供するモジュール。線形探索より高速に、順序を保ったまま
-要素を追加できる。
+ソート済みリストに対して、二分探索を用いた挿入位置の検索・挿入を行う関数群を提供するモジュール。線形探索より高速に、順序を保ったまま要素を追加できる。
 
 bisect.bisect_left / bisect.bisect_right
 --------------------------------------------
 
-ソート済みリストに値を挿入する場合の位置を二分探索で求める。同じ値がすでに存在する場合、``bisect_left`` はその左側、``bisect_right`` （``bisect`` の別名）はその右側の位置を返す。
+ソート済みリストに値を挿入する場合の位置を二分探索で求める。同じ値がすでに存在する場合、``bisect_left`` はその左側、``bisect_right``\ （``bisect`` の別名）はその右側の位置を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> import bisect
    >>> data = [1, 3, 3, 5, 7]
@@ -27,6 +26,7 @@ bisect.insort
 値を挿入すべき位置を探し、実際にリストへ挿入するところまでを一度に行う。``list.append`` してから ``list.sort`` するより効率的にソート順を維持できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> import bisect
    >>> data = [1, 3, 5, 7]
@@ -34,16 +34,30 @@ bisect.insort
    >>> data
    [1, 3, 4, 5, 7]
 
-``insort`` は ``insort_right`` の別名であり、``bisect_right`` と同じ基準（同じ値が既に存在する場合はその右側）で挿入位置を決める。左側に挿入したい場合の対となる関数として ``insort_left`` （``bisect_left`` を使う版）も用意されている。
+``insort`` は ``insort_right`` の別名であり、``bisect_right`` と同じ基準（同じ値がすでに存在する場合はその右側）で挿入位置を決める。左側に挿入したい場合の対となる関数として ``insort_left``\ （``bisect_left`` を使う版）も用意されている。
 
 ソート済みリストを利用した二分探索
 --------------------------------------
 
-``bisect_left`` は、値がリスト中に存在するかどうかを二分探索で確認する
-用途にも使える。存在確認だけでなく、区間の境界を求める処理（成績の
-ランク分けなど）にも応用できる。
+``bisect_left`` は、値がリスト中に存在するかどうかを二分探索で確認する用途にも使える。返された位置にその値があれば存在すると判定できる。
 
 .. code-block:: python
+   :linenos:
+
+   >>> import bisect
+   >>> def contains(sorted_list, x):
+   ...     i = bisect.bisect_left(sorted_list, x)
+   ...     return i != len(sorted_list) and sorted_list[i] == x
+   ...
+   >>> contains([1, 3, 5, 7], 5)
+   True
+   >>> contains([1, 3, 5, 7], 4)
+   False
+
+存在確認だけでなく、区間の境界を求める処理（成績のランク分けなど）にも応用できる。
+
+.. code-block:: python
+   :linenos:
 
    >>> import bisect
    >>> def grade(score, breakpoints=[60, 70, 80, 90], grades="FDCBA"):
@@ -52,3 +66,19 @@ bisect.insort
    ...
    >>> [grade(s) for s in [55, 65, 85, 95]]
    ['F', 'D', 'B', 'A']
+
+key 引数
+------------
+
+各関数は ``key`` 引数を受け取り、要素から比較用の値を取り出す関数を指定できる。タプルや辞書のリストを、特定の項目でソートした状態のまま検索する場合に便利である。ただし ``key`` は検索対象の要素にだけ適用され、検索する値 ``x`` には適用されない（``insort`` 系では挿入する要素にも適用される）。
+
+.. code-block:: python
+   :linenos:
+
+   >>> import bisect
+   >>> users = [("Bob", 25), ("Alice", 30), ("Carol", 35)]  # 年齢順にソート済み
+   >>> bisect.bisect_left(users, 30, key=lambda u: u[1])
+   1
+   >>> bisect.insort(users, ("Dave", 28), key=lambda u: u[1])
+   >>> users
+   [('Bob', 25), ('Dave', 28), ('Alice', 30), ('Carol', 35)]

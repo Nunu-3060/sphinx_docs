@@ -1,33 +1,33 @@
 環境構築
 ========
 
-numpy、pandas、matplotlib を使い始めるための環境構築について説明します。
+numpy、pandas、matplotlib を使い始めるための環境構築について説明する。
 
 前提条件
 --------
 
-あらかじめ Python がインストールされている必要があります。`Python 公式サイト <https://www.python.org/>`_\ から Windows 用インストーラを入手してインストールしてください。インストーラの「Install launcher for all users (recommended)」は既定でチェックが入っており、これにより以降の手順で使用する ``py`` コマンド（py ランチャー）が有効になります。
+あらかじめ Python がインストールされている必要がある。`Python 公式サイト <https://www.python.org/>`_\ から Windows 用インストーラを入手してインストールすること。インストーラの「Install launcher for all users (recommended)」は既定でチェックが入っており、これにより以降の手順で使用する ``py`` コマンド（py ランチャー）が有効になる。
 
 .. code-block:: console
 
    > py --version
 
-上記のコマンドでバージョンが表示されれば、Python は正しくインストールされています。
+上記のコマンドでバージョンが表示されれば、Python は正しくインストールされている。
 
 .. note::
 
-   Python 3.10 は EOL（サポート終了）が近づいているため、これから環境を構築する場合は Python 3.11 以降のバージョンを利用することを推奨します。本ドキュメントのサンプルコードも、Python 3.11 以降での動作を前提としています。
+   Python 3.10 は 2026 年 10 月に EOL（サポート終了）を迎え、セキュリティ修正も提供されなくなった。これから環境を構築する場合は Python 3.11 以降、できれば最新の安定版を利用すること。なお、Python 3.11 も 2027 年 10 月に EOL を迎える予定である。本ドキュメントのサンプルコードは Python 3.11 以降での動作を前提としており、Python 3.14、numpy 2.5、pandas 3.1、matplotlib 3.11 で動作を確認している。
 
 pip を使ったインストール
 -------------------------
 
-Python のパッケージ管理ツール ``pip`` を使って、必要なライブラリをまとめてインストールします。
+Python のパッケージ管理ツール ``pip`` を使って、必要なライブラリをまとめてインストールする。
 
 .. code-block:: console
 
    > py -m pip install numpy pandas matplotlib
 
-インストールが完了したら、以下のコマンドで各ライブラリのバージョンを確認できます。
+インストールが完了したら、以下のコマンドで各ライブラリのバージョンを確認できる。
 
 .. code-block:: console
 
@@ -38,7 +38,7 @@ Python のパッケージ管理ツール ``pip`` を使って、必要なライ�
 仮想環境の利用（推奨）
 ----------------------
 
-プロジェクトごとに独立した環境を作るため、仮想環境の利用を推奨します。
+プロジェクトごとに独立した環境を作るため、仮想環境の利用を推奨する。
 
 .. code-block:: console
 
@@ -46,10 +46,12 @@ Python のパッケージ管理ツール ``pip`` を使って、必要なライ�
    > .venv\Scripts\activate
    (.venv) > py -m pip install numpy pandas matplotlib
 
+上の手順はコマンドプロンプトを想定している。PowerShell では ``.venv\Scripts\Activate.ps1`` で仮想環境を有効にする。スクリプトの実行が許可されていないというエラーが出る場合は、``Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`` で実行ポリシーを変更する。
+
 動作確認
 --------
 
-以下のスクリプトが正しく実行できれば、環境構築は完了です。
+以下のスクリプトが正しく実行できれば、環境構築は完了である。
 
 .. code-block:: python
 

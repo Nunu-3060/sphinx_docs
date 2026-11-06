@@ -9,6 +9,7 @@ os.getcwd / os.chdir
 カレントディレクトリの取得・変更を行う。
 
 .. code-block:: python
+   :linenos:
 
    >>> import os
    >>> os.getcwd()
@@ -21,9 +22,10 @@ os.getcwd / os.chdir
 os.listdir / os.scandir
 -------------------------
 
-ディレクトリ内のエントリ一覧を取得する。``scandir`` はファイル種別などの情報を保持したまま反復できるため、大量のファイルを扱う際は高速。
+ディレクトリ内のエントリ一覧を取得する。``listdir`` は名前の文字列のリストを返す。``scandir`` はファイル種別などの情報を保持した ``os.DirEntry`` オブジェクトのイテレータを返すため、種別判定を伴う場合に追加のシステムコールが減り、大量のファイルを扱う際に高速である。
 
 .. code-block:: python
+   :linenos:
 
    >>> os.listdir(".")  # doctest: +SKIP
    ['source', 'Makefile', 'build_html.bat']
@@ -33,9 +35,10 @@ os.listdir / os.scandir
 os.walk
 -------
 
-ディレクトリツリーを再帰的にたどり、各ディレクトリについて ``(ディレクトリパス, サブディレクトリ名のリスト, ファイル名のリスト)`` のタプルを生成する。ディレクトリ配下を丸ごと処理したい場合に最もよく使う関数。
+ディレクトリツリーを再帰的にたどり、各ディレクトリについて ``(ディレクトリパス, サブディレクトリ名のリスト, ファイル名のリスト)`` のタプルを生成する。ディレクトリ配下を丸ごと処理したい場合に最もよく使う関数である。
 
 .. code-block:: python
+   :linenos:
 
    >>> for dirpath, dirnames, filenames in os.walk("source/stdlib"):
    ...     print(dirpath, len(filenames))  # doctest: +SKIP
@@ -47,32 +50,38 @@ os.walk
 os.makedirs / os.remove / os.rmdir
 ------------------------------------
 
-ディレクトリ・ファイルの作成や削除を行う。
+ディレクトリ・ファイルの作成や削除を行う。``makedirs`` は中間ディレクトリもまとめて作成し、``exist_ok=True`` を指定すると既に存在していてもエラーにしない。``rmdir`` は空のディレクトリしか削除できない（中身ごと削除するには :doc:`shutil` の ``shutil.rmtree`` を使う）。
 
 .. code-block:: python
+   :linenos:
 
    >>> os.makedirs("a/b/c", exist_ok=True)
-   >>> open("a/b/c/file.txt", "w").close()
+   >>> open("a/b/c/file.txt", "w", encoding="utf-8").close()
    >>> os.remove("a/b/c/file.txt")
    >>> os.rmdir("a/b/c")
 
 os.environ
 ----------
 
-環境変数を辞書のように参照・設定する。
+環境変数を辞書のように参照・設定する。存在しないキーを ``[]`` で参照すると ``KeyError`` になるため、未設定の可能性がある場合は ``get()`` で既定値を指定する。
 
 .. code-block:: python
+   :linenos:
 
    >>> os.environ["PATH"]  # doctest: +SKIP
+   'C:\\Windows\\system32;C:\\Windows;...'
+   >>> os.environ["MY_APP_ENV"] = "production"  # 子プロセスにも引き継がれる
+   >>> del os.environ["MY_APP_ENV"]
    >>> os.environ.get("MY_APP_ENV", "development")
    'development'
 
 os.getpid / os.system / os.kill
 --------------------------------
 
-実行中のプロセスに関する情報の取得や、他プロセスの起動・制御も ``os`` モジュールの役割の一つ。``os.getpid()`` は現在のプロセス ID を返す。シェルコマンドを実行したい場合は ``os.system()``、他プロセスにシグナルを送りたい場合は ``os.kill()`` が使えるが、いずれもより高機能な :mod:`subprocess` モジュールで代替できることが多い。
+実行中のプロセスに関する情報の取得や、他プロセスの起動・制御も ``os`` モジュールの役割の 1 つである。``os.getpid()`` は現在のプロセス ID を返す。シェルコマンドを実行したい場合は ``os.system()``、他プロセスにシグナルを送りたい場合は ``os.kill()`` が使える。ただし、外部コマンドの実行には出力の取得やエラー処理が柔軟に行える :doc:`../system/subprocess` モジュールを使うのが推奨される。
 
 .. code-block:: python
+   :linenos:
 
    >>> os.getpid()  # doctest: +SKIP
    12345
@@ -85,9 +94,10 @@ os.getpid / os.system / os.kill
 os.path
 -------
 
-パス文字列を操作するサブモジュール。パスの結合や存在確認などによく使う。
+パス文字列を操作するサブモジュール。パスの結合や存在確認などによく使う。区切り文字は OS に応じて切り替わる（以下の例は Windows での出力）。
 
 .. code-block:: python
+   :linenos:
 
    >>> os.path.join("source", "index.rst")
    'source\\index.rst'

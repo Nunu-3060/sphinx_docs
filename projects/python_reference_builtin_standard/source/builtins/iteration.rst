@@ -9,6 +9,7 @@ len
 オブジェクトの長さ（要素数）を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> len([1, 2, 3])
    3
@@ -21,6 +22,7 @@ range
 等差数列を生成するイミュータブルなシーケンス型。
 
 .. code-block:: python
+   :linenos:
 
    >>> list(range(5))
    [0, 1, 2, 3, 4]
@@ -33,6 +35,7 @@ enumerate
 イテラブルの要素にインデックスを付与したイテレータを返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> list(enumerate(["a", "b", "c"]))
    [(0, 'a'), (1, 'b'), (2, 'c')]
@@ -43,9 +46,22 @@ zip
 複数のイテラブルの要素を組にまとめたイテレータを返す。最も短いイテラブルの長さで打ち切られる。
 
 .. code-block:: python
+   :linenos:
 
    >>> list(zip([1, 2, 3], ["a", "b", "c"]))
    [(1, 'a'), (2, 'b'), (3, 'c')]
+   >>> list(zip([1, 2, 3], ["a", "b"]))
+   [(1, 'a'), (2, 'b')]
+
+長さが揃っていることを前提とする場合は ``strict=True`` を指定すると、長さが異なるときに ``ValueError`` が送出され、データの欠落に気付ける。
+
+.. code-block:: python
+   :linenos:
+
+   >>> list(zip([1, 2, 3], ["a", "b"], strict=True))
+   Traceback (most recent call last):
+     ...
+   ValueError: zip() argument 2 is shorter than argument 1
 
 map
 ---
@@ -53,6 +69,7 @@ map
 イテラブルの各要素に関数を適用したイテレータを返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> list(map(str, [1, 2, 3]))
    ['1', '2', '3']
@@ -71,13 +88,14 @@ filter
 関数が ``True`` を返す要素だけを残したイテレータを返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> list(filter(lambda x: x % 2 == 0, range(10)))
    [0, 2, 4, 6, 8]
 
 .. note::
 
-   map の場合と同様の理由で、内包表記より ``filter`` が適する場面がある。``filter`` 特有の便利な使い方として、関数の代わりに ``None`` を渡す ``filter(None, xs)`` は、偽値（``0``、``''``、``None`` など）を取り除くイディオムとしてよく使われる。
+   ``map`` の場合と同様の理由で、内包表記より ``filter`` が適する場面がある。``filter`` 特有の便利な使い方として、関数の代わりに ``None`` を渡す ``filter(None, xs)`` は、偽値（``0``、``''``、``None`` など）を取り除くイディオムとしてよく使われる。
 
 sorted
 ------
@@ -85,6 +103,7 @@ sorted
 イテラブルの要素を並べ替えた新しいリストを返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> sorted([3, 1, 2])
    [1, 2, 3]
@@ -97,6 +116,7 @@ reversed
 シーケンスを逆順にたどるイテレータを返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> list(reversed([1, 2, 3]))
    [3, 2, 1]
@@ -107,6 +127,7 @@ sum
 イテラブルの要素の合計を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> sum([1, 2, 3])
    6
@@ -119,6 +140,7 @@ min / max
 イテラブル中の最小値・最大値を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> min([3, 1, 2])
    1
@@ -133,6 +155,7 @@ any / all
 ``any`` はいずれかの要素が真なら ``True``、``all`` はすべての要素が真なら ``True`` を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> any([0, 0, 1])
    True
@@ -141,16 +164,17 @@ any / all
 
 .. note::
 
-   空のイテラブルを渡した場合、``any`` は ``False``、``all`` は ``True`` を返す。これは「1つでも真の要素があるか（存在）」「すべての要素が真か（全称）」という論理を、要素が0個の場合にも数学的に一貫させた結果（空真理、vacuous truth）であり、バグではない。
+   空のイテラブルを渡した場合、``any`` は ``False``、``all`` は ``True`` を返す。これは「1 つでも真の要素があるか（存在）」「すべての要素が真か（全称）」という論理を、要素が 0 個の場合にも数学的に一貫させた結果（空真理、vacuous truth）であり、バグではない。
 
    .. code-block:: python
+      :linenos:
 
       >>> any([])
       False
       >>> all([])
       True
 
-   このため、``all()`` を「対象データがすべて条件を満たしているか」の検証に使う場合、対象が1件もないと意図せず ``True`` になってしまう点に注意が必要。件数チェックを別途行うなど、空である場合の扱いを明確にしておくとよい。
+   このため、``all()`` を「対象データがすべて条件を満たしているか」の検証に使う場合、対象が 1 件もないと意図せず ``True`` になってしまう点に注意が必要である。件数チェックを別途行うなど、空である場合の扱いを明確にしておくとよい。
 
 iter / next
 -----------
@@ -158,6 +182,7 @@ iter / next
 ``iter`` はイテラブルからイテレータを取得し、``next`` はイテレータから次の要素を取り出す。
 
 .. code-block:: python
+   :linenos:
 
    >>> it = iter([1, 2, 3])
    >>> next(it)

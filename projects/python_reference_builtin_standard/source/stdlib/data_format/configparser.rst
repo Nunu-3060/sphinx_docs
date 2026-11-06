@@ -1,16 +1,15 @@
 configparser
 =============
 
-INI ファイル形式（``[section]`` とキー・バリューの組で構成される設定ファイル）
-を読み書きするためのモジュール。アプリケーションの設定ファイルを扱う際によく使われる。
+INI ファイル形式（``[section]`` とキー・バリューの組で構成される設定ファイル）を読み書きするためのモジュール。アプリケーションの設定ファイルを扱う際によく使われる。
 
 ConfigParser の基本
 ----------------------
 
-``ConfigParser`` オブジェクトを生成し、``read`` でファイルを読み込む。
-設定はセクションごとに辞書のようにアクセスできる。
+``ConfigParser`` オブジェクトを生成し、``read`` でファイルを読み込む。設定はセクションごとに辞書のようにアクセスできる。``read`` は読み込みに成功したファイル名のリストを返し、存在しないファイルはエラーにならずに無視される。ファイルの存在を前提とする場合は、戻り値を確認するか、``open()`` で開いたファイルを ``read_file`` に渡す。
 
 .. code-block:: python
+   :linenos:
 
    >>> # config.ini の内容:
    >>> # [server]
@@ -33,6 +32,7 @@ ConfigParser の基本
 ``sections()`` でセクション名の一覧を、各セクションに対して ``options()`` や辞書メソッドでキーの一覧を取得できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> config.sections()
    ['server']
@@ -49,6 +49,7 @@ getint / getboolean による型変換
 ``config["section"]["key"]`` で取得した値は常に文字列になる。数値や真偽値として扱いたい場合は ``getint``、``getfloat``、``getboolean`` を使うと自動的に変換される。
 
 .. code-block:: python
+   :linenos:
 
    >>> config["server"]["port"]
    '8080'
@@ -63,6 +64,7 @@ getint / getboolean による型変換
 セクションの追加や値の変更を行い、``write`` でファイルに保存できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> config.add_section("client")
    >>> config["client"]["timeout"] = "30"
@@ -77,6 +79,7 @@ fallback とデフォルト値
 キーが存在しない場合に備え、``get`` 系メソッドには ``fallback`` 引数でデフォルト値を指定できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> config.get("server", "timeout", fallback="10")
    '10'
@@ -85,13 +88,14 @@ fallback とデフォルト値
 
 .. note::
 
-   セクション名・キー名の大文字小文字の扱いなど細かな挙動は Python 公式ドキュメントの configparser モジュールの説明を参照。
+   デフォルトでは、キー名は小文字に変換されて大文字小文字を区別せずに扱われるが、セクション名は区別される。細かな挙動は `Python 公式ドキュメントの configparser モジュールの説明 <https://docs.python.org/ja/3/library/configparser.html>`_ を参照。
 
 .. note::
 
-   ``ConfigParser`` は既定で ``BasicInterpolation`` が有効になっており、値の中の ``%(name)s`` を他のキーの値で置換できる。この機能のため ``%`` はテンプレート構文の特殊文字として扱われ、``value = 50%`` のように ``%`` を単体で含む値をそのまま書くと、読み込み時に ``InterpolationSyntaxError`` が発生する。``%`` そのものを値に含めたい場合は ``%%`` のように 2 つ重ねてエスケープするか、補間機能を無効にした ``configparser.ConfigParser(interpolation=None)`` を使う。
+   ``ConfigParser`` はデフォルトで ``BasicInterpolation`` が有効になっており、値の中の ``%(name)s`` を他のキーの値で置換できる。この機能のため ``%`` はテンプレート構文の特殊文字として扱われ、``value = 50%`` のように ``%`` を単体で含む値をそのまま書くと、読み込み時に ``InterpolationSyntaxError`` が発生する。``%`` そのものを値に含めたい場合は ``%%`` のように 2 つ重ねてエスケープするか、補間機能を無効にした ``configparser.ConfigParser(interpolation=None)`` を使う。
 
    .. code-block:: python
+      :linenos:
 
       >>> config = configparser.ConfigParser()
       >>> config.read_string("[server]\nvalue = 50%\n")
@@ -109,3 +113,7 @@ fallback とデフォルト値
       >>> config.read_string("[server]\nvalue = 50%\n")
       >>> config["server"]["value"]
       '50%'
+
+.. note::
+
+   古い解説記事に見られる ``SafeConfigParser`` クラスと ``readfp()`` メソッドは Python 3.12 で削除された。それぞれ ``ConfigParser`` と ``read_file()`` を使う。

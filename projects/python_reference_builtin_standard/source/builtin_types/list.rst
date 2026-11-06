@@ -9,6 +9,7 @@ list.append / list.extend
 ``append`` はリストの末尾に要素を 1 つだけ追加する。``extend`` はイテラブル（別のリストやタプルなど）を受け取り、その要素をすべて末尾に追加する。
 
 .. code-block:: python
+   :linenos:
 
    >>> nums = [1, 2, 3]
    >>> nums.append(4)
@@ -21,6 +22,7 @@ list.append / list.extend
 よくある間違いとして、複数の要素を追加したいのに ``append`` を使ってしまい、リストそのものが 1 つの要素として追加されてしまうケースがある。
 
 .. code-block:: python
+   :linenos:
 
    >>> nums = [1, 2, 3]
    >>> nums.append([4, 5])
@@ -39,6 +41,7 @@ list.insert
 ``insert(index, value)`` は指定したインデックスの位置に要素を挿入する。それ以降の要素は 1 つずつ後ろにずれる。
 
 .. code-block:: python
+   :linenos:
 
    >>> fruits = ["apple", "banana", "cherry"]
    >>> fruits.insert(1, "blueberry")
@@ -54,6 +57,7 @@ list.remove / list.pop
 ``remove(value)`` は指定した値と最初に一致する要素を削除する。値そのもので指定するため、リスト内に見つからない場合は ``ValueError`` が発生する。一方 ``pop(index)`` はインデックスで指定した要素を削除し、その値を返す。引数を省略すると末尾の要素を取り出す。
 
 .. code-block:: python
+   :linenos:
 
    >>> nums = [10, 20, 30, 20]
    >>> nums.remove(20)
@@ -80,6 +84,7 @@ list.sort / list.reverse
 ``sort`` はリストの要素をその場で並べ替える。``reverse`` はリストの要素の順序をその場で反転する。いずれも戻り値は ``None`` で、元のリスト自体が変更される点に注意する。新しい並べ替え済みのリストを別に得たい場合は、組み込み関数 ``sorted()`` を使う（こちらは元のリストを変更せず、並べ替えた新しいリストを返す）。
 
 .. code-block:: python
+   :linenos:
 
    >>> nums = [3, 1, 4, 1, 5, 9, 2, 6]
    >>> nums.sort()
@@ -99,6 +104,7 @@ list.sort / list.reverse
 ``sort`` には ``key`` と ``reverse`` というキーワード引数がある。``key`` には各要素から並べ替えの基準となる値を取り出す関数を渡し、``reverse=True`` を指定すると降順に並べ替える。
 
 .. code-block:: python
+   :linenos:
 
    >>> words = ["banana", "kiwi", "apple", "fig"]
    >>> words.sort(key=len)
@@ -114,6 +120,7 @@ list.index / list.count
 ``index(value)`` は指定した値と最初に一致する要素のインデックスを返す。見つからない場合は ``ValueError`` が発生する。``count(value)`` は指定した値がリスト中に出現する回数を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> letters = ["a", "b", "c", "b", "a"]
    >>> letters.index("b")
@@ -133,6 +140,7 @@ list.clear / list.copy
 ``clear`` はリストの要素をすべて削除し、空のリストにする。``copy`` はリストの浅いコピー（shallow copy）を作成して返す。スライス ``lst[:]`` でも同じ結果が得られるが、``copy`` の方が意図が明確になる。
 
 .. code-block:: python
+   :linenos:
 
    >>> nums = [1, 2, 3]
    >>> nums.clear()
@@ -157,6 +165,7 @@ list.clear / list.copy
 ``lst[start:stop:step]`` の形式でリストの一部分を取り出すことができる。スライスは元のリストを変更せず、新しいリストを返す点に注意する。
 
 .. code-block:: python
+   :linenos:
 
    >>> nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
    >>> nums[2:5]
@@ -173,6 +182,7 @@ list.clear / list.copy
 一方、スライスに対して代入を行うと、元のリストの該当部分をその場で置き換えることができる。置き換える要素の個数は、元の範囲の長さと一致していなくてもよい。
 
 .. code-block:: python
+   :linenos:
 
    >>> nums = [0, 1, 2, 3, 4]
    >>> nums[1:3] = [10, 20, 30]

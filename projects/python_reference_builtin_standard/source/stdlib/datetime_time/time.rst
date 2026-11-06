@@ -9,6 +9,7 @@ time.time
 エポックからの経過秒数を浮動小数点数で返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> import time
    >>> time.time()  # doctest: +SKIP
@@ -17,9 +18,10 @@ time.time
 time.sleep
 ----------
 
-指定した秒数だけ処理を一時停止する。
+指定した秒数だけ処理を一時停止する。小数を指定すれば 1 秒未満の待機もできる。
 
 .. code-block:: python
+   :linenos:
 
    >>> import time
    >>> print("start")
@@ -31,9 +33,10 @@ time.sleep
 time.perf_counter
 ------------------
 
-処理時間の計測に特化した高精度なカウンタを返す。基準点は不定なので、差分（経過時間）を求める用途にのみ使う。ベンチマークには ``time.time()`` よりもこちらが適している。
+処理時間の計測に特化した高精度なカウンタの値（秒）を返す。基準点は不定なので、差分（経過時間）を求める用途にのみ使う。``time.time()`` はシステム時刻の変更（NTP による補正など）の影響を受けて逆行することもあるため、経過時間の計測やベンチマークには、単調増加が保証された ``perf_counter`` のほうが適している。
 
 .. code-block:: python
+   :linenos:
 
    >>> import time
    >>> start = time.perf_counter()
@@ -48,6 +51,7 @@ time.strftime / time.localtime
 ``localtime`` はエポック秒をローカルタイムの ``struct_time`` に変換し、``strftime`` はそれを書式文字列に変換する。
 
 .. code-block:: python
+   :linenos:
 
    >>> import time
    >>> t = time.localtime()

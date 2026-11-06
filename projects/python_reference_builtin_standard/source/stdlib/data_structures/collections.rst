@@ -6,10 +6,10 @@ collections
 collections.Counter
 --------------------
 
-要素の出現回数を数えるための ``dict`` のサブクラス。存在しないキーに
-アクセスしても ``KeyError`` にならず ``0`` を返す。
+要素の出現回数を数えるための ``dict`` のサブクラス。存在しないキーにアクセスしても ``KeyError`` にならず ``0`` を返す。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections import Counter
    >>> c = Counter("abracadabra")
@@ -23,10 +23,10 @@ collections.Counter
 collections.defaultdict
 ------------------------
 
-キーが存在しない場合に、指定したファクトリ関数でデフォルト値を自動生成
-する辞書。グルーピング処理を書くときに ``setdefault`` より簡潔になる。
+キーが存在しない場合に、指定したファクトリ関数でデフォルト値を自動生成する辞書。グルーピング処理を書くときに ``setdefault`` より簡潔になる。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections import defaultdict
    >>> groups = defaultdict(list)
@@ -42,20 +42,21 @@ collections.OrderedDict
 挿入順を保持する辞書。組み込みの ``dict`` も挿入順を保持するため差は小さくなったが、``move_to_end`` のような順序操作専用のメソッドが必要な場合はこちらを使う。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections import OrderedDict
    >>> od = OrderedDict(a=1, b=2, c=3)
    >>> od.move_to_end("a")
-   >>> od
+   >>> od  # Python 3.11 では OrderedDict([('b', 2), ('c', 3), ('a', 1)]) と表示される
    OrderedDict({'b': 2, 'c': 3, 'a': 1})
 
 collections.namedtuple
 -----------------------
 
-フィールド名でアクセスできる軽量なタプルのサブクラスを生成する。
-少数の属性を持つ値オブジェクトを、クラスを定義せずに手早く作れる。
+フィールド名でアクセスできる軽量なタプルのサブクラスを生成する。少数の属性を持つ値オブジェクトを、クラスを定義せずに手早く作れる。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections import namedtuple
    >>> Point = namedtuple("Point", ["x", "y"])
@@ -68,12 +69,10 @@ collections.namedtuple
 collections.ChainMap
 ---------------------
 
-複数の辞書を、コピーを作らずに 1 つの辞書のように重ねて参照できる。
-先に指定した辞書ほど優先され、キーが見つからない場合は後続の辞書へ
-フォールバックする。ユーザー設定とデフォルト設定を組み合わせる場合など
-に便利。
+複数の辞書を、コピーを作らずに 1 つの辞書のように重ねて参照できる。先に指定した辞書ほど優先され、キーが見つからない場合は後続の辞書へフォールバックする。ユーザー設定とデフォルト設定を組み合わせる場合などに便利。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections import ChainMap
    >>> defaults = {"color": "blue", "size": "M"}
@@ -89,10 +88,10 @@ collections.ChainMap
 collections.deque
 ------------------
 
-両端からの追加・削除を高速に行える両端キュー。リストの先頭への
-挿入・削除が O(n) になるのに対し、``deque`` は O(1) で行える。
+両端からの追加・削除を高速に行える両端キュー。リストの先頭への挿入・削除が O(n) になるのに対し、``deque`` は O(1) で行える。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections import deque
    >>> dq = deque([1, 2, 3])

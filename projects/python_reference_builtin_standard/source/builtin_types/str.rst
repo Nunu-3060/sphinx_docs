@@ -9,6 +9,7 @@ str.split / str.join
 ``split`` は文字列を区切り文字で分割してリストにする。``join`` はその逆に、リストなどの文字列の列を区切り文字で連結して 1 つの文字列にする。
 
 .. code-block:: python
+   :linenos:
 
    >>> "2024-01-15".split("-")
    ['2024', '01', '15']
@@ -25,6 +26,7 @@ str.strip / str.lstrip / str.rstrip
 前後の空白や指定した文字を取り除く。``strip`` は両端、``lstrip`` は左端、``rstrip`` は右端のみを対象とする。引数に文字を指定すると、その文字集合に含まれる文字を取り除く。
 
 .. code-block:: python
+   :linenos:
 
    >>> "  hello world  ".strip()
    'hello world'
@@ -41,6 +43,7 @@ str.replace
 文字列中の部分文字列を別の文字列に置き換える。第 3 引数で置換回数の上限を指定できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> "I like cats. Cats are cute.".replace("cats", "dogs")
    'I like dogs. Cats are cute.'
@@ -53,6 +56,7 @@ str.startswith / str.endswith
 文字列が指定した接頭辞・接尾辞を持つかどうかを判定する。ファイルの拡張子や URL のスキームの確認などによく使う。
 
 .. code-block:: python
+   :linenos:
 
    >>> "sample.rst".endswith(".rst")
    True
@@ -61,12 +65,32 @@ str.startswith / str.endswith
    >>> "sample.rst".startswith(("sample", "test"))
    True
 
+str.removeprefix / str.removesuffix
+--------------------------------------
+
+文字列が指定した接頭辞・接尾辞で始まる（終わる）場合に限り、その部分を取り除いた文字列を返す。一致しない場合は元の文字列がそのまま返る。``strip`` 系のメソッドが引数を「取り除く文字の集合」として扱うのに対し、こちらは引数を 1 つの文字列として扱う点が異なる。
+
+.. code-block:: python
+   :linenos:
+
+   >>> "test_sample.py".removeprefix("test_")
+   'sample.py'
+   >>> "sample.rst".removesuffix(".rst")
+   'sample'
+   >>> "sample.rst".removesuffix(".txt")
+   'sample.rst'
+   >>> "test.rst".removesuffix(".rst")
+   'test'
+   >>> "test.rst".rstrip(".rst")   # "."・"r"・"s"・"t" の集合として扱われ、"test" の "st" まで削られる
+   'te'
+
 str.find / str.index
 ---------------------
 
 部分文字列が最初に現れる位置（インデックス）を調べる。``find`` は見つからない場合に ``-1`` を返すのに対し、``index`` は見つからない場合に ``ValueError`` を発生させる点が異なる。
 
 .. code-block:: python
+   :linenos:
 
    >>> "hello world".find("world")
    6
@@ -86,9 +110,10 @@ str.find / str.index
 str.upper / str.lower / str.title
 ------------------------------------
 
-文字列の大文字・小文字を変換する。``upper`` は全て大文字、``lower`` は全て小文字、``title`` は各単語の先頭を大文字にする。
+文字列の大文字・小文字を変換する。``upper`` はすべて大文字、``lower`` はすべて小文字、``title`` は各単語の先頭を大文字にする。
 
 .. code-block:: python
+   :linenos:
 
    >>> "Hello World".upper()
    'HELLO WORLD'
@@ -103,6 +128,7 @@ str.count
 文字列中に指定した部分文字列が出現する回数を返す。``list.count`` や ``tuple.count`` と同じ「値の出現回数を数える」メソッドだが、``str.count`` は開始位置・終了位置を指定して検索範囲を絞ることもできる。
 
 .. code-block:: python
+   :linenos:
 
    >>> "I like cats. Cats are cute.".count("cats")
    1
@@ -125,6 +151,7 @@ str.isdigit / str.isalpha / str.isupper / str.islower / str.isalnum
 - ``isalnum()``: すべての文字が英数字（アルファベットまたは数字）であれば ``True``
 
 .. code-block:: python
+   :linenos:
 
    >>> "12345".isdigit()
    True
@@ -157,6 +184,7 @@ f-string / str.format
 文字列中に値を埋め込むための機能。``f"{value}"`` の形式で書く f-string と、``"{}".format(value)`` の形式で書く ``str.format`` メソッドがある。
 
 .. code-block:: python
+   :linenos:
 
    >>> name = "Python"
    >>> version = 3.12
@@ -174,19 +202,20 @@ f-string / str.format
 書式指定のミニ言語
 ~~~~~~~~~~~~~~~~~~~~
 
-``{value:書式指定}`` の書式指定部分では、幅・アライメント・0埋め・桁区切り・パーセント表示などを指定できる。この記法は f-string と ``str.format`` のどちらでも共通して使える。
+``{value:書式指定}`` の書式指定部分では、幅・アライメント・0 埋め・桁区切り・パーセント表示などを指定できる。この記法は f-string と ``str.format`` のどちらでも共通して使える。
 
 .. code-block:: python
+   :linenos:
 
-   >>> f"{42:5d}"        # 幅5で右揃え
+   >>> f"{42:5d}"        # 幅 5 で右揃え
    '   42'
    >>> f"{42:<5d}|"      # 左揃え
    '42   |'
-   >>> f"{42:05d}"       # 0埋め
+   >>> f"{42:05d}"       # 0 埋め
    '00042'
-   >>> f"{1234567:,}"    # 3桁ごとの桁区切り
+   >>> f"{1234567:,}"    # 3 桁ごとの桁区切り
    '1,234,567'
-   >>> f"{0.256:.1%}"    # パーセント表示（小数点以下1桁）
+   >>> f"{0.256:.1%}"    # パーセント表示（小数点以下 1 桁）
    '25.6%'
 
 ``=`` によるデバッグ出力
@@ -195,6 +224,7 @@ f-string / str.format
 f-string では、式の後ろに ``=`` を付けると「``式名=値``」の形式で出力される。``print`` デバッグの際に変数名を手で書く必要がなくなり便利。
 
 .. code-block:: python
+   :linenos:
 
    >>> name = "Python"
    >>> count = 3
@@ -206,9 +236,10 @@ f-string では、式の後ろに ``=`` を付けると「``式名=値``」の�
 波括弧のエスケープ
 ~~~~~~~~~~~~~~~~~~~~
 
-f-string・``str.format`` の中で波括弧そのものを出力したい場合は、``{{``・``}}`` のように2つ重ねてエスケープする。
+f-string・``str.format`` の中で波括弧そのものを出力したい場合は、``{{``・``}}`` のように 2 つ重ねてエスケープする。
 
 .. code-block:: python
+   :linenos:
 
    >>> f"{{literal braces}}"
    '{literal braces}'
@@ -221,6 +252,7 @@ t-string（テンプレート文字列）
 Python 3.14 で追加された ``t"..."`` の形式で書く構文（PEP 750）。見た目は f-string に似ているが、その場で文字列に変換されるのではなく、埋め込んだ式と値を保持したままの ``string.templatelib.Template`` オブジェクトを生成する。呼び出し側で値ごとにエスケープ処理などを挟めるため、SQL や HTML を組み立てる際に、埋め込み値をそのまま文字列連結してしまう事故を防ぎやすい。登場したばかりの機能で実務での採用はまだ広がっていないため、基本的な文字列の組み立てにはこれまで通り f-string を使えばよい。
 
 .. code-block:: python
+   :linenos:
 
    >>> name = "World"
    >>> template = t"Hello, {name}!"
@@ -238,6 +270,7 @@ str.encode
 文字列を指定したエンコーディングでバイト列（``bytes``）に変換する。逆にバイト列から文字列に戻すには、対になる :meth:`bytes.decode` を使う。
 
 .. code-block:: python
+   :linenos:
 
    >>> "こんにちは".encode("utf-8")
    b'\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf'

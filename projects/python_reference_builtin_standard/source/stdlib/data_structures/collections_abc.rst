@@ -1,11 +1,7 @@
 collections.abc
 ================
 
-コンテナ型（``list``、``dict``、``set`` など）が備えるべき振る舞いを、
-抽象基底クラス（ABC: Abstract Base Class）として定義したモジュール。
-「イテレートできる」「要素数を持つ」「キーで値を取り出せる」といった
-性質を、具体的な型を問わずに ``isinstance()`` で判定したり、関数の
-引数や戻り値の型ヒントとして表現したりするのに使う。
+コンテナ型（``list``、``dict``、``set`` など）が備えるべき振る舞いを、抽象基底クラス（ABC: Abstract Base Class）として定義したモジュール。「イテレートできる」「要素数を持つ」「キーで値を取り出せる」といった性質を、具体的な型を問わずに ``isinstance()`` で判定したり、関数の引数や戻り値の型ヒントとして表現したりするのに使う。
 
 ABC とは何のためにあるのか
 --------------------------
@@ -13,6 +9,7 @@ ABC とは何のためにあるのか
 Python では「``list`` かどうか」より「イテレート可能かどうか」のように、振る舞い（プロトコル）に着目したダックタイピングが好まれる。``collections.abc`` の ABC は、``__iter__`` や ``__len__`` のような特殊メソッドを実装しているオブジェクトを、継承関係なしに「その性質を持つ」と認識できるようにする。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections.abc import Iterable
    >>> isinstance([1, 2, 3], Iterable)
@@ -25,9 +22,10 @@ Python では「``list`` かどうか」より「イテレート可能かどう�
 Iterable と Iterator
 ---------------------
 
-``Iterable`` は ``__iter__`` を持つ（for 文で反復できる）オブジェクトを、``Iterator`` はさらに ``__next__`` を持つ（``next()`` で1つずつ値を取り出せる）オブジェクトを表す。自作クラスがこれらの性質を満たすかを継承関係に依らず判定できる。
+``Iterable`` は ``__iter__`` を持つ（for 文で反復できる）オブジェクトを、``Iterator`` はさらに ``__next__`` を持つ（``next()`` で 1 つずつ値を取り出せる）オブジェクトを表す。自作クラスがこれらの性質を満たすかを継承関係に依らず判定できる。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections.abc import Iterable, Iterator
    >>>
@@ -56,6 +54,7 @@ Sequence と Mapping
 ``Sequence`` はインデックスアクセス（``__getitem__``）と順序を持つコンテナ（``list``、``tuple``、``str`` など）を、``Mapping`` はキーで値を取り出せるコンテナ（``dict`` など）を表す。``isinstance()`` による判定に使えるほか、``Sequence[int]`` のように要素の型を指定したジェネリック型ヒントとしても使える。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections.abc import Sequence, Mapping
    >>> isinstance([1, 2, 3], Sequence)
@@ -79,9 +78,10 @@ Sequence と Mapping
 Callable による型ヒント
 ------------------------
 
-``Callable`` は、関数やメソッドのような呼び出し可能オブジェクトを表す。``Callable[[引数の型...], 戻り値の型]`` の形式でパラメータ化できる。これは、組み込み型や ABC を添字表記でパラメータ化できるようにしたPEP 585 により、かつて ``typing.Callable`` が担っていた役割を置き換えるもので、新しいコードでは ``typing.Callable`` の代わりにこちらを使うのが推奨される（詳細は :doc:`../misc/typing` を参照）。
+``Callable`` は、関数やメソッドのような呼び出し可能オブジェクトを表す。``Callable[[引数の型...], 戻り値の型]`` の形式でパラメータ化できる。これは、組み込み型や ABC を添字表記でパラメータ化できるようにした PEP 585 により、かつて ``typing.Callable`` が担っていた役割を置き換えるもので、新しいコードでは ``typing.Callable`` の代わりにこちらを使うのが推奨される（詳細は :doc:`../misc/typing` を参照）。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections.abc import Callable
    >>>
@@ -94,13 +94,10 @@ Callable による型ヒント
 自作クラスを ABC に適合させる
 ------------------------------
 
-``__iter__`` や ``__len__`` などの必要なメソッドを実装していれば、
-そのクラスは明示的に継承しなくても対応する ABC の「サブクラス」として
-認識される（これを構造的サブクラス化と呼ぶ）。また、継承関係を持たない
-まま、明示的にサブクラスとして登録する ``register()`` という方法も
-用意されている。
+``__iter__`` や ``__len__`` などの必要なメソッドを実装していれば、そのクラスは明示的に継承しなくても対応する ABC の「サブクラス」として認識される（これを構造的サブクラス化と呼ぶ）。また、継承関係を持たないまま、明示的にサブクラスとして登録する ``register()`` という方法も用意されている。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections.abc import Sized
    >>>
@@ -113,12 +110,35 @@ Callable による型ヒント
    >>> isinstance(Basket([1, 2, 3]), Sized)
    True
 
+ただし、メソッドの有無だけで自動的に判定されるのは ``Iterable``、``Iterator``、``Sized``、``Container``、``Collection``、``Callable``、``Hashable`` など、少数の特殊メソッドで性質が決まる ABC に限られる。``Sequence`` や ``Mapping`` などは、``__getitem__`` や ``__len__`` を実装しただけでは ``isinstance()`` が ``True`` にならず、継承するか ``register()`` で登録する必要がある。
+
+.. code-block:: python
+   :linenos:
+
+   >>> from collections.abc import Sequence
+   >>>
+   >>> class Squares:
+   ...     def __getitem__(self, index):
+   ...         if not 0 <= index < 10:
+   ...             raise IndexError(index)
+   ...         return index ** 2
+   ...     def __len__(self):
+   ...         return 10
+   ...
+   >>> isinstance(Squares(), Sequence)
+   False
+   >>> Sequence.register(Squares)
+   <class '__main__.Squares'>
+   >>> isinstance(Squares(), Sequence)
+   True
+
 MutableMapping を継承した独自クラスの作成
 --------------------------------------------
 
 前節の構造的サブクラス化は ``isinstance()`` による判定を可能にするだけで、``update()`` や ``get()`` のような便利メソッドを自動的に使えるようにはしない。これらを利用したい場合は、実際に ABC を継承する必要がある。``collections.abc`` の最も実用的な使い方は、ABC を継承して独自のコンテナクラスを作ることである。``MutableMapping`` を継承する場合、``__getitem__``、``__setitem__``、``__delitem__``、``__iter__``、``__len__`` の 5 つの抽象メソッドだけを実装すれば、``update()``、``get()``、``pop()``、``keys()``、``items()`` などの残りのメソッドは ABC 側の実装から「無料で」手に入る。
 
 .. code-block:: python
+   :linenos:
 
    >>> from collections.abc import MutableMapping
    >>>
